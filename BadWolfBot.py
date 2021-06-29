@@ -1024,14 +1024,8 @@ async def on_message(message: discord.Message):
                     await commands.OtherCommands.get_flag_command(message, server_prefix)
                         
                 elif args[0] in LOUNGE_NAME_TERMS:
-                    discordIDToLoad = str(author_id)
-                    await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]) )
-                    lounge_name = UserDataProcessing.get_lounge(author_id)
-                    if lounge_name == None:
-                        await message.channel.send("You don't have a lounge name. Join Lounge! (If you think this is an error, go on Wiimfi and try running this command again.)")
-                    else:
-                        await message.channel.send("Your lounge name is: " + UtilityFunctions.process_name(str(lounge_name)))
-                        
+                    await commands.OtherCommands.lounge_name_command(message)
+                    
                 elif args[0] in SET_FLAG_TERMS:
                     if len(args) > 1:
                         #if 2nd argument is numeric, it's a discord ID

@@ -205,6 +205,19 @@ class OtherCommands:
         embed.set_thumbnail(url=f"attachment://{image_name}")
         await message.channel.send(file=file, embed=embed)
     
+    
+    @staticmethod
+    async def lounge_name_command(message:discord.Message):
+        author_id = message.author.id
+        discordIDToLoad = str(author_id)
+        await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
+        lounge_name = UserDataProcessing.get_lounge(author_id)
+        if lounge_name == None:
+            await message.channel.send("You don't have a lounge name. Join Lounge! (If you think this is an error, go on Wiimmfi and try running this command again.)")
+        else:
+            await message.channel.send("Your lounge name is: " + UtilityFunctions.process_name(str(lounge_name)))
+            
+
     @staticmethod
     async def fc_command(message:discord.Message, args:List[str], old_command:str):
         discordIDToLoad = None
