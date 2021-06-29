@@ -1018,10 +1018,7 @@ async def on_message(message: discord.Message):
                     await commands.TablingCommands.team_penalty_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
                 elif args[0] in FCS_TERMS:
-                    if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-                        await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
-                    else:
-                        await message.channel.send(this_bot.getRoom().getFCPlayerListString())
+                    await commands.TablingCommands.fcs_command(message, this_bot, args, server_prefix, is_lounge_server)
                     
                 elif args[0] in GET_FLAG_TERMS:
                     flag = UserDataProcessing.get_flag(author_id)

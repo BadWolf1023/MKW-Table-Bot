@@ -539,6 +539,14 @@ class ServerDefaultCommands:
 #TODO: Refactor these
 class TablingCommands:
     @staticmethod
+    async def fcs_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
+            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+        else:
+            await message.channel.send(this_bot.getRoom().getFCPlayerListString())
+            
+            
+    @staticmethod
     async def team_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
   
         if not this_bot.table_is_set():
