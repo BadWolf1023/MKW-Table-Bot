@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import aiohttp
 import TableBotExceptions
+from collections import namedtuple
 MIIS_DISABLED = False
 
 default_prefix = "?"
@@ -121,10 +122,48 @@ base_url_edit_table_lorenzi = "https://gb.hlorenzi.com/table?data="
 
 BAD_WOLF_ID = 706120725882470460
 
+
+
+#Lounge stuff
+RT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?type=rt&import="
+CT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?type=ct&import="
+RT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/rt/?import="
+CT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/ct/?import="
+RT_UPDATER_CHANNEL = 758161201682841610
+CT_UPDATER_CHANNEL = 758161224202059847
+RT_REPORTER_ID = 389252697284542465
+RT_UPDATER_ID = 393600567781621761
+CT_REPORTER_ID = 520808674411937792
+CT_UPDATER_ID = 520808645252874240
+lounge_server_id = 387347467332485122
+#in order: Boss, Higher Tier Arb, Lower Tier Arb, Higher Tier CT Arb, Lower Tier CT Arb, RT Updater, CT Updater, RT Reporter, CT Reporter, Developer
+lounge_staff_roles = {387347888935534593, 399382503825211393, 399384750923579392, 521149807994208295, 792891432301625364,
+                      393600567781621761, 520808645252874240, 389252697284542465, 520808674411937792,
+                      521154917675827221, 748367398905708634, 748367393264238663}
+
+
+LoungeUpdateChannels = namedtuple('LoungeUpdateChannels', ['updater_channel_id_primary', 'updater_link_primary', 'preview_link_primary', 'type_text_primary',
+                                                           'updater_channel_id_secondary', 'updater_link_secondary', 'preview_link_secondary', 'type_text_secondary'])
+lounge_channel_mappings = {lounge_server_id:LoungeUpdateChannels(
+    updater_channel_id_primary=RT_UPDATER_CHANNEL,
+    updater_link_primary=RT_UPDATER_LINK,
+    preview_link_primary=RT_UPDATE_PREVIEW_LINK,
+    type_text_primary="RT",
+    updater_channel_id_secondary=CT_UPDATER_CHANNEL,
+    updater_link_secondary=CT_UPDATER_LINK,
+    preview_link_secondary=CT_UPDATE_PREVIEW_LINK,
+    type_text_secondary="CT")
+    }
+
+
 #Raises exception if author is not bad wolf
-def is_bad_wolf(self, author):
+def is_bad_wolf(author):
     if author.id != BAD_WOLF_ID:
         raise TableBotExceptions.NotBadWolf()
+    return True
+
+def throw_if_not_lounge(guild):
+    if guild.id 
     return True
 
 def check_create(file_name):

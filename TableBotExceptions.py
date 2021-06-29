@@ -8,16 +8,29 @@ Created on Jun 27, 2021
 class NotAuthorized(Exception):
     pass
 
-class NotBadWolf(NotAuthorized):
+class NoAuthorityWithTableBot(NotAuthorized):
     pass
 
-class NotBotAdmin(NotAuthorized):
+class NotBadWolf(NoAuthorityWithTableBot):
     pass
 
-class NotServerAdministrator(NotAuthorized):
+class NotBotAdmin(NoAuthorityWithTableBot):
     pass
 
-class NotLoungeStaff(NotAuthorized):
+class NoAuthorityInServer(NotAuthorized):
+    pass
+
+class NotServerAdministrator(NoAuthorityInServer):
+    pass
+
+class NotLoungeStaff(NoAuthorityInServer):
+    pass
+
+
+class WrongServer(NotAuthorized):
+    pass
+
+class NotLoungeServer(WrongServer):
     pass
 
 
