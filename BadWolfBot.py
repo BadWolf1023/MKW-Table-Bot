@@ -196,6 +196,8 @@ lounge_submissions = Lounge.Lounge(LOUNGE_ID_COUNTER_FILE, LOUNGE_TABLE_UPDATES_
 
 bad_wolf_facts = []
 
+def createEmptyTableBot(server_id=None):
+    return TableBot.ChannelBot(server_id=server_id)
 
 client = discord.Client()
 
@@ -682,6 +684,7 @@ async def on_message(message: discord.Message):
                     await message.channel.send(size_str)
             
                 elif args[0] in SET_PREFIX_TERMS:
+                    await commands.ServerDefaultCommands.change_server_prefix_command(message, args)
                     
                 
                 elif args[0] in ALL_PLAYERS_TERMS:
@@ -805,7 +808,7 @@ async def on_message(message: discord.Message):
                     await commands.TablingCommands.undo_command(message, this_bot, server_prefix, is_lounge_server)
                 elif args[0] in VERIFY_ROOM_TERMS:
                     if commands.vr_is_on:
-                        await commands.OtherCommands.vr_command(this_bot, message, args, old_command)
+                        await commands.OtherCommands.vr_command(this_bot, message, args, old_command, createEmptyTableBot()) #create a new one so it won't interfere with any room they might have loaded (like a table)
                 
                 elif args[0] in WORLDWIDE_TERMS:
                     await commands.OtherCommands.wws_command(client, this_bot, message, args, old_command, ww_type=Race.RT_WW_ROOM_TYPE)
@@ -871,9 +874,9 @@ async def on_message(message: discord.Message):
     except aiohttp.client_exceptions.ClientOSError:
         await safe_send(message, "Discord's servers had an error. This is usually temporary, so do your command again.")
     except TableBotExceptions.NotServerAdministrator as not_admin_failure:
-        await safe_send(message, f"You are not a server administrator: {not_admin_failure}"
-     except TableBotExceptions.NotBadWolf as not_badwolf_failure:
-        await safe_send(message, f"You are not allowed to use this command because you are not Bad Wolf: {not_badwolf_failure}"
+        await safe_send(message, f"You are not a server administrator: {not_admin_failure}")
+    except TableBotExceptions.NotBadWolf as not_badwolf_failure:
+        await safe_send(message, f"You are not allowed to use this command because you are not Bad Wolf: {not_badwolf_failure}")
                         
     except:
         with open(ERROR_LOGS_FILE, "a+") as f:

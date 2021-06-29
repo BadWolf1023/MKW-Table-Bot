@@ -496,12 +496,11 @@ class OtherCommands:
     
     
     @staticmethod
-    async def vr_command_get_races(rLID:str):
-        new_bot = createEmptyTableBot() #create a new one so it won't interfere with any room they might have loaded (like a table)
-        successful = await new_bot.load_room_smart([rLID])
+    async def vr_command_get_races(rLID:str, temp_bot):
+        successful = await temp_bot.load_room_smart([rLID])
         if not successful:
             return None
-        return new_bot.getRoom().get_races_abbreviated(last_x_races=12)
+        return temp_bot.getRoom().get_races_abbreviated(last_x_races=12)
     
     @staticmethod
     def vr_command_get_data(data_piece):
@@ -512,7 +511,7 @@ class OtherCommands:
     
 
     @staticmethod           
-    async def vr_command(this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], old_command:str):
+    async def vr_command(this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], old_command:str, temp_bot):
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
             delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
@@ -578,7 +577,7 @@ class OtherCommands:
         #the verify_room function
         if "(last start" in last_match_str:
             #go get races from room
-            races_str = await OtherCommands.vr_command_get_races(rLID)
+            races_str = await OtherCommands.vr_command_get_races(rLID, temp_bot)
             if races_str != None:
                 str_msg += "\n\nRaces (Last 12): " + races_str
             else:

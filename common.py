@@ -9,7 +9,6 @@ import numpy as np
 import aiohttp
 import TableBotExceptions
 from collections import namedtuple
-import TableBot
 import discord
 from pathlib import Path
 
@@ -216,8 +215,7 @@ async def download_image(image_url, image_path):
         pass
     return False
 
-def createEmptyTableBot(server_id=None):
-    return TableBot.ChannelBot(server_id=server_id)
+
 
 
 
