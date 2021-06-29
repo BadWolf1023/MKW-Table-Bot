@@ -1006,42 +1006,8 @@ async def on_message(message: discord.Message):
                     await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge_server, command)
                 
                 elif args[0] in CHANGE_PLAYER_NAME_TERMS:
-                    if not this_bot.table_is_set():
-                        await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
-                    else:
-                        if len(args) < 3:
-                            to_send = this_bot.getRoom().get_sorted_player_list_string()
-                            to_send += "\n**To change the name of the 8th player on the list to \"joe\", do:** *" + server_prefix + "changename 8 joe*"
-                            await message.channel.send(to_send)
-                        else:
-                            playerNum = old_command.split()[1].strip()
-                            new_name = " ".join(old_command.split()[2:])
-                            players = this_bot.getRoom().get_sorted_player_list()
-                            if playerNum.isnumeric():
-                                playerNum = int(playerNum)
-                                if playerNum < 1 or playerNum > len(players):
-                                    await message.channel.send("The player number must be on this list (between 1 and " + str(len(players)) + "). Do " + server_prefix + "changename for an example on how to use this command.")
-                                else:
-                                    this_bot.add_save_state(message.content)
-                                    this_bot.getRoom().setNameForFC(players[playerNum-1][0], new_name)
-                                    await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0])) + " name set to: " + UtilityFunctions.process_name(new_name))
-                            else:
-                                lounge_name = str(copy.copy(playerNum))
-                                loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
-                                for _playerNum, (fc, _) in enumerate(players, 1):
-                                    if fc in loungeNameFCs:
-                                        break
-                                else:
-                                    _playerNum = None
-                                    
-                                    
-                                if _playerNum == None:
-                                    await message.channel.send("Could not find Lounge name " + UtilityFunctions.process_name(str(lounge_name)) + " in this room.")
-                                else:
-                                    this_bot.add_save_state(message.content)
-                                    this_bot.getRoom().setNameForFC(players[_playerNum-1][0], new_name)
-                                    await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + lounge_add(players[_playerNum-1][0])) + " name set to: " + UtilityFunctions.process_name(new_name))
-
+                    await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge_server, command)
+                
                 elif args[0] in EDIT_PLAYER_SCORE_TERMS:
                     if not this_bot.table_is_set():
                         await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
