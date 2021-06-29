@@ -539,6 +539,59 @@ class ServerDefaultCommands:
 #TODO: Refactor these
 class TablingCommands:
     @staticmethod
+    async def team_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+  
+        if not this_bot.table_is_set():
+            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            return
+
+        if this_bot.getWar().is_ffa():
+            await message.channel.send("You can't give team penalties in FFAs. Do " + server_prefix + "penalty to give an individual player a penalty in an FFA.")
+            return
+        
+        if len(args) == 1:
+            teams = sorted(this_bot.getWar().getTags())
+            to_send = ""
+            for team_num, team in enumerate(teams, 1):
+                to_send += UtilityFunctions.process_name(str(team_num)) + ". " + team + "\n"
+            to_send += "\n**To give the 2nd team on the list a 15 point penalty:** *" + server_prefix + "teampenalty 2 15*"
+            await message.channel.send(to_send)
+            return
+        
+        if len(args) != 3:
+            await message.channel.send(example_help(server_prefix, args[0]))
+            return
+    
+        teamNum = args[1]
+        amount = args[2]
+        teams = sorted(this_bot.getWar().getTags())
+        if not teamNum.isnumeric():
+            for ind, team in enumerate(teams):
+                if team.lower() == teamNum:
+                    teamNum = ind + 1
+                    break
+        else:
+            teamNum = int(teamNum)
+        if not amount.isnumeric():
+            if len(amount) > 0 and amount[0] == '-':
+                if amount[1:].isnumeric():
+                    amount = int(amount[1:]) * -1
+        else:
+            amount = int(amount)
+        
+        
+        if not isinstance(teamNum, int) or not isinstance(amount, int):
+            await message.channel.send(f"Both the team number and the penalty amount must be numbers. {example_help(server_prefix, args[0])}")
+        elif teamNum < 1 or teamNum > len(teams):
+            await message.channel.send(f"The team number must be on this list (between 1 and {len(teams)}). {example_help(server_prefix, args[0])}")
+        else:
+            this_bot.add_save_state(message.content)
+            this_bot.getWar().addTeamPenalty(teams[teamNum-1], amount)
+            await message.channel.send(UtilityFunctions.process_name(teams[teamNum-1] + " given a " + str(amount) + " point penalty."))
+
+
+
+    @staticmethod
     async def player_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
   
         if not this_bot.table_is_set():
@@ -552,7 +605,7 @@ class TablingCommands:
             return
         
         if len(args) != 3:
-            await message.channel.send("Do " + server_prefix + "penalty for an example on how to use this command.")
+            await message.channel.send(example_help(server_prefix, args[0]))
             return
         
         playerNum = args[1]
@@ -570,9 +623,9 @@ class TablingCommands:
             amount = int(amount)
             
         if not isinstance(playerNum, int) or not isinstance(amount, int):
-            await message.channel.send("Both player number and the penalty amount must be numbers. Do " + server_prefix + "penalty for an example on how to use this command.")
+            await message.channel.send(f"Both player number and the penalty amount must be numbers. {example_help(server_prefix, args[0])}")
         elif playerNum < 1 or playerNum > len(players):
-            await message.channel.send("The player number must be on this list (between 1 and " + str(len(players)) + "). Do " + server_prefix + "penalty for an example on how to use this command.")
+            await message.channel.send(f"The player number must be on this list (between 1 and {len(players)}). {example_help(server_prefix, args[0])}")
         else:
             this_bot.add_save_state(message.content)
             this_bot.getRoom().addPlayerPenalty(players[playerNum-1][0], amount)
@@ -1522,4 +1575,7 @@ def load_vr_is_on():
                 vr_is_on = pkl.load(pickle_in)
             except:
                 print(f"Could not read in '{VR_IS_ON_FILE}'")
+                
+def example_help(server_prefix:str, original_command:str):
+    return f"Do {server_prefix}{original_command} for an example on how to use this command."
                 

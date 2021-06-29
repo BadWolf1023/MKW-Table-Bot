@@ -1015,48 +1015,8 @@ async def on_message(message: discord.Message):
                     await commands.TablingCommands.player_penalty_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
                 elif args[0] in TEAM_PENALTY_TERMS:
-                    if not this_bot.table_is_set():
-                        await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
-                    else:
-                        if this_bot.getWar().is_ffa():
-                            await message.channel.send("You can't give team penalties in FFAs. Do " + server_prefix + "penalty to give an individual player a penalty in an FFA.")
-                        elif len(args) == 1:
-                            teams = sorted(this_bot.getWar().getTags())
-                            to_send = ""
-                            for team_num, team in enumerate(teams, 1):
-                                to_send += UtilityFunctions.process_name(str(team_num)) + ". " + team + "\n"
-                            to_send += "\n**To give the 2nd team on the list a 15 point penalty:** *" + server_prefix + "teampenalty 2 15*"
-                            await message.channel.send(to_send)
-                        elif len(args) != 3:
-                            await message.channel.send("Do " + server_prefix + "teampenalty for an example on how to use this command.")
-                        elif len(args) == 3:
-                            teamNum = args[1]
-                            amount = args[2]
-                            teams = sorted(this_bot.getWar().getTags())
-                            if not teamNum.isnumeric():
-                                for ind, team in enumerate(teams):
-                                    if team.lower() == teamNum:
-                                        teamNum = ind + 1
-                                        break
-                            else:
-                                teamNum = int(teamNum)
-                            if not amount.isnumeric():
-                                if len(amount) > 0 and amount[0] == '-':
-                                    if amount[1:].isnumeric():
-                                        amount = int(amount[1:]) * -1
-                            else:
-                                amount = int(amount)
-                            
-                            
-                            if not isinstance(teamNum, int) or not isinstance(amount, int):
-                                await message.channel.send("Both the team number and the penalty amount must be numbers. Do " + server_prefix + "teampenalty for an example on how to use this command.")
-                            elif teamNum < 1 or teamNum > len(teams):
-                                await message.channel.send("The team number must be on this list (between 1 and " + str(len(teams)) + "). Do " + server_prefix + "teampenalty for an example on how to use this command.")
-                            else:
-                                this_bot.add_save_state(message.content)
-                                this_bot.getWar().addTeamPenalty(teams[teamNum-1], amount)
-                                await message.channel.send(UtilityFunctions.process_name(teams[teamNum-1] + " given a " + str(amount) + " point penalty."))
-
+                    await commands.TablingCommands.team_penalty_command(message, this_bot, args, server_prefix, is_lounge_server)
+                
                 elif args[0] in FCS_TERMS:
                     if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
                         await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
