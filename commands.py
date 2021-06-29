@@ -911,84 +911,120 @@ class LoungeCommands:
 class ServerDefaultCommands:
     """There is no point to this class, other than for organization purposes.
     This class contains all of the commands that server administrators can use to set defaults for their server"""
+    
+    @staticmethod
+    def server_admin_check(author, failure_message):
+        if not author.guild_permissions.administrator:
+            raise TableBotExceptions.NotServerAdministrator(failure_message)
+        return True
+    
     @staticmethod
     async def large_time_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
+        ServerDefaultCommands.server_admin_check(message.author, "cannot change server default for hiding large times on tables")
+        
         server_id = message.guild.id
-        if not message.author.guild_permissions.administrator:
-            await message.channel.send("Cannot change server default for hiding large times on tables because you're not an administrator in this server.")
-        else:
-            if len(args) == 1:
-                await send_available_large_time_options(message, args, this_bot, server_prefix, server_wide=True)
-            elif len(args) > 1:
-                setting = args[1]
-                if setting not in ServerFunctions.bool_map:
-                    await message.channel.send(f"That is not a valid default large time setting. To see valid settings, run the command `{server_prefix}{args[0]}` and read carefully.")
-                else:
-                    was_success = ServerFunctions.change_default_large_time_setting(server_id, setting)
-                    if was_success:
-                        await message.channel.send(f"Server setting changed to:\n{get_large_time_option(setting)}")
-                    else:
-                        await message.channel.send("Error changing default large time setting for this server. This is TableBot's fault. Try to set it again.")
+    
+        if len(args) == 1:
+            await send_available_large_time_options(message, args, this_bot, server_prefix, server_wide=True)
+            return
+        
+        elif len(args) > 1:
+            setting = args[1]
+            if setting not in ServerFunctions.bool_map:
+                await message.channel.send(f"That is not a valid default large time setting. To see valid settings, run the command `{server_prefix}{args[0]}` and read carefully.")
+                return
+            
+            was_success = ServerFunctions.change_default_large_time_setting(server_id, setting)
+            if was_success:
+                await message.channel.send(f"Server setting changed to:\n{get_large_time_option(setting)}")
+            else:
+                await message.channel.send("Error changing default large time setting for this server. This is TableBot's fault. Try to set it again.")
+
     @staticmethod              
     async def mii_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
+        ServerDefaultCommands.server_admin_check(message.author, "cannot change miis default for this server")
+
         server_id = message.guild.id
-        if not message.author.guild_permissions.administrator:
-            await message.channel.send("Cannot change default for miis being on/off for tables for this server because you're not an administrator in this server.")
-        else:
-            if len(args) == 1:
-                await send_available_mii_options(message, args, this_bot, server_prefix, server_wide=True)
-            elif len(args) > 1:
-                setting = args[1]
-                if setting not in ServerFunctions.bool_map:
-                    await message.channel.send(f"That is not a valid mii setting. To see valid settings, run the command `{server_prefix}{args[0]}` and read carefully.")
-                else:
-                    was_success = ServerFunctions.change_default_server_mii_setting(server_id, setting)
-                    if was_success:
-                        await message.channel.send(f"Server setting changed to:\n{get_mii_option(setting)}")
-                    else:
-                        await message.channel.send("Error changing mii on/off default for server. This is TableBot's fault. Try to set it again.")
+    
+        if len(args) == 1:
+            await send_available_mii_options(message, args, this_bot, server_prefix, server_wide=True)
+            return
+        
+        elif len(args) > 1:
+            setting = args[1]
+            if setting not in ServerFunctions.bool_map:
+                await message.channel.send(f"That is not a valid mii setting. To see valid settings, run the command `{server_prefix}{args[0]}` and read carefully.")
+                return
+            
+            was_success = ServerFunctions.change_default_server_mii_setting(server_id, setting)
+            if was_success:
+                await message.channel.send(f"Server setting changed to:\n{get_mii_option(setting)}")
+            else:
+                await message.channel.send("Error changing mii on/off default for server. This is TableBot's fault. Try to set it again.")
 
 
     @staticmethod
     async def graph_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
+        ServerDefaultCommands.server_admin_check(message.author, "cannot change default graph for this server")
+
         server_id = message.guild.id
-        if not message.author.guild_permissions.administrator:
-            await message.channel.send("Cannot change the default graph for tables for this server because you're not an administrator in this server.")
-        else:
-            if len(args) == 1:
-                await send_available_graph_list(message, args, this_bot, server_prefix, server_wide=True)
-            elif len(args) > 1:
-                setting = args[1]
-                if not this_bot.is_valid_graph(setting):
-                    await message.channel.send(f"That is not a valid graph setting. To see valid settings, run the command `{server_prefix}{args[0]}` and read carefully.")
-                else:
-                    was_success = ServerFunctions.change_default_server_graph(server_id, setting)
-                    if was_success:
-                        await message.channel.send(f"Default graph for server set to: **{this_bot.get_graph_name(setting)}**")
-                    else:
-                        await message.channel.send("Error setting default graph for server. This is TableBot's fault. Try to set it again.")
+        if len(args) == 1:
+            await send_available_graph_list(message, args, this_bot, server_prefix, server_wide=True)
+            return
+        
+        if len(args) > 1:
+            setting = args[1]
+            if not this_bot.is_valid_graph(setting):
+                await message.channel.send(f"That is not a valid graph setting. To see valid settings, run the command `{server_prefix}{args[0]}` and read carefully.")
+                return
+            
+            was_success = ServerFunctions.change_default_server_graph(server_id, setting)
+            if was_success:
+                await message.channel.send(f"Default graph for server set to: **{this_bot.get_graph_name(setting)}**")
+            else:
+                await message.channel.send("Error setting default graph for server. This is TableBot's fault. Try to set it again.")
 
     @staticmethod
     async def theme_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
+        ServerDefaultCommands.server_admin_check(message.author, "cannot change default table theme for this server")
+        
         server_id = message.guild.id
-        if not message.author.guild_permissions.administrator:
-            await message.channel.send("Cannot change the default table theme for this server because you're not an administrator in this server.")
-        else:   
-            if len(args) == 1:
-                await send_table_theme_list(message, args, this_bot, server_prefix, server_wide=True)
-            elif len(args) > 1:
-                setting = args[1]
-                if not this_bot.is_valid_style(setting):
-                    await message.channel.send(f"That is not a valid table theme setting. To see valid settings, run the command `{server_prefix}{args[0]}` and read carefully.")
-                else:
-                    was_success = ServerFunctions.change_default_server_table_theme(server_id, setting)
-                    if was_success:
-                        await message.channel.send(f"Default table theme for server set to: **{this_bot.get_style_name(setting)}**")
-                    else:
-                        await message.channel.send("Error setting default table theme for server. This is TableBot's fault. Try to set it again.")
-             
+        if len(args) == 1:
+            await send_table_theme_list(message, args, this_bot, server_prefix, server_wide=True)
+            return
+        if len(args) > 1:
+            setting = args[1]
+            if not this_bot.is_valid_style(setting):
+                await message.channel.send(f"That is not a valid table theme setting. To see valid settings, run the command `{server_prefix}{args[0]}` and read carefully.")
+                return
+            
+            was_success = ServerFunctions.change_default_server_table_theme(server_id, setting)
+            if was_success:
+                await message.channel.send(f"Default table theme for server set to: **{this_bot.get_style_name(setting)}**")
+            else:
+                await message.channel.send("Error setting default table theme for server. This is TableBot's fault. Try to set it again.")
+     
 
+    @staticmethod
+    async def change_server_prefix_command(message:discord.Message, args:List[str]):
+        ServerDefaultCommands.server_admin_check(message.author, "cannot change prefix")
+        server_id = message.guild.id
+        
+        if len(args) < 2:
+            await message.channel.send("Give a prefix. Prefix not changed.")
+            return
+    
+        end_prefix_cmd = message.content.lower().index("setprefix") + len("setprefix")
+        new_prefix = message.content[end_prefix_cmd:].strip("\n").strip()
+        if len(new_prefix) < 1:
+            await message.channel.send("Cannot set an empty prefix. Prefix not changed.")
+            return
 
+        was_success = ServerFunctions.change_server_prefix(str(server_id), new_prefix)
+        if was_success:
+            await message.channel.send("Prefix changed to: " + new_prefix) 
+        else:
+            await message.channel.send("Errors setting prefix. Prefix not changed.")
 
 
 """================== Tabling Commands =================="""

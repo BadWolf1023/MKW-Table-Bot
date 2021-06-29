@@ -863,26 +863,25 @@ async def on_message(message: discord.Message):
 
     except discord.errors.Forbidden:
         lounge_submissions.clear_user_cooldown(message.author)
-        try:
-            await message.channel.send("MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work.")
-        except discord.errors.Forbidden: #We can't send messages
-            pass
+        await safe_send(message, "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work.")
     except TableBotExceptions.WarSetupStillRunning:
-        try:
-            await message.channel.send("I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
-        except discord.errors.Forbidden: #We can't send messages
-            pass
+        await safe_send(message, "I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
     except discord.errors.DiscordServerError:
-        await message.channel.send("Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
+        await safe_send(message, "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
     except aiohttp.client_exceptions.ClientOSError:
-        await message.channel.send("Discord's servers had an error. This is usually temporary, so do your command again.")
+        await safe_send(message, "Discord's servers had an error. This is usually temporary, so do your command again.")
+    except TableBotExceptions.NotServerAdministrator as not_admin_failure:
+        await safe_send(message, f"You are not a server administrator: {not_admin_failure}"
+     except TableBotExceptions.NotBadWolf as not_badwolf_failure:
+        await safe_send(message, f"You are not allowed to use this command because you are not Bad Wolf: {not_badwolf_failure}"
+                        
     except:
         with open(ERROR_LOGS_FILE, "a+") as f:
             f.write(f"\n{str(datetime.now())}: \n")
             traceback.print_exc(file=f)
 
         lounge_submissions.clear_user_cooldown(message.author)
-        await message.channel.send(f"Internal bot error. An unknown problem occurred. Please use {server_prefix}log to tell me what happened. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
+        safe_send(message, f"Internal bot error. An unknown problem occurred. Please use {server_prefix}log to tell me what happened. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
         raise
     else:
         if has_pref: #No exceptions, and we did send a response, so online

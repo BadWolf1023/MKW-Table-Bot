@@ -10,6 +10,8 @@ import aiohttp
 import TableBotExceptions
 from collections import namedtuple
 import TableBot
+import discord
+from pathlib import Path
 
 MIIS_DISABLED = False
 
@@ -216,5 +218,42 @@ async def download_image(image_url, image_path):
 
 def createEmptyTableBot(server_id=None):
     return TableBot.ChannelBot(server_id=server_id)
+
+
+
+
+async def safe_send_missing_permissions(message:discord.Message, delete_after=None):
+    try:
+        await message.channel.send("I'm missing permissions. Contact your admins.", delete_after=delete_after)
+    except discord.errors.Forbidden: #We can't send messages
+        pass
+    
+async def safe_send_file(message:discord.Message, content):
+    file_name = str(message.id) + ".txt"
+    Path('./attachments').mkdir(parents=True, exist_ok=True)
+    file_path = "./attachments/" + file_name
+    with open(file_path, "w") as f:
+        f.write(content)
+        
+    txt_file = discord.File(file_path, filename=file_name)
+    try:
+        await message.channel.send(content="My message was too long, so I've attached it as a txt file instead.", file=txt_file)
+    except discord.errors.Forbidden:
+        safe_send_missing_permissions(message)
+    finally:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+
+#Won't throw exceptions if we're missing permissions, it's "safe"
+async def safe_send(message:discord.Message, content=None, embed=None, delete_after=None):
+    if content != None and len(content) > 1998:
+        await safe_send_file(message, content)
+        return
+
+    try:
+        await message.channel.send(content=content, embed=embed, delete_after=delete_after)
+    except discord.errors.Forbidden: #Missing permissions
+        await safe_send_missing_permissions(message, delete_after=10)
         
         
