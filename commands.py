@@ -538,7 +538,55 @@ class ServerDefaultCommands:
 """================== Tabling Commands =================="""
 #TODO: Refactor these - target the waterfall-like if-statements
 class TablingCommands:
+    @staticmethod
+    async def change_player_tag_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
+
+        if not this_bot.table_is_set():
+            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            return
         
+
+        if this_bot.getWar().is_ffa():
+            to_send = "You cannot change a player's tag in an FFA. FFAs have no teams."
+            await message.channel.send(to_send)
+            return
+        
+        if len(args) == 1:
+            to_send = this_bot.getRoom().get_sorted_player_list_string()
+            to_send += "\n**To change the tag of the 8th player on the list to KG, do:** *" + server_prefix + "changetag 8 KG*"
+            await message.channel.send(to_send)
+            return
+        
+        elif len(args) >= 3:
+            playerNum = command.split()[1].strip()
+            new_tag = " ".join(command.split()[2:])
+            players = this_bot.getRoom().get_sorted_player_list()
+            if playerNum.isnumeric():
+                playerNum = int(playerNum)
+                if playerNum < 1 or playerNum > len(players):
+                    await message.channel.send("The player number must be on this list (between 1 and " + str(len(players)) + "). Do " + server_prefix + "changetag for an example on how to use this command.")
+                else:
+                    this_bot.add_save_state(message.content)
+                    this_bot.getWar().setTeamForFC(players[playerNum-1][0], new_tag)
+                    await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
+            else:
+                lounge_name = str(copy.copy(playerNum))
+                loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
+                for _playerNum, (fc, _) in enumerate(players, 1):
+                    if fc in loungeNameFCs:
+                        break
+                else:
+                    _playerNum = None
+                    
+                    
+                if _playerNum == None:
+                    await message.channel.send("Could not find Lounge name " + UtilityFunctions.process_name(str(lounge_name)) + " in this room.")
+                else:
+                    this_bot.add_save_state(message.content)
+                    this_bot.getWar().setTeamForFC(players[_playerNum-1][0], new_tag)
+                    await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + lounge_add(players[_playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
+
+
     #Refactor this method to make it more readable
     @staticmethod
     async def start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str, permission_check:Callable):
