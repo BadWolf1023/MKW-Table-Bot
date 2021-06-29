@@ -1027,45 +1027,12 @@ async def on_message(message: discord.Message):
                     await commands.OtherCommands.lounge_name_command(message)
                     
                 elif args[0] in SET_FLAG_TERMS:
-                    if len(args) > 1:
-                        #if 2nd argument is numeric, it's a discord ID
-                        if args[1].isnumeric(): #This is an admin attempt
-                            if str(author_id) in UtilityFunctions.botAdmins:
-                                if len(args) == 2 or args[2] == "none":
-                                    UserDataProcessing.add_flag(args[1], "")
-                                    await message.channel.send(str(args[1] + "'s flag was successfully removed."))
-                                else:
-                                    UserDataProcessing.add_flag(args[1], args[2].lower())
-                                    await message.channel.send(str(args[1] + "'s flag was successfully added and will now be displayed on tables."))
-                            elif author_id in user_flag_exceptions:
-                                flag = UserDataProcessing.get_flag(int(args[1]))
-                                if flag == None:
-                                    UserDataProcessing.add_flag(args[1], args[2].lower())
-                                    await message.channel.send(str(args[1] + "'s flag was successfully added and will now be displayed on tables."))
-                                else:
-                                    await message.channel.send("This person already has a flag set.")
-                            else:
-                                await message.channel.send("You are not a bot admin, nor do you have an exception for adding flags.")
-    
-                        elif len(args) >= 2:
-                            if args[1].lower() not in UserDataProcessing.valid_flag_codes:
-                                await message.channel.send(f"This is not a valid flag code. For a list of flags and their codes, please visit: {LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
-                            elif args[1].lower() == "none":
-                                UserDataProcessing.add_flag(author_id, "")
-                                await message.channel.send("Your flag was successfully removed.")
-                            else:
-                                UserDataProcessing.add_flag(author_id, args[1].lower())
-                                await message.channel.send("Your flag was successfully added and will now be displayed on tables.")
-                    elif len(args) == 1:
-                        UserDataProcessing.add_flag(author_id, "")
-                        await message.channel.send("Your flag was successfully removed.")
+                    await commands.OtherCommands.set_flag_command(message, args, user_flag_exceptions)
                     
                     
                 elif args[0] in RXX_TERMS:
-                    if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-                        await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
-                    else:
-                        await message.channel.send(this_bot.getRoom().getRXXText())
+                    await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge_server)
+                        
                 elif args[0] in SERVER_USAGE_TERMS:
                     if author_id == badwolf_id:
                         command_output = subprocess.check_output('top -b -o +%MEM | head -n 22', shell=True, text=True)

@@ -57,6 +57,7 @@ async def send_missing_permissions(channel:discord.TextChannel, content=None, de
         return await channel.send("I'm missing permissions. Contact your admins. The bot needs these additional permissions:\n- Send Messages\n- Add Reactions (for pages)\n- Manage Messages (to remove reactions)", delete_after=delete_after)
     except discord.errors.Forbidden: #We can't send messages
         pass
+    
         
 """============== Bad Wolf only commands ================"""
 #TODO: Refactor these - target the waterfall-like if-statements
@@ -204,8 +205,49 @@ class OtherCommands:
         file = discord.File(f"{FLAG_IMAGES_PATH}{image_name}", filename=image_name)
         embed.set_thumbnail(url=f"attachment://{image_name}")
         await message.channel.send(file=file, embed=embed)
-    
-    
+        
+    @staticmethod
+    async def set_flag_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]):  
+        author_id = message.author.id
+        if len(args) > 1:
+            #if 2nd argument is numeric, it's a discord ID
+            if args[1].isnumeric(): #This is an admin attempt
+                if str(author_id) in UtilityFunctions.botAdmins:
+                    if len(args) == 2 or args[2] == "none":
+                        UserDataProcessing.add_flag(args[1], "")
+                        await message.channel.send(str(args[1] + "'s flag was successfully removed."))
+                    else:
+                        UserDataProcessing.add_flag(args[1], args[2].lower())
+                        await message.channel.send(str(args[1] + "'s flag was successfully added and will now be displayed on tables."))
+                elif author_id in user_flag_exceptions:
+                    flag = UserDataProcessing.get_flag(int(args[1]))
+                    if flag == None:
+                        UserDataProcessing.add_flag(args[1], args[2].lower())
+                        await message.channel.send(str(args[1] + "'s flag was successfully added and will now be displayed on tables."))
+                    else:
+                        await message.channel.send("This person already has a flag set.")
+                else:
+                    await message.channel.send("You are not a bot admin, nor do you have an exception for adding flags.")
+
+            elif len(args) >= 2:
+                if args[1].lower() not in UserDataProcessing.valid_flag_codes:
+                    await message.channel.send(f"This is not a valid flag code. For a list of flags and their codes, please visit: {LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+                    return
+                
+                if args[1].lower() == "none":
+                    UserDataProcessing.add_flag(author_id, "")
+                    await message.channel.send("Your flag was successfully removed.")
+                    return
+
+                UserDataProcessing.add_flag(author_id, args[1].lower())
+                await message.channel.send("Your flag was successfully added and will now be displayed on tables.")
+                return
+            
+        elif len(args) == 1:
+            UserDataProcessing.add_flag(author_id, "")
+            await message.channel.send(f"Your flag was successfully removed. If you want to add a flag again in the future, pick a flag code from this website: {LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+
+
     @staticmethod
     async def lounge_name_command(message:discord.Message):
         author_id = message.author.id
@@ -576,8 +618,14 @@ class TablingCommands:
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
             await message.channel.send(this_bot.getRoom().getFCPlayerListString())
-            
-            
+    
+    @staticmethod
+    async def rxx_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
+        if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
+            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+        else:
+            await message.channel.send(this_bot.getRoom().getRXXText())   
+
     @staticmethod
     async def team_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
   
