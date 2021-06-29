@@ -71,21 +71,6 @@ testing_bot_key = None
 real_bot_key = None
 bot_invite_link = "https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=116800&scope=bot"
 
-RT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?type=rt&import="
-CT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?type=ct&import="
-RT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/rt/?import="
-CT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/ct/?import="
-RT_UPDATER_CHANNEL = 758161201682841610
-CT_UPDATER_CHANNEL = 758161224202059847
-RT_REPORTER_ID = 389252697284542465
-RT_UPDATER_ID = 393600567781621761
-CT_REPORTER_ID = 520808674411937792
-CT_UPDATER_ID = 520808645252874240
-lounge_server_id = 387347467332485122
-#in order: Boss, Higher Tier Arb, Lower Tier Arb, Higher Tier CT Arb, Lower Tier CT Arb, RT Updater, CT Updater, RT Reporter, CT Reporter, Developer
-lounge_staff_roles = {387347888935534593, 399382503825211393, 399384750923579392, 521149807994208295, 792891432301625364,
-                      393600567781621761, 520808645252874240, 389252697284542465, 520808674411937792,
-                      521154917675827221, 748367398905708634, 748367393264238663}
 
 #These commands modify the table
 RESET_TERMS = {"reset", "restart", "cancel", "quit", "stop", "clear"}
@@ -205,13 +190,11 @@ switch_status = True
 table_bots = {}
 user_flag_exceptions = set()
 
-lounge_submissions = Lounge.Lounge(LOUNGE_ID_COUNTER_FILE, LOUNGE_TABLE_UPDATES_FILE, lounge_server_id)
+lounge_submissions = Lounge.Lounge(LOUNGE_ID_COUNTER_FILE, LOUNGE_TABLE_UPDATES_FILE, lounge_server_id, main_lounge_can_report_table)
 
 
 
 bad_wolf_facts = []
-
-update_cooldowns = {}
 
 
 client = discord.Client()
@@ -219,14 +202,6 @@ client = discord.Client()
 
 
 
-def author_is_lounge_staff(message_author:discord.Member):
-    for role in message_author.roles:
-        if role.id in lounge_staff_roles:
-            return True
-    return False
-
-def can_report_table(message_author:discord.Member):
-    return author_is_lounge_staff(message_author) or message_author.id == BAD_WOLF_ID
 
 def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bot:TableBot.ChannelBot, command:str):
     
@@ -308,17 +283,6 @@ def has_my_name(message:str):
     return "tablebot" in message.lower().replace(" ", "")
 
 
-
-
-def createEmptyTableBot(server_id=None):
-    return TableBot.ChannelBot(server_id=server_id)
-
-async def get_races(rLID:str):
-    new_bot = createEmptyTableBot() #create a new one so it won't interfere with any room they might have loaded (like a table)
-    successful = await new_bot.load_room_smart([rLID])
-    if not successful:
-        return None
-    return new_bot.getRoom().get_races_abbreviated(last_x_races=12)
 
 
 last_fact_times = {}
@@ -547,88 +511,21 @@ async def on_message(message: discord.Message):
                     await commands.BadWolfCommands.total_clear_command(message, lounge_submissions)
                          
                 elif args[0] in LOUNGE_RT_MOGI_UPDATE_TERMS:
-                    
-                    
+                    await commands.LoungeCommands.rt_mogi_update(client, this_bot, message, args, lounge_submissions)
+                
+                elif args[0] in LOUNGE_CT_MOGI_UPDATE_TERMS:
+                    await commands.LoungeCommands.ct_mogi_update(client, this_bot, message, args, lounge_submissions)
                     
             
-                elif args[0] in LOUNGE_TABLE_SUBMISSION_TERMS:
-                    if not is_lounge_server:
-                        return
-                    if message.channel.id not in [RT_UPDATER_CHANNEL, CT_UPDATER_CHANNEL]:
-                        return
-                    if can_report_table(message.author):
-                        reporter_approved = args[0] in LOUNGE_TABLE_SUBMISSION_APPROVAL_TERMS
-                        if len(args) < 2:
-                            await message.channel.send("The way to use this command is: ?" + args[0] + " submissionID")
-                            return
-                        submissionID = args[1]
-                        if submissionID.isnumeric():
-                            submissionID = int(submissionID)
-                            if submissionID in lounge_table_reports:
-                                submissionMessageID, submissionChannelID, summaryChannelID, submissionStatus = lounge_table_reports[submissionID]
-                                submissionMessage = None
-                                
-                                try:
-                                    submissionChannel = client.get_channel(submissionChannelID)
-                                    if submissionChannel == None:
-                                        await message.channel.send("I cannot see the submission channels (or they changed). Get boss help.")
-                                        return
-                                    submissionMessage = await submissionChannel.fetch_message(submissionMessageID)
-                                except discord.errors.NotFound:
-                                    await message.channel.send("That submission appears to have been deleted on Discord. I have now removed this submission from my records.")
-                                    del lounge_table_reports[submissionID]
-                                    return
-                                
-                                if reporter_approved:
-                                    submissionEmbed = submissionMessage.embeds[0]
-                                    submissionEmbed.remove_field(5)
-                                    submissionEmbed.remove_field(4)
-                                    submissionEmbed.remove_field(3)
-                                    submissionEmbed.remove_field(2)
-                                    submissionEmbed.set_field_at(1, name="Approved by:", value=message.author.mention)
-                                    submissionEmbed.add_field(name="Approval link:", value="[Message](" + submissionMessage.jump_url + ")")
-                                    
-                                    summaryChannelRetrieved = True
-                                    if summaryChannelID == None:
-                                        summaryChannelRetrieved = False
-                                    summaryChannelObj = client.get_channel(summaryChannelID)
-                                    if summaryChannelObj == None:
-                                        summaryChannelRetrieved = False
-                                    if not summaryChannelRetrieved:
-                                        await message.channel.send("I cannot see the summary channels. Contact a boss.")
-                                        return
-                                    try:
-                                        await summaryChannelObj.send(embed=submissionEmbed)
-                                    except discord.errors.Forbidden:
-                                        await message.channel.send("I'm not allowed to send messages in summary channels. Contact a boss.")
-                                        return
-                                    
-                                    lounge_table_reports[submissionID][3] = "APPROVED"
-                                    await submissionMessage.clear_reaction("\u274C")
-                                    await submissionMessage.add_reaction("\u2705")
-                                    await message.add_reaction(u"\U0001F197")
-                                else:
-                                    await submissionMessage.clear_reaction("\u2705")
-                                    await submissionMessage.add_reaction("\u274C")
-                                    lounge_table_reports[submissionID][3] = "DENIED"
-                                    await message.add_reaction(u"\U0001F197")
-                            else:
-                                await message.channel.send("I couldn't find this submission ID. Make sure you have the right submission ID.")                              
-                        else:
-                            await message.channel.send("The way to use this command is: ?" + args[0] + " submissionID - submissionID must be a number")
-                
+                elif args[0] in LOUNGE_TABLE_SUBMISSION_APPROVAL_TERMS:
+                    await commands.LoungeCommands.approve_submission_command(client, message, args, lounge_submissions)
+                    
+                elif args[0] in LOUNGE_TABLE_SUBMISSION_DENY_TERMS:
+                    await commands.LoungeCommands.approve_submission_command(client, message, args, lounge_submissions)
+                    
                 elif args[0] in LOUNGE_PENDING_TABLE_SUBMISSION_TERMS:
-                    if not is_lounge_server:
-                        return
-                    if can_report_table(message.author):
-                        to_send = ""
-                        for submissionID in lounge_table_reports:
-                            _, submissionChannelID, summaryChannelID, submissionStatus = lounge_table_reports[submissionID]
-                            if submissionStatus == "PENDING":
-                                to_send += MogiUpdate.getTierFromChannelID(summaryChannelID) + " - Submission ID: " + str(submissionID) + "\n"
-                        if to_send == "":
-                            to_send = "No pending submissions."
-                        await message.channel.send(to_send)
+                    await commands.LoungeCommands.pending_submissions_command(message, lounge_submissions)
+                    
                 #Fun commands
                 elif args[0] in STATS_TERMS:
                     num_wars = getNumActiveWars()
@@ -785,21 +682,7 @@ async def on_message(message: discord.Message):
                     await message.channel.send(size_str)
             
                 elif args[0] in SET_PREFIX_TERMS:
-                    if not message.author.guild_permissions.administrator:
-                        await message.channel.send("Can't change prefix, you're not an administrator in this server.")
-                    elif len(args) < 2:
-                        await message.channel.send("Give a prefix. Prefix not changed.")
-                    else:
-                        end_prefix_cmd = message.content.lower().index("setprefix") + len("setprefix")
-                        new_prefix = message.content[end_prefix_cmd:].strip("\n").strip()
-                        if len(new_prefix) < 1:
-                            await message.channel.send("Cannot set an empty prefix. Prefix not changed.")
-                        else:
-                            was_success = ServerFunctions.change_server_prefix(str(server_id), new_prefix)
-                            if was_success:
-                                await message.channel.send("Prefix changed to: " + new_prefix) 
-                            else:
-                                await message.channel.send("Errors setting prefix. Prefix not changed.")
+                    
                 
                 elif args[0] in ALL_PLAYERS_TERMS:
                     await commands.TablingCommands.all_players_command(message, this_bot, server_prefix, is_lounge_server)

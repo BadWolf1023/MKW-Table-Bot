@@ -14,7 +14,7 @@ from common import lounge_channel_mappings, LoungeUpdateChannels
 
 DEFAULT_UPDATE_COOLDOWN_TIME = timedelta(seconds=20)
 class Lounge:
-    def __init__(self, id_counter_file, table_reports_file, server_id, update_cooldown_time=DEFAULT_UPDATE_COOLDOWN_TIME):
+    def __init__(self, id_counter_file, table_reports_file, server_id, report_authority_check, update_cooldown_time=DEFAULT_UPDATE_COOLDOWN_TIME):
         self.table_reports = {}
         self.table_id_counter = 25 #set at a slightly higher number so the first few submissions aren't confusing for people
         
@@ -23,6 +23,8 @@ class Lounge:
         self.load_pkl()
         
         self.server_id = server_id
+        
+        self.report_table_authority_check = report_authority_check
         
         if self.server_id not in lounge_channel_mappings:
             raise Exception("Created a Lounge abomination")
@@ -56,6 +58,23 @@ class Lounge:
         
     def update_user_cooldown(self, author):
         self.update_cooldowns[author.id] = datetime.now()
+        
+    def has_submission_id(self, submissionID):
+        return submissionID in self.table_reports
+    
+    def get_submission_id(self, submissionID):
+        return self.table_reports[submissionID]
+    
+    def remove_submission_id(self, submissionID):
+        self.table_reports.pop(submissionID, None)
+        
+    def approve_submission_id(self, submissionID):
+        self.table_reports[submissionID][3] = "APPROVED"
+        
+    def deny_submission_id(self, submissionID):
+        self.table_reports[submissionID][3] = "DENIED"
+    
+    
     
     def get_primary_information(self):
         return (self.channels_mapping.updater_channel_id_primary,

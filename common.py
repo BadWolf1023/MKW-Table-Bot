@@ -9,6 +9,8 @@ import numpy as np
 import aiohttp
 import TableBotExceptions
 from collections import namedtuple
+import TableBot
+
 MIIS_DISABLED = False
 
 default_prefix = "?"
@@ -142,6 +144,16 @@ lounge_staff_roles = {387347888935534593, 399382503825211393, 399384750923579392
                       521154917675827221, 748367398905708634, 748367393264238663}
 
 
+def author_is_lounge_staff(message_author):
+    for role in message_author.roles:
+        if role.id in lounge_staff_roles:
+            return True
+    return False
+
+def main_lounge_can_report_table(message_author):
+    return author_is_lounge_staff(message_author) or message_author.id == BAD_WOLF_ID
+
+
 LoungeUpdateChannels = namedtuple('LoungeUpdateChannels', ['updater_channel_id_primary', 'updater_link_primary', 'preview_link_primary', 'type_text_primary',
                                                            'updater_channel_id_secondary', 'updater_link_secondary', 'preview_link_secondary', 'type_text_secondary'])
 lounge_channel_mappings = {lounge_server_id:LoungeUpdateChannels(
@@ -156,6 +168,7 @@ lounge_channel_mappings = {lounge_server_id:LoungeUpdateChannels(
     }
 
 
+
 #Raises exception if author is not bad wolf
 def is_bad_wolf(author):
     if author.id != BAD_WOLF_ID:
@@ -163,7 +176,8 @@ def is_bad_wolf(author):
     return True
 
 def throw_if_not_lounge(guild):
-    if guild.id 
+    if guild.id != lounge_server_id:
+        raise TableBotExceptions.NotLoungeServer()
     return True
 
 def check_create(file_name):
@@ -199,5 +213,8 @@ async def download_image(image_url, image_path):
     except:
         pass
     return False
+
+def createEmptyTableBot(server_id=None):
+    return TableBot.ChannelBot(server_id=server_id)
         
         

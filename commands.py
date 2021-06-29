@@ -494,6 +494,23 @@ class OtherCommands:
             except discord.errors.NotFound:
                 pass
     
+    
+    @staticmethod
+    async def vr_command_get_races(rLID:str):
+        new_bot = createEmptyTableBot() #create a new one so it won't interfere with any room they might have loaded (like a table)
+        successful = await new_bot.load_room_smart([rLID])
+        if not successful:
+            return None
+        return new_bot.getRoom().get_races_abbreviated(last_x_races=12)
+    
+    @staticmethod
+    def vr_command_get_data(data_piece):
+        place = -1
+        if data_piece[1][0].isnumeric():
+            place = int(data_piece[1][0])
+        return  place, data_piece[0], str(data_piece[1][1]), UserDataProcessing.lounge_get(data_piece[0])
+    
+
     @staticmethod           
     async def vr_command(this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], old_command:str):
         rlCooldown = this_bot.getRLCooldownSeconds()
@@ -546,13 +563,8 @@ class OtherCommands:
         FC_List = [fc for fc in room_data]
         await updateData(* await LoungeAPIFunctions.getByFCs(FC_List))
     
-        def get_data(data_piece):
-            place = -1
-            if data_piece[1][0].isnumeric():
-                place = int(data_piece[1][0])
-            return  place, data_piece[0], str(data_piece[1][1]), UserDataProcessing.lounge_get(data_piece[0])
-        
-        tuple_data = [get_data(item) for item in room_data.items()]
+
+        tuple_data = [OtherCommands.vr_command_get_data(item) for item in room_data.items()]
         tuple_data.sort()
         
         str_msg =  f"```diff\n- {last_match_str.strip()} -\n\n"
@@ -566,7 +578,7 @@ class OtherCommands:
         #the verify_room function
         if "(last start" in last_match_str:
             #go get races from room
-            races_str = await get_races(rLID)
+            races_str = await OtherCommands.vr_command_get_races(rLID)
             if races_str != None:
                 str_msg += "\n\nRaces (Last 12): " + races_str
             else:
@@ -784,9 +796,113 @@ class LoungeCommands:
             raise TableBotExceptions.WrongServer()
         
         LoungeCommands.mogi_update(client, this_bot, message, args, lounge_server_updates, is_primary=True)
+    
+    
+    @staticmethod
+    async def submission_action_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge, is_approval=True):
+        if message.guild.id != lounge_server_updates.server_id:
+            raise TableBotExceptions.WrongServer()
+
+    
+
+        if message.channel.id != lounge_server_updates.channels_mapping.updater_channel_id_primary and\
+        message.channel.id != lounge_server_updates.channels_mapping.updater_channel_id_secondary:
+            return
         
+        if lounge_server_updates.report_table_authority_check(message.author):
+            if len(args) < 2:
+                await message.channel.send("The way to use this command is: ?" + args[0] + " submissionID")
+                return
+            submissionID = args[1]
+            if submissionID.isnumeric():
+                submissionID = int(submissionID)
+                if lounge_server_updates.has_submission_id(submissionID):
+                    submissionMessageID, submissionChannelID, summaryChannelID, submissionStatus = lounge_server_updates.get_submission_id(submissionID)
+                    submissionMessage = None
+                    
+                    try:
+                        submissionChannel = client.get_channel(submissionChannelID)
+                        if submissionChannel == None:
+                            await message.channel.send("I cannot see the submission channels (or they changed). Get boss help.")
+                            return
+                        submissionMessage = await submissionChannel.fetch_message(submissionMessageID)
+                    except discord.errors.NotFound:
+                        await message.channel.send("That submission appears to have been deleted on Discord. I have now removed this submission from my records.")
+                        lounge_server_updates.remove_submission_id(submissionID)
+                        return
+                    
+                    if is_approval:
+                        submissionEmbed = submissionMessage.embeds[0]
+                        submissionEmbed.remove_field(5)
+                        submissionEmbed.remove_field(4)
+                        submissionEmbed.remove_field(3)
+                        submissionEmbed.remove_field(2)
+                        submissionEmbed.set_field_at(1, name="Approved by:", value=message.author.mention)
+                        submissionEmbed.add_field(name="Approval link:", value="[Message](" + submissionMessage.jump_url + ")")
+                        
+                        summaryChannelRetrieved = True
+                        if summaryChannelID == None:
+                            summaryChannelRetrieved = False
+                        summaryChannelObj = client.get_channel(summaryChannelID)
+                        if summaryChannelObj == None:
+                            summaryChannelRetrieved = False
+                        if not summaryChannelRetrieved:
+                            await message.channel.send("I cannot see the summary channels. Contact a boss.")
+                            return
+                        try:
+                            await summaryChannelObj.send(embed=submissionEmbed)
+                        except discord.errors.Forbidden:
+                            await message.channel.send("I'm not allowed to send messages in summary channels. Contact a boss.")
+                            return
+                        
+                        
+                        lounge_server_updates.approve_submission_id(submissionID)
+                        
+                        await submissionMessage.clear_reaction("\u274C")
+                        await submissionMessage.add_reaction("\u2705")
+                        await message.add_reaction(u"\U0001F197")
+                    else:
+                        await submissionMessage.clear_reaction("\u2705")
+                        await submissionMessage.add_reaction("\u274C")
+                        lounge_server_updates.deny_submission_id(submissionID)
+                        await message.add_reaction(u"\U0001F197")
+                else:
+                    await message.channel.send("I couldn't find this submission ID. Make sure you have the right submission ID.")                              
+            else:
+                await message.channel.send("The way to use this command is: ?" + args[0] + " submissionID - submissionID must be a number")
+
+    @staticmethod
+    async def approve_submission_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
+        if message.guild.id != lounge_server_updates.server_id:
+            raise TableBotExceptions.WrongServer()
         
+        await LoungeCommands.submission_action_command(client, message, args, lounge_server_updates, is_approval=True)
         
+    
+    
+    @staticmethod
+    async def deny_submission_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
+        if message.guild.id != lounge_server_updates.server_id:
+            raise TableBotExceptions.WrongServer()
+        
+        await LoungeCommands.submission_action_command(client, message, args, lounge_server_updates, is_approval=False)
+        
+    
+    @staticmethod
+    async def pending_submissions_command(message:discord.Message, lounge_server_updates:Lounge.Lounge):
+        if message.guild.id != lounge_server_updates.server_id:
+            raise TableBotExceptions.WrongServer()
+
+        if lounge_server_updates.report_table_authority_check(message.author):
+            to_send = ""
+            for submissionID in lounge_server_updates.table_reports:
+                _, submissionChannelID, summaryChannelID, submissionStatus = lounge_server_updates.get_submission_id(submissionID)
+                if submissionStatus == "PENDING":
+                    to_send += MogiUpdate.getTierFromChannelID(summaryChannelID) + " - Submission ID: " + str(submissionID) + "\n"
+            if to_send == "":
+                to_send = "No pending submissions."
+            await message.channel.send(to_send)
+
         
         
 
