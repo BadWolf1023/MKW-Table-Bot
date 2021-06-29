@@ -1,0 +1,6 @@
+For help related to tabling, do: `{SERVER_PREFIX}help tabling`
+For help related to changing MKW TableBot's default settings in your server, do: `{SERVER_PREFIX}help serverdefaults`
+For help related to flags on table, do: `{SERVER_PREFIX}help flags`
+For help with anything else, do: `{SERVER_PREFIX}help other`
+
+If you're new to MKW TableBot and want to learn the basics of tabling, do: `{SERVER_PREFIX}quickstart`

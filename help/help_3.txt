@@ -1,0 +1,25 @@
+**dc <playerNumber> <on/before>**: playerNumber is the number on the list for ?dcs. If that DC was on the results for that race, do ?dc <playerNumber> onresults. If they DCed before that race, put before. This is an important command that can quickly fix tables.
+
+**earlydc <gpNumber> <on/before>**: Use this command when someone DCs on race one. If that DC was on the results for that race, do ?dc <playerNumber> onresults. If they DCed before that race, put before. This is an important command that can quickly fix tables.
+
+**quickedit <playerNumber> <raceNumber> <placement>**: Use this command when someone has blank race time, or a tie has occurred. It will correctly adjust all placements and scores to match what is given.
+
+
+***Beta Command***:
+**mergeroom**: Use this command with caution, as it’s not as functional as most would like it to be. This command is merely for merging rooms when a room dies, and you don’t want to have 2 separate tables. This command should work perfectly if there are no subs. With subs, it will generally only work if the room changes between gps, as if the room changes in the middle of a gp, in all normal cases, a sub should not be able to join. To run this command, after you have finished the first race of the new room, run ?mergeroom <yourLoungeName>. If something goes wrong with this command, always ping table bot support.
+
+
+***Other Commands***:
+**setprefix <prefix>**: Changes the server's prefix for the bot to prefix. Only admins can do this.
+
+**stats**: Displays stats of the bot.
+
+**quickstart**: Describes the 2 commands you actually need to know to use this bot. Useful if you cried when you saw how long this help document was.
+
+**help**: Displays this message.
+
+**setflag <flagcode>**: Sets your flag for all future tables to that flagcode. If no flagcode is given, your flag will be removed.
+
+**getflag**: Displays your flag.
+
+**setwarname <warName>**: Sets the name of the war to warName.

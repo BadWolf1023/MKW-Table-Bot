@@ -1,0 +1,18 @@
+
+Please note: ***You cannot start a war or load a room until the first race has finished.*** Things in parentheses () are *optional*. They have defaults if you do not put them. Things not in parentheses are *required*.
+
+
+***Main commands:***
+**startwar <format> <numberOfTeams> (LoungeName/FC/@Mention/rxx) (psb=yes/no) (gps=numberOfGPs)**: You can also use sw instead of startwar. This loads the room and starts a war. *Format* must be FFA, 2v2, 3v3, 4v4, 5v5, or 6v6. NumberOfTeams is how many teams are playing. If no *LoungeName/FC/@Mention/rxx* is given, the room will be loaded for the person who ran the command. In the lounge and war lounge servers, you will not be able to start a war for anyone else. The *psb=* default is no. *psb=yes* will not display any large time errors. The *gps=* default is 3. You can make the table any number of GPs, up to 15 GPs.
+
+**warpicture (<miis=yes/no>) (<loungenames=yes/no>)**: You can also use wp instead of warpicture. This will update the room with any races that have been played, then display the table along with any errors that the room had. Please read the errors carefully, they may affect the table. By default, this command puts Lounge names into the table, and if they are not in Lounge, their mii name is put.
+    - To display mii names only: miis=yes
+    - To display lounge names only: default
+    - To display both Lounge names and mii names (useful for comparing against a picture): miis=yes loungenames=yes
+
+**loadroom (<LoungeName/FC/@Mention/rxx>)**: You can also use lr instead of loadroom. If no LoungeName/FC/@Mention/rxx is given, this will load the current room for the person that ran the command.
+
+
+***Utility Commands***:
+**reset**: Resets the bot for the channel. Useful if you made a mistake, or if something odd is happening. Ping Table Bot Support if you are unable to reset yourself.
+
