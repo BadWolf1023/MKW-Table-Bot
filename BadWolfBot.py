@@ -33,7 +33,6 @@ from collections import defaultdict
 import dill as p
 import psutil
 import gc
-import subprocess
 import random
 from bs4 import NavigableString
 from pathlib import Path
@@ -73,7 +72,7 @@ class RoomMissingException(Error):
 
 
 
-badwolf_id = 706120725882470460
+
 testing_bot_key = None
 real_bot_key = None
 bot_invite_link = "https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=116800&scope=bot"
@@ -1034,39 +1033,38 @@ async def on_message(message: discord.Message):
                     await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge_server)
                         
                 elif args[0] in SERVER_USAGE_TERMS:
-                    if author_id == badwolf_id:
-                        command_output = subprocess.check_output('top -b -o +%MEM | head -n 22', shell=True, text=True)
-                        await message.channel.send(command_output)
-                elif args[0] in TABLE_BOT_MEMORY_USAGE_TERMS:
-                    if author_id == badwolf_id:
-                        size_str = ""
-                        print(f"get_size: Lounge table reports size (KiB):")
-                        size_str += "Lounge table reports size (KiB): " + str(get_size(lounge_table_reports)//1024)
-                        print(f"get_size: FC_DiscordID:")
-                        size_str += "\nFC_DiscordID (KiB): " + str(get_size(UserDataProcessing.FC_DiscordID)//1024)
-                        print(f"get_size: discordID_Lounges:")
-                        size_str += "\ndiscordID_Lounges (KiB): " + str(get_size(UserDataProcessing.discordID_Lounges)//1024)
-                        print(f"get_size: discordID_Flags (KiB):")
-                        size_str += "\ndiscordID_Flags (KiB): " + str(get_size(UserDataProcessing.discordID_Flags)//1024)
-                        print(f"get_size: blacklisted_Users (KiB):")
-                        size_str += "\nblacklisted_Users (KiB): " + str(get_size(UserDataProcessing.blacklisted_Users)//1024)
-                        print(f"get_size: valid_flag_codes (KiB):")
-                        size_str += "\nvalid_flag_codes (KiB): " + str(get_size(UserDataProcessing.valid_flag_codes)//1024)
-                        print(f"get_size: to_add_lounge (KiB):")
-                        size_str += "\nto_add_lounge (KiB): " + str(get_size(UserDataProcessing.to_add_lounge)//1024)
-                        print(f"get_size: to_add_fc (KiB):")
-                        size_str += "\nto_add_fc (KiB): " + str(get_size(UserDataProcessing.to_add_fc)//1024)
-                        print(f"get_size: bot_abuse_tracking (KiB):")
-                        size_str += "\nbot_abuse_tracking (KiB): " + str(get_size(bot_abuse_tracking)//1024)
-                        print(f"get_size: table_bots (KiB):")
-                        size_str += "\ntable_bots (KiB): " + str(get_size(table_bots)//1024)
-                        print(f"get_size: PROCESS SIZE (KiB) (virt):")
-                        size_str += "\nPROCESS SIZE (KiB) (virt): " + str((psutil.Process(os.getpid()).memory_info().vms)//1024)
-                        print(f"get_size: PROCESS SIZE (KiB) (actual): ")
-                        size_str += "\nPROCESS SIZE (KiB) (actual): " + str((psutil.Process(os.getpid()).memory_info().rss)//1024)
-                        print(f"get_size: Done.")
-                        await message.channel.send(size_str)
+                    await commands.BadWolfCommands.server_process_memory_command(message)
                 
+                elif args[0] in TABLE_BOT_MEMORY_USAGE_TERMS:
+                    is_bad_wolf(message.author)
+                    size_str = ""
+                    print(f"get_size: Lounge table reports size (KiB):")
+                    size_str += "Lounge table reports size (KiB): " + str(get_size(lounge_table_reports)//1024)
+                    print(f"get_size: FC_DiscordID:")
+                    size_str += "\nFC_DiscordID (KiB): " + str(get_size(UserDataProcessing.FC_DiscordID)//1024)
+                    print(f"get_size: discordID_Lounges:")
+                    size_str += "\ndiscordID_Lounges (KiB): " + str(get_size(UserDataProcessing.discordID_Lounges)//1024)
+                    print(f"get_size: discordID_Flags (KiB):")
+                    size_str += "\ndiscordID_Flags (KiB): " + str(get_size(UserDataProcessing.discordID_Flags)//1024)
+                    print(f"get_size: blacklisted_Users (KiB):")
+                    size_str += "\nblacklisted_Users (KiB): " + str(get_size(UserDataProcessing.blacklisted_Users)//1024)
+                    print(f"get_size: valid_flag_codes (KiB):")
+                    size_str += "\nvalid_flag_codes (KiB): " + str(get_size(UserDataProcessing.valid_flag_codes)//1024)
+                    print(f"get_size: to_add_lounge (KiB):")
+                    size_str += "\nto_add_lounge (KiB): " + str(get_size(UserDataProcessing.to_add_lounge)//1024)
+                    print(f"get_size: to_add_fc (KiB):")
+                    size_str += "\nto_add_fc (KiB): " + str(get_size(UserDataProcessing.to_add_fc)//1024)
+                    print(f"get_size: bot_abuse_tracking (KiB):")
+                    size_str += "\nbot_abuse_tracking (KiB): " + str(get_size(bot_abuse_tracking)//1024)
+                    print(f"get_size: table_bots (KiB):")
+                    size_str += "\ntable_bots (KiB): " + str(get_size(table_bots)//1024)
+                    print(f"get_size: PROCESS SIZE (KiB) (virt):")
+                    size_str += "\nPROCESS SIZE (KiB) (virt): " + str((psutil.Process(os.getpid()).memory_info().vms)//1024)
+                    print(f"get_size: PROCESS SIZE (KiB) (actual): ")
+                    size_str += "\nPROCESS SIZE (KiB) (actual): " + str((psutil.Process(os.getpid()).memory_info().rss)//1024)
+                    print(f"get_size: Done.")
+                    await message.channel.send(size_str)
+            
                 elif args[0] in SET_PREFIX_TERMS:
                     if not message.author.guild_permissions.administrator:
                         await message.channel.send("Can't change prefix, you're not an administrator in this server.")

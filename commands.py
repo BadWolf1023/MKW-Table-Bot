@@ -23,7 +23,6 @@ import SimpleRooms
 import Race
 import MogiUpdate
 import help_documentation
-import TableBotExceptions
 
 
 
@@ -37,6 +36,7 @@ from collections.abc import Callable
 import urllib
 import copy
 import dill as pkl
+import subprocess
 
 vr_is_on = False
 
@@ -65,6 +65,7 @@ class BadWolfCommands:
     """There is no point to this class, other than for organization purposes.
     This class contains all of the commands that are private and only available to me"""
         
+        
     #Adds or removes a discord ID to/from the bot admins
     @staticmethod
     async def bot_admin_change(message:discord.Message, args:List[str], adding=True):
@@ -83,11 +84,19 @@ class BadWolfCommands:
     
     @staticmethod
     async def add_bot_admin_command(message:discord.Message, args:List[str]):
+        is_bad_wolf(message.author)
         await BadWolfCommands.bot_admin_change(message, args, adding=True)
         
     @staticmethod
     async def remove_bot_admin_command(message:discord.Message, args:List[str]):
+        is_bad_wolf(message.author)
         await BadWolfCommands.bot_admin_change(message, args, adding=False)
+    
+    @staticmethod
+    async def server_process_memory_command(message:discord.Message):
+        is_bad_wolf(message.author)
+        command_output = subprocess.check_output('top -b -o +%MEM | head -n 22', shell=True, text=True)
+        await message.channel.send(command_output)
   
   
   

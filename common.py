@@ -7,6 +7,7 @@ import os
 from datetime import datetime, timedelta
 import numpy as np
 import aiohttp
+import TableBotExceptions
 MIIS_DISABLED = False
 
 default_prefix = "?"
@@ -117,6 +118,14 @@ embed_page_time = timedelta(minutes=2)
 
 base_url_lorenzi = "https://gb.hlorenzi.com/table.png?data="
 base_url_edit_table_lorenzi = "https://gb.hlorenzi.com/table?data="
+
+BAD_WOLF_ID = 706120725882470460
+
+#Raises exception if author is not bad wolf
+def is_bad_wolf(self, author):
+    if author.id != BAD_WOLF_ID:
+        raise TableBotExceptions.NotBadWolf()
+    return True
 
 def check_create(file_name):
     if not os.path.isfile(file_name):
