@@ -536,9 +536,107 @@ class ServerDefaultCommands:
 
 
 """================== Tabling Commands =================="""
-#TODO: Refactor these - target the waterfall-like if-statements
+#TODO: Refactor these
 class TablingCommands:
+    @staticmethod
+    async def player_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+  
+        if not this_bot.table_is_set():
+            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            return
     
+        if len(args) == 1:
+            to_send = this_bot.getRoom().get_sorted_player_list_string()
+            to_send += "\n**To give the 2nd player on the list a 15 point penalty:** *" + server_prefix + "penalty 2 15*"
+            await message.channel.send(to_send)
+            return
+        
+        if len(args) != 3:
+            await message.channel.send("Do " + server_prefix + "penalty for an example on how to use this command.")
+            return
+        
+        playerNum = args[1]
+        amount = args[2]
+        players = this_bot.getRoom().get_sorted_player_list()
+        if not playerNum.isnumeric():
+            pass
+        else:
+            playerNum = int(playerNum)
+        if not amount.isnumeric():
+            if len(amount) > 0 and amount[0] == '-':
+                if amount[1:].isnumeric():
+                    amount = int(amount[1:]) * -1
+        else:
+            amount = int(amount)
+            
+        if not isinstance(playerNum, int) or not isinstance(amount, int):
+            await message.channel.send("Both player number and the penalty amount must be numbers. Do " + server_prefix + "penalty for an example on how to use this command.")
+        elif playerNum < 1 or playerNum > len(players):
+            await message.channel.send("The player number must be on this list (between 1 and " + str(len(players)) + "). Do " + server_prefix + "penalty for an example on how to use this command.")
+        else:
+            this_bot.add_save_state(message.content)
+            this_bot.getRoom().addPlayerPenalty(players[playerNum-1][0], amount)
+            await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty."))
+
+
+    @staticmethod
+    async def change_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
+        if not this_bot.table_is_set():
+            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            return
+
+        if len(args) == 1:
+            to_send = this_bot.getRoom().get_sorted_player_list_string()
+            to_send += "\n**To edit the GP3 score of the 7th player on the list to 37 points:** *" + server_prefix + "edit 7 3 37*"
+            await message.channel.send(to_send)
+            return
+        
+        if len(args) != 4:
+            await message.channel.send("Do " + server_prefix + "edit for an example on how to use this command.")
+            return
+    
+    
+        playerNum = command.split()[1].strip()
+        GPNum = args[2]
+        amount = args[3]
+        players = this_bot.getRoom().get_sorted_player_list()
+        if not GPNum.isnumeric() or not amount.isnumeric():
+            await message.channel.send("GP Number and amount must all be numbers. Do " + server_prefix + "edit for an example on how to use this command.")
+            return
+
+        players = this_bot.getRoom().get_sorted_player_list()
+        numGPs = this_bot.getWar().numberOfGPs
+        GPNum = int(GPNum)
+        amount = int(amount)
+        if playerNum.isnumeric():
+            playerNum = int(playerNum)
+            if playerNum < 1 or playerNum > len(players):
+                await message.channel.send("The player number must be on this list (between 1 and " + str(len(players)) + "). Do " + server_prefix + "edit for an example on how to use this command.")
+            elif GPNum < 1 or GPNum > numGPs:
+                await message.channel.send("The current war is only set to " + str(numGPs) + " GPs. Your GP number was: " + UtilityFunctions.process_name(str(GPNum)))
+            else:
+                this_bot.add_save_state(message.content)
+                this_bot.getWar().addEdit(players[playerNum-1][0], GPNum, amount)
+                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points."))
+        else:
+            lounge_name = str(copy.copy(playerNum))
+            loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
+            for _playerNum, (fc, _) in enumerate(players, 1):
+                if fc in loungeNameFCs:
+                    break
+            else:
+                _playerNum = None
+                
+                
+            if _playerNum == None:
+                await message.channel.send("Could not find Lounge name " + UtilityFunctions.process_name(str(lounge_name)) + " in this room.")
+            else:
+                this_bot.add_save_state(message.content)
+                this_bot.getWar().addEdit(players[_playerNum-1][0], GPNum, amount)
+                await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + lounge_add(players[_playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points."))
+
+
+
     #Code is quite similar to chane_player_tag_command, potential refactor opportunity?
     @staticmethod
     async def change_player_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
