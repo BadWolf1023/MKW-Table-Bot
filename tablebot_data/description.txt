@@ -1,0 +1,1 @@
+This directory contains all of table bot's data. Generally speaking, this directory is where Table Bot saves all of its data before shutting down. This directory is loaded when Table Bot starts. 
