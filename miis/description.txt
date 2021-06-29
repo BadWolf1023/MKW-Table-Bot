@@ -1,0 +1,1 @@
+Mii pictures are downloaded to this directory. Pictures obtained with the ?mii command are immediately deleted after being sent. Mii pictures for tables are stored here until the table is removed (due to ?reset, new table, or inactivity).
