@@ -1021,20 +1021,7 @@ async def on_message(message: discord.Message):
                     await commands.TablingCommands.fcs_command(message, this_bot, args, server_prefix, is_lounge_server)
                     
                 elif args[0] in GET_FLAG_TERMS:
-                    flag = UserDataProcessing.get_flag(author_id)
-                    if flag == None:
-                        await message.channel.send(f"You don't have a flag set. Use {server_prefix}setflag [flag] to set your flag for tables. Flag codes can be found at: {LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
-                    else:
-                        image_name = ""
-                        if flag.startswith("cl_") and flag.endswith("u"):
-                            image_name += 'cl_C3B1u.png'
-                        else:
-                            image_name += f"{flag}.png"
-                            
-                        embed = discord.Embed(colour = discord.Colour.dark_blue())
-                        file = discord.File(f"{FLAG_IMAGES_PATH}{image_name}", filename=image_name)
-                        embed.set_thumbnail(url=f"attachment://{image_name}")
-                        await message.channel.send(file=file, embed=embed)
+                    await commands.OtherCommands.get_flag_command(message, server_prefix)
                         
                 elif args[0] in LOUNGE_NAME_TERMS:
                     discordIDToLoad = str(author_id)

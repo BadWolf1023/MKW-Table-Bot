@@ -187,6 +187,25 @@ class OtherCommands:
     This class contains all of the non administrative "stateless" commands"""
     
     @staticmethod
+    async def get_flag_command(message:discord.Message, server_prefix:str):
+        author_id = message.author.id
+        flag = UserDataProcessing.get_flag(author_id)
+        if flag is None:
+            await message.channel.send(f"You don't have a flag set. Use {server_prefix}setflag [flag] to set your flag for tables. Flag codes can be found at: {LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+            return
+        
+        image_name = ""
+        if flag.startswith("cl_") and flag.endswith("u"): #Remap this specific flag code to a specific picture
+            image_name += 'cl_C3B1u.png'
+        else:
+            image_name += f"{flag}.png"
+            
+        embed = discord.Embed(colour = discord.Colour.dark_blue())
+        file = discord.File(f"{FLAG_IMAGES_PATH}{image_name}", filename=image_name)
+        embed.set_thumbnail(url=f"attachment://{image_name}")
+        await message.channel.send(file=file, embed=embed)
+    
+    @staticmethod
     async def fc_command(message:discord.Message, args:List[str], old_command:str):
         discordIDToLoad = None
         id_lounge = {}
