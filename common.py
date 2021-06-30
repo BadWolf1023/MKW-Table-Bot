@@ -170,11 +170,8 @@ lounge_channel_mappings = {lounge_server_id:LoungeUpdateChannels(
 
 
 
-#Raises exception if author is not bad wolf
 def is_bad_wolf(author):
-    if author.id != BAD_WOLF_ID:
-        raise TableBotExceptions.NotBadWolf()
-    return True
+    return author.id == BAD_WOLF_ID
 
 def throw_if_not_lounge(guild):
     if guild.id != lounge_server_id:

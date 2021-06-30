@@ -67,7 +67,23 @@ async def send_missing_permissions(channel:discord.TextChannel, content=None, de
 class BadWolfCommands:
     """There is no point to this class, other than for organization purposes.
     This class contains all of the commands that are private and only available to me"""
+    
+    @staticmethod
+    def is_badwolf_check(author, failure_message):
+        if not is_bad_wolf(author):
+            raise TableBotExceptions.NotBadWolf(failure_message)
+        return True
+    
+    async def get_logs_command(self, message:discord.Message):
+        BadWolfCommands.is_badwolf_check(message.author, "cannot give logs")
         
+        if os.path.exists(FEEDBACK_LOGS_FILE):
+            await message.channel.send(file=discord.File(FEEDBACK_LOGS_FILE))
+        if os.path.exists(ERROR_LOGS_FILE):
+            await message.channel.send(file=discord.File(ERROR_LOGS_FILE))
+        if os.path.exists(MESSAGE_LOGGING_FILE):
+            await message.channel.send(file=discord.File(MESSAGE_LOGGING_FILE))
+
         
     #Adds or removes a discord ID to/from the bot admins
     @staticmethod
@@ -87,23 +103,23 @@ class BadWolfCommands:
     
     @staticmethod
     async def add_bot_admin_command(message:discord.Message, args:List[str]):
-        is_bad_wolf(message.author)
+        BadWolfCommands.is_badwolf_check(message.author, "cannot add bot admin")
         await BadWolfCommands.bot_admin_change(message, args, adding=True)
         
     @staticmethod
     async def remove_bot_admin_command(message:discord.Message, args:List[str]):
-        is_bad_wolf(message.author)
+        BadWolfCommands.is_badwolf_check(message.author, "cannot remove bot admin")
         await BadWolfCommands.bot_admin_change(message, args, adding=False)
     
     @staticmethod
     async def server_process_memory_command(message:discord.Message):
-        is_bad_wolf(message.author)
+        BadWolfCommands.is_badwolf_check(message.author, "cannot show server memory usage")
         command_output = subprocess.check_output('top -b -o +%MEM | head -n 22', shell=True, text=True)
         await message.channel.send(command_output)
         
     @staticmethod()
     async def add_fact_command(message:discord.Message, command:str, bad_wolf_facts:List[str], data_save):
-        is_bad_wolf(message.author)
+        BadWolfCommands.is_badwolf_check(message.author, "cannot add fact")
         fact = " ".join(command.split()[1:]).strip()
         if len(fact) == 0:
             await message.channel.send("Cannot add empty fact.")
@@ -116,7 +132,7 @@ class BadWolfCommands:
     
     @staticmethod()
     async def remove_fact_command(message:discord.Message, args:List[str], bad_wolf_facts:List[str], data_save):
-        is_bad_wolf(message.author)
+        BadWolfCommands.is_badwolf_check(message.author, "cannot remove fact")
         index = "".join(args[1:])
         if not index.isnumeric() or int(index) < 0 or int(index) >= len(bad_wolf_facts):
             await message.channel.send(f"Cannot remove fact at index {index}")
@@ -128,21 +144,21 @@ class BadWolfCommands:
   
     @staticmethod()
     async def garbage_collect_command(message:discord.Message):
-        is_bad_wolf(message.author)
+        BadWolfCommands.is_badwolf_check(message.author, "cannot garbage collect")
         gc.collect()
         await message.channel.send("Collected")
     
     
     @staticmethod()
     async def send_all_facts_command(message:discord.Message, bad_wolf_facts:List[str]):
-        is_bad_wolf(message.author)
+        BadWolfCommands.is_badwolf_check(message.author, "cannot display facts")
         if len(bad_wolf_facts) > 0:
             await message.channel.send("\n".join(bad_wolf_facts))
     
     
     @staticmethod()
     async def total_clear_command(message:discord.Message, lounge_update_data):
-        is_bad_wolf(message.author)
+        BadWolfCommands.is_badwolf_check(message.author, "cannot clear lounge table submission cooldown tracking")
         lounge_update_data.update_cooldowns.clear()
         await message.channel.send("Cleared.")
   
@@ -302,6 +318,13 @@ class OtherCommands:
             UserDataProcessing.add_flag(author_id, "")
             await message.channel.send(f"Your flag was successfully removed. If you want to add a flag again in the future, pick a flag code from this website: {LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
 
+
+    @staticmethod
+    async def log_feedback_command(message:discord.Message, args:List[str], command:str):
+        if len(args) > 1:
+            to_log = f"{message.author} - {message.author.id}: {command}"
+            log_text(to_log, FEEDBACK_LOGGING_TYPE)
+            await message.channel.send("Logged") 
 
     @staticmethod
     async def lounge_name_command(message:discord.Message):
@@ -1036,6 +1059,13 @@ class TablingCommands:
         channel_id = message.channel.id
         del(table_bots[server_id][channel_id])
         await message.channel.send("Reset successful.")
+    
+    @staticmethod
+    async def display_races_played_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
+        if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
+            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+        else:
+            await message.channel.send(this_bot.getRoom().get_races_string())
                     
                     
     @staticmethod

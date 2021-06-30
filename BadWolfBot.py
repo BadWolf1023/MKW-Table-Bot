@@ -654,7 +654,7 @@ async def on_message(message: discord.Message):
                     await commands.BadWolfCommands.server_process_memory_command(message)
                 
                 elif args[0] in TABLE_BOT_MEMORY_USAGE_TERMS:
-                    is_bad_wolf(message.author)
+                    commands.BadWolfCommands.is_badwolf_check(message.author, "cannot display table bot internal memory usage")
                     size_str = ""
                     print(f"get_size: Lounge table reports size (KiB):")
                     size_str += "Lounge table reports size (KiB): " + str(get_size(lounge_table_reports)//1024)
@@ -689,36 +689,25 @@ async def on_message(message: discord.Message):
                 
                 elif args[0] in ALL_PLAYERS_TERMS:
                     await commands.TablingCommands.all_players_command(message, this_bot, server_prefix, is_lounge_server)
+                
                 elif args[0] in FC_TERMS:
                     await commands.OtherCommands.fc_command(message, args, old_command)
+                
                 elif args[0] in MII_TERMS:
                     await commands.OtherCommands.mii_command(message, args, old_command)
+                
                 elif args[0] in SET_WAR_NAME_TERMS:
                     await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, old_command)
                     
                 elif args[0] in LOG_TERMS:
-                    if len(args) > 1:
-                        to_log = f"{message.author} - {message.author.id}: {command}"
-                        log_text(to_log, FEEDBACK_LOGGING_TYPE)
-                        await message.channel.send("Logged") 
+                    await commands.OtherCommands.log_feedback_command(message, args, command)
+                
                 elif args[0] in GET_LOGS_TERMS:
-                    if author_id == badwolf_id:
-                        if os.path.exists(FEEDBACK_LOGS_FILE):
-                            await message.channel.send(file=discord.File(FEEDBACK_LOGS_FILE))
-                        if os.path.exists(ERROR_LOGS_FILE):
-                            await message.channel.send(file=discord.File(ERROR_LOGS_FILE))
-                        if os.path.exists(MESSAGE_LOGGING_FILE):
-                            await message.channel.send(file=discord.File(MESSAGE_LOGGING_FILE))
-
-                    else:
-                        await message.channel.send("You are not Bad Wolf.")
+                    await commands.BadWolfCommands.get_logs_command(message)
     
     
                 elif args[0] in RACES_TERMS:
-                    if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-                        await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
-                    else:
-                        await message.channel.send(this_bot.getRoom().get_races_string())
+                    await commands.TablingCommands.display_races_played_command(message, this_bot, server_prefix, is_lounge_server)
                 
                 elif args[0] in PLAYER_DISCONNECT_TERMS:
                     if not this_bot.table_is_set():
@@ -829,10 +818,7 @@ async def on_message(message: discord.Message):
                         await commands.BadWolfCommands.add_bot_admin_command(message, args)
                         
                 elif args[0] in REMOVE_BOT_ADMIN_TERMS:
-                    if author_id != badwolf_id:
-                        await message.channel.send("**You are not allowed to remove admins to the bot. Only BadWolf is.**") 
-                    else:
-                        await commands.BadWolfCommands.remove_bot_admin_command(message, args)
+                    await commands.BadWolfCommands.remove_bot_admin_command(message, args)
     
                 elif args[0] in BLACKLIST_WORD_TERMS:
                     await commands.BotAdminCommands.add_blacklisted_word_command(message, args)
@@ -843,8 +829,10 @@ async def on_message(message: discord.Message):
                 
                 elif args[0] in TABLE_THEME_TERMS:
                     await commands.TablingCommands.table_theme_command(message, this_bot, args, server_prefix, is_lounge_server)
+                
                 elif args[0] in SERVER_DEFAULT_TABLE_THEME_TERMS:
                     await commands.ServerDefaultCommands.theme_setting_command(message, this_bot, args, server_prefix)
+                
                 elif args[0] in GRAPH_TERMS:
                     await commands.TablingCommands.table_graph_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
@@ -859,6 +847,7 @@ async def on_message(message: discord.Message):
 
                 elif args[0] in DISPLAY_GP_SIZE_TERMS:
                     await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)
+                
                 else:
                     await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  
                 
