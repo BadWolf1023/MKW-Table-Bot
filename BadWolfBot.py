@@ -361,7 +361,6 @@ async def on_message(message: discord.Message):
         if guild.name == "POV: u've been ur mom'd":
             print(guild.id)
     return"""
-    print(message.content)
     
     if message.author == client.user:
         return

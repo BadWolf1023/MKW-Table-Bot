@@ -343,7 +343,7 @@ class OtherCommands:
                 
                 if args[1].lower() == "none":
                     UserDataProcessing.add_flag(author_id, "")
-                    await message.channel.send("Your flag was successfully removed.")
+                    await message.channel.send(f"Your flag was successfully removed. If you want to add a flag again in the future, pick a flag code from this website: {LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
                     return
 
                 UserDataProcessing.add_flag(author_id, args[1].lower())
