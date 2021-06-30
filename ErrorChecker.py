@@ -44,9 +44,9 @@ EC_Messages_Alternative = {_SINGLE_BLANK_RACE_TIME: "One blank race time. If no 
 def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=True, ignoreLargeTimes=False):   
     race_errors = {}
     
-    if startrace == None:
+    if startrace is None:
         startrace = 1
-    if endrace == None:
+    if endrace is None:
         endrace = len(room.races)
     startrace -= 1
     
@@ -89,7 +89,7 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
     return race_errors
 
 def get_war_errors_players(war, room, lounge_replace=True, ignoreLargeTimes=False):
-    if room == None or not room.is_initialized():
+    if room is None or not room.is_initialized():
         return None
     
     race_errors = {}

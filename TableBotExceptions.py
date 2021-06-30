@@ -23,11 +23,20 @@ class NoAuthorityInServer(NotAuthorized):
 class NotServerAdministrator(NoAuthorityInServer):
     pass
 
-class NotLoungeStaff(NoAuthorityInServer):
+class NotStaff(NoAuthorityInServer):
+    pass
+
+class NotLoungeStaff(NotStaff):
     pass
 
 
 class WrongServer(NotAuthorized):
+    pass
+
+class WrongChannel(NotAuthorized):
+    pass
+
+class WrongUpdaterChannel(WrongChannel):
     pass
 
 class NotLoungeServer(WrongServer):

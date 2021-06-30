@@ -1,25 +1,26 @@
-#Bot internal imports - stuff I coded
+#Internal imports (stuff I coded) for this file
 import ServerFunctions
 import Stats
 import LoungeAPIFunctions
 import UserDataProcessing
-from UserDataProcessing import lounge_add
 import TableBot
 import UtilityFunctions
 import Race
-import MogiUpdate
 import help_documentation
 import commands
 import Lounge
-from common import *
+from common import in_testing_server, main_lounge_can_report_table, LOUNGE_ID_COUNTER_FILE, \
+LOUNGE_TABLE_UPDATES_FILE, default_prefix, MIIS_PATH, \
+SERVER_SETTINGS_PATH, FLAG_IMAGES_PATH, FONT_PATH, HELP_PATH, LOGGING_PATH, TABLE_HEADERS_PATH, \
+DATA_PATH, PRIVATE_INFO_FILE, BAD_WOLF_ID, author_is_lounge_staff, BADWOLF_PICTURE_FILE, \
+safe_send, ERROR_LOGS_FILE, TABLE_BOT_PKL_FILE, CTGP_REGION_FILE, BAD_WOLF_FACT_FILE, ERROR_LOGGING_TYPE, \
+log_text, lounge_staff_roles, lounge_server_id
+
 import TableBotExceptions
 
-
-
-#External library imports - stuff other smart people coded
+#External library imports for this file
 import discord
 from discord.ext import tasks
-import itertools
 import traceback
 import copy
 import sys
@@ -30,8 +31,10 @@ import dill as p
 import psutil
 import random
 from bs4 import NavigableString
+from datetime import datetime, timedelta
 from pathlib import Path
-
+import aiohttp
+import os
 
 finished_on_ready = False
 
@@ -178,12 +181,14 @@ ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | LOUNGE_TABLE_SU
 
 
 if in_testing_server:
-    lounge_server_id = 739733336871665696
-    RT_UPDATER_CHANNEL = 851745996396560405
-    CT_UPDATER_CHANNEL = 742947685652365392
-    MogiUpdate.rt_summary_channels = {"1":851745996396560405, "2":None, "3":None, "4":None, "4-5":770109830957498428, "5":None, "6":None, "7":None, "squadqueue":742947723237392514}
-    MogiUpdate.ct_summary_channels = {"1":740574415057846323, "2":None, "3":None, "4":None, "4-5":None, "5":None, "6":None, "7":None, "squadqueue":742947723237392514}
+    #lounge_server_id = 739733336871665696
+    #RT_UPDATER_CHANNEL = 851745996396560405
+    #CT_UPDATER_CHANNEL = 742947685652365392
+    #MogiUpdate.rt_summary_channels = {"1":851745996396560405, "2":None, "3":None, "4":None, "4-5":770109830957498428, "5":None, "6":None, "7":None, "squadqueue":742947723237392514}
+    #MogiUpdate.ct_summary_channels = {"1":740574415057846323, "2":None, "3":None, "4":None, "4-5":None, "5":None, "6":None, "7":None, "squadqueue":742947723237392514}
+    
     lounge_staff_roles.add(740659173695553667) #Admin in test server
+    
 
 switch_status = True
 
@@ -216,13 +221,13 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
             return True
     
     
-    if this_bot != None and this_bot.getWar() != None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
-        return this_bot.getRoom().getSetupUser() == None or this_bot.getRoom().getSetupUser() == message_author.id
+    if this_bot is not None and this_bot.getWar() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
+        return this_bot.getRoom().getSetupUser() is None or this_bot.getRoom().getSetupUser() == message_author.id
     
     if command not in needPermissionCommands:
         return True
     
-    if this_bot == None or this_bot.getRoom() == None or not this_bot.getRoom().is_initialized() or this_bot.getRoom().getSetupUser() == None:
+    if this_bot is None or this_bot.getRoom() is None or not this_bot.getRoom().is_initialized() or this_bot.getRoom().getSetupUser() is None:
         return True
 
     #At this point, we know the command's server is Lounge, it's not staff, and a room has been loaded
@@ -235,7 +240,7 @@ def getNumActiveWars():
     num_wars = 0
     for s in table_bots:
         for c in table_bots[s]:
-            if table_bots[s][c] != None and table_bots[s][c].getWar() != None:
+            if table_bots[s][c] is not None and table_bots[s][c].getWar() is not None:
                 time_passed = datetime.now() - table_bots[s][c].last_used
                 if time_passed < inactivity_time_period_count:
                     num_wars += 1
@@ -356,10 +361,11 @@ async def on_message(message: discord.Message):
         if guild.name == "POV: u've been ur mom'd":
             print(guild.id)
     return"""
+    print(message.content)
     
     if message.author == client.user:
         return
-    if message.guild == None:
+    if message.guild is None:
         return
     if not finished_on_ready:
         return
@@ -462,12 +468,12 @@ async def on_message(message: discord.Message):
             
             if not commandIsAllowed(is_lounge_server, message.author, this_bot, args[0]):
                 to_send = "The bot is locked to players in this room only: **"
-                if this_bot.getRoom() != None:
-                    if this_bot.getRoom().getSetupUser() != None:
+                if this_bot.getRoom() is not None:
+                    if this_bot.getRoom().getSetupUser() is not None:
                         room_lounge_names = this_bot.getRoom().get_loungenames_can_modify_table()
                         to_send += ", ".join(room_lounge_names)
                         to_send += "**."
-                    if this_bot.loungeFinishTime == None:
+                    if this_bot.loungeFinishTime is None:
                         await message.channel.send(f"{to_send} Wait until they are finished.")  
                     else:
                         await message.channel.send(f"{to_send} {this_bot.getBotunlockedInStr()}")  
@@ -532,7 +538,7 @@ async def on_message(message: discord.Message):
                 elif args[0] in STATS_TERMS:
                     num_wars = getNumActiveWars()
                     stats_str = Stats.stats(num_wars, client)
-                    if stats_str == None:
+                    if stats_str is None:
                         await message.channel.send("Error fetching stats. Try again.")
                     else:
                         await message.channel.send(stats_str)
@@ -544,36 +550,12 @@ async def on_message(message: discord.Message):
                     await message.channel.send(bot_invite_link)              
                 
                 
-                
                 #Informational commands
                 elif args[0] in GET_LOCK_TERMS and is_lounge_server:
-                    if this_bot.getRoom() == None or this_bot.getRoom().getSetupUser() == None:
-                        await message.channel.send("Bot is not locked to any user.")
-                    else:
-                        room_lounge_names = this_bot.getRoom().get_loungenames_can_modify_table()
-                        to_send = "The bot is locked to players in this room: **"
-                        to_send += ", ".join(room_lounge_names)
-                        to_send += "**.\n"
-                        to_send += "The setup user who has the main lock is **" + str(this_bot.getRoom().getSetupUser()) + f"- {this_bot.getRoom().set_up_user_display_name}**"
-                        
-                        await message.channel.send(to_send)   
+                    await commands.LoungeCommands.get_lock_command(message, this_bot)
                 
                 elif args[0] in TRANSFER_LOCK_TERMS and is_lounge_server:
-                    if author_is_lounge_staff(message.author):
-                        if this_bot.getRoom() == None or this_bot.getRoom().getSetupUser() == None:
-                            await message.channel.send("Cannot transfer lock. Bot not locked to any user.")
-                        else:
-                            if len(args) > 1:
-                                newUser = args[1]
-                                if not newUser.isnumeric():
-                                    await message.channel.send("You must give their Discord ID. This is the long number you can get in Discord's Developer Mode.")
-                                else:
-                                    newUser = int(newUser)
-                                    this_bot.getRoom().set_up_user = newUser
-                                    this_bot.getRoom().set_up_user_display_name = ""
-                                    await message.channel.send("Lock transferred to: " + str(newUser))
-                            else:
-                                await message.channel.send("You must give their Discord ID. This is the long number you can get in Discord's Developer Mode.")       
+                    await commands.LoungeCommands.transfer_lock_command(message, args, this_bot)
                     
                 elif args[0] in RACE_RESULTS_TERMS:
                     await commands.TablingCommands.race_results_command(message, this_bot, args, server_prefix, is_lounge_server)
@@ -607,7 +589,6 @@ async def on_message(message: discord.Message):
                 
                 elif args[0] in HELP_TERMS:
                     await help_documentation.send_help(message, is_lounge_server, args, server_prefix)
-                
                 
                 #Utility commands
                 elif args[0] in EARLY_DC_TERMS:
@@ -646,7 +627,6 @@ async def on_message(message: discord.Message):
                 elif args[0] in SET_FLAG_TERMS:
                     await commands.OtherCommands.set_flag_command(message, args, user_flag_exceptions)
                     
-                    
                 elif args[0] in RXX_TERMS:
                     await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge_server)
                         
@@ -657,7 +637,7 @@ async def on_message(message: discord.Message):
                     commands.BadWolfCommands.is_badwolf_check(message.author, "cannot display table bot internal memory usage")
                     size_str = ""
                     print(f"get_size: Lounge table reports size (KiB):")
-                    size_str += "Lounge table reports size (KiB): " + str(get_size(lounge_table_reports)//1024)
+                    size_str += "Lounge submission tracking size (KiB): " + str(get_size(lounge_submissions)//1024)
                     print(f"get_size: FC_DiscordID:")
                     size_str += "\nFC_DiscordID (KiB): " + str(get_size(UserDataProcessing.FC_DiscordID)//1024)
                     print(f"get_size: discordID_Lounges:")
@@ -686,7 +666,6 @@ async def on_message(message: discord.Message):
                 elif args[0] in SET_PREFIX_TERMS:
                     await commands.ServerDefaultCommands.change_server_prefix_command(message, args)
                     
-                
                 elif args[0] in ALL_PLAYERS_TERMS:
                     await commands.TablingCommands.all_players_command(message, this_bot, server_prefix, is_lounge_server)
                 
@@ -710,91 +689,18 @@ async def on_message(message: discord.Message):
                     await commands.TablingCommands.display_races_played_command(message, this_bot, server_prefix, is_lounge_server)
                 
                 elif args[0] in PLAYER_DISCONNECT_TERMS:
-                    if not this_bot.table_is_set():
-                        await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
-                    elif len(args) == 1:
-                        had_DCS, DC_List_String = this_bot.getRoom().getDCListString(this_bot.getWar().getNumberOfGPS(), True)
-                        if had_DCS:
-                            DC_List_String += "\nIf the first disconnection on this list was on results: **" + server_prefix + "dc 1 onresults**\n" +\
-                            "If they were not on results, do **" + server_prefix + "dc 1 before**"
-                        await message.channel.send(DC_List_String)  
-                    else:
-                        if len(args) < 3:
-                            await message.channel.send("You must give a dc number on the list and if they were on results or not. Run " + server_prefix + "dcs for more information.")
-                        else:
-                            missing_per_race = this_bot.getRoom().getMissingOnRace(this_bot.getWar().numberOfGPs)
-                            merged = list(itertools.chain(*missing_per_race))
-                            disconnection_number = args[1]
-                            if not disconnection_number.isnumeric():
-                                await message.channel.send(UtilityFunctions.process_name(str(disconnection_number)) + " is not a number on the dcs list. Do " + server_prefix + "dcs for an example on how to use this command.")
-                            elif int(disconnection_number) > len(merged):
-                                await message.channel.send("There have not been this many DCs. Run " + server_prefix + "dcs to learn how to use this command.")  
-                            elif int(disconnection_number) < 1:
-                                await message.channel.send("You must give a DC number on the list. Run " + server_prefix + "dcs to learn how to use this command.")  
-                            else:
-                                disconnection_number = int(disconnection_number)
-                                on_or_before = args[2].lower().strip("\n").strip()
-                                race, index = 0, 0
-                                counter = 0
-                                for missing in missing_per_race:
-                                    race += 1
-                                    
-                                    for _ in missing:
-                                        counter += 1
-                                        if counter == disconnection_number:
-                                            break
-                                        index+=1
-        
-                                    else:
-                                        index=0
-                                        continue
-                                    break
-                                player_fc = missing_per_race[race-1][index][0]
-                                player_name = UtilityFunctions.process_name(str(missing_per_race[race-1][index][1]) + lounge_add(player_fc))
-                                if on_or_before in ["on", "during", "midrace", "results", "onresults"]:
-                                    this_bot.add_save_state(message.content)
-                                    this_bot.getRoom().dc_on_or_before[race][player_fc] = 'on'
-                                    await message.channel.send("Saved: " + player_name + ' was on results for race #' + str(race))                    
-                                elif on_or_before in ["before", "prior", "beforerace", "notonresults", "noresults", "off"]:
-                                    this_bot.add_save_state(message.content)
-                                    this_bot.getRoom().dc_on_or_before[race][player_fc] = 'before'
-                                    await message.channel.send("Saved: " + player_name + ' was not on results for race #' + str(race))                    
-                                else:
-                                    await message.channel.send('"' + UtilityFunctions.process_name(str(on_or_before)) + '" needs to be either "on" or "before". Do ' + server_prefix + "dcs for an example on how to use this command.")
-
-                
+                    await commands.TablingCommands.disconnections_command(message, this_bot, args, server_prefix, is_lounge_server)
                        
                 #Admin commands     
                 elif args[0] in DUMP_DATA_TERMS:
-                    if author_id != badwolf_id:
-                        await message.channel.send("You are not a Bad Wolf.")
-                    else:
-                        successful = await UserDataProcessing.dump_data()
-                        pickle_tablebots()
-                        if successful:
-                            await message.channel.send("Completed.")        
-                        else:
-                            await message.channel.send("Failed.")         
+                    await commands.BadWolfCommands.dump_data_command(message, pickle_tablebots)
                 
                 elif args[0] in BLACKLIST_USER_TERMS:
-                    if str(author_id) not in UtilityFunctions.botAdmins:
-                        await message.channel.send("You are not a bot admin.")
-                    elif len(args) < 2:
-                        await message.channel.send("Check command.")
-                    elif len(args) == 2:
-                        if UserDataProcessing.add_Blacklisted_user(args[1], ""):
-                            await message.channel.send("Removed blacklist for " + old_command.split()[1])
-                        else:
-                            await message.channel.send("Blacklist failed.")
-                    elif len(args) > 2:
-                        if UserDataProcessing.add_Blacklisted_user(args[1], " ".join(old_command.split()[2:])):
-                            await message.channel.send("Blacklisted " + args[1])
-                        else:
-                            await message.channel.send("Blacklist failed.") 
+                    await commands.BotAdminCommands.blacklist_user_command(message, args, command)
                         
-                
                 elif args[0] in UNDO_TERMS:
                     await commands.TablingCommands.undo_command(message, this_bot, server_prefix, is_lounge_server)
+                
                 elif args[0] in VERIFY_ROOM_TERMS:
                     if commands.vr_is_on:
                         await commands.OtherCommands.vr_command(this_bot, message, args, old_command, createEmptyTableBot()) #create a new one so it won't interfere with any room they might have loaded (like a table)
@@ -812,10 +718,7 @@ async def on_message(message: discord.Message):
                     await commands.TablingCommands.merge_room_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
                 elif args[0] in ADD_BOT_ADMIN_TERMS:
-                    if author_id != badwolf_id:
-                        await message.channel.send("**You are not allowed to add admins to the bot. Only BadWolf is.**") 
-                    else:
-                        await commands.BadWolfCommands.add_bot_admin_command(message, args)
+                    await commands.BadWolfCommands.add_bot_admin_command(message, args)
                         
                 elif args[0] in REMOVE_BOT_ADMIN_TERMS:
                     await commands.BadWolfCommands.remove_bot_admin_command(message, args)
@@ -826,7 +729,6 @@ async def on_message(message: discord.Message):
                 elif args[0] in REMOVE_BLACKLISTED_WORD_TERMS:
                     await commands.BotAdminCommands.remove_blacklisted_word_command(message, args)
                             
-                
                 elif args[0] in TABLE_THEME_TERMS:
                     await commands.TablingCommands.table_theme_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
@@ -887,7 +789,6 @@ async def on_ready():
     global finished_on_ready
     
     if not finished_on_ready:
-        load_lounge_updates()
         load_tablebot_pickle()
         load_CTGP_region_pickle()
         commands.load_vr_is_on()
@@ -1019,7 +920,7 @@ def load_bad_wolf_facts_pkl():
                 
 def pickle_tablebots():
     global table_bots
-    if table_bots != None:
+    if table_bots is not None:
         with open(TABLE_BOT_PKL_FILE, "wb+") as pickle_out:
             try:
                 p.dump(table_bots, pickle_out)

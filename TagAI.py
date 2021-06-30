@@ -82,7 +82,7 @@ def __get_player_tags(name:str):
     #If player has something in brackets, we're assuming 100% it is their tag
     bracket_tag = __get_bracket_tag(name)
 
-    if bracket_tag != None:
+    if bracket_tag is not None:
         return [(bracket_tag[0], stripBadChars(bracket_tag[1]))]
 
     name = stripBadChars(name)
@@ -321,7 +321,7 @@ def __clean_by_overlap(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str
             #don't even go down the path if there's a tag with less players per team than the format has
             not_enough_players = {}
             for tag, players in tags_possibilities.items():
-                if players == None or len(players) < playersPerTeam:
+                if players is None or len(players) < playersPerTeam:
                     not_enough_players[tag] = players
             for tag in not_enough_players:
                 del(tags_possibilities[tag])
@@ -344,7 +344,7 @@ def __clean_by_overlap(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str
     all_possible_solutions_recurrsion(dups, tag_players, all_players, all_possible_solutions, playersPerTeam)
     if beyond_time():
         return None
-    if all_possible_solutions == None or len(all_possible_solutions) == 0:
+    if all_possible_solutions is None or len(all_possible_solutions) == 0:
         return None
     
     #for number, solution in enumerate(all_possible_solutions, 1):
@@ -352,7 +352,7 @@ def __clean_by_overlap(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str
     #    print(solution)
     #print(all_possible_solutions)
     best_solution = __choose_best_solution(all_possible_solutions)
-    if best_solution == None:
+    if best_solution is None:
         return None
     players_tags = {}
     for tag, fc_players in best_solution.items():
@@ -426,7 +426,7 @@ def getTagsSmart(fc_players:List[Tuple[str, str]], playersPerTeam:int) -> Dict[T
     temp = __clean_by_overlap(tag_counts, playersPerTeam)
     
 
-    if temp == None or len(temp) == 0:
+    if temp is None or len(temp) == 0:
         return None, True
     
     if len(tag_counts) == len(temp):
@@ -443,7 +443,7 @@ def getTagSmart(name:str):
     bracket_tag = __get_bracket_tag(name)
     
     
-    if bracket_tag != None:
+    if bracket_tag is not None:
         return bracket_tag
     
     name = stripBadChars(name)

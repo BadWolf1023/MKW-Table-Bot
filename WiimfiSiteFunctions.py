@@ -39,15 +39,15 @@ async def __getMKWXSoupCall__():
 async def getMKWXSoup():
     global current_mkwx_soups
     global mkwx_soup_last_updated
-    if current_mkwx_soups == None or \
-    mkwx_soup_last_updated == None or \
+    if current_mkwx_soups is None or \
+    mkwx_soup_last_updated is None or \
     (datetime.now() - mkwx_cache_time) > mkwx_soup_last_updated:
-        if current_mkwx_soups == None:
+        if current_mkwx_soups is None:
             current_mkwx_soups = []
         current_mkwx_soups.append( await __getMKWXSoupCall__() )
         mkwx_soup_last_updated = datetime.now()
         
-    if current_mkwx_soups != None:
+    if current_mkwx_soups is not None:
         while len(current_mkwx_soups) >= 5:
             current_mkwx_soups[0].decompose()
             del current_mkwx_soups[0]
@@ -58,22 +58,22 @@ async def getMKWXSoup():
 async def getrLIDSoup(rLID):
     roomHTML = await getRoomHTML(mkwxURL + "/list/" + rLID)
     temp = BeautifulSoup(roomHTML, "html.parser")
-    if temp.find(text="No match found!") == None:
+    if temp.find(text="No match found!") is None:
         return temp
     return None
         
 def _is_rLID(roomID):
-    return re.match("^r[0-9]{7}$", roomID) != None
+    return re.match("^r[0-9]{7}$", roomID) is not None
 
 def _is_fc(fc):
-    return re.match("^[0-9]{4}[-][0-9]{4}[-][0-9]{4}$", fc.strip()) != None
+    return re.match("^[0-9]{4}[-][0-9]{4}[-][0-9]{4}$", fc.strip()) is not None
 
 #getRoomLink old name
 async def getRoomData(rid_or_rlid):
     if _is_rLID(rid_or_rlid): #It is a unique rxxxxxxx number given
         #Check if the rLID is a valid link (bogus input check, or the link may have expired)
         rLIDSoup = await getrLIDSoup(rid_or_rlid)
-        if rLIDSoup != None:
+        if rLIDSoup is not None:
             return mkwxURL + "/list/" + rid_or_rlid, rid_or_rlid, rLIDSoup
         else:
             return None, None, None
@@ -82,7 +82,7 @@ async def getRoomData(rid_or_rlid):
     mkwxSoup = await getMKWXSoup()
         
     roomIDSpot = mkwxSoup.find(text=rid_or_rlid)
-    if roomIDSpot == None:
+    if roomIDSpot is None:
         return None, None, None
     link = str(roomIDSpot.find_previous('a')['data-href'])
     rLID = link.split("/")[-1]
@@ -98,10 +98,10 @@ async def getMKWXHTMLDataByFC(fcs):
     fcSpot = None
     for fc in fcs:
         fcSpot = soup.find(text=fc)
-        if fcSpot != None:
+        if fcSpot is not None:
             break
         
-    if fcSpot == None:
+    if fcSpot is None:
         return None
     #found the FC, now go get the room
     levels = [fcSpot.parent.parent.parent]
@@ -113,7 +113,7 @@ async def getMKWXHTMLDataByFC(fcs):
         
         levels.append(levels[-1].previous_sibling)
         #print(correctLevel)
-        if levels[-1] == None:
+        if levels[-1] is None:
             returnNone = True
             break
         if isinstance(levels[-1], NavigableString):
@@ -137,10 +137,10 @@ async def getRoomDataByFC(fcs):
     fcSpot = None
     for fc in fcs:
         fcSpot = soup.find(text=fc)
-        if fcSpot != None:
+        if fcSpot is not None:
             break
         
-    if fcSpot == None:
+    if fcSpot is None:
         return None, None, None
     
     #found the FC, now go get the room
@@ -151,7 +151,7 @@ async def getRoomDataByFC(fcs):
         #print("\n\n=====================================================\n")
         correctLevel = correctLevel.previous_sibling
         #print(correctLevel)
-        if correctLevel == None:
+        if correctLevel is None:
             return None, None, None
         if isinstance(correctLevel, NavigableString):
             continue

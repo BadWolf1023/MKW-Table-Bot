@@ -107,7 +107,7 @@ async def getPlayerIDs(mogi_players: List[Tuple[str, int]], is_rt=True, mogiPlay
     data = await getJSONData(full_url)
     
     
-    if data == None:
+    if data is None:
         print("Bad request to Lounge API... The website is either down or went offline for a split second. Try again.")
         return None, None
     if "error" in data:

@@ -10,7 +10,6 @@ import ServerFunctions
 import ImageCombine
 import War
 from TagAI import getTagsSmart, getTagSmart
-import Stats
 import LoungeAPIFunctions
 import ScoreKeeper as SK
 import UserDataProcessing
@@ -23,14 +22,15 @@ import SimpleRooms
 import Race
 import MogiUpdate
 import Lounge
-import help_documentation
+import TableBotExceptions
+from common import is_bad_wolf, FEEDBACK_LOGS_FILE, ERROR_LOGS_FILE, MESSAGE_LOGGING_FILE, is_bot_admin,\
+LORENZI_FLAG_PAGE_URL_NO_PREVIEW, FLAG_IMAGES_PATH, log_text, FEEDBACK_LOGGING_TYPE, MIIS_DISABLED, \
+LEFT_ARROW_EMOTE, RIGHT_ARROW_EMOTE, embed_page_time, author_is_lounge_staff, lounge_server_id, RT_UPDATER_CHANNEL, CT_UPDATER_CHANNEL, \
+base_url_lorenzi, base_url_edit_table_lorenzi, download_image, current_notification, VR_IS_ON_FILE, botAdmins
 
 
-
-from common import *
 
 #Other library imports, other people codes
-import discord
 from typing import List, Set
 import asyncio
 from collections.abc import Callable
@@ -40,6 +40,10 @@ import dill as pkl
 import subprocess
 import gc
 from builtins import staticmethod
+import itertools
+import discord
+import os
+from datetime import datetime
 
 vr_is_on = False
 
@@ -101,6 +105,7 @@ class BadWolfCommands:
         else:
             await message.channel.send("Something went wrong. Try again.")
     
+    
     @staticmethod
     async def add_bot_admin_command(message:discord.Message, args:List[str]):
         BadWolfCommands.is_badwolf_check(message.author, "cannot add bot admin")
@@ -117,7 +122,7 @@ class BadWolfCommands:
         command_output = subprocess.check_output('top -b -o +%MEM | head -n 22', shell=True, text=True)
         await message.channel.send(command_output)
         
-    @staticmethod()
+    @staticmethod
     async def add_fact_command(message:discord.Message, command:str, bad_wolf_facts:List[str], data_save):
         BadWolfCommands.is_badwolf_check(message.author, "cannot add fact")
         fact = " ".join(command.split()[1:]).strip()
@@ -130,7 +135,7 @@ class BadWolfCommands:
         
         
     
-    @staticmethod()
+    @staticmethod
     async def remove_fact_command(message:discord.Message, args:List[str], bad_wolf_facts:List[str], data_save):
         BadWolfCommands.is_badwolf_check(message.author, "cannot remove fact")
         index = "".join(args[1:])
@@ -142,25 +147,35 @@ class BadWolfCommands:
         await message.channel.send(f"Removed: {removed_fact}")
   
   
-    @staticmethod()
+    @staticmethod
     async def garbage_collect_command(message:discord.Message):
         BadWolfCommands.is_badwolf_check(message.author, "cannot garbage collect")
         gc.collect()
         await message.channel.send("Collected")
     
     
-    @staticmethod()
+    @staticmethod
     async def send_all_facts_command(message:discord.Message, bad_wolf_facts:List[str]):
         BadWolfCommands.is_badwolf_check(message.author, "cannot display facts")
         if len(bad_wolf_facts) > 0:
             await message.channel.send("\n".join(bad_wolf_facts))
     
     
-    @staticmethod()
+    @staticmethod
     async def total_clear_command(message:discord.Message, lounge_update_data):
         BadWolfCommands.is_badwolf_check(message.author, "cannot clear lounge table submission cooldown tracking")
         lounge_update_data.update_cooldowns.clear()
         await message.channel.send("Cleared.")
+        
+    @staticmethod
+    async def dump_data_command(message:discord.Message, data_dump_function):
+        BadWolfCommands.is_badwolf_check(message.author, "cannot dump data")
+        successful = await UserDataProcessing.dump_data()
+        data_dump_function()
+        if successful:
+            await message.channel.send("Completed.")        
+        else:
+            await message.channel.send("Failed.")  
   
  
         
@@ -171,11 +186,13 @@ class BotAdminCommands:
     This class contains the commands that only Bot Admins can do"""
     
     @staticmethod
+    def is_bot_admin_check(author, failure_message):
+        if not is_bot_admin(author):
+            raise TableBotExceptions.NotBotAdmin(failure_message)
+        return True
+    
+    @staticmethod
     async def blacklisted_word_change(message:discord.Message, args:List[str], adding=True):
-        author_id = message.author.id
-        if str(author_id) not in UtilityFunctions.botAdmins:
-            await message.channel.send("**This command is reserved for bot administrators only.**")
-            return
         if len(args) <= 1:
             to_send = "Give a word to blacklist." if adding else "Specify a word to remove from the blacklist."
             await message.channel.send(to_send)
@@ -189,19 +206,37 @@ class BotAdminCommands:
             
     @staticmethod
     async def remove_blacklisted_word_command(message:discord.Message, args:List[str]):
+        BotAdminCommands.is_bot_admin_check(message.author, "cannot remove blacklisted word")
         await BadWolfCommands.blacklisted_word_change(message, args, adding=False)
     
     @staticmethod
     async def add_blacklisted_word_command(message:discord.Message, args:List[str]):
+        BotAdminCommands.is_bot_admin_check(message.author, "cannot add blacklisted word")
         await BadWolfCommands.blacklisted_word_change(message, args, adding=True)
+        
+    
+    @staticmethod
+    async def blacklist_user_command(message:discord.Message, args:List[str], command:str):
+        BotAdminCommands.is_bot_admin_check(message.author, "cannot blacklist user")
+        
+        if len(args) < 2:
+            await message.channel.send(f"Give a Discord ID to blacklist. If you do not specify a reason for blacklisting a user, the given discord ID will be **removed** from the blacklist. To blacklist a discord ID, give a reason. `?{args[0]} <discordID> (reason)`")
+            return
+        
+        if len(args) == 2:
+            if UserDataProcessing.add_Blacklisted_user(args[1], ""):
+                await message.channel.send("Removed blacklist for " + command.split()[1])
+            else:
+                await message.channel.send("Blacklist failed.")
+            return
+    
+        if UserDataProcessing.add_Blacklisted_user(args[1], " ".join(command.split()[2:])):
+            await message.channel.send("Blacklisted " + args[1])
+        else:
+            await message.channel.send("Blacklist failed.") 
     
     @staticmethod
     async def change_flag_exception(message:discord.Message, args:List[str], user_flag_exceptions:Set[int], adding=True):
-        author_id = message.author.id
-        if str(author_id) not in UtilityFunctions.botAdmins:
-            await message.channel.send("You are not a bot admin.")
-            return
-        
         if len(args) <= 1:
             await message.channel.send("You must give a discord ID.")
             return
@@ -222,18 +257,19 @@ class BotAdminCommands:
     
     @staticmethod
     async def add_flag_exception_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]):
+        BotAdminCommands.is_bot_admin_check(message.author, "cannot give user ID a flag exception privilege")
         await BadWolfCommands.change_flag_exception(message, args, user_flag_exceptions, adding=True)
     
     @staticmethod      
+    
     async def remove_flag_exception_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]):
+        BotAdminCommands.is_bot_admin_check(message.author, "cannot remove user ID's flag exception privilege")
         await BadWolfCommands.change_flag_exception(message, args, user_flag_exceptions, adding=False)
     
     @staticmethod
     async def change_ctgp_region_command(message:discord.Message, args:List[str]):
-        author_id = message.author.id
-        if str(author_id) not in UtilityFunctions.botAdmins:
-            await message.channel.send("You are not a bot admin.")
-        elif len(args) <= 1:
+        BotAdminCommands.is_bot_admin_check(message.author, "cannot change CTGP CTWW region")
+        if len(args) <= 1:
             await message.channel.send("You must give a new CTGP region to use for displaying CTGP WWs.")
         else:
             Race.set_ctgp_region(args[1])
@@ -241,12 +277,12 @@ class BotAdminCommands:
     
     @staticmethod
     async def global_vr_command(message:discord.Message, on=True):
+        BotAdminCommands.is_bot_admin_check(message.author, "cannot change vr on/off")
+
         global vr_is_on
-        author_id = message.author.id
-        if str(author_id) in UtilityFunctions.botAdmins:
-            vr_is_on = on
-            dump_vr_is_on()
-            await message.channel.send(f"Turned !vr/?vr {'on' if on else 'off'}.")
+        vr_is_on = on
+        dump_vr_is_on()
+        await message.channel.send(f"Turned !vr/?vr {'on' if on else 'off'}.")
 
 
 
@@ -283,7 +319,7 @@ class OtherCommands:
         if len(args) > 1:
             #if 2nd argument is numeric, it's a discord ID
             if args[1].isnumeric(): #This is an admin attempt
-                if str(author_id) in UtilityFunctions.botAdmins:
+                if str(author_id) in botAdmins:
                     if len(args) == 2 or args[2] == "none":
                         UserDataProcessing.add_flag(args[1], "")
                         await message.channel.send(str(args[1] + "'s flag was successfully removed."))
@@ -292,7 +328,7 @@ class OtherCommands:
                         await message.channel.send(str(args[1] + "'s flag was successfully added and will now be displayed on tables."))
                 elif author_id in user_flag_exceptions:
                     flag = UserDataProcessing.get_flag(int(args[1]))
-                    if flag == None:
+                    if flag is None:
                         UserDataProcessing.add_flag(args[1], args[2].lower())
                         await message.channel.send(str(args[1] + "'s flag was successfully added and will now be displayed on tables."))
                     else:
@@ -332,7 +368,7 @@ class OtherCommands:
         discordIDToLoad = str(author_id)
         await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
         lounge_name = UserDataProcessing.get_lounge(author_id)
-        if lounge_name == None:
+        if lounge_name is None:
             await message.channel.send("You don't have a lounge name. Join Lounge! (If you think this is an error, go on Wiimmfi and try running this command again.)")
         else:
             await message.channel.send("Your lounge name is: " + UtilityFunctions.process_name(str(lounge_name)))
@@ -355,26 +391,26 @@ class OtherCommands:
             else:
                 to_find_lounge = " ".join(old_command.split()[1:])
                 id_lounge, fc_id = await LoungeAPIFunctions.getByLoungeNames([to_find_lounge])
-                if id_lounge != None and len(id_lounge) == 1:
+                if id_lounge is not None and len(id_lounge) == 1:
                     for this_id in id_lounge:
                         discordIDToLoad = this_id
                         break
-                if discordIDToLoad == None:
+                if discordIDToLoad is None:
                     discordIDToLoad = UserDataProcessing.get_DiscordID_By_LoungeName(to_find_lounge)
                     
         await updateData(id_lounge, fc_id)    
         FC = None
-        if fc_id != None and id_lounge != None: #This would only occur it the API went down...
+        if fc_id is not None and id_lounge is not None: #This would only occur it the API went down...
             for fc, _id in fc_id.items():
                 if _id == discordIDToLoad:
                     FC = fc
                     break
-        if FC == None:
+        if FC is None:
             FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
             if len(FCs) > 0:
                 FC = FCs[0]
     
-        if FC == None:
+        if FC is None:
             if len(args) == 1:
                 await message.channel.send("You have not set an FC. (Use Friendbot to add your FC, then try this command later.")
             elif len(message.raw_mentions) > 0:
@@ -415,7 +451,7 @@ class OtherCommands:
             if len(FCs) > 0:
                 FC = FCs[0]
             
-        if FC == None:
+        if FC is None:
             if len(args) == 1:
                 await message.channel.send("You have not set an FC. (Use Friendbot to add your FC, then try this command later.")
             elif len(message.raw_mentions) > 0:
@@ -512,7 +548,7 @@ class OtherCommands:
                     await msg.remove_reaction(RIGHT_ARROW_EMOTE, client.user)
                 except:
                     pass
-                if message.guild != None and not sent_missing_perms_message:
+                if message.guild is not None and not sent_missing_perms_message:
                     await send_missing_permissions(message.channel)
             except discord.errors.NotFound:
                 pass
@@ -579,7 +615,7 @@ class OtherCommands:
                 if not successful:
                     await message.channel.send(f"Could not find {UtilityFunctions.process_name(' '.join(old_command.split()[1:]))} in a room. (This could be an error if I couldn't their FC in the database.)")             
         
-        if not successful or room_data == None or rLID == None:
+        if not successful or room_data is None or rLID is None:
             await message2.delete()
             return
         FC_List = [fc for fc in room_data]
@@ -601,7 +637,7 @@ class OtherCommands:
         if "(last start" in last_match_str:
             #go get races from room
             races_str = await OtherCommands.vr_command_get_races(rLID, temp_bot)
-            if races_str != None:
+            if races_str is not None:
                 str_msg += "\n\nRaces (Last 12): " + races_str
             else:
                 str_msg += "\n\nFailed"
@@ -614,10 +650,73 @@ class OtherCommands:
  
 class LoungeCommands:
     
+    @staticmethod
+    def has_authority_in_server_check(author, failure_message, authority_check=author_is_lounge_staff):
+        if not authority_check(author):
+            raise TableBotExceptions.NotStaff(failure_message)
+        return True
+    
+    
+    @staticmethod
+    def correct_server_check(guild, failure_message, server_id=lounge_server_id):
+        if guild.id != server_id:
+            raise TableBotExceptions.WrongServer(failure_message)
+        return True
+    
+    @staticmethod
+    def updater_channel_check(channel, failure_message, valid_channel_ids={RT_UPDATER_CHANNEL, CT_UPDATER_CHANNEL}):
+        if channel.id not in valid_channel_ids:
+            raise TableBotExceptions.WrongUpdaterChannel("failure_message")
+        return True
+    
+    
+
+    
+    @staticmethod
+    async def get_lock_command(message:discord.Message, this_bot:TableBot.ChannelBot):
+        LoungeCommands.correct_server_check(message.guild, "cannot display lock")
+        
+        if this_bot.getRoom() is None or this_bot.getRoom().getSetupUser() is None:
+            await message.channel.send("Bot is not locked to any user.")
+            return
+    
+        room_lounge_names = this_bot.getRoom().get_loungenames_can_modify_table()
+        to_send = "The bot is locked to players in this room: **"
+        to_send += ", ".join(room_lounge_names)
+        to_send += "**.\n"
+        to_send += "The setup user who has the main lock is **" + str(this_bot.getRoom().getSetupUser()) + f"- {this_bot.getRoom().set_up_user_display_name}**"
+        
+        await message.channel.send(to_send)   
+        
+    @staticmethod
+    async def transfer_lock_command(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot):
+        LoungeCommands.correct_server_check(message.guild, "cannot transfer lock")
+        LoungeCommands.has_authority_in_server_check(message.author, "cannot transfer lock")
+        
+        if this_bot.getRoom() is None or this_bot.getRoom().getSetupUser() is None:
+            await message.channel.send("Cannot transfer lock. Bot not locked to any user.")
+            return
+    
+        if len(args) <= 1:
+            await message.channel.send("You must give their Discord ID. This is the long number you can get in Discord's Developer Mode.")       
+            return
+    
+        newUser = args[1]
+        if not newUser.isnumeric():
+            await message.channel.send("You must give their Discord ID. This is the long number you can get in Discord's Developer Mode.")
+            return
+    
+        newUser = int(newUser)
+        this_bot.getRoom().set_up_user = newUser
+        this_bot.getRoom().set_up_user_display_name = ""
+        await message.channel.send("Lock transferred to: " + str(newUser))
+
+    
     #TODO: Refactor this - in an rushed effort to release this, the code is sloppy.
     #It should be refactored as this is some of the worst code in TableBot
+    
     @staticmethod
-    async def mogi_update(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge, is_primary=True):
+    async def __mogi_update__(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge, is_primary=True):
         
         cooldown = lounge_server_updates.get_user_update_submit_cooldown(message.author.id)
         updater_channel_id, updater_link, preview_link, type_text = lounge_server_updates.get_information(is_primary)
@@ -632,13 +731,13 @@ class LoungeCommands:
         
 
         tier_number, summary_channel_id = MogiUpdate.get_tier_and_summary_channel_id(args[1], is_primary)
-        if tier_number == None:
+        if tier_number is None:
             await message.channel.send("The format of this command is: ?" + args[0] + " TierNumber (TableText) - TierNumber must be a number. For RTs, must be between 1 and 8. For CTs, must be between 1 and 6. If you are trying to submit a squadqueue table, <tierNumber> should be: squadqueue")
             return
         
         if len(args) == 2:
             #check if they have war going currently
-            if this_bot.getWar() == None or this_bot.getRoom() == None:
+            if this_bot.getWar() is None or this_bot.getRoom() is None:
                 await message.channel.send("You must start a war to use this command - if you want to submit a table you did manually, put in the table text")
             elif len(this_bot.getRoom().getRaces()) < 12:
                 await message.channel.send("Cannot submit a table that has less than 12 races.")
@@ -670,7 +769,7 @@ class LoungeCommands:
                         error_code, _, json_data = await MogiUpdate.textInputUpdate(original_table_text, tier_number, is_rt=is_primary)
                         
                         if error_code != MogiUpdate.SUCCESS_EC:
-                            if error_code == None:
+                            if error_code is None:
                                 await message.channel.send("Couldn't submit table. An unknown error occurred.")
                             elif error_code == MogiUpdate.PLAYER_NOT_FOUND_EC:
                                 missing_players = json_data
@@ -696,7 +795,7 @@ class LoungeCommands:
                             embed.add_field(name="Submission ID:", value=str(id_to_submit))
                             embed.add_field(name="Tier", value=tier_number)
                             summary_channel = client.get_channel(summary_channel_id)
-                            embed.add_field(name="Approving to:", value=(summary_channel.mention if summary_channel != None else "Can't find channel"))
+                            embed.add_field(name="Approving to:", value=(summary_channel.mention if summary_channel is not None else "Can't find channel"))
                             embed.add_field(name='Submitted from:', value=message.channel.mention)
                             embed.add_field(name='Submitted by:', value=message.author.mention)
                             embed.add_field(name='Discord ID:', value=str(message.author.id))
@@ -737,7 +836,7 @@ class LoungeCommands:
             
             
             if error_code != MogiUpdate.SUCCESS_EC:
-                if error_code == None:
+                if error_code is None:
                     await message.channel.send("Couldn't submit table. An unknown error occurred.")
                 elif error_code == MogiUpdate.PLAYER_NOT_FOUND_EC:
                     missing_players = json_data
@@ -771,7 +870,7 @@ class LoungeCommands:
                         embed.add_field(name='Submission ID:', value=str(id_to_submit))
                         embed.add_field(name="Tier", value=tier_number)
                         summary_channel = client.get_channel(summary_channel_id)
-                        embed.add_field(name="Approving to:", value=(summary_channel.mention if summary_channel != None else "Can't find channel"))
+                        embed.add_field(name="Approving to:", value=(summary_channel.mention if summary_channel is not None else "Can't find channel"))
                         embed.add_field(name='Submitted from:', value=message.channel.mention)
                         embed.add_field(name='Submitted by:', value=message.author.mention)
                         embed.add_field(name='Discord ID:', value=str(message.author.id))
@@ -806,124 +905,110 @@ class LoungeCommands:
     
     @staticmethod
     async def ct_mogi_update(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
-        if message.guild.id != lounge_server_updates.server_id:
-            raise TableBotExceptions.WrongServer()
-        
-        LoungeCommands.mogi_update(client, this_bot, message, args, lounge_server_updates, is_primary=False)
+        LoungeCommands.correct_server_check(message.guild, "cannot submit table update for CT mogi", lounge_server_updates.server_id)
+        LoungeCommands.__mogi_update__(client, this_bot, message, args, lounge_server_updates, is_primary=False)
         
         
     @staticmethod
     async def rt_mogi_update(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
-        if message.guild.id != lounge_server_updates.server_id:
-            raise TableBotExceptions.WrongServer()
-        
-        LoungeCommands.mogi_update(client, this_bot, message, args, lounge_server_updates, is_primary=True)
+        LoungeCommands.correct_server_check(message.guild, "cannot submit table update for RT mogi", lounge_server_updates.server_id)
+        LoungeCommands.__mogi_update__(client, this_bot, message, args, lounge_server_updates, is_primary=True)
     
     
     @staticmethod
-    async def submission_action_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge, is_approval=True):
-        if message.guild.id != lounge_server_updates.server_id:
-            raise TableBotExceptions.WrongServer()
-
-    
-
-        if message.channel.id != lounge_server_updates.channels_mapping.updater_channel_id_primary and\
-        message.channel.id != lounge_server_updates.channels_mapping.updater_channel_id_secondary:
+    async def __submission_action_command__(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge, is_approval=True):
+        if len(args) < 2:
+            await message.channel.send("The way to use this command is: ?" + args[0] + " submissionID")
             return
         
-        if lounge_server_updates.report_table_authority_check(message.author):
-            if len(args) < 2:
-                await message.channel.send("The way to use this command is: ?" + args[0] + " submissionID")
-                return
-            submissionID = args[1]
-            if submissionID.isnumeric():
-                submissionID = int(submissionID)
-                if lounge_server_updates.has_submission_id(submissionID):
-                    submissionMessageID, submissionChannelID, summaryChannelID, submissionStatus = lounge_server_updates.get_submission_id(submissionID)
-                    submissionMessage = None
+        submissionID = args[1]
+        if submissionID.isnumeric():
+            submissionID = int(submissionID)
+            if lounge_server_updates.has_submission_id(submissionID):
+                submissionMessageID, submissionChannelID, summaryChannelID, submissionStatus = lounge_server_updates.get_submission_id(submissionID)
+                submissionMessage = None
+                
+                try:
+                    submissionChannel = client.get_channel(submissionChannelID)
+                    if submissionChannel is None:
+                        await message.channel.send("I cannot see the submission channels (or they changed). Get boss help.")
+                        return
+                    submissionMessage = await submissionChannel.fetch_message(submissionMessageID)
+                except discord.errors.NotFound:
+                    await message.channel.send("That submission appears to have been deleted on Discord. I have now removed this submission from my records.")
+                    lounge_server_updates.remove_submission_id(submissionID)
+                    return
+                
+                if is_approval:
+                    submissionEmbed = submissionMessage.embeds[0]
+                    submissionEmbed.remove_field(5)
+                    submissionEmbed.remove_field(4)
+                    submissionEmbed.remove_field(3)
+                    submissionEmbed.remove_field(2)
+                    submissionEmbed.set_field_at(1, name="Approved by:", value=message.author.mention)
+                    submissionEmbed.add_field(name="Approval link:", value="[Message](" + submissionMessage.jump_url + ")")
                     
+                    summaryChannelRetrieved = True
+                    if summaryChannelID is None:
+                        summaryChannelRetrieved = False
+                    summaryChannelObj = client.get_channel(summaryChannelID)
+                    if summaryChannelObj is None:
+                        summaryChannelRetrieved = False
+                    if not summaryChannelRetrieved:
+                        await message.channel.send("I cannot see the summary channels. Contact a boss.")
+                        return
                     try:
-                        submissionChannel = client.get_channel(submissionChannelID)
-                        if submissionChannel == None:
-                            await message.channel.send("I cannot see the submission channels (or they changed). Get boss help.")
-                            return
-                        submissionMessage = await submissionChannel.fetch_message(submissionMessageID)
-                    except discord.errors.NotFound:
-                        await message.channel.send("That submission appears to have been deleted on Discord. I have now removed this submission from my records.")
-                        lounge_server_updates.remove_submission_id(submissionID)
+                        await summaryChannelObj.send(embed=submissionEmbed)
+                    except discord.errors.Forbidden:
+                        await message.channel.send("I'm not allowed to send messages in summary channels. Contact a boss.")
                         return
                     
-                    if is_approval:
-                        submissionEmbed = submissionMessage.embeds[0]
-                        submissionEmbed.remove_field(5)
-                        submissionEmbed.remove_field(4)
-                        submissionEmbed.remove_field(3)
-                        submissionEmbed.remove_field(2)
-                        submissionEmbed.set_field_at(1, name="Approved by:", value=message.author.mention)
-                        submissionEmbed.add_field(name="Approval link:", value="[Message](" + submissionMessage.jump_url + ")")
-                        
-                        summaryChannelRetrieved = True
-                        if summaryChannelID == None:
-                            summaryChannelRetrieved = False
-                        summaryChannelObj = client.get_channel(summaryChannelID)
-                        if summaryChannelObj == None:
-                            summaryChannelRetrieved = False
-                        if not summaryChannelRetrieved:
-                            await message.channel.send("I cannot see the summary channels. Contact a boss.")
-                            return
-                        try:
-                            await summaryChannelObj.send(embed=submissionEmbed)
-                        except discord.errors.Forbidden:
-                            await message.channel.send("I'm not allowed to send messages in summary channels. Contact a boss.")
-                            return
-                        
-                        
-                        lounge_server_updates.approve_submission_id(submissionID)
-                        
-                        await submissionMessage.clear_reaction("\u274C")
-                        await submissionMessage.add_reaction("\u2705")
-                        await message.add_reaction(u"\U0001F197")
-                    else:
-                        await submissionMessage.clear_reaction("\u2705")
-                        await submissionMessage.add_reaction("\u274C")
-                        lounge_server_updates.deny_submission_id(submissionID)
-                        await message.add_reaction(u"\U0001F197")
+                    
+                    lounge_server_updates.approve_submission_id(submissionID)
+                    
+                    await submissionMessage.clear_reaction("\u274C")
+                    await submissionMessage.add_reaction("\u2705")
+                    await message.add_reaction(u"\U0001F197")
                 else:
-                    await message.channel.send("I couldn't find this submission ID. Make sure you have the right submission ID.")                              
+                    await submissionMessage.clear_reaction("\u2705")
+                    await submissionMessage.add_reaction("\u274C")
+                    lounge_server_updates.deny_submission_id(submissionID)
+                    await message.add_reaction(u"\U0001F197")
             else:
-                await message.channel.send("The way to use this command is: ?" + args[0] + " submissionID - submissionID must be a number")
+                await message.channel.send("I couldn't find this submission ID. Make sure you have the right submission ID.")                              
+        else:
+            await message.channel.send("The way to use this command is: ?" + args[0] + " submissionID - submissionID must be a number")
+
 
     @staticmethod
     async def approve_submission_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
-        if message.guild.id != lounge_server_updates.server_id:
-            raise TableBotExceptions.WrongServer()
+        LoungeCommands.correct_server_check(message.guild, "cannot approve table submission", lounge_server_updates.server_id)
+        LoungeCommands.has_authority_in_server_check(message.author, "cannot approve table submission", authority_check=lounge_server_updates.report_table_authority_check)
+        LoungeCommands.updater_channel_check(message.channel, "cannot approve table submission", lounge_server_updates.get_updater_channel_ids())
+        await LoungeCommands.__submission_action_command__(client, message, args, lounge_server_updates, is_approval=True)
         
-        await LoungeCommands.submission_action_command(client, message, args, lounge_server_updates, is_approval=True)
-        
-    
     
     @staticmethod
     async def deny_submission_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
-        if message.guild.id != lounge_server_updates.server_id:
-            raise TableBotExceptions.WrongServer()
-        
-        await LoungeCommands.submission_action_command(client, message, args, lounge_server_updates, is_approval=False)
+        LoungeCommands.correct_server_check(message.guild, "cannot deny table submission", lounge_server_updates.server_id)
+        LoungeCommands.has_authority_in_server_check(message.author, "cannot deny table submission", authority_check=lounge_server_updates.report_table_authority_check)
+        LoungeCommands.updater_channel_check(message.channel, "cannot deny table submission", lounge_server_updates.get_updater_channel_ids())
+        await LoungeCommands.__submission_action_command__(client, message, args, lounge_server_updates, is_approval=False)
         
     
     @staticmethod
     async def pending_submissions_command(message:discord.Message, lounge_server_updates:Lounge.Lounge):
-        if message.guild.id != lounge_server_updates.server_id:
-            raise TableBotExceptions.WrongServer()
-
-        if lounge_server_updates.report_table_authority_check(message.author):
-            to_send = ""
-            for submissionID in lounge_server_updates.table_reports:
-                _, submissionChannelID, summaryChannelID, submissionStatus = lounge_server_updates.get_submission_id(submissionID)
-                if submissionStatus == "PENDING":
-                    to_send += MogiUpdate.getTierFromChannelID(summaryChannelID) + " - Submission ID: " + str(submissionID) + "\n"
-            if to_send == "":
-                to_send = "No pending submissions."
-            await message.channel.send(to_send)
+        LoungeCommands.correct_server_check(message.guild, "cannot display pending table submissions", lounge_server_updates.server_id)
+        LoungeCommands.has_authority_in_server_check(message.author, "cannot display pending table submissions", authority_check=lounge_server_updates.report_table_authority_check)
+       
+        to_send = ""
+        for submissionID in lounge_server_updates.table_reports:
+            _, submissionChannelID, summaryChannelID, submissionStatus = lounge_server_updates.get_submission_id(submissionID)
+            if submissionStatus == "PENDING":
+                to_send += MogiUpdate.getTierFromChannelID(summaryChannelID) + " - Submission ID: " + str(submissionID) + "\n"
+        if to_send == "":
+            to_send = "No pending submissions."
+        await message.channel.send(to_send)
 
         
         
@@ -1135,6 +1220,76 @@ class TablingCommands:
             this_bot.getWar().addTeamPenalty(teams[teamNum-1], amount)
             await message.channel.send(UtilityFunctions.process_name(teams[teamNum-1] + " given a " + str(amount) + " point penalty."))
 
+    
+    
+    
+    
+    @staticmethod
+    async def disconnections_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+
+        if not this_bot.table_is_set():
+            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            return
+        
+        if len(args) == 1:
+            had_DCS, DC_List_String = this_bot.getRoom().getDCListString(this_bot.getWar().getNumberOfGPS(), True)
+            if had_DCS:
+                DC_List_String += "\nIf the first disconnection on this list was on results: **" + server_prefix + "dc 1 onresults**\n" +\
+                "If they were not on results, do **" + server_prefix + "dc 1 before**"
+            await message.channel.send(DC_List_String)  
+            return
+    
+        if len(args) < 3:
+            await message.channel.send("You must give a dc number on the list and if they were on results or not. Run " + server_prefix + "dcs for more information.")
+            return
+    
+        missing_per_race = this_bot.getRoom().getMissingOnRace(this_bot.getWar().numberOfGPs)
+        merged = list(itertools.chain(*missing_per_race))
+        disconnection_number = args[1]
+        if not disconnection_number.isnumeric():
+            await message.channel.send(UtilityFunctions.process_name(str(disconnection_number)) + " is not a number on the dcs list. Do " + server_prefix + "dcs for an example on how to use this command.")
+            return
+        if int(disconnection_number) > len(merged):
+            await message.channel.send("There have not been this many DCs. Run " + server_prefix + "dcs to learn how to use this command.")  
+            return
+        if int(disconnection_number) < 1:
+            await message.channel.send("You must give a DC number on the list. Run " + server_prefix + "dcs to learn how to use this command.")  
+            return
+    
+        disconnection_number = int(disconnection_number)
+        on_or_before = args[2].lower().strip("\n").strip()
+        race, index = 0, 0
+        counter = 0
+        for missing in missing_per_race:
+            race += 1
+            
+            for _ in missing:
+                counter += 1
+                if counter == disconnection_number:
+                    break
+                index+=1
+
+            else:
+                index=0
+                continue
+            break
+        
+        player_fc = missing_per_race[race-1][index][0]
+        player_name = UtilityFunctions.process_name(str(missing_per_race[race-1][index][1]) + lounge_add(player_fc))
+        if on_or_before in ["on", "during", "midrace", "results", "onresults"]:
+            this_bot.add_save_state(message.content)
+            this_bot.getRoom().dc_on_or_before[race][player_fc] = 'on'
+            await message.channel.send("Saved: " + player_name + ' was on results for race #' + str(race))                    
+            return
+        if on_or_before in ["before", "prior", "beforerace", "notonresults", "noresults", "off"]:
+            this_bot.add_save_state(message.content)
+            this_bot.getRoom().dc_on_or_before[race][player_fc] = 'before'
+            await message.channel.send("Saved: " + player_name + ' was not on results for race #' + str(race))                    
+            return
+        
+        await message.channel.send('"' + UtilityFunctions.process_name(str(on_or_before)) + '" needs to be either "on" or "before". Do ' + server_prefix + "dcs for an example on how to use this command.")
+
+
 
     @staticmethod
     async def player_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -1226,7 +1381,7 @@ class TablingCommands:
                 _playerNum = None
                 
                 
-            if _playerNum == None:
+            if _playerNum is None:
                 await message.channel.send("Could not find Lounge name " + UtilityFunctions.process_name(str(lounge_name)) + " in this room.")
             else:
                 this_bot.add_save_state(message.content)
@@ -1271,7 +1426,7 @@ class TablingCommands:
                 _playerNum = None
                 
                 
-            if _playerNum == None:
+            if _playerNum is None:
                 await message.channel.send("Could not find Lounge name " + UtilityFunctions.process_name(str(lounge_name)) + " in this room.")
             else:
                 this_bot.add_save_state(message.content)
@@ -1319,7 +1474,7 @@ class TablingCommands:
                     _playerNum = None
                     
                     
-                if _playerNum == None:
+                if _playerNum is None:
                     await message.channel.send("Could not find Lounge name " + UtilityFunctions.process_name(str(lounge_name)) + " in this room.")
                 else:
                     this_bot.add_save_state(message.content)
@@ -1418,7 +1573,7 @@ class TablingCommands:
                             await message.channel.send("Too many players based on the teams and war format. War not created.")
                         else:  
                         
-                            if this_bot.getWar() != None:
+                            if this_bot.getWar() is not None:
                                 populate_mii_task = asyncio.get_event_loop().create_task(this_bot.populate_miis(str(message.id)))
                                 players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numgps*4).items())
                                 player_fcs_tags, hasANoneTag = getTagsSmart(players, this_bot.getWar().playersPerTeam)
@@ -1449,7 +1604,7 @@ class TablingCommands:
                                             else:
                                                 tag_counter = 0
                                             previous_tags.append(teamTag)
-                                            if playerTag == None:
+                                            if playerTag is None:
                                                 teamTag = f"**Team #{playerNum+1}\n**"
                                             cur_processed_team_tag = UtilityFunctions.process_name(teamTag)
                                             to_print += f"**Tag: {cur_processed_team_tag}** \n"
@@ -1513,7 +1668,7 @@ class TablingCommands:
             this_bot.manualWarSetUp = True
             return
         
-        if this_bot.getRoom() == None or not this_bot.getRoom().is_initialized():
+        if this_bot.getRoom() is None or not this_bot.getRoom().is_initialized():
             await message.channel.send(f"Unexpected error. Somehow, there is no room loaded. War stopped. Recommend the command: {server_prefix}reset")
             this_bot.setWar(None)
             return
@@ -1694,7 +1849,7 @@ class TablingCommands:
             if args[2] == 'before' or args[2] == 'notonresults':
                 roomSize = this_bot.getRoom().races[raceNum-1].getNumberOfPlayers()
         
-        if roomSize == None:
+        if roomSize is None:
             roomSize = this_bot.getWar().get_num_players()
         
         this_bot.add_save_state(message.content)
@@ -1831,7 +1986,7 @@ class TablingCommands:
                             
                             file = discord.File(table_image_path, filename=table_image_path)
                             numRaces = 0
-                            if this_bot.getRoom() != None and this_bot.getRoom().races != None:
+                            if this_bot.getRoom() is not None and this_bot.getRoom().races is not None:
                                 numRaces = min( (len(this_bot.getRoom().races), this_bot.getRoom().getNumberOfGPS()*4) )
                             embed.set_author(name=this_bot.getWar().getWarName(numRaces), icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                             embed.set_image(url="attachment://" + table_image_path)
@@ -1869,7 +2024,7 @@ class TablingCommands:
     async def manual_war_setup(message:discord.Message, this_bot:ChannelBot, command:str):
         this_bot.manualWarSetUp = False
         
-        if this_bot.getRoom() == None or not this_bot.getRoom().is_initialized():
+        if this_bot.getRoom() is None or not this_bot.getRoom().is_initialized():
             await message.channel.send("Unexpected error. Somehow, there is no room loaded. Recommend the command: reset")
             this_bot.setWar(None)
             return
@@ -2023,7 +2178,7 @@ class TablingCommands:
                             _playerNum = None
                             
                             
-                        if _playerNum == None:
+                        if _playerNum is None:
                             await message.channel.send("Could not find Lounge name " + UtilityFunctions.process_name(str(lounge_name)) + " in this room.")
                         playerNum = _playerNum
                     else:

@@ -20,7 +20,7 @@ def addFilter(url, filter_type, data):
     return result
 
 def parseData(data:List[Dict], loungeVerifiedOnly=True):
-    if data == None:
+    if data is None:
         print("Bad request to Lounge API... Data was None.")
         return None, None
     if "error" in data:

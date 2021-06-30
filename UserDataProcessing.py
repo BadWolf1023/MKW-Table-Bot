@@ -288,9 +288,9 @@ def read_FC_DiscordID_file(filename=FC_DISCORD_ID_FILE):
 
 
 def get_all_fcs(discord_id, FCDID=None):
-    if discord_id == None:
+    if discord_id is None:
         return []
-    if FCDID == None:
+    if FCDID is None:
         FCDID = FC_DiscordID
         
     discord_id = str(discord_id)
@@ -303,9 +303,9 @@ def get_all_fcs(discord_id, FCDID=None):
     return [data[0] for data in FCs]
 
 def get_DiscordID_By_LoungeName(lounge_name:str, DID_L=None):
-    if lounge_name == None:
+    if lounge_name is None:
         return ''
-    if DID_L == None:
+    if DID_L is None:
         DID_L = discordID_Lounges
     
     lounge_name = lounge_name.lower()
@@ -317,7 +317,7 @@ def get_DiscordID_By_LoungeName(lounge_name:str, DID_L=None):
         
 
 def getFCsByLoungeName(lounge_name:str):
-    if lounge_name == None:
+    if lounge_name is None:
         return []
     did = get_DiscordID_By_LoungeName(lounge_name)
     if did == '': #Couldn't look up their discord id by their lounge name
@@ -337,9 +337,9 @@ def addFCsIDs(to_add: Dict[str,Tuple[str,datetime]]):
     to_add_fc.update(to_add)
     
 def smartUpdate(id_lounge=None, fc_id=None):
-    if id_lounge != None:
+    if id_lounge is not None:
         addIDsLounges(id_lounge)
-    if fc_id != None:
+    if fc_id is not None:
         addFCsIDs(fc_id)
         
 

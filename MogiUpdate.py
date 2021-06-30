@@ -435,7 +435,7 @@ def getSubScores(name:str, scores):
             return SUB_WRONG_GP_COUNT
         else:
             sub_scores = determine_subs_scores(subs, scores)
-            if sub_scores == None:
+            if sub_scores is None:
                 return [(name, sum(scores))]
             return sub_scores
         
@@ -496,10 +496,10 @@ def getPlayersAndScores(table_lines:List[str]):
                 return linePackage, None
             
             for player_data in linePackage:
-                if player_data == None:
+                if player_data is None:
                     return PLAYER_BAD_STRING, player_data
                 for item in player_data:
-                    if item == None: #TODO: Come back here
+                    if item is None: #TODO: Come back here
                         return PLAYER_BAD_STRING, player_data 
             teams[-1].append(linePackage)
         else:
@@ -516,7 +516,7 @@ def process_table_text(tableText:str):
             good_lines.append(line)
             
     odd_ffa = is_odd_ffa(good_lines)
-    if odd_ffa == None:
+    if odd_ffa is None:
         return BAD_TABLE, BAD_TABLE
     if odd_ffa:
         good_lines.insert(0, "FFA")
@@ -630,7 +630,7 @@ async def textInputUpdate(tableText:str, tier:str, warFormat=None, is_rt=True):
 
     id_mapping, missing = await MogiUpdateAPIFunctions.getPlayerIDs(three_deep_flatten(players_and_scores), is_rt)
     
-    if id_mapping == None:
+    if id_mapping is None:
         return CORRUPT_DATA_EC, None, id_mapping
     elif len(missing) > 0:
         return PLAYER_NOT_FOUND_EC, None, missing

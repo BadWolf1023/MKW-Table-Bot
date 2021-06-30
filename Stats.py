@@ -9,7 +9,7 @@ from datetime import datetime
 import humanize
 from pathlib import Path
 import shutil
-from common import check_create, MESSAGE_LOGGING_FILE, STATS_FILE, FILES_TO_BACKUP
+from common import check_create, MESSAGE_LOGGING_FILE, STATS_FILE, FILES_TO_BACKUP, ALL_PATHS
 
 
 user_delimiter = "C,'6WeWq~w,S24!z;L+EM$vL{3M,HMKjy9U2dfH8F-'mwH'2@K.qaQGpg*!StX*:D7^&P;d4@AcWS3)8f64~6CB^B4{s`>9+*brV"
@@ -22,6 +22,11 @@ def backup_files(to_back_up=FILES_TO_BACKUP):
     Path(backup_folder).mkdir(parents=True, exist_ok=True)
     todays_backup_path = backup_folder + str(datetime.date(datetime.now())) + "/"
     Path(todays_backup_path).mkdir(parents=True, exist_ok=True)
+    
+    #Create backup folders
+    for local_dir in ALL_PATHS:
+        Path(f"{todays_backup_path}{local_dir}").mkdir(parents=True, exist_ok=True)
+    
     for file_name in to_back_up:
         try:
             check_create(file_name)
@@ -163,7 +168,7 @@ def stats(num_bots:int, client=None, stats_file=STATS_FILE, commands_logging=MES
         except:
             pass
     
-    if ago != None:
+    if ago is not None:
         str_build += "Last command before your stats command was **" + humanize.naturaltime(ago) + "**\n"
     else:
         str_build += "Last command before your stats command was **" + "N/A" + "**\n"

@@ -222,7 +222,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
         for fc, player in FC_table_str.items():
             gp_amount = [0, 0, 0, 0]
             editAmount = war.getEditAmount(fc, GPnum)
-            if editAmount != None:
+            if editAmount is not None:
                 gp_amount = [editAmount, 0, 0, 0]
             elif fc in GP_scores.keys():
                 gp_amount = GP_scores[fc]
@@ -292,7 +292,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
                         table_str += "\nPenalty -" + str(war.getTeamPenalities()[curTeam]) + "\n"
                     curTeam = war.getTeamForFC(fc)
                     teamHex = ""
-                    if war.teamColors != None:
+                    if war.teamColors is not None:
                         if teamCounter < len(war.teamColors):
                             teamHex = " " + war.teamColors[teamCounter]
                     table_str += "\n" + curTeam + teamHex + "\n"
@@ -310,7 +310,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
                     table_str += "\nPenalty -" + str(war.getTeamPenalities()[curTeam]) + "\n"
                 curTeam = war.getTeamForFC(fc)
                 teamHex = ""
-                if war.teamColors != None:
+                if war.teamColors is not None:
                     if teamCounter < len(war.teamColors):
                         teamHex = " " + war.teamColors[teamCounter]
                 table_str += "\n" + curTeam + teamHex + "\n"

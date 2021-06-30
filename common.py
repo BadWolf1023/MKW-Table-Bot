@@ -92,6 +92,8 @@ ERROR_LOGGING_TYPE = "error"
 MESSAGE_LOGGING_TYPE = "messagelogging"
 FEEDBACK_LOGGING_TYPE = "feedback"
 
+ALL_PATHS = {LOGGING_PATH, SERVER_SETTINGS_PATH, DATA_PATH}
+
 FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    FEEDBACK_LOGS_FILE,
                    MESSAGE_LOGGING_FILE,
@@ -145,6 +147,14 @@ lounge_staff_roles = {387347888935534593, 399382503825211393, 399384750923579392
                       521154917675827221, 748367398905708634, 748367393264238663}
 
 
+
+#Bot Admin information
+blacklistedWordsFileIsOpen = False
+blackListedWords = set()
+botAdminsFileIsOpen = False
+botAdmins = set()
+
+
 def author_is_lounge_staff(message_author):
     for role in message_author.roles:
         if role.id in lounge_staff_roles:
@@ -172,6 +182,9 @@ lounge_channel_mappings = {lounge_server_id:LoungeUpdateChannels(
 
 def is_bad_wolf(author):
     return author.id == BAD_WOLF_ID
+
+def is_bot_admin(author):
+    return str(author.id) in botAdmins or is_bad_wolf(author)
 
 def throw_if_not_lounge(guild):
     if guild.id != lounge_server_id:
@@ -242,7 +255,7 @@ async def safe_send_file(message:discord.Message, content):
 
 #Won't throw exceptions if we're missing permissions, it's "safe"
 async def safe_send(message:discord.Message, content=None, embed=None, delete_after=None):
-    if content != None and len(content) > 1998:
+    if content is not None and len(content) > 1998:
         await safe_send_file(message, content)
         return
 

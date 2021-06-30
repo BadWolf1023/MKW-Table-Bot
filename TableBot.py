@@ -27,7 +27,7 @@ styles = {"1":("Default", "default style"),
           "5":("200 League", "200l"),
           "6":("America's Cup", "americas"),
           "7":("Euro League", "euro"),
-          "8":("マリオカートチームリーグ戦", "japan"),
+          "8":("ãƒžãƒªã‚ªã‚«ãƒ¼ãƒˆãƒ�ãƒ¼ãƒ ãƒªãƒ¼ã‚°æˆ¦", "japan"),
           "9":("Clan War League", "cwl"),
           "10":("Runners Assemble", "runners"),
           "11":("Mario Kart Worlds", "mkworlds")
@@ -140,7 +140,7 @@ class ChannelBot(object):
         
         
     def getBotunlockedInStr(self):
-        if self.room == None or self.room.set_up_user == None or self.room.races == None or len(self.room.races) < 12:
+        if self.room is None or self.room.set_up_user is None or self.room.races is None or len(self.room.races) < 12:
             return None
         
         time_passed_since_lounge_finish = datetime.now() - self.loungeFinishTime
@@ -202,8 +202,8 @@ class ChannelBot(object):
             
         
     def updateLoungeFinishTime(self):
-        if self.loungeFinishTime == None and self.room != None \
-            and self.room.is_initialized() and self.room.races != None and len(self.room.races) >= 12:
+        if self.loungeFinishTime is None and self.room is not None \
+            and self.room.is_initialized() and self.room.races is not None and len(self.room.races) >= 12:
                 self.loungeFinishTime = datetime.now()
     
     
@@ -219,7 +219,7 @@ class ChannelBot(object):
         to_find = load_me[0]
 
         beautiful_soup_room_top = await WiimfiSiteFunctions.getRoomHTMLDataSmart(to_find)
-        if beautiful_soup_room_top == None:
+        if beautiful_soup_room_top is None:
             del beautiful_soup_room_top
             return False, None, None, None
         
@@ -248,14 +248,14 @@ class ChannelBot(object):
         
         
         
-        if correctLevel == None:
+        if correctLevel is None:
             return False, None, None, None
         
         
         while True:
             correctLevel = correctLevel.next_sibling
             
-            if correctLevel == None:
+            if correctLevel is None:
                 break
             if isinstance(correctLevel, NavigableString):
                 continue
@@ -306,7 +306,7 @@ class ChannelBot(object):
             rLIDs.append(rLID)
             soups.append(roomSoup)
             
-            if roomSoup == None: #wrong roomID or no races played
+            if roomSoup is None: #wrong roomID or no races played
                 break
         else:
             roomSoup = WiimfiSiteFunctions.combineSoups(soups)
@@ -319,7 +319,7 @@ class ChannelBot(object):
                 success = True
         
         while len(soups) > 0:
-            if soups[0] != None:
+            if soups[0] is not None:
                 soups[0].decompose()
             del soups[0]
         return success
@@ -356,7 +356,7 @@ class ChannelBot(object):
             self.should_send_mii_notification = False
         if in_testing_server:
             return -1
-        if self.lastWPTime == None:
+        if self.lastWPTime is None:
             return -1
         curTime = datetime.now()
         time_passed = curTime - self.lastWPTime
@@ -369,7 +369,7 @@ class ChannelBot(object):
     def getRLCooldownSeconds(self) -> int:
         if in_testing_server:
             return -1
-        if self.roomLoadTime == None:
+        if self.roomLoadTime is None:
             return -1
         curTime = datetime.now()
         time_passed = curTime - self.roomLoadTime
@@ -377,13 +377,13 @@ class ChannelBot(object):
         
         
     def isFinishedLounge(self) -> bool:
-        if self.getRoom() == None or not self.getRoom().is_initialized():
+        if self.getRoom() is None or not self.getRoom().is_initialized():
             return True
         
-        if self.room.set_up_user == None:
+        if self.room.set_up_user is None:
             return True
         
-        if self.lastWPTime != None:
+        if self.lastWPTime is not None:
             time_passed_since_last_wp = datetime.now() - self.lastWPTime
             if time_passed_since_last_wp > inactivity_unlock:
                 return True
@@ -393,14 +393,14 @@ class ChannelBot(object):
             return True
 
         
-        if self.loungeFinishTime == None:
+        if self.loungeFinishTime is None:
             return False
         
         time_passed_since_lounge_finish = datetime.now() - self.loungeFinishTime
         return time_passed_since_lounge_finish > lounge_inactivity_time_period
         
     def freeLock(self):
-        if self.room != None:
+        if self.room is not None:
             self.room.set_up_user = None
             self.room.set_up_user_display_name = ""
             self.loungeFinishTime = None

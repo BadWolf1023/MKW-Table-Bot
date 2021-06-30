@@ -111,7 +111,7 @@ class War(object):
             if this_gpNum == gpNum:
                 index = i
                 break
-        if index != None:
+        if index is not None:
             del self.manualEdits[FC][index]
             
         self.manualEdits[FC].append((gpNum, gpScore))
@@ -154,7 +154,7 @@ class War(object):
 
     def get_war_errors_string_2(self, room, replaceLounge=True):
         errors = ErrorChecker.get_war_errors_players(self, room, replaceLounge, ignoreLargeTimes=self.ignoreLargeTimes)
-        if errors == None:
+        if errors is None:
             return "Room not loaded."
         
         errors_no_large_times = ErrorChecker.get_war_errors_players(self, room, replaceLounge, ignoreLargeTimes=True)
@@ -196,7 +196,7 @@ class War(object):
     def getWarName(self, numRaces:int):
         if self.teams is None:
             raise TableBotExceptions.WarSetupStillRunning()
-        if self.warName != None:
+        if self.warName is not None:
             return self.warName
         war_string = ""
         if self.is_ffa():
@@ -213,7 +213,7 @@ class War(object):
         return war_string
     
     def getTableWarName(self, numRaces:int):
-        if self.warName == None:
+        if self.warName is None:
             return str(numRaces) + " races"
         else:
             return self.getWarName(numRaces)

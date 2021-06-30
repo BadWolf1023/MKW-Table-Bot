@@ -38,9 +38,9 @@ class Room(object):
     def initialize(self, rLIDs, roomSoup, races=None, roomID=None):
         self.rLIDs = rLIDs
         
-        if roomSoup == None:
+        if roomSoup is None:
             raise Exception
-        if self.rLIDs == None or len(self.rLIDs) == 0:
+        if self.rLIDs is None or len(self.rLIDs) == 0:
             #TODO: Here? Caller should?
             roomSoup.decompose()
             raise Exception
@@ -52,7 +52,7 @@ class Room(object):
             
         self.races = races
         self.roomID = roomID
-        if self.races == None:
+        if self.races is None:
             self.races = self.getRacesList(roomSoup, races_old)
         if len(self.races) > 0:
             self.roomID = self.races[0].roomID
@@ -66,11 +66,11 @@ class Room(object):
     
     
     def is_initialized(self):
-        return self.races != None and self.rLIDs != None and len(self.rLIDs) > 0
+        return self.races is not None and self.rLIDs is not None and len(self.rLIDs) > 0
         
     
     def had_positions_changed(self):
-        if self.races != None:
+        if self.races is not None:
             for race in self.races:
                 if race.placements_changed:
                     return True
@@ -88,7 +88,7 @@ class Room(object):
         return False, None
     
     def __remove_race__(self, raceIndex, races=None):
-        if races==None:
+        if races is None:
             races=self.races
         if raceIndex >= 0 and raceIndex < len(races):
             del races[raceIndex]
@@ -261,7 +261,7 @@ class Room(object):
         roomPosition = -1
         role = "-1"
 
-        if (allRows[1].find("b") != None):
+        if (allRows[1].find("b") is not None):
             roomPosition = 1
             role = "host"
         else:
@@ -322,7 +322,7 @@ class Room(object):
             if foundRaceHeader:
                 foundRaceHeader = False
             else:
-                if (line.get('id') != None): #Found Race Header
+                if (line.get('id') is not None): #Found Race Header
                     #_ used to be the racenumber, but mkwx deletes races 24 hours after being played. This leads to rooms getting races removed, and even though
                     #they have race numbers, the number doesn't match where they actually are on the page
                     #This was leading to out of bounds exceptions.
@@ -349,7 +349,7 @@ class Room(object):
         for raceNum, race in enumerate(races, 1):
             race.raceNumber = raceNum
         
-        if races_old != None:
+        if races_old is not None:
             for race in races_old:
                 if race.placements_changed:
                     races[race.raceNumber-1].placements_changed = True
@@ -383,7 +383,7 @@ class Room(object):
             tempSoup = WiimfiSiteFunctions.combineSoups(soups)
             
             to_return = False
-            if tempSoup != None:
+            if tempSoup is not None:
                 self.initialize(rLIDs, tempSoup)
                 tempSoup.decompose()
                 del tempSoup
@@ -399,24 +399,24 @@ class Room(object):
         return [r.track for r in self.races]
     
     def get_races_abbreviated(self, last_x_races=None):
-        if last_x_races == None:
+        if last_x_races is None:
             temp = []
             for ind,race in enumerate(self.races, 1):
-                if race.getAbbreviatedName() == None:
+                if race.getAbbreviatedName() is None:
                     return None
                 temp.append(str(ind) + ". " + race.getAbbreviatedName())
             return " | ".join(temp)
         else:
             temp = []
             for ind,race in enumerate(self.races[-last_x_races:], 1):
-                if race.getAbbreviatedName() == None:
+                if race.getAbbreviatedName() is None:
                     return None
                 temp.append(str(ind) + ". " + race.getAbbreviatedName())
             return " | ".join(temp)
         
     
     def get_races_string(self, races=None):
-        if races == None:
+        if races is None:
             races = self.getRacesPlayed()
         string_build = ""
         num = 1
@@ -446,7 +446,7 @@ class Room(object):
             
     
     def canModifyTable(self, discord_id:int):
-        if self.getSetupUser() == None or self.getSetupUser() == discord_id:
+        if self.getSetupUser() is None or self.getSetupUser() == discord_id:
             return True
         discord_ids = [data[0] for data in self.getRoomFCDiscordIDs().values()]
         return str(discord_id) in discord_ids

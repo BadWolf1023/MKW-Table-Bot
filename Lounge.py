@@ -6,7 +6,8 @@ Created on Jun 29, 2021
 import dill as pkl
 import os
 from datetime import datetime, timedelta
-from common import lounge_channel_mappings, LoungeUpdateChannels
+from common import lounge_channel_mappings
+from typing import Set
 
 
 
@@ -73,9 +74,10 @@ class Lounge:
         
     def deny_submission_id(self, submissionID):
         self.table_reports[submissionID][3] = "DENIED"
-    
-    
-    
+        
+    def get_updater_channel_ids(self) -> Set[int]:
+        return {self.channels_mapping.updater_channel_id_primary, self.channels_mapping.updater_channel_id_secondary}
+
     def get_primary_information(self):
         return (self.channels_mapping.updater_channel_id_primary,
                 self.channels_mapping.updater_link_primary,
