@@ -21,4 +21,5 @@ tablebot_data/vr_is_on.pkl
 .settings/org.eclipse.core.resources.prefs
 *.txt
 */*.txt
+*\*.txt
 
