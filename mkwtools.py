@@ -58,3 +58,4 @@ def get_wiimmfi_mii(id_type, playerid):
     return SakeMiiResponse(mii_data, mii_data.content)
 
 
+

@@ -100,3 +100,4 @@ class Player(object):
     def __str__(self):
         return "Name: " + str(self.name) + " - FC: " + self.FC + " - Role: " + self.role
         
+        

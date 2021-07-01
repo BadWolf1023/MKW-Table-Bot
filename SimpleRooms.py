@@ -329,3 +329,4 @@ if __name__ == '__main__':
         print(ctgp_ww.roomID, ctgp_ww.getRoomRating())
     print(SimpleRooms.get_embed_text_for_race(ctgp_wws, 0)[1])
         
+        

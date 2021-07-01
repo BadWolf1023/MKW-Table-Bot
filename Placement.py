@@ -81,4 +81,5 @@ class Placement(object):
             return  str(self.place) +  ". " + UtilityFunctions.process_name(self.player.name + lounge_add(self.player.FC)) + " - " +"DISCONNECTED"
         return str(self.place) +  ". " + UtilityFunctions.process_name(self.player.name + lounge_add(self.player.FC)) + " - " + self.get_time_string() 
         
+     
         

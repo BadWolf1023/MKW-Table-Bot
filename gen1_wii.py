@@ -94,3 +94,4 @@ class Gen1Wii(KaitaiStruct):
         self.unknown_11 = self._io.read_bits_int_be(1) != 0
         self._io.align_to_byte()
         self.creator_name = (self._io.read_bytes(20)).decode(u"utf-16be")
+        
