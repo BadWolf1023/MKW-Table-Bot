@@ -6,11 +6,7 @@ Mii.py: Collaboration between [WilliamTX](https://github.com/willsigg) (reading 
 
 MiiPuller.py: Collaboration between [BadWolf1023](https://github.com/BadWolf1023) and [WilliamTX](https://github.com/willsigg)	
 
-miirenderer.py: [WilliamTX](https://github.com/willsigg)
-
-mkwtools.py: [WilliamTX](https://github.com/willsigg)
-
-miirenderer.py: [WilliamTX](https://github.com/willsigg)	
+miirender.py: [WilliamTX](https://github.com/willsigg)
 
 
 ‎
