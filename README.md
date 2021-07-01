@@ -5,8 +5,11 @@ MKW Table Bot is a Discord Bot to automatically create tables for online rooms i
 
 Mii.py: Collaboration between [WilliamTX](https://github.com/willsigg) (reading mii data into class) and [BadWolf1023](https://github.com/BadWolf1023) (mii photograph functionality and destruction) 
 MiiPuller.py: Collaboration between [BadWolf1023](https://github.com/BadWolf1023) and [WilliamTX](https://github.com/willsigg) 
+
 miirenderer.py: [WilliamTX](https://github.com/willsigg) 
+
 mkwtools.py: [WilliamTX](https://github.com/willsigg) 
+
 miirenderer.py: [WilliamTX](https://github.com/willsigg) 
 
 
