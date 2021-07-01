@@ -12,7 +12,7 @@ import UserDataProcessing
 from _collections import defaultdict
 import UtilityFunctions
 from TagAI import getTagSmart
-from common import log_text, ERROR_LOGGING_TYPE
+import common
 
 class Room(object):
     '''
@@ -492,8 +492,8 @@ class Room(object):
             try:
                 save_state['races'][matchID] = recoverable_save_state
             except Exception as e:
-                log_text(f"Error in Room.get_recoverable_save_state() putting race in dictionary: {str(matchID)}", ERROR_LOGGING_TYPE)
-                log_text(str(e), ERROR_LOGGING_TYPE)
+                common.log_text(f"Error in Room.get_recoverable_save_state() putting race in dictionary: {str(matchID)}", common.ERROR_LOGGING_TYPE)
+                common.log_text(str(e), common.ERROR_LOGGING_TYPE)
         
         return save_state
     

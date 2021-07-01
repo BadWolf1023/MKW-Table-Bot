@@ -2,7 +2,7 @@ from struct import pack
 from binascii import hexlify, unhexlify
 from requests import get
 from gen1_wii import Gen1Wii
-from common import download_image
+import common
 
 
 def u8(data):
@@ -112,7 +112,7 @@ async def download_mii(original_mii_data, file_name, picture_width=512):
     mii_data = format_mii_data(original_mii_data)
     
     mii_url = get_mii_url(mii_data, picture_width)
-    success = await download_image(mii_url, file_name)
+    success = await common.download_image(mii_url, file_name)
     return success if success else None
 
 

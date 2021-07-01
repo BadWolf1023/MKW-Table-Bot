@@ -5,7 +5,7 @@ Created on Jun 25, 2021
 '''
 from typing import List
 import os
-from common import HELP_PATH, default_prefix
+import common
 
 main_help_file_list = ['main_help.txt']
 tabling_help_file_list = ['tabling_help_1.txt', 'tabling_help_2.txt']
@@ -22,7 +22,7 @@ HELP_KEY_FILES = {"help":main_help_file_list,
                   "other":old_help_file_list
                   }
 
-QUICKSTART_FILE = f"{HELP_PATH}quickstart.txt"
+QUICKSTART_FILE = f"{common.HELP_PATH}quickstart.txt"
 
 def get_help_files(args:List[str]):
     help_ind = None
@@ -40,7 +40,7 @@ def get_help_files(args:List[str]):
     return help_key
 
 
-async def send_help(message, is_lounge_server, args:List[str], prefix=default_prefix):
+async def send_help(message, is_lounge_server, args:List[str], prefix=common.default_prefix):
     help_key = get_help_files(args)
     
     if is_lounge_server and help_key == tabling_help_key:
@@ -50,7 +50,7 @@ async def send_help(message, is_lounge_server, args:List[str], prefix=default_pr
     prefix_text = ""
     help_files = HELP_KEY_FILES[help_key]
     for index, help_text_file in enumerate(help_files, 1):
-        help_file = f"{HELP_PATH}{help_text_file}"
+        help_file = f"{common.HELP_PATH}{help_text_file}"
         if os.path.isfile(help_file):
             with open(help_file, "r") as f:
                 help_text = ""

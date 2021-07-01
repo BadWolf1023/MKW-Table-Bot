@@ -6,7 +6,7 @@ Created on Jul 23, 2020
 #Module with functions for verifying room information
 from UserDataProcessing import lounge_add
 from collections import defaultdict
-from common import log_text, ERROR_LOGGING_TYPE
+import common
 
 _SINGLE_BLANK_RACE_TIME = 11
 _MULTIPLE_BLANK_RACE_TIMES = 12
@@ -129,8 +129,8 @@ def get_war_errors_players(war, room, lounge_replace=True, ignoreLargeTimes=Fals
                 if not race_errors[int(race.raceNumber)]:
                     del race_errors[int(race.raceNumber)]
             except IndexError:
-                log_text(str(missingPlayersByRace), ERROR_LOGGING_TYPE)
-                log_text(str(race), ERROR_LOGGING_TYPE)
+                common.log_text(str(missingPlayersByRace), common.ERROR_LOGGING_TYPE)
+                common.log_text(str(race), common.ERROR_LOGGING_TYPE)
                 raise
                 
             

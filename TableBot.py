@@ -12,8 +12,7 @@ from bs4 import NavigableString, Tag
 from WiimfiSiteFunctions import _is_fc
 import MiiPuller
 import concurrent.futures
-from common import in_testing_server,inactivity_time_period,lounge_inactivity_time_period,inactivity_unlock,wp_cooldown_seconds,rl_cooldown_seconds,log_text,MIIS_DISABLED,\
-    ERROR_LOGGING_TYPE
+import common
 from typing import Dict, Tuple
 import Mii
 import ServerFunctions
@@ -144,7 +143,7 @@ class ChannelBot(object):
             return None
         
         time_passed_since_lounge_finish = datetime.now() - self.loungeFinishTime
-        cooldown_time = time_passed_since_lounge_finish - lounge_inactivity_time_period
+        cooldown_time = time_passed_since_lounge_finish - common.lounge_inactivity_time_period
         return "Bot will become unlocked " + humanize.naturaltime(cooldown_time)
 
     def get_miis(self) -> Dict[str, Mii.Mii]:
@@ -169,7 +168,7 @@ class ChannelBot(object):
             except:
                 pass
     async def populate_miis(self, message_id:str):
-        if MIIS_DISABLED:
+        if common.MIIS_DISABLED:
             return
         if self.getWar() is not None and self.getWar().displayMiis:
             if self.populating:
@@ -186,7 +185,7 @@ class ChannelBot(object):
                             try:
                                 mii_pull_result = future.result()
                             except Exception as exc:
-                                log_text(f'{fc} generated an exception: {exc}', ERROR_LOGGING_TYPE)
+                                common.log_text(f'{fc} generated an exception: {exc}', common.ERROR_LOGGING_TYPE)
                             else:
                                 if not isinstance(mii_pull_result, str):
                                     self.miis[fc] = mii_pull_result
@@ -280,15 +279,15 @@ class ChannelBot(object):
             mii_classes = correctLevel.find_all(class_="mii-font")
             if len(place_in_room_str) == 0 or len(mii_classes) != 1 or not _is_fc(FC_data_str):
                 player_data[FC_data_str] = ("bad data", "bad data")
-                log_text(str(place_in_room_str), ERROR_LOGGING_TYPE)
-                log_text(str(mii_classes), ERROR_LOGGING_TYPE)
-                log_text(str(FC_data_str), ERROR_LOGGING_TYPE)
+                common.log_text(str(place_in_room_str), common.ERROR_LOGGING_TYPE)
+                common.log_text(str(mii_classes), common.ERROR_LOGGING_TYPE)
+                common.log_text(str(FC_data_str), common.ERROR_LOGGING_TYPE)
                 
             else:
                 if mii_classes[0] is None or len(mii_classes[0]) < 1:
                     player_data[FC_data_str] = ("bad data", "bad data")
-                    log_text(str(mii_classes), ERROR_LOGGING_TYPE)
-                    log_text(str(mii_classes[0]), ERROR_LOGGING_TYPE)
+                    common.log_text(str(mii_classes), common.ERROR_LOGGING_TYPE)
+                    common.log_text(str(mii_classes[0]), common.ERROR_LOGGING_TYPE)
                 else:
                     player_data[FC_data_str] = (place_in_room_str, str(mii_classes[0].contents[0]))
             
@@ -354,26 +353,26 @@ class ChannelBot(object):
     def getWPCooldownSeconds(self) -> int:
         if self.should_send_mii_notification:
             self.should_send_mii_notification = False
-        if in_testing_server:
+        if common.in_testing_server:
             return -1
         if self.lastWPTime is None:
             return -1
         curTime = datetime.now()
         time_passed = curTime - self.lastWPTime
-        return wp_cooldown_seconds - int(time_passed.total_seconds())
+        return common.wp_cooldown_seconds - int(time_passed.total_seconds())
     
     
     def updateRLCoolDown(self):
         self.roomLoadTime = datetime.now()
 
     def getRLCooldownSeconds(self) -> int:
-        if in_testing_server:
+        if common.in_testing_server:
             return -1
         if self.roomLoadTime is None:
             return -1
         curTime = datetime.now()
         time_passed = curTime - self.roomLoadTime
-        return rl_cooldown_seconds - int(time_passed.total_seconds())
+        return common.rl_cooldown_seconds - int(time_passed.total_seconds())
         
         
     def isFinishedLounge(self) -> bool:
@@ -385,11 +384,11 @@ class ChannelBot(object):
         
         if self.lastWPTime is not None:
             time_passed_since_last_wp = datetime.now() - self.lastWPTime
-            if time_passed_since_last_wp > inactivity_unlock:
+            if time_passed_since_last_wp > common.inactivity_unlock:
                 return True
             
         time_passed_since_last_used = datetime.now() - self.last_used
-        if time_passed_since_last_used > inactivity_unlock:
+        if time_passed_since_last_used > common.inactivity_unlock:
             return True
 
         
@@ -397,7 +396,7 @@ class ChannelBot(object):
             return False
         
         time_passed_since_lounge_finish = datetime.now() - self.loungeFinishTime
-        return time_passed_since_lounge_finish > lounge_inactivity_time_period
+        return time_passed_since_lounge_finish > common.lounge_inactivity_time_period
         
     def freeLock(self):
         if self.room is not None:
@@ -408,7 +407,7 @@ class ChannelBot(object):
     def isInactive(self):
         curTime = datetime.now()
         time_passed_since_last_used = curTime - self.last_used
-        return time_passed_since_last_used > inactivity_time_period
+        return time_passed_since_last_used > common.inactivity_time_period
     
     def get_save_state(self, command="Unknown Command"):
         save_state = {}

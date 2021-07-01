@@ -9,27 +9,25 @@ from datetime import datetime
 import humanize
 from pathlib import Path
 import shutil
-from common import check_create, MESSAGE_LOGGING_FILE, STATS_FILE, FILES_TO_BACKUP, ALL_PATHS
-
+import common
 
 user_delimiter = "C,'6WeWq~w,S24!z;L+EM$vL{3M,HMKjy9U2dfH8F-'mwH'2@K.qaQGpg*!StX*:D7^&P;d4@AcWS3)8f64~6CB^B4{s`>9+*brV"
 
 backup_folder = "../backups/"
-FILES_TO_BACKUP
 
 
-def backup_files(to_back_up=FILES_TO_BACKUP):
+def backup_files(to_back_up=common.FILES_TO_BACKUP):
     Path(backup_folder).mkdir(parents=True, exist_ok=True)
     todays_backup_path = backup_folder + str(datetime.date(datetime.now())) + "/"
     Path(todays_backup_path).mkdir(parents=True, exist_ok=True)
     
     #Create backup folders
-    for local_dir in ALL_PATHS:
+    for local_dir in common.ALL_PATHS:
         Path(f"{todays_backup_path}{local_dir}").mkdir(parents=True, exist_ok=True)
     
     for file_name in to_back_up:
         try:
-            check_create(file_name)
+            common.check_create(file_name)
             
             temp_file_n = file_name
             if os.path.exists(todays_backup_path + temp_file_n):
@@ -51,7 +49,7 @@ def count_lines_of_code():
                     lines_count += 1
     return lines_count
 
-def get_from_stats_file(stats_file=STATS_FILE):
+def get_from_stats_file(stats_file=common.STATS_FILE):
     global user_delimiter
     total_pictures = 0
     total_commands = 0
@@ -74,7 +72,7 @@ def get_from_stats_file(stats_file=STATS_FILE):
     return total_pictures, total_commands, total_code_lines, servers, users
 
 
-def get_combined_stats_from_both(stats_file=STATS_FILE, commands_logging=MESSAGE_LOGGING_FILE):
+def get_combined_stats_from_both(stats_file=common.STATS_FILE, commands_logging=common.MESSAGE_LOGGING_FILE):
     stats_1 = get_from_stats_file(stats_file)
     stats_2 = get_from_messages_logging_file(commands_logging)
     total_pictures = stats_1[0] + stats_2[0]
@@ -85,12 +83,12 @@ def get_combined_stats_from_both(stats_file=STATS_FILE, commands_logging=MESSAGE
     return total_pictures, total_commands, total_code_lines, stats_1[3], stats_1[4]
 
         
-def get_from_messages_logging_file(commands_logging=MESSAGE_LOGGING_FILE):
+def get_from_messages_logging_file(commands_logging=common.MESSAGE_LOGGING_FILE):
     users = set()
     servers = set()
     war_picture_count = 0
     total_commands = 0
-    check_create(commands_logging)
+    common.check_create(commands_logging)
     with open(commands_logging, "r+", encoding='utf-8') as f:
         for line_ in f:
             total_commands += 1
@@ -108,7 +106,7 @@ def get_from_messages_logging_file(commands_logging=MESSAGE_LOGGING_FILE):
     return war_picture_count, total_commands, 0, servers, users
     
 
-def dump_to_stats_file(stats_file=STATS_FILE, commands_logging=MESSAGE_LOGGING_FILE):
+def dump_to_stats_file(stats_file=common.STATS_FILE, commands_logging=common.MESSAGE_LOGGING_FILE):
     global user_delimiter
     war_picture_count, total_commands, total_code_lines, servers, users = get_combined_stats_from_both(stats_file, commands_logging)
     temp_stats = f"{stats_file}_temp"
@@ -125,11 +123,11 @@ def dump_to_stats_file(stats_file=STATS_FILE, commands_logging=MESSAGE_LOGGING_F
     os.remove(stats_file)
     os.rename(temp_stats, stats_file)
     os.remove(commands_logging)   
-    check_create(commands_logging) 
+    common.check_create(commands_logging) 
     
 
 
-def stats(num_bots:int, client=None, stats_file=STATS_FILE, commands_logging=MESSAGE_LOGGING_FILE):
+def stats(num_bots:int, client=None, stats_file=common.STATS_FILE, commands_logging=common.MESSAGE_LOGGING_FILE):
     str_build = ""
     
     war_picture_count, total_commands, total_code_lines, servers, users = get_combined_stats_from_both(stats_file, commands_logging)

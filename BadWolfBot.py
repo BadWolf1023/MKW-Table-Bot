@@ -9,15 +9,8 @@ import Race
 import help_documentation
 import commands
 import Lounge
-from common import in_testing_server, main_lounge_can_report_table, LOUNGE_ID_COUNTER_FILE, \
-LOUNGE_TABLE_UPDATES_FILE, default_prefix, MIIS_PATH, \
-SERVER_SETTINGS_PATH, FLAG_IMAGES_PATH, FONT_PATH, HELP_PATH, LOGGING_PATH, TABLE_HEADERS_PATH, \
-DATA_PATH, PRIVATE_INFO_FILE, BAD_WOLF_ID, author_is_lounge_staff, BADWOLF_PICTURE_FILE, \
-safe_send, ERROR_LOGS_FILE, TABLE_BOT_PKL_FILE, CTGP_REGION_FILE, BAD_WOLF_FACT_FILE, ERROR_LOGGING_TYPE, \
-log_text, lounge_staff_roles, lounge_server_id
-
 import TableBotExceptions
-
+import common
 #External library imports for this file
 import discord
 from discord.ext import tasks
@@ -26,7 +19,6 @@ import copy
 import sys
 import atexit
 import signal
-from collections import defaultdict
 import dill as p
 import psutil
 import random
@@ -47,28 +39,7 @@ LOUNGE_ECHELONS_CAT_ID = 389250562836922378
 LOUNGE_ECHELONS_CT_CAT_ID = 520790337443332104
 LOUNGE_COMP_DISC_ID = 455763458483421194
 TEMPORARY_VR_CATEGORIES = [LOUNGE_COMP_DISC_ID, LOUNGE_ECHELONS_CAT_ID, LOUNGE_ECHELONS_CT_CAT_ID, WAR_LOUNGE_COMP_DISC_CAT_ID, WAR_LOUNGE_ECHELONS_CAT_ID, CT_WAR_LOUNGE_ECHELONS_CAT_ID]
-
-
-blacklisted_command_count = defaultdict(int)
-bot_abuse_tracking = defaultdict(int)
-BOT_ABUSE_REPORT_CHANNEL_ID = 766272946091851776
-SPAM_THRESHOLD = 13
-WARN_THRESHOLD = 13
-AUTO_BAN_THRESHOLD = 18
-
-
-class Error(Exception):
-    """Base class"""
-    pass
-
-class RoomMissingException(Error):
-    def __init__(self):
-        pass
     
-    
-
-
-
 
 testing_bot_key = None
 real_bot_key = None
@@ -180,14 +151,14 @@ needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS
 ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | LOUNGE_TABLE_SUBMISSION_TERMS | LOUNGE_PENDING_TABLE_SUBMISSION_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | LOUNGE_NAME_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS
 
 
-if in_testing_server:
+if common.in_testing_server:
     #lounge_server_id = 739733336871665696
     #RT_UPDATER_CHANNEL = 851745996396560405
     #CT_UPDATER_CHANNEL = 742947685652365392
     #MogiUpdate.rt_summary_channels = {"1":851745996396560405, "2":None, "3":None, "4":None, "4-5":770109830957498428, "5":None, "6":None, "7":None, "squadqueue":742947723237392514}
     #MogiUpdate.ct_summary_channels = {"1":740574415057846323, "2":None, "3":None, "4":None, "4-5":None, "5":None, "6":None, "7":None, "squadqueue":742947723237392514}
     
-    lounge_staff_roles.add(740659173695553667) #Admin in test server
+    common.lounge_staff_roles.add(740659173695553667) #Admin in test server
     
 
 switch_status = True
@@ -195,7 +166,7 @@ switch_status = True
 table_bots = {}
 user_flag_exceptions = set()
 
-lounge_submissions = Lounge.Lounge(LOUNGE_ID_COUNTER_FILE, LOUNGE_TABLE_UPDATES_FILE, lounge_server_id, main_lounge_can_report_table)
+lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.lounge_server_id, common.main_lounge_can_report_table)
 
 
 
@@ -217,7 +188,7 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     
     
     for role in message_author.roles:
-        if role.id in lounge_staff_roles:
+        if role.id in common.lounge_staff_roles:
             return True
     
     
@@ -250,12 +221,12 @@ def getNumActiveWars():
 #Strips the given prefix from the start of the command
 #Note, the caller must ensure that the given string has a prefix by using has_prefix to ensure proper behaviour
 #lstrip won't work here (go read the documentation and find a scenario that it wouldn't work in)
-def strip_prefix(command, pref=default_prefix):
+def strip_prefix(command, pref=common.default_prefix):
     new_command = command[len(pref):]
     return new_command
 
 #Checks if the given string has the given prefix at the front of it
-def has_prefix(command, pref=default_prefix):
+def has_prefix(command, pref=common.default_prefix):
     if type(command) != type(""):
         return False
     if len(command) < len(pref):
@@ -327,20 +298,20 @@ def check_create_channel_bot(message:discord.Message):
     
 #Creates the necessary folders for running the bot
 def create_folders():
-    Path(MIIS_PATH).mkdir(parents=True, exist_ok=True)
-    Path(SERVER_SETTINGS_PATH).mkdir(parents=True, exist_ok=True)
-    Path(FLAG_IMAGES_PATH).mkdir(parents=True, exist_ok=True)
-    Path(FONT_PATH).mkdir(parents=True, exist_ok=True)
-    Path(HELP_PATH).mkdir(parents=True, exist_ok=True)
-    Path(LOGGING_PATH).mkdir(parents=True, exist_ok=True)
-    Path(TABLE_HEADERS_PATH).mkdir(parents=True, exist_ok=True)
-    Path(DATA_PATH).mkdir(parents=True, exist_ok=True)
+    Path(common.MIIS_PATH).mkdir(parents=True, exist_ok=True)
+    Path(common.SERVER_SETTINGS_PATH).mkdir(parents=True, exist_ok=True)
+    Path(common.FLAG_IMAGES_PATH).mkdir(parents=True, exist_ok=True)
+    Path(common.FONT_PATH).mkdir(parents=True, exist_ok=True)
+    Path(common.HELP_PATH).mkdir(parents=True, exist_ok=True)
+    Path(common.LOGGING_PATH).mkdir(parents=True, exist_ok=True)
+    Path(common.TABLE_HEADERS_PATH).mkdir(parents=True, exist_ok=True)
+    Path(common.DATA_PATH).mkdir(parents=True, exist_ok=True)
 
 #Bring in the bot key and LoungeAPI key
 def private_data_init():
     global testing_bot_key
     global real_bot_key
-    with open(PRIVATE_INFO_FILE, "r") as f:
+    with open(common.PRIVATE_INFO_FILE, "r") as f:
         testing_bot_key = f.readline().strip("\n")
         real_bot_key = f.readline().strip("\n")
         LoungeAPIFunctions.code = f.readline().strip("\n")
@@ -357,10 +328,6 @@ def initialize():
 @client.event
 async def on_message(message: discord.Message):
     ##########################################################################################At this point, we know the room exists, and we certainly have rLID. We're not sure if we have the roomID yet though.    
-    """for guild in client.guilds:
-        if guild.name == "POV: u've been ur mom'd":
-            print(guild.id)
-    return"""
     
     if message.author == client.user:
         return
@@ -368,14 +335,14 @@ async def on_message(message: discord.Message):
         return
     if not finished_on_ready:
         return
+    print(message.content)
     has_pref = None
-    global bad_wolf_facts
     try:
         
         server_id = message.guild.id
         channel_id = message.channel.id
         author_id = message.author.id
-        is_lounge_server = server_id == lounge_server_id
+        is_lounge_server = server_id == common.lounge_server_id
         
         server_prefix = ServerFunctions.get_server_prefix(server_id)
         has_pref = has_prefix(message.content, server_prefix)
@@ -400,33 +367,25 @@ async def on_message(message: discord.Message):
             return
         args = command.split()
         
-        if str(author_id) in UserDataProcessing.blacklisted_Users and author_id != BAD_WOLF_ID:
-            if has_pref:
-                if blacklisted_command_count[author_id] % 15 == 0:
-                    await message.channel.send("You have been blacklisted by a bot admin. You are not allowed to use this bot. Reason: " + str(UserDataProcessing.blacklisted_Users[str(author_id)]), delete_after=10)
-                blacklisted_command_count[author_id] += 1
-            return
+        
+        
         """if message.content.strip().lower() == 'addme':
             lounge_staff_roles.add(740659173695553667)
         elif message.content.strip().lower() == 'removeme':
             lounge_staff_roles.remove(740659173695553667)
         """
+        
+        
         if has_prefix:
             if len(args) > 0:
                 if not commands.vr_is_on and (args[0] in VERIFY_ROOM_TERMS):
                     return
-            bot_abuse_tracking[author_id] += 1
-            if bot_abuse_tracking[author_id] == WARN_THRESHOLD:
-                await message.channel.send(f"{message.author.mention} slow down, you're sending too many commands. To avoid getting banned, wait 5 minutes before sending another command.")
-            elif bot_abuse_tracking[author_id] == AUTO_BAN_THRESHOLD: #certain spam
-                UserDataProcessing.add_Blacklisted_user(str(author_id), "Automated ban - you spammed the bot. This hurts users everywhere because it slows down the bot for everyone. You can appeal in 1 week.")
-                await client.get_channel(BOT_ABUSE_REPORT_CHANNEL_ID).send(f"Automatic ban for spamming bot:\nDiscord: {str(message.author)}\nDiscord ID: {author_id}\nDisplay name: {message.author.display_name}\nLast message: {message.content}")
-                return
+
             
         if message.content.strip().lower() in ["?help"] or (client.user.mentioned_in(message) and 'help' in message.content.strip().lower()):
             if message.channel.category_id in TEMPORARY_VR_CATEGORIES:
                 return
-            if str(author_id) in UserDataProcessing.blacklisted_Users and author_id != BAD_WOLF_ID:
+            if str(author_id) in UserDataProcessing.blacklisted_Users and author_id != common.BAD_WOLF_ID:
                 #await message.channel.send("You have been blacklisted by a bot admin. You are not allowed to use this bot. Reason: " + str(UserDataProcessing.blacklisted_Users[str(author_id)]))
                 return
             else:
@@ -478,7 +437,7 @@ async def on_message(message: discord.Message):
                         await message.channel.send(f"{to_send} {this_bot.getBotunlockedInStr()}")  
             else:
                 
-                if str(author_id) in UserDataProcessing.blacklisted_Users and author_id != BAD_WOLF_ID:
+                if str(author_id) in UserDataProcessing.blacklisted_Users and author_id != common.BAD_WOLF_ID:
                     await message.channel.send(f"You have been blacklisted by a bot admin. You are not allowed to use this bot. Reason: {UserDataProcessing.blacklisted_Users[str(author_id)]}")
                 
                 elif args[0] in RESET_TERMS:
@@ -505,7 +464,7 @@ async def on_message(message: discord.Message):
                     commands.BadWolfCommands.send_all_facts_command(message, bad_wolf_facts)
                         
                 elif args[0] in START_WAR_TERMS:
-                    await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, author_is_lounge_staff)
+                    await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_lounge_staff)
                 
                 elif args[0] in TABLE_TEXT_TERMS:
                     await commands.TablingCommands.table_text_command(message, this_bot, server_prefix, is_lounge_server)
@@ -543,7 +502,7 @@ async def on_message(message: discord.Message):
                         await message.channel.send(stats_str)
                 
                 elif (args[0] in ["badwolf"]) or (len(args) > 1 and (args[0] in ["bad"] and args[1] in ["wolf"])):
-                    await message.channel.send(file=discord.File(BADWOLF_PICTURE_FILE))    
+                    await message.channel.send(file=discord.File(common.BADWOLF_PICTURE_FILE))    
                 
                 elif args[0] in INVITE_TERMS:
                     await message.channel.send(bot_invite_link)              
@@ -652,7 +611,7 @@ async def on_message(message: discord.Message):
                     print(f"get_size: to_add_fc (KiB):")
                     size_str += "\nto_add_fc (KiB): " + str(get_size(UserDataProcessing.to_add_fc)//1024)
                     print(f"get_size: bot_abuse_tracking (KiB):")
-                    size_str += "\nbot_abuse_tracking (KiB): " + str(get_size(bot_abuse_tracking)//1024)
+                    size_str += "\nbot_abuse_tracking (KiB): " + str(get_size(common.bot_abuse_tracking)//1024)
                     print(f"get_size: table_bots (KiB):")
                     size_str += "\ntable_bots (KiB): " + str(get_size(table_bots)//1024)
                     print(f"get_size: PROCESS SIZE (KiB) (virt):")
@@ -675,7 +634,7 @@ async def on_message(message: discord.Message):
                     await commands.OtherCommands.mii_command(message, args, old_command)
                 
                 elif args[0] in SET_WAR_NAME_TERMS:
-                    await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, old_command)
+                    await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, is_lounge_server, command)
                     
                 elif args[0] in LOG_TERMS:
                     await commands.OtherCommands.log_feedback_command(message, args, command)
@@ -756,25 +715,25 @@ async def on_message(message: discord.Message):
 
     except discord.errors.Forbidden:
         lounge_submissions.clear_user_cooldown(message.author)
-        await safe_send(message, "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work.")
+        await common.safe_send(message, "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work.")
     except TableBotExceptions.WarSetupStillRunning:
-        await safe_send(message, "I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
+        await common.safe_send(message, "I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
     except discord.errors.DiscordServerError:
-        await safe_send(message, "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
+        await common.safe_send(message, "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
     except aiohttp.client_exceptions.ClientOSError:
-        await safe_send(message, "Discord's servers had an error. This is usually temporary, so do your command again.")
+        await common.safe_send(message, "Discord's servers had an error. This is usually temporary, so do your command again.")
     except TableBotExceptions.NotServerAdministrator as not_admin_failure:
-        await safe_send(message, f"You are not a server administrator: {not_admin_failure}")
+        await common.safe_send(message, f"You are not a server administrator: {not_admin_failure}")
     except TableBotExceptions.NotBadWolf as not_badwolf_failure:
-        await safe_send(message, f"You are not allowed to use this command because you are not Bad Wolf: {not_badwolf_failure}")
+        await common.safe_send(message, f"You are not allowed to use this command because you are not Bad Wolf: {not_badwolf_failure}")
                         
     except:
-        with open(ERROR_LOGS_FILE, "a+") as f:
+        with open(common.ERROR_LOGS_FILE, "a+") as f:
             f.write(f"\n{str(datetime.now())}: \n")
             traceback.print_exc(file=f)
 
         lounge_submissions.clear_user_cooldown(message.author)
-        safe_send(message, f"Internal bot error. An unknown problem occurred. Please use {server_prefix}log to tell me what happened. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
+        await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please use {server_prefix}log to tell me what happened. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
         raise
     else:
         if has_pref: #No exceptions, and we did send a response, so online
@@ -792,6 +751,8 @@ async def on_ready():
         load_CTGP_region_pickle()
         commands.load_vr_is_on()
         load_bad_wolf_facts_pkl()
+    
+    common.set_bot_abuse_report_channel(client)
     updatePresence.start()
     removeInactiveTableBots.start()
     freeFinishedTableBotsLounge.start()
@@ -829,18 +790,18 @@ async def updatePresence():
 #Also clears the abuse tracking every 60 seconds
 @tasks.loop(seconds=60)
 async def checkBotAbuse():
-    global bot_abuse_tracking
     abuserIDs = set()
     
-    for user_id, message_count in bot_abuse_tracking.items():
-        if message_count > SPAM_THRESHOLD:
+    for user_id, message_count in common.bot_abuse_tracking.items():
+        if message_count > common.SPAM_THRESHOLD:
             if str(user_id) not in UserDataProcessing.blacklisted_Users:
                 abuserIDs.add(str(user_id))
-    bot_abuse_tracking.clear()
+    common.bot_abuse_tracking.clear()
     
     
     if len(abuserIDs) > 0:
-        await client.get_channel(BOT_ABUSE_REPORT_CHANNEL_ID).send(f"The following IDs were sending messages too quickly and were told to slow down: {', '.join(abuserIDs)}")
+        if common.BOT_ABUSE_REPORT_CHANNEL is not None:
+            await common.BOT_ABUSE_REPORT_CHANNEL.send(f"The following IDs were sending messages too quickly and were told to slow down: {', '.join(abuserIDs)}")
         
 
 #This function will run every 15 min, removing any table bots that are
@@ -872,24 +833,24 @@ async def stay_alive_503():
 #"finished" in Lounge - the definition of what is finished can be found in the ChannelBot class
 @tasks.loop(minutes=1)
 async def freeFinishedTableBotsLounge():
-    if lounge_server_id in table_bots:
-        for lounge_bot_channel_id in table_bots[lounge_server_id]:
-            if table_bots[lounge_server_id][lounge_bot_channel_id].isFinishedLounge(): #if the table bot is inactive, delete it
-                table_bots[lounge_server_id][lounge_bot_channel_id].freeLock()
+    if common.lounge_server_id in table_bots:
+        for lounge_bot_channel_id in table_bots[common.lounge_server_id]:
+            if table_bots[common.lounge_server_id][lounge_bot_channel_id].isFinishedLounge(): #if the table bot is inactive, delete it
+                table_bots[common.lounge_server_id][lounge_bot_channel_id].freeLock()
         
 
 def load_tablebot_pickle():
     global table_bots
-    if os.path.exists(TABLE_BOT_PKL_FILE):
-        with open(TABLE_BOT_PKL_FILE, "rb") as pickle_in:
+    if os.path.exists(common.TABLE_BOT_PKL_FILE):
+        with open(common.TABLE_BOT_PKL_FILE, "rb") as pickle_in:
             try:
                 table_bots = p.load(pickle_in)
             except:
                 print("Could not read in the pickle for table bots.")
 
 def load_CTGP_region_pickle():
-    if os.path.exists(CTGP_REGION_FILE):
-        with open(CTGP_REGION_FILE, "rb") as pickle_in:
+    if os.path.exists(common.CTGP_REGION_FILE):
+        with open(common.CTGP_REGION_FILE, "rb") as pickle_in:
             try:
                 Race.CTGP_CTWW_ROOM_TYPE = p.load(pickle_in)
             except:
@@ -901,7 +862,7 @@ def pickle_lounge_updates():
     
 def pkl_bad_wolf_facts():
     global bad_wolf_facts
-    with open(BAD_WOLF_FACT_FILE, "wb") as pickle_out:
+    with open(common.BAD_WOLF_FACT_FILE, "wb") as pickle_out:
         try:
             p.dump(bad_wolf_facts, pickle_out)
         except:
@@ -909,8 +870,8 @@ def pkl_bad_wolf_facts():
             
 def load_bad_wolf_facts_pkl():
     global bad_wolf_facts
-    if os.path.exists(BAD_WOLF_FACT_FILE):
-        with open(BAD_WOLF_FACT_FILE, "rb") as pickle_in:
+    if os.path.exists(common.BAD_WOLF_FACT_FILE):
+        with open(common.BAD_WOLF_FACT_FILE, "rb") as pickle_in:
             try:
                 bad_wolf_facts = p.load(pickle_in)
             except:
@@ -920,7 +881,7 @@ def load_bad_wolf_facts_pkl():
 def pickle_tablebots():
     global table_bots
     if table_bots is not None:
-        with open(TABLE_BOT_PKL_FILE, "wb+") as pickle_out:
+        with open(common.TABLE_BOT_PKL_FILE, "wb+") as pickle_out:
             try:
                 p.dump(table_bots, pickle_out)
                 return
@@ -930,7 +891,7 @@ def pickle_tablebots():
     print("Could not dump pickle for table bots. None existed.") 
     
 def pickle_CTGP_region():
-    with open(CTGP_REGION_FILE, "wb+") as pickle_out:
+    with open(common.CTGP_REGION_FILE, "wb+") as pickle_out:
         try:
             p.dump(Race.CTGP_CTWW_ROOM_TYPE, pickle_out)
             return
@@ -942,7 +903,7 @@ def save_data():
     successful = UserDataProcessing.non_async_dump_data()
     if not successful:
         print("LOUNGE API DATA DUMP FAILED! CRITICAL!")
-        log_text("LOUNGE API DATA DUMP FAILED! CRITICAL!", ERROR_LOGGING_TYPE)
+        common.log_text("LOUNGE API DATA DUMP FAILED! CRITICAL!", common.ERROR_LOGGING_TYPE)
     pickle_tablebots()
     pickle_CTGP_region()
     pickle_lounge_updates()
@@ -984,7 +945,7 @@ def get_size(objct, seen=None):
     return total_size
 
 def log_command_sent(message:discord.Message):
-    log_text(f"Sever: {message.guild} - Channel: {message.channel} - User: {message.author} - Command: {message.content}")
+    common.log_text(f"Sever: {message.guild} - Channel: {message.channel} - User: {message.author} - Command: {message.content}")
 
 #This function dumps everything we have pulled recently from the API
 #in our two dictionaries to local storage and the main dictionaries      
@@ -1001,7 +962,7 @@ signal.signal(signal.SIGINT, handler)
 atexit.register(save_data)
 
 initialize()
-if in_testing_server:
+if common.in_testing_server:
     client.run(testing_bot_key)
 else:
     client.run(real_bot_key)

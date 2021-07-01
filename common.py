@@ -11,6 +11,7 @@ import TableBotExceptions
 from collections import namedtuple
 import discord
 from pathlib import Path
+from collections import defaultdict
 
 MIIS_DISABLED = False
 
@@ -154,6 +155,19 @@ blackListedWords = set()
 botAdminsFileIsOpen = False
 botAdmins = set()
 
+#Abuse tracking
+bot_abuse_tracking = defaultdict(int)
+BOT_ABUSE_REPORT_CHANNEL_ID = 766272946091851776
+SPAM_THRESHOLD = 13
+WARN_THRESHOLD = 13
+AUTO_BAN_THRESHOLD = 18
+blacklisted_command_count = defaultdict(int)
+BOT_ABUSE_REPORT_CHANNEL = None
+
+def set_bot_abuse_report_channel(client):
+    global BOT_ABUSE_REPORT_CHANNEL
+    BOT_ABUSE_REPORT_CHANNEL = client.get_channel(BOT_ABUSE_REPORT_CHANNEL_ID)
+
 
 def author_is_lounge_staff(message_author):
     for role in message_author.roles:
@@ -263,5 +277,6 @@ async def safe_send(message:discord.Message, content=None, embed=None, delete_af
         await message.channel.send(content=content, embed=embed, delete_after=delete_after)
     except discord.errors.Forbidden: #Missing permissions
         await safe_send_missing_permissions(message, delete_after=10)
-        
+
+
         

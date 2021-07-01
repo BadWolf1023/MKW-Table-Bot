@@ -10,7 +10,7 @@ import os
 import cv2
 import UserDataProcessing
 import numpy as np
-from common import MII_TABLE_PICTURE_PREFIX, MII_SIZE_FOR_TABLE, DEFAULT_FOOTER_COLOR
+import common
 
 
 class Mii(KaitaiStruct):
@@ -140,7 +140,7 @@ class Mii(KaitaiStruct):
     def get_mii_picture_link(self):
         return self.folder_path + self.file_name
     def get_mii_picture_path_for_table(self):
-        return self.folder_path + MII_TABLE_PICTURE_PREFIX + self.file_name
+        return self.folder_path + common.MII_TABLE_PICTURE_PREFIX + self.file_name
     
     def main_mii_picture_exists(self):
         return os.path.exists(self.get_mii_picture_link())
@@ -165,8 +165,8 @@ class Mii(KaitaiStruct):
         if not self.main_mii_picture_exists():
             return False
         try:
-            filled_mii_image = self.__fill_transparent_background_with_color__(background_color=DEFAULT_FOOTER_COLOR)
-            resized_mii_image = self.__resize_mii_image__(mii_image=filled_mii_image, width=MII_SIZE_FOR_TABLE, height=MII_SIZE_FOR_TABLE)
+            filled_mii_image = self.__fill_transparent_background_with_color__(background_color=common.DEFAULT_FOOTER_COLOR)
+            resized_mii_image = self.__resize_mii_image__(mii_image=filled_mii_image, width=common.MII_SIZE_FOR_TABLE, height=common.MII_SIZE_FOR_TABLE)
             cv2.imwrite(self.get_mii_picture_path_for_table(), resized_mii_image)
             return True
         except:
@@ -196,7 +196,7 @@ class Mii(KaitaiStruct):
     
     #Mutates given numpy array image with all transparency replaced with given background color
     #If no image is given, tries to open the main mii image and returns that as a numpy array with all transparent color replaced with the given background color
-    def __fill_transparent_background_with_color__(self, mii_image=None, background_color=DEFAULT_FOOTER_COLOR):
+    def __fill_transparent_background_with_color__(self, mii_image=None, background_color=common.DEFAULT_FOOTER_COLOR):
         if mii_image is None:
             mii_image = self.__get_cv2_mii_image__()
             
@@ -208,7 +208,7 @@ class Mii(KaitaiStruct):
         
         return mii_image
     
-    def __resize_mii_image__(self, mii_image=None, width=MII_SIZE_FOR_TABLE, height=MII_SIZE_FOR_TABLE):
+    def __resize_mii_image__(self, mii_image=None, width=common.MII_SIZE_FOR_TABLE, height=common.MII_SIZE_FOR_TABLE):
         if mii_image is None:
             mii_image = self.__get_cv2_mii_image__()
         return cv2.resize(mii_image, dsize=(width, height), interpolation=cv2.INTER_CUBIC)

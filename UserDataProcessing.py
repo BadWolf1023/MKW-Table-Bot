@@ -6,7 +6,7 @@ Created on Jul 25, 2020
 #DN = Discord Name
 import os
 from typing import Dict, Tuple
-from common import check_create, BLACKLISTED_USERS_FILE, FC_DISCORD_ID_FILE, FLAG_EXCEPTION_FILE, FLAG_CODES_FILE, DISCORD_ID_LOUNGES_FILE, DISCORD_ID_FLAGS_FILE
+import common
 from datetime import datetime, timedelta
 
 
@@ -49,8 +49,8 @@ def lounge_get(fc, lounge_replace=True):
     return ""
 
 
-def read_Blacklisted_file(filename=BLACKLISTED_USERS_FILE):
-    check_create(filename)
+def read_Blacklisted_file(filename=common.BLACKLISTED_USERS_FILE):
+    common.check_create(filename)
     temp = {}
     with open(filename, "r", encoding="utf-8", errors="replace" ) as f:
         for line in f:
@@ -64,8 +64,8 @@ def add_Blacklisted_user(discord_id, reason):
     if discord_id in blacklisted_Users:
         del blacklisted_Users[discord_id]
         
-        temp_file_name = f"{BLACKLISTED_USERS_FILE}_temp"
-        with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(BLACKLISTED_USERS_FILE, "r", encoding="utf-8", errors="replace") as original:
+        temp_file_name = f"{common.BLACKLISTED_USERS_FILE}_temp"
+        with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.BLACKLISTED_USERS_FILE, "r", encoding="utf-8", errors="replace") as original:
             for line in original:
                 if line.strip("\n").split(seperator)[0] != discord_id:
                     temp_out.write(line)
@@ -74,19 +74,19 @@ def add_Blacklisted_user(discord_id, reason):
                 temp_out.write(discord_id + seperator + reason + "\n")
                 blacklisted_Users[discord_id] = reason
                     
-        os.remove(BLACKLISTED_USERS_FILE)
-        os.rename(temp_file_name, BLACKLISTED_USERS_FILE)
+        os.remove(common.BLACKLISTED_USERS_FILE)
+        os.rename(temp_file_name, common.BLACKLISTED_USERS_FILE)
     else:
         if reason not in ["unban", "remove", "unblacklist", ""]:
-            with open(BLACKLISTED_USERS_FILE, "a", encoding="utf-8", errors="replace") as f:
+            with open(common.BLACKLISTED_USERS_FILE, "a", encoding="utf-8", errors="replace") as f:
                 f.write(str(discord_id) + seperator + reason + "\n")
                 blacklisted_Users[discord_id] = reason
     
     return True
 
    
-def read_DiscordID_Flags_file(filename=DISCORD_ID_FLAGS_FILE):
-    check_create(filename)
+def read_DiscordID_Flags_file(filename=common.DISCORD_ID_FLAGS_FILE):
+    common.check_create(filename)
     temp = {}
     with open(filename, "r", encoding="utf-8", errors="replace") as f:
         for line in f:
@@ -107,8 +107,8 @@ def add_flag(discord_id, flag):
         if discord_id in discordID_Flags:
             del discordID_Flags[discord_id]
             
-            temp_file_name = f"{DISCORD_ID_FLAGS_FILE}_temp"
-            with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(DISCORD_ID_FLAGS_FILE, "r", encoding="utf-8", errors="replace") as original:
+            temp_file_name = f"{common.DISCORD_ID_FLAGS_FILE}_temp"
+            with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.DISCORD_ID_FLAGS_FILE, "r", encoding="utf-8", errors="replace") as original:
                 for line in original:
                     if line.strip("\n").split(seperator)[0] != discord_id:
                         temp_out.write(line)
@@ -117,11 +117,11 @@ def add_flag(discord_id, flag):
                     temp_out.write(discord_id + seperator + flag + "\n")
                     discordID_Flags[discord_id] = flag
                         
-            os.remove(DISCORD_ID_FLAGS_FILE)
-            os.rename(temp_file_name, DISCORD_ID_FLAGS_FILE)
+            os.remove(common.DISCORD_ID_FLAGS_FILE)
+            os.rename(temp_file_name, common.DISCORD_ID_FLAGS_FILE)
         else:
             if flag not in ["none", ""]:
-                with open(DISCORD_ID_FLAGS_FILE, "a", encoding="utf-8", errors="replace") as f:
+                with open(common.DISCORD_ID_FLAGS_FILE, "a", encoding="utf-8", errors="replace") as f:
                     f.write(str(discord_id) + seperator + flag + "\n")
                     discordID_Flags[discord_id] = flag
         
@@ -137,25 +137,25 @@ def get_flag(discord_id):
     return None
     
 def flag_exception(discord_id, add=True):
-    check_create(FLAG_EXCEPTION_FILE)
+    common.check_create(common.FLAG_EXCEPTION_FILE)
     discord_id = str(discord_id)
-    temp_file_name = f"{FLAG_EXCEPTION_FILE}_temp"
-    with open(temp_file_name, "w+", encoding="utf-8", errors="replace") as temp_out, open(FLAG_EXCEPTION_FILE, "r+", encoding="utf-8", errors="replace") as original:
+    temp_file_name = f"{common.FLAG_EXCEPTION_FILE}_temp"
+    with open(temp_file_name, "w+", encoding="utf-8", errors="replace") as temp_out, open(common.FLAG_EXCEPTION_FILE, "r+", encoding="utf-8", errors="replace") as original:
         for line in original:
             if line.strip("\n").split(seperator)[0] != discord_id:
                 temp_out.write(line)
         if add:
             temp_out.write(str(discord_id) + "\n")
                 
-    os.remove(FLAG_EXCEPTION_FILE)
-    os.rename(temp_file_name, FLAG_EXCEPTION_FILE)
+    os.remove(common.FLAG_EXCEPTION_FILE)
+    os.rename(temp_file_name, common.FLAG_EXCEPTION_FILE)
    
     return True
 
 def read_flag_exceptions():
-    check_create(FLAG_EXCEPTION_FILE)
+    common.check_create(common.FLAG_EXCEPTION_FILE)
     flag_exceptions = set()
-    with open(FLAG_EXCEPTION_FILE, "r+", encoding="utf-8", errors="replace") as original:
+    with open(common.FLAG_EXCEPTION_FILE, "r+", encoding="utf-8", errors="replace") as original:
         for line in original:
             line = line.strip('\n').strip()
             if line.isnumeric():
@@ -163,8 +163,8 @@ def read_flag_exceptions():
     return flag_exceptions
  
 
-def read_DiscordID_Lounges_file(filename=DISCORD_ID_LOUNGES_FILE):
-    check_create(filename)
+def read_DiscordID_Lounges_file(filename=common.DISCORD_ID_LOUNGES_FILE):
+    common.check_create(filename)
     temp = {}
     counter = 1
     with open(filename, "r", encoding="utf-8", errors="replace" ) as f:
@@ -189,29 +189,29 @@ def non_async_dump_data():
     else:
         FC_discord_id_file_is_open = True
         discord_id_lounges_file_is_open = True
-        check_create(FC_DISCORD_ID_FILE)
-        check_create(DISCORD_ID_LOUNGES_FILE)
+        common.check_create(common.FC_DISCORD_ID_FILE)
+        common.check_create(common.DISCORD_ID_LOUNGES_FILE)
 
         
         #Next, let's add all of the fc and lounge names to the file and dictionary
-        temp_file_name = f"{DISCORD_ID_LOUNGES_FILE}_temp"
-        with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(DISCORD_ID_LOUNGES_FILE, "r", encoding="utf-8", errors="replace") as original:
+        temp_file_name = f"{common.DISCORD_ID_LOUNGES_FILE}_temp"
+        with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.DISCORD_ID_LOUNGES_FILE, "r", encoding="utf-8", errors="replace") as original:
             for discord_id, lounge_name in discordID_Lounges.items():
                 temp_out.write(discord_id + seperator + lounge_name + "\n")
                 
 
-        os.remove(DISCORD_ID_LOUNGES_FILE)
-        os.rename(temp_file_name, DISCORD_ID_LOUNGES_FILE)
+        os.remove(common.DISCORD_ID_LOUNGES_FILE)
+        os.rename(temp_file_name, common.DISCORD_ID_LOUNGES_FILE)
         
         
         
-        temp_file_name = f"{FC_DISCORD_ID_FILE}_temp"
-        with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(FC_DISCORD_ID_FILE, "r", encoding="utf-8", errors="replace") as original:
+        temp_file_name = f"{common.FC_DISCORD_ID_FILE}_temp"
+        with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.FC_DISCORD_ID_FILE, "r", encoding="utf-8", errors="replace") as original:
             for fc, (discord_id, last_used) in FC_DiscordID.items():
                 temp_out.write(fc + seperator + discord_id + seperator + str(last_used) + "\n")
         
-        os.remove(FC_DISCORD_ID_FILE)
-        os.rename(temp_file_name, FC_DISCORD_ID_FILE)
+        os.remove(common.FC_DISCORD_ID_FILE)
+        os.rename(temp_file_name, common.FC_DISCORD_ID_FILE)
         
         to_add_lounge.clear()
         to_add_fc.clear()
@@ -236,8 +236,8 @@ def add_lounge(discord_id, lounge_name):
         if discord_id in discordID_Lounges:
             del discordID_Lounges[discord_id]
             
-            temp_file_name = f"{DISCORD_ID_LOUNGES_FILE}_temp"
-            with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(DISCORD_ID_LOUNGES_FILE, "r", encoding="utf-8", errors="replace") as original:
+            temp_file_name = f"{common.DISCORD_ID_LOUNGES_FILE}_temp"
+            with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.DISCORD_ID_LOUNGES_FILE, "r", encoding="utf-8", errors="replace") as original:
                 for line in original:
                     if line.strip("\n").split(seperator)[0] != discord_id:
                         temp_out.write(line)
@@ -245,10 +245,10 @@ def add_lounge(discord_id, lounge_name):
                 temp_out.write(discord_id + seperator + lounge_name + "\n")
                 discordID_Lounges[discord_id] = lounge_name
                         
-            os.remove(DISCORD_ID_LOUNGES_FILE)
-            os.rename(temp_file_name, DISCORD_ID_LOUNGES_FILE)
+            os.remove(common.DISCORD_ID_LOUNGES_FILE)
+            os.rename(temp_file_name, common.DISCORD_ID_LOUNGES_FILE)
         else:
-            with open(DISCORD_ID_LOUNGES_FILE, "a", encoding="utf-8", errors="replace") as f:
+            with open(common.DISCORD_ID_LOUNGES_FILE, "a", encoding="utf-8", errors="replace") as f:
                 f.write(str(discord_id) + seperator + lounge_name + "\n")
                 discordID_Lounges[discord_id] = lounge_name
         
@@ -268,8 +268,8 @@ def get_lounge(discord_id):
 
 
 
-def read_FC_DiscordID_file(filename=FC_DISCORD_ID_FILE):
-    check_create(filename)
+def read_FC_DiscordID_file(filename=common.FC_DISCORD_ID_FILE):
+    common.check_create(filename)
     temp = {}
     counter = 0
     with open(filename, "r", encoding="utf-8", errors="replace") as f:
@@ -343,8 +343,8 @@ def smartUpdate(id_lounge=None, fc_id=None):
         addFCsIDs(fc_id)
         
 
-def read_valid_flags_file(filename=FLAG_CODES_FILE):
-    check_create(filename)
+def read_valid_flags_file(filename=common.FLAG_CODES_FILE):
+    common.check_create(filename)
     flag_codes = set()
     with open(filename, "r", encoding="utf-8", errors="replace") as f:
         for line in f:

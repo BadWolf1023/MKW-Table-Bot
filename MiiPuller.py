@@ -11,8 +11,7 @@ from typing import Tuple
 import Mii
 import miirender
 import requests
-from common import MIIS_PATH
-
+import common
 
 
 
@@ -61,7 +60,7 @@ async def get_mii(fc:str, message_id:str, picture_width=512):
         return NO_MII_ERROR_MESSAGE
     else:
         file_name = message_id + "_" + fc + '.png'
-        folder_path = MIIS_PATH
+        folder_path = common.MIIS_PATH
         full_download_path = folder_path + file_name
         success = await miirender.download_mii(mii_hex_str, full_download_path, picture_width=picture_width)
         if success is None:
@@ -91,7 +90,7 @@ def get_mii_blocking(fc:str, message_id:str, picture_width=512):
         return NO_MII_ERROR_MESSAGE
     else:
         file_name = message_id + "_" + fc + '.png'
-        folder_path = MIIS_PATH
+        folder_path = common.MIIS_PATH
         full_download_path = folder_path + file_name
         success = miirender.download_mii_blocking(mii_hex_str, full_download_path, picture_width=picture_width)
         if success is None:

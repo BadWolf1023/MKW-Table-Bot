@@ -4,8 +4,7 @@ Created on Aug 1, 2020
 @author: willg
 '''
 import os
-from common import check_create, default_prefix, DEFAULT_LARGE_TIME_FILE, DEFAULT_PREFIX_FILE, DEFAULT_TABLE_THEME_FILE_NAME, DEFAULT_GRAPH_FILE, DEFAULT_MII_FILE
-
+import common
 
 
 server_prefixes = {}
@@ -50,7 +49,7 @@ def get_server_graph(server_id, default_graph=default_graph):
         return default_graph
     return server_graphs[server_id]
 
-def get_server_prefix(server_id, default_prefix=default_prefix):
+def get_server_prefix(server_id, default_prefix=common.default_prefix):
     server_id = str(server_id).strip()
     if server_id not in server_prefixes:
         return default_prefix
@@ -63,7 +62,7 @@ def remove_server_setting(server_id, file_name, corresponding_dict):
     temp_file_name = f"{file_name}_temp"
         
     removed = False
-    check_create(file_name)
+    common.check_create(file_name)
     with open(temp_file_name, "w") as temp_out, open(file_name, "r") as original:
         for line in original:
             cur_server_id = line.strip("\n").split()[0].strip()
@@ -92,7 +91,7 @@ def change_server_setting(server_id, new_setting, file_name, corresponding_dict)
         if server_id in corresponding_dict:
             remove_server_setting(server_id, file_name, corresponding_dict)
         corresponding_dict[server_id] = new_setting
-        check_create(file_name)
+        common.check_create(file_name)
         with open(file_name, "a") as f:
             f.write(server_id + " " + new_setting + "\n")
         return True
@@ -101,23 +100,23 @@ def change_server_setting(server_id, new_setting, file_name, corresponding_dict)
 
 
 def change_server_prefix(server_id, new_prefix):
-    return change_server_setting(server_id, new_prefix, DEFAULT_PREFIX_FILE, server_prefixes)
+    return change_server_setting(server_id, new_prefix, common.DEFAULT_PREFIX_FILE, server_prefixes)
 
 def change_default_server_table_theme(server_id, new_theme):
-    return change_server_setting(server_id, new_theme, DEFAULT_TABLE_THEME_FILE_NAME, server_table_themes)
+    return change_server_setting(server_id, new_theme, common.DEFAULT_TABLE_THEME_FILE_NAME, server_table_themes)
 
 def change_default_server_graph(server_id, new_graph):
-    return change_server_setting(server_id, new_graph, DEFAULT_GRAPH_FILE, server_graphs)
+    return change_server_setting(server_id, new_graph, common.DEFAULT_GRAPH_FILE, server_graphs)
 
 def change_default_server_mii_setting(server_id, new_mii_setting):
-    return change_server_setting(server_id, new_mii_setting, DEFAULT_MII_FILE, server_miis)
+    return change_server_setting(server_id, new_mii_setting, common.DEFAULT_MII_FILE, server_miis)
 
 def change_default_large_time_setting(server_id, new_large_time_setting):
-    return change_server_setting(server_id, new_large_time_setting, DEFAULT_LARGE_TIME_FILE, server_large_times)
+    return change_server_setting(server_id, new_large_time_setting, common.DEFAULT_LARGE_TIME_FILE, server_large_times)
 
 
 def load_file(file_name, corresponding_dict):
-    check_create(file_name)
+    common.check_create(file_name)
     with open(file_name, "r") as f:
         for line in f:
             stuffs = line.split()
@@ -126,10 +125,10 @@ def load_file(file_name, corresponding_dict):
             corresponding_dict[server_id.strip()] = server_setting.strip()
             
 def initialize():
-    load_file(DEFAULT_PREFIX_FILE, server_prefixes)
-    load_file(DEFAULT_TABLE_THEME_FILE_NAME, server_table_themes)
-    load_file(DEFAULT_GRAPH_FILE, server_graphs)
-    load_file(DEFAULT_MII_FILE, server_miis)
-    load_file(DEFAULT_LARGE_TIME_FILE, server_large_times)
+    load_file(common.DEFAULT_PREFIX_FILE, server_prefixes)
+    load_file(common.DEFAULT_TABLE_THEME_FILE_NAME, server_table_themes)
+    load_file(common.DEFAULT_GRAPH_FILE, server_graphs)
+    load_file(common.DEFAULT_MII_FILE, server_miis)
+    load_file(common.DEFAULT_LARGE_TIME_FILE, server_large_times)
     
     

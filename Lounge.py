@@ -6,8 +6,8 @@ Created on Jun 29, 2021
 import dill as pkl
 import os
 from datetime import datetime, timedelta
-from common import lounge_channel_mappings
 from typing import Set
+import common
 
 
 
@@ -27,10 +27,10 @@ class Lounge:
         
         self.report_table_authority_check = report_authority_check
         
-        if self.server_id not in lounge_channel_mappings:
+        if self.server_id not in common.lounge_channel_mappings:
             raise Exception("Created a Lounge abomination")
         
-        self.channels_mapping:LoungeUpdateChannels = lounge_channel_mappings[self.server_id]
+        self.channels_mapping:LoungeUpdateChannels = common.lounge_channel_mappings[self.server_id]
         
         
         

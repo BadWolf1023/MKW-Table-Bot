@@ -23,11 +23,7 @@ import Race
 import MogiUpdate
 import Lounge
 import TableBotExceptions
-from common import is_bad_wolf, FEEDBACK_LOGS_FILE, ERROR_LOGS_FILE, MESSAGE_LOGGING_FILE, is_bot_admin,\
-LORENZI_FLAG_PAGE_URL_NO_PREVIEW, FLAG_IMAGES_PATH, log_text, FEEDBACK_LOGGING_TYPE, MIIS_DISABLED, \
-LEFT_ARROW_EMOTE, RIGHT_ARROW_EMOTE, embed_page_time, author_is_lounge_staff, lounge_server_id, RT_UPDATER_CHANNEL, CT_UPDATER_CHANNEL, \
-base_url_lorenzi, base_url_edit_table_lorenzi, download_image, current_notification, VR_IS_ON_FILE, botAdmins
-
+import common
 
 
 #Other library imports, other people codes
@@ -65,6 +61,33 @@ async def send_missing_permissions(channel:discord.TextChannel, content=None, de
     except discord.errors.Forbidden: #We can't send messages
         pass
     
+
+async def abuse_track_check(message:discord.Message):
+    await blacklisted_user_check(message)
+    
+    author_id = message.author.id
+    common.bot_abuse_tracking[author_id] += 1
+    if common.bot_abuse_tracking[author_id] == common.WARN_THRESHOLD:
+        await message.channel.send(f"{message.author.mention} slow down, you're sending too many commands. To avoid getting banned, wait 5 minutes before sending another command.")
+    elif common.bot_abuse_tracking[author_id] == common.AUTO_BAN_THRESHOLD: #certain spam
+        UserDataProcessing.add_Blacklisted_user(str(author_id), "Automated ban - you spammed the bot. This hurts users everywhere because it slows down the bot for everyone. You can appeal in 1 week to a bot admin or in Bad Wolf's server.")
+        if common.BOT_ABUSE_REPORT_CHANNEL is not None:
+            common.BOT_ABUSE_REPORT_CHANNEL.send(f"Automatic ban for spamming bot:\nDiscord: {str(message.author)}\nDiscord ID: {author_id}\nDisplay name: {message.author.display_name}\nLast message: {message.content}")
+        raise TableBotExceptions.BlacklistedUser("blacklisted user")
+    return True
+
+#Raises BlacklistedUser Exception if the author of the message is blacklisted
+#Sends a notification once in a while that they are blacklisted
+async def blacklisted_user_check(message:discord.Message, notify_threshold=15):
+    author_id = message.author.id
+    if str(author_id) in UserDataProcessing.blacklisted_Users and author_id != common.BAD_WOLF_ID:
+        if common.blacklisted_command_count[author_id] % notify_threshold == 0:
+            await message.channel.send("You have been blacklisted by a bot admin. You are not allowed to use this bot. Reason: " + str(UserDataProcessing.blacklisted_Users[str(author_id)]), delete_after=10)
+        common.blacklisted_command_count[author_id] += 1
+        raise TableBotExceptions.BlacklistedUser("blacklisted user")
+    return True
+        
+            
         
 """============== Bad Wolf only commands ================"""
 #TODO: Refactor these - target the waterfall-like if-statements
@@ -74,19 +97,20 @@ class BadWolfCommands:
     
     @staticmethod
     def is_badwolf_check(author, failure_message):
-        if not is_bad_wolf(author):
+        if not common.is_bad_wolf(author):
             raise TableBotExceptions.NotBadWolf(failure_message)
         return True
     
     async def get_logs_command(self, message:discord.Message):
+        await abuse_track_check()
         BadWolfCommands.is_badwolf_check(message.author, "cannot give logs")
         
-        if os.path.exists(FEEDBACK_LOGS_FILE):
-            await message.channel.send(file=discord.File(FEEDBACK_LOGS_FILE))
-        if os.path.exists(ERROR_LOGS_FILE):
-            await message.channel.send(file=discord.File(ERROR_LOGS_FILE))
-        if os.path.exists(MESSAGE_LOGGING_FILE):
-            await message.channel.send(file=discord.File(MESSAGE_LOGGING_FILE))
+        if os.path.exists(common.FEEDBACK_LOGS_FILE):
+            await message.channel.send(file=discord.File(common.FEEDBACK_LOGS_FILE))
+        if os.path.exists(common.ERROR_LOGS_FILE):
+            await message.channel.send(file=discord.File(common.ERROR_LOGS_FILE))
+        if os.path.exists(common.MESSAGE_LOGGING_FILE):
+            await message.channel.send(file=discord.File(common.MESSAGE_LOGGING_FILE))
 
         
     #Adds or removes a discord ID to/from the bot admins
@@ -187,7 +211,7 @@ class BotAdminCommands:
     
     @staticmethod
     def is_bot_admin_check(author, failure_message):
-        if not is_bot_admin(author):
+        if not common.is_bot_admin(author):
             raise TableBotExceptions.NotBotAdmin(failure_message)
         return True
     
@@ -299,7 +323,7 @@ class OtherCommands:
         author_id = message.author.id
         flag = UserDataProcessing.get_flag(author_id)
         if flag is None:
-            await message.channel.send(f"You don't have a flag set. Use {server_prefix}setflag [flag] to set your flag for tables. Flag codes can be found at: {LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+            await message.channel.send(f"You don't have a flag set. Use {server_prefix}setflag [flag] to set your flag for tables. Flag codes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
             return
         
         image_name = ""
@@ -309,7 +333,7 @@ class OtherCommands:
             image_name += f"{flag}.png"
             
         embed = discord.Embed(colour = discord.Colour.dark_blue())
-        file = discord.File(f"{FLAG_IMAGES_PATH}{image_name}", filename=image_name)
+        file = discord.File(f"{common.FLAG_IMAGES_PATH}{image_name}", filename=image_name)
         embed.set_thumbnail(url=f"attachment://{image_name}")
         await message.channel.send(file=file, embed=embed)
         
@@ -319,7 +343,7 @@ class OtherCommands:
         if len(args) > 1:
             #if 2nd argument is numeric, it's a discord ID
             if args[1].isnumeric(): #This is an admin attempt
-                if str(author_id) in botAdmins:
+                if str(author_id) in common.botAdmins:
                     if len(args) == 2 or args[2] == "none":
                         UserDataProcessing.add_flag(args[1], "")
                         await message.channel.send(str(args[1] + "'s flag was successfully removed."))
@@ -338,12 +362,12 @@ class OtherCommands:
 
             elif len(args) >= 2:
                 if args[1].lower() not in UserDataProcessing.valid_flag_codes:
-                    await message.channel.send(f"This is not a valid flag code. For a list of flags and their codes, please visit: {LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+                    await message.channel.send(f"This is not a valid flag code. For a list of flags and their codes, please visit: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
                     return
                 
                 if args[1].lower() == "none":
                     UserDataProcessing.add_flag(author_id, "")
-                    await message.channel.send(f"Your flag was successfully removed. If you want to add a flag again in the future, pick a flag code from this website: {LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+                    await message.channel.send(f"Your flag was successfully removed. If you want to add a flag again in the future, pick a flag code from this website: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
                     return
 
                 UserDataProcessing.add_flag(author_id, args[1].lower())
@@ -352,14 +376,14 @@ class OtherCommands:
             
         elif len(args) == 1:
             UserDataProcessing.add_flag(author_id, "")
-            await message.channel.send(f"Your flag was successfully removed. If you want to add a flag again in the future, pick a flag code from this website: {LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+            await message.channel.send(f"Your flag was successfully removed. If you want to add a flag again in the future, pick a flag code from this website: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
 
 
     @staticmethod
     async def log_feedback_command(message:discord.Message, args:List[str], command:str):
         if len(args) > 1:
             to_log = f"{message.author} - {message.author.id}: {command}"
-            log_text(to_log, FEEDBACK_LOGGING_TYPE)
+            common.log_text(to_log, common.FEEDBACK_LOGGING_TYPE)
             await message.channel.send("Logged") 
 
     @staticmethod
@@ -424,7 +448,7 @@ class OtherCommands:
       
     @staticmethod
     async def mii_command(message:discord.Message, args:List[str], old_command:str):
-        if MIIS_DISABLED:
+        if common.MIIS_DISABLED:
             await message.channel.send("This command is temporarily disabled.")
             return
         
@@ -500,7 +524,7 @@ class OtherCommands:
                 return
             
             def check(reaction, user):
-                return user == message.author and str(reaction.emoji) in {LEFT_ARROW_EMOTE, RIGHT_ARROW_EMOTE}
+                return user == message.author and str(reaction.emoji) in {common.LEFT_ARROW_EMOTE, common.RIGHT_ARROW_EMOTE}
         
             embed_page_start_time = datetime.now()
             sent_missing_perms_message = False
@@ -508,18 +532,18 @@ class OtherCommands:
             curRoomTxt = SimpleRooms.SimpleRooms.get_embed_text_for_race(rooms, current_page)
             should_send_error_message = False
             msg = await message.channel.send(curRoomTxt)
-            await msg.add_reaction(LEFT_ARROW_EMOTE)
-            await msg.add_reaction(RIGHT_ARROW_EMOTE)
-            while (datetime.now() - embed_page_start_time) < embed_page_time:
+            await msg.add_reaction(common.LEFT_ARROW_EMOTE)
+            await msg.add_reaction(common.RIGHT_ARROW_EMOTE)
+            while (datetime.now() - embed_page_start_time) < common.embed_page_time:
     
-                timeout_time_delta = embed_page_time - (datetime.now() - embed_page_start_time)
+                timeout_time_delta = common.embed_page_time - (datetime.now() - embed_page_start_time)
                 timeout_seconds = timeout_time_delta.total_seconds()
                 if timeout_seconds <= 0:
                     break
     
                 try:
                     reaction, user = await client.wait_for('reaction_add', timeout=timeout_seconds, check=check)
-                    if(str(reaction.emoji) == LEFT_ARROW_EMOTE):
+                    if(str(reaction.emoji) == common.LEFT_ARROW_EMOTE):
                         current_page = (current_page - 1) % (len(rooms))
                     else:
                         current_page = (current_page + 1) % (len(rooms))
@@ -540,12 +564,12 @@ class OtherCommands:
                     break
             
             try:
-                await msg.clear_reaction(LEFT_ARROW_EMOTE)
-                await msg.clear_reaction(RIGHT_ARROW_EMOTE)
+                await msg.clear_reaction(common.LEFT_ARROW_EMOTE)
+                await msg.clear_reaction(common.RIGHT_ARROW_EMOTE)
             except discord.errors.Forbidden:
                 try:
-                    await msg.remove_reaction(LEFT_ARROW_EMOTE, client.user)
-                    await msg.remove_reaction(RIGHT_ARROW_EMOTE, client.user)
+                    await msg.remove_reaction(common.LEFT_ARROW_EMOTE, client.user)
+                    await msg.remove_reaction(common.RIGHT_ARROW_EMOTE, client.user)
                 except:
                     pass
                 if message.guild is not None and not sent_missing_perms_message:
@@ -651,20 +675,20 @@ class OtherCommands:
 class LoungeCommands:
     
     @staticmethod
-    def has_authority_in_server_check(author, failure_message, authority_check=author_is_lounge_staff):
+    def has_authority_in_server_check(author, failure_message, authority_check=common.author_is_lounge_staff):
         if not authority_check(author):
             raise TableBotExceptions.NotStaff(failure_message)
         return True
     
     
     @staticmethod
-    def correct_server_check(guild, failure_message, server_id=lounge_server_id):
+    def correct_server_check(guild, failure_message, server_id=common.lounge_server_id):
         if guild.id != server_id:
             raise TableBotExceptions.WrongServer(failure_message)
         return True
     
     @staticmethod
-    def updater_channel_check(channel, failure_message, valid_channel_ids={RT_UPDATER_CHANNEL, CT_UPDATER_CHANNEL}):
+    def updater_channel_check(channel, failure_message, valid_channel_ids={common.RT_UPDATER_CHANNEL, common.CT_UPDATER_CHANNEL}):
         if channel.id not in valid_channel_ids:
             raise TableBotExceptions.WrongUpdaterChannel("failure_message")
         return True
@@ -747,10 +771,10 @@ class LoungeCommands:
                 original_table_text, table_sorted_data = SK.get_war_table_DCS(this_bot)
                 with_style_and_graph_table_text = original_table_text + this_bot.get_lorenzi_style_and_graph(prepend_newline=True)
                 url_table_text = urllib.parse.quote(with_style_and_graph_table_text)
-                image_url = base_url_lorenzi + url_table_text
+                image_url = common.base_url_lorenzi + url_table_text
                 
                 table_image_path = str(message.id) + ".png"
-                image_download_success = await download_image(image_url, table_image_path)
+                image_download_success = await common.download_image(image_url, table_image_path)
                 try:
                     if not image_download_success:
                         await message.channel.send("Could not get image for table.")
@@ -847,9 +871,9 @@ class LoungeCommands:
             
             else:
                 url_table_text = urllib.parse.quote(newTableText)
-                image_url = base_url_lorenzi + url_table_text
+                image_url = common.base_url_lorenzi + url_table_text
                 table_image_path = str(message.id) + ".png"
-                image_download_success = await download_image(image_url, table_image_path)
+                image_download_success = await common.download_image(image_url, table_image_path)
                 try:
                     if not image_download_success:
                         await message.channel.send("Could not get image for table.")
@@ -1957,10 +1981,10 @@ class TablingCommands:
                     table_text_with_style_and_graph = table_text + this_bot.get_lorenzi_style_and_graph(prepend_newline=True)
                     display_url_table_text = urllib.parse.quote(table_text)
                     true_url_table_text = urllib.parse.quote(table_text_with_style_and_graph)
-                    image_url = base_url_lorenzi + true_url_table_text
+                    image_url = common.base_url_lorenzi + true_url_table_text
                     
                     table_image_path = str(message.id) + ".png"
-                    image_download_success = await download_image(image_url, table_image_path)
+                    image_download_success = await common.download_image(image_url, table_image_path)
                     try:
                         if not image_download_success:
                             await message.channel.send("Could not download table picture.")
@@ -1980,7 +2004,7 @@ class TablingCommands:
                         else:
                             embed = discord.Embed(
                                 title = "",
-                                description="[Edit this table on Lorenzi's website](" + base_url_edit_table_lorenzi + display_url_table_text + ")",
+                                description="[Edit this table on Lorenzi's website](" + common.base_url_edit_table_lorenzi + display_url_table_text + ")",
                                 colour = discord.Colour.dark_blue()
                             )
                             
@@ -1998,8 +2022,8 @@ class TablingCommands:
                             embed.set_footer(text=temp)
                             await message.channel.send(file=file, embed=embed)
                             await message3.delete()
-                            if should_send_notification and current_notification != "":
-                                await message.channel.send(current_notification)
+                            if should_send_notification and common.current_notification != "":
+                                await message.channel.send(common.current_notification)
                     finally:
                         if os.path.exists(table_image_path):
                             os.remove(table_image_path)
@@ -2330,7 +2354,7 @@ async def send_available_large_time_options(message:discord.Message, args:List[s
 
 
 def dump_vr_is_on():
-    with open(VR_IS_ON_FILE, "wb") as pickle_out:
+    with open(common.VR_IS_ON_FILE, "wb") as pickle_out:
         try:
             pkl.dump(vr_is_on, pickle_out)
         except:
@@ -2338,12 +2362,12 @@ def dump_vr_is_on():
             
 def load_vr_is_on():
     global vr_is_on
-    if os.path.exists(VR_IS_ON_FILE):
-        with open(VR_IS_ON_FILE, "rb") as pickle_in:
+    if os.path.exists(common.VR_IS_ON_FILE):
+        with open(common.VR_IS_ON_FILE, "rb") as pickle_in:
             try:
                 vr_is_on = pkl.load(pickle_in)
             except:
-                print(f"Could not read in '{VR_IS_ON_FILE}'")
+                print(f"Could not read in '{common.VR_IS_ON_FILE}'")
                 
 def example_help(server_prefix:str, original_command:str):
     return f"Do {server_prefix}{original_command} for an example on how to use this command."
