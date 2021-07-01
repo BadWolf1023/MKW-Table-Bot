@@ -19,7 +19,4 @@ tablebot_data/tablebots.pkl
 tablebot_data/vr_is_on.pkl
 *.pyc
 .settings/org.eclipse.core.resources.prefs
-*.txt
-*/*.txt
-*\*.txt
 
