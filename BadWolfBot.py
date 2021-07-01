@@ -337,6 +337,7 @@ async def on_message(message: discord.Message):
         return
     print(message.content)
     has_pref = None
+    server_prefix = common.default_prefix
     try:
         
         server_id = message.guild.id
@@ -716,17 +717,26 @@ async def on_message(message: discord.Message):
     except discord.errors.Forbidden:
         lounge_submissions.clear_user_cooldown(message.author)
         await common.safe_send(message, "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work.")
+    except TableBotExceptions.BlacklistedUser:
+        pass #Already sent blacklisted message, if necessary
+    except TableBotExceptions.NotBadWolf as not_bad_wolf_exception:
+        await common.safe_send(message, f"You are not Bad Wolf: {not_bad_wolf_exception}")
+    except TableBotExceptions.NotBotAdmin as not_bot_admin_exception:
+        await common.safe_send(message, f"You are not a bot admin: {not_bot_admin_exception}")
+    except TableBotExceptions.NotServerAdministrator as not_admin_failure:
+        await common.safe_send(message, f"You are not a server administrator: {not_admin_failure}")
+    except TableBotExceptions.NotStaff as not_staff_exception:
+        await common.safe_send(message, f"You are not staff in this server: {not_staff_exception}")
+    except TableBotExceptions.WrongServer:
+        await common.safe_send(message, f"Not a valid command. For more help, do the command: {server_prefix}help")
+    except TableBotExceptions.WrongUpdaterChannel as wrong_updater_channel_exception:
+        await common.safe_send(message, f"Use this command in the appropriate updater channel: {wrong_updater_channel_exception}")
     except TableBotExceptions.WarSetupStillRunning:
-        await common.safe_send(message, "I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
+        await common.safe_send(message, f"I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
     except discord.errors.DiscordServerError:
         await common.safe_send(message, "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
     except aiohttp.client_exceptions.ClientOSError:
-        await common.safe_send(message, "Discord's servers had an error. This is usually temporary, so do your command again.")
-    except TableBotExceptions.NotServerAdministrator as not_admin_failure:
-        await common.safe_send(message, f"You are not a server administrator: {not_admin_failure}")
-    except TableBotExceptions.NotBadWolf as not_badwolf_failure:
-        await common.safe_send(message, f"You are not allowed to use this command because you are not Bad Wolf: {not_badwolf_failure}")
-                        
+        await common.safe_send(message, "Discord's servers had an error. This is usually temporary, so do your command again.")       
     except:
         with open(common.ERROR_LOGS_FILE, "a+") as f:
             f.write(f"\n{str(datetime.now())}: \n")

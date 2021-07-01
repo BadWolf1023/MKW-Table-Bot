@@ -690,7 +690,7 @@ class LoungeCommands:
     @staticmethod
     def updater_channel_check(channel, failure_message, valid_channel_ids={common.RT_UPDATER_CHANNEL, common.CT_UPDATER_CHANNEL}):
         if channel.id not in valid_channel_ids:
-            raise TableBotExceptions.WrongUpdaterChannel("failure_message")
+            raise TableBotExceptions.WrongUpdaterChannel(failure_message)
         return True
     
     
