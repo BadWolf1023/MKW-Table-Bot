@@ -1,0 +1,17 @@
+
+*Please note:*
+
+***You can only start a war or load a room after you have finished the first race.***
+
+Let's go through an example:
+
+**?startwar 2v2 5 1163-4318-6780**    (or ?sw command)
+This will start a 2v2v2v2v2 (that's a 2v2 with 5 teams!) looking up the room info for that FC. Alternatively, you can put a Lounge name or the rxx number of the room instead of an FC.
+
+**?warpicture **   (or ?wp command)
+This will update the room to the most recent race, table the room, and display the picture, along with any potential errors the room had. This command by default puts a player's Lounge name into the table, and if they do not have one, their mii name.
+
+This bot has additional functionality and powerful commands to help you with fixing potential errors. Read ?help or watch the ?tutorial once you have these commands figured out. The more you know about the bot, the easier it'll be to quickly do advanced things.
+
+Sincerely,
+    *- BadWolf*

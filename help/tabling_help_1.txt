@@ -21,6 +21,8 @@ Let's break that down. It's not as complicated as it seems.
 *Example:* `{SERVER_PREFIX}sw 5v5 2 psb=yes gps=5 miis=no` will try find you in a room and start a table with 2 teams having 5 players on each team. Large time errors will be hidden, the table will be 5 GPs, and mii pictures beneath the table will be off.
 *Example:* `{SERVER_PREFIX}sw 6v6 2 r1234567 gps=1` will try to load that room (see Terminology section above) and start a table with 2 teams having 6 players on each team. The table will be 1 GP.
 
+
+
 **I messed up my table pretty badly. How can I reset it?**
 Before you reset your table, MKW Table Bot keeps a history of all the changes you made. You can undo your changes one at a time by doing `{SERVER_PREFIX}undo`
 If you still want to completely reset everything, do `{SERVER_PREFIX}reset`. This cannot be undone, so be careful.
@@ -28,8 +30,34 @@ If you still want to completely reset everything, do `{SERVER_PREFIX}reset`. Thi
 **Someone disconnected, and MKW Table Bot is now displaying an error. What do I do?**
 To see a list of all the disconnections for the room, run `?dcs`
 Read this list carefully.
+**UNFINISHED**
 
 **We played a race that shouldn't be scored on the table. How can I remove it?**
+?removerace
+**UNFINISHED**
+
+**Someone's tag is incorrect on the table. How do I change their tag?**
+?changetag
+
+
+**How can I change the style of the table?**
+For a list of table themes you can use, use the command `{SERVER_PREFIX}theme`
+To change the theme of your table, use the command `{SERVER_PREFIX}theme themenumber`
+*Example:* `{SERVER_PREFIX}theme 2` will change the table's theme to **Dark Theme**
+
+**How can I change (or turn off) the graph of the table?**
+For a list of graphs you can use, use the command `{SERVER_PREFIX}graph`
+To change the graph on your table, use the command `{SERVER_PREFIX}graph graphnumber`
+*Example:* `{SERVER_PREFIX}graph 2` will change the table's graph to **Absolute**
+
+**Can the table be shown by race instead of by 4-race GPs?**
+Yes. There are two ways to do this.
+- The first way is temporary: to see the table broken down by race, do `{SERVER_PREFIX}wp race`
+- The second way changes the view size for your table until you reset or start a new table. To change the number of races that are displayed in each section of the table, do `?size displaysize`
+*Example:* `{SERVER_PREFIX}size 2` will change the view size to two races. So if the room has played 4 races, the first column of the table will be race #1 and race #2 and the second column of the table will be race #3 and race #4.
+*Note:* For scoring purposes, the number of races in a GP is always considered to be 4. This command just changes how the table is *displayed.*
+
+
 
 
 #These commands also modify the table, but can be undone using the ?undo command
@@ -41,12 +69,10 @@ PLAYER_DISCONNECT_TERMS = {"dc", "dcs"}
 MERGE_ROOM_TERMS = {"mr", "mergeroom"}
 SET_WAR_NAME_TERMS = {"setwarname"}
 CHANGE_PLAYER_NAME_TERMS = {'changename'}
-CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag', 'setteam', 'settag'}
 CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize"}
 EARLY_DC_TERMS = {'earlydc'}
 QUICK_EDIT_TERMS = {'quickedit', 'qe'}
-TABLE_THEME_TERMS = {'style', 'theme', 'tablestyle', 'tabletheme'}
-GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
+
 DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
 
 
