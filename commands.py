@@ -1051,7 +1051,8 @@ class ServerDefaultCommands:
     
     @staticmethod
     async def large_time_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        ServerDefaultCommands.server_admin_check(message.author, "cannot change server default for hiding large times on tables")
+        if not common.in_testing_server:
+            ServerDefaultCommands.server_admin_check(message.author, "cannot change server default for hiding large times on tables")
         
         server_id = message.guild.id
     
@@ -1073,7 +1074,8 @@ class ServerDefaultCommands:
 
     @staticmethod              
     async def mii_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        ServerDefaultCommands.server_admin_check(message.author, "cannot change miis default for this server")
+        if not common.in_testing_server:
+            ServerDefaultCommands.server_admin_check(message.author, "cannot change miis default for this server")
 
         server_id = message.guild.id
     
@@ -1096,7 +1098,8 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def graph_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        ServerDefaultCommands.server_admin_check(message.author, "cannot change default graph for this server")
+        if not common.in_testing_server:
+            ServerDefaultCommands.server_admin_check(message.author, "cannot change default graph for this server")
 
         server_id = message.guild.id
         if len(args) == 1:
@@ -1117,7 +1120,8 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def theme_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        ServerDefaultCommands.server_admin_check(message.author, "cannot change default table theme for this server")
+        if not common.in_testing_server:
+            ServerDefaultCommands.server_admin_check(message.author, "cannot change default table theme for this server")
         
         server_id = message.guild.id
         if len(args) == 1:
