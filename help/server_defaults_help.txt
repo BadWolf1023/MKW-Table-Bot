@@ -1,2 +1,27 @@
+You can change certain things on MKW Table Bot for your server.
 
-Blah
+**How can I change MKW Table Bot's prefix?**
+To change the prefix, do `{SERVER_PREFIX}setprefix newprefix`
+*Example:* `{SERVER_PREFIX}setprefix $$` will change MKW Table Bot's prefix to $$ in your server.
+
+**How can I change the default theme for tables?**
+For a list of all the table themes you can use, use the command `{SERVER_PREFIX}defaulttheme`
+To change the default theme of tables in your server, use the command `{SERVER_PREFIX}defaulttheme themenumber`
+*Example:* `{SERVER_PREFIX}defaulttheme 2` will make all future tables in your server have the **Dark Theme**
+*Note:* You can always change the theme for an individual table after it has been started by using the `{SERVER_PREFIX}theme` command.
+
+**How can I change the default graph on tables?**
+For a list of all graphs you can use, use the command `{SERVER_PREFIX}defaultgraph`
+To change the default graph on tables in your server, use the command `{SERVER_PREFIX}defaultgraph graphnumber`
+*Example:* `{SERVER_PREFIX}defaultgraph 2` will make all future tables in your server have the **Absolute** graph.
+*Note:* You can always change the graph for an individual table after it has been started by using the `{SERVER_PREFIX}graph` command.
+
+**For the mii heads at the bottom of the table, how can I turn those off by default?**
+To turn off mii heads by default, use the command `{SERVER_PREFIX}defaultmii 2`
+To turn on mii heads by default, use the command `{SERVER_PREFIX}defaultmii 1`
+*Note:* When you start a table, you can always override the server default by doing `miis=on` or `miis=off`. Eg `{SERVER_PREFIX}sw ffa 12 miis=on`
+
+**How can I ignore large times by default? We only table wars, and bagger large times flood the chat.**
+To automatically hide large times on tables for your server, use the command `{SERVER_PREFIX}defaultpsb 2`
+To automatically show large times on tables for your server, use the command `{SERVER_PREFIX}defaultpsb 1`
+*Note:* When you start a table, you can always override the server default by doing `psb=on` or `psb=off`. Eg `{SERVER_PREFIX}sw 5v5 2 psb=on`
