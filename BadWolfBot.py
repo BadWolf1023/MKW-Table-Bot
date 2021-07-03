@@ -48,7 +48,7 @@ bot_invite_link = "https://discord.com/api/oauth2/authorize?client_id=7357822131
 
 #These commands modify the table
 RESET_TERMS = {"reset", "restart", "cancel", "quit", "stop", "clear"}
-START_WAR_TERMS = {"startwar", "sw"}
+START_WAR_TERMS = {"startwar", "sw", "starttable"}
 UNDO_TERMS = {"undo", "undocommand", "reverse"}
 
 #These commands also modify the table, but can be undone using the ?undo command
