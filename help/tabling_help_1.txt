@@ -1,4 +1,9 @@
-Blah
+**Terminology:**
+*FC* means friend code on Mario Kart Wii. If you are not registered in Mogi Lounge, you'll need to give commands your friend code.
+*LoungeName* is the name that someone has in Mogi Lounge.
+*Mention* means you ping the person. Mentions only work if the person being mentioned is registered in Mogi Lounge.
+*RXX* is the number in your room's mkwx URL. It looks like r#######. For example, the rxx number of <https://wiimmfi.de/stats/mkwx/list/r1234567> is r1234567.
+
 
 RESET_TERMS = {"reset", "restart", "cancel", "quit", "stop", "clear"}
 START_WAR_TERMS = {"startwar", "sw"}
