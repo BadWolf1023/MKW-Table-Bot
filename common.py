@@ -16,6 +16,7 @@ from collections import defaultdict
 MIIS_DISABLED = False
 
 default_prefix = "?"
+MAX_PREFIX_LENGTH = 3
 
 current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `?help_documentation`. Server administrators have more table bot defaults they can set for their server."
 

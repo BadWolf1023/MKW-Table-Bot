@@ -248,6 +248,11 @@ async def check_default_change_pref(message:discord.Message):
         new_prefix = message.content[len("?setprefix"):].strip("\n").strip()
         if len(new_prefix) < 1:
             await message.channel.send("Cannot set an empty prefix. Prefix not changed.")
+            return True
+        if len(new_prefix) > common.MAX_PREFIX_LENGTH:
+            await message.channel.send(f"Prefixes must be {common.MAX_PREFIX_LENGTH} characters or less.")
+            return True
+        
         was_success = ServerFunctions.change_server_prefix(str(message.guild.id), new_prefix)
         if was_success:
             await message.channel.send("Prefix changed to: " + new_prefix) 

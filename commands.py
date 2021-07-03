@@ -1150,6 +1150,9 @@ class ServerDefaultCommands:
         if len(new_prefix) < 1:
             await message.channel.send("Cannot set an empty prefix. Prefix not changed.")
             return
+        if len(new_prefix) > common.MAX_PREFIX_LENGTH:
+            await message.channel.send(f"Prefixes must be {common.MAX_PREFIX_LENGTH} characters or less.")
+            return
 
         was_success = ServerFunctions.change_server_prefix(str(server_id), new_prefix)
         if was_success:
