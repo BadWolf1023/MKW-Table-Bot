@@ -11,7 +11,9 @@ main_help_file_list = ['main_help.txt']
 tabling_help_file_list = ['tabling_help_1.txt', 'tabling_help_2.txt']
 server_defaults_help_file_list = ['server_defaults_help.txt']
 flags_help_file_list = ['flags_help.txt']
-old_help_file_list = ['help_1.txt', 'help_2.txt', 'help_3.txt']
+lounge_help_file_list = ['lounge_help.txt']
+other_help_file_list = ['other_help_1.txt', 'other_help_2.txt']
+
 
 default_help_key = 'help'
 tabling_help_key = 'tabling'
@@ -19,7 +21,8 @@ HELP_KEY_FILES = {"help":main_help_file_list,
                   "tabling":tabling_help_file_list,
                   "serverdefaults":server_defaults_help_file_list,
                   "flags":flags_help_file_list,
-                  "other":old_help_file_list
+                  "lounge":lounge_help_file_list,
+                  "other":other_help_file_list
                   }
 
 QUICKSTART_FILE = f"{common.HELP_PATH}quickstart.txt"

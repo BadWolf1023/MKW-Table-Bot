@@ -1,2 +1,34 @@
-
 Blah
+
+RESET_TERMS = {"reset", "restart", "cancel", "quit", "stop", "clear"}
+START_WAR_TERMS = {"startwar", "sw"}
+UNDO_TERMS = {"undo", "undocommand", "reverse"}
+
+#These commands also modify the table, but can be undone using the ?undo command
+REMOVE_RACE_TERMS = {"removerace"}
+PLAYER_PENALTY_TERMS = {"pen", "penalty"}
+TEAM_PENALTY_TERMS = {"teampen", "teampenalty"}
+EDIT_PLAYER_SCORE_TERMS = {"edit"}
+PLAYER_DISCONNECT_TERMS = {"dc", "dcs"}
+MERGE_ROOM_TERMS = {"mr", "mergeroom"}
+SET_WAR_NAME_TERMS = {"setwarname"}
+CHANGE_PLAYER_NAME_TERMS = {'changename'}
+CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag', 'setteam', 'settag'}
+CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize"}
+EARLY_DC_TERMS = {'earlydc'}
+QUICK_EDIT_TERMS = {'quickedit', 'qe'}
+TABLE_THEME_TERMS = {'style', 'theme', 'tablestyle', 'tabletheme'}
+GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
+DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
+
+
+
+#Commands that require a war to be started, but don't modify the war/room/table in any way
+TABLE_TEXT_TERMS = {"tt", "tabletext"}
+WAR_PICTURE_TERMS = {"wp", "warpicture"}
+RACE_RESULTS_TERMS = {"rr", "raceresults"}
+RACES_TERMS = {"races"}
+RXX_TERMS = {"rxx", "rlid"}
+ALL_PLAYERS_TERMS = {"allplayers", "ap"}
+FCS_TERMS = {"fcs"}
+CURRENT_ROOM_TERMS = {"currentroom"}

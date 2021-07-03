@@ -48,9 +48,9 @@ vr_is_on = False
 
 async def sendRoomWarNotLoaded(message: discord.Message, serverPrefix:str, is_lounge=False):
     if is_lounge:
-        return await message.channel.send(f"Room is not loaded! Use the command `{serverPrefix}sw <format> <numberOfTeams>` to load a room.")  
+        return await message.channel.send(f"Room is not loaded! Use the command `{serverPrefix}sw mogiformat numberOfTeams` to load a room.")  
     else:
-        return await message.channel.send(f"Room is not loaded! Use the command `{serverPrefix}sw <format> <numberOfTeams> [LoungeName/rxx/FC] [gps=numberOfGPs] [psb=yes/no] [miis=yes/no]` to start a war.")  
+        return await message.channel.send(f"Room is not loaded! Use the command `{serverPrefix}sw warformat numberOfTeams (LoungeName/rxx/FC) (gps=numberOfGPs) (psb=on/off) (miis=yes/no)` to start a war.")  
 
 async def updateData(id_lounge, fc_id):
     UserDataProcessing.smartUpdate(id_lounge, fc_id)
