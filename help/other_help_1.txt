@@ -1,15 +1,26 @@
-Blah
+**Terminology:**
+*FC* means friend code on Mario Kart Wii. If you are not registered in Mogi Lounge, you'll need to give commands your friend code.
+*LoungeName* is the name that someone has in Mogi Lounge.
+*Mention* means you ping the person. Mentions only work if the person being mentioned is registered in Mogi Lounge.
 
-#General commands that do not require a war to be started (stateless commands)
-FC_TERMS = {"fc"}
-LOUNGE_NAME_TERMS = {"lounge", "loungename", "ln"}
-GET_FLAG_TERMS = {"getflag", "gf"}
-SET_FLAG_TERMS = {"setflag", "sf"}
-MII_TERMS = {"mii"}
-WORLDWIDE_TERMS = {"wws", "ww", "rtww", "rtwws", "worldwide", "worldwides"}
-CTWW_TERMS = {"ctgpww", "ctgpwws", "ctwws", "ctww", "ctww", "ctwws", "ctworldwide", "ctworldwides", "customtrackworldwide", "customtrackworldwides"}
-BATTLES_TERMS = {"bts", "battle", "battles", "btww", "btwws", "battleww", "battlewws", "battleworldwide", "battleworldwides"}
-VERIFY_ROOM_TERMS = {"vr", "verifyroom"}
-STATS_TERMS = {"stats", "stat"}
-INVITE_TERMS = {"invite"}
-LOG_TERMS = {"log"}
+**How can I invite MKW Table Bot to my server?**
+Just run the command `{SERVER_PREFIX}invite`
+
+**How can I get a picture of my mii?**
+You can get the a picture of the mii you most recently used on Wiimmfi along with other information by doing `{SERVER_PREFIX}mii`
+*Note:* You must be registered in Mogi Lounge for this to work. If you are not, refer to the next question below.
+
+**How can I get a picture of someone else's mii?**
+You need to know their *LoungeName*, *FC*, or *Mention* them. You can get the a picture of the mii they most recently used on Wiimmfi along with other information by doing `{SERVER_PREFIX}mii LoungeName/FC/Mention`
+*Note:* If they are not registered in Mogi Lounge, this command will only work with their FC.
+
+**Can MKW Table Bot show me the worldwides that are playing right now?**
+Certainly, MKW Table Bot can show you the regular track worldwides, custom track worldwides, and ballon battle/coin runner worldwides that are currently playing.
+For regular track worldwides, use the command `{SERVER_PREFIX}wws`
+For custom track worldwides, use the command `{SERVER_PREFIX}ctwws`
+For balloon battle/coin runner worldwides, use the command `{SERVER_PREFIX}battles`
+*Note:* Worldwides are displayed in order of most skilled to least skilled worldwides. MKW Table Bot uses several metrics to determine the skill of a worldwide.
+*Note:* For custom track worldwides, MKW Table Bot will only show worldwides playing in the current, official release of CTGP. (Custom track worldwides in other distributions, like the popular CTGP classic, won't be shown.)
+
+**What is my FC?**
+The friend code you most recently used can be displayed by doing the command `{SERVER_PREFIX}fc`

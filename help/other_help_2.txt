@@ -1,15 +1,24 @@
-Blah
+*Note:* This command only works with FCs you have registered with FriendBot in Mogi Lounge. If you just registered a new FC with FriendBot in Mogi Lounge, it can take up to 24 hours for TableBot to get your new FC.
 
-#General commands that do not require a war to be started (stateless commands)
-FC_TERMS = {"fc"}
-LOUNGE_NAME_TERMS = {"lounge", "loungename", "ln"}
-GET_FLAG_TERMS = {"getflag", "gf"}
-SET_FLAG_TERMS = {"setflag", "sf"}
-MII_TERMS = {"mii"}
-WORLDWIDE_TERMS = {"wws", "ww", "rtww", "rtwws", "worldwide", "worldwides"}
-CTWW_TERMS = {"ctgpww", "ctgpwws", "ctwws", "ctww", "ctww", "ctwws", "ctworldwide", "ctworldwides", "customtrackworldwide", "customtrackworldwides"}
-BATTLES_TERMS = {"bts", "battle", "battles", "btww", "btwws", "battleww", "battlewws", "battleworldwide", "battleworldwides"}
-VERIFY_ROOM_TERMS = {"vr", "verifyroom"}
-STATS_TERMS = {"stats", "stat"}
-INVITE_TERMS = {"invite"}
-LOG_TERMS = {"log"}
+**How can I get someone else's FC?**
+You need to know their *LoungeName* or *Mention* them. Their most recently used friend code can be displayed by doing the command `{SERVER_PREFIX}fc LoungeName/Mention`
+*Note:* This command only works with FCs they have registered with FriendBot in Mogi Lounge.
+
+**What is my name in Mogi Lounge?**
+To see what your name in Mogi Lounge is, do `{SERVER_PREFIX}loungename`
+*Note:* If you just changed your name in Mogi Lounge, it can take up to 24 hours for TableBot to get your new name.
+
+**How can I show information about a room I'm in?**
+You can see information about the room you are in by doing `{SERVER_PREFIX}vr`
+*Note:* You must be registered in Mogi Lounge for this to work. If you are not, refer to the next question below.
+
+**How can I show information about the room that someone else is in?**
+You need to know their *LoungeName*, *FC*, or *Mention* them. You can display information about the room they are in by doing `{SERVER_PREFIX}vr LoungeName/FC/Mention`
+*Note:* If they are not registered in Mogi Lounge, this command will only work with their FC.
+
+**I want to know more about MKW Table Bot.**
+Try the command `{SERVER_PREFIX}stats`
+If that's not what you were looking for, you can get support and ask questions in Bad Wolf's server by using the invite code: K937DqM
+
+**I want to give feedback or report a bug to the developer.**
+The preferred method is to use the command `{SERVER_PREFIX}log`. Feedback logs are checked daily. Alternatively, you can reach Bad Wolf in his Discord server by using the invite code: K937DqM
