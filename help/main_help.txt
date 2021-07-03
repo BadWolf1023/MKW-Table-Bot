@@ -3,4 +3,7 @@ For help related to changing MKW TableBot's default settings in your server, do:
 For help related to flags on table, do: `{SERVER_PREFIX}help flags`
 For help with anything else, do: `{SERVER_PREFIX}help other`
 
+When you are reading the documentation, anything inside of parentheses is optional. For example, `?setflag (flagcode)` would mean that you do not have to give **flagcode** to the command.
+
+
 If you're new to MKW TableBot and want to learn the basics of tabling, do: `{SERVER_PREFIX}quickstart`

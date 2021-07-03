@@ -38,7 +38,7 @@ DEFAULT_FOOTER_COLOR = np.array([23, 22, 18], dtype=np.uint8)
 MII_SIZE_FOR_TABLE = 81
 
 #Other variables
-LORENZI_FLAG_PAGE_URL = "https://gb.hlorenzi.com/help_documentation/flags"
+LORENZI_FLAG_PAGE_URL = "https://gb.hlorenzi.com/help/flags"
 LORENZI_FLAG_PAGE_URL_NO_PREVIEW = f"<{LORENZI_FLAG_PAGE_URL}>"
 
 #Various folder paths
