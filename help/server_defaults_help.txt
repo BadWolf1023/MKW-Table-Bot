@@ -1,17 +1,17 @@
-You can change certain things on MKW Table Bot for your server.
+You can change certain things on MKW Table Bot for your server. You must be an administrator in your server to use these commands. 
 
 **How can I change MKW Table Bot's prefix?**
 To change the prefix, do `{SERVER_PREFIX}setprefix newprefix`
 *Example:* `{SERVER_PREFIX}setprefix $$` will change MKW Table Bot's prefix to $$ in your server.
 
 **How can I change the default theme for tables?**
-For a list of all the table themes you can use, use the command `{SERVER_PREFIX}defaulttheme`
+For a list of table themes you can use, use the command `{SERVER_PREFIX}defaulttheme`
 To change the default theme of tables in your server, use the command `{SERVER_PREFIX}defaulttheme themenumber`
 *Example:* `{SERVER_PREFIX}defaulttheme 2` will make all future tables in your server have the **Dark Theme**
 *Note:* You can always change the theme for an individual table after it has been started by using the `{SERVER_PREFIX}theme` command.
 
 **How can I change the default graph on tables?**
-For a list of all graphs you can use, use the command `{SERVER_PREFIX}defaultgraph`
+For a list of graphs you can use, use the command `{SERVER_PREFIX}defaultgraph`
 To change the default graph on tables in your server, use the command `{SERVER_PREFIX}defaultgraph graphnumber`
 *Example:* `{SERVER_PREFIX}defaultgraph 2` will make all future tables in your server have the **Absolute** graph.
 *Note:* You can always change the graph for an individual table after it has been started by using the `{SERVER_PREFIX}graph` command.
