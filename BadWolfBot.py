@@ -39,10 +39,10 @@ LOUNGE_ECHELONS_CAT_ID = 389250562836922378
 LOUNGE_ECHELONS_CT_CAT_ID = 520790337443332104
 LOUNGE_COMP_DISC_ID = 455763458483421194
 TEMPORARY_VR_CATEGORIES = [LOUNGE_COMP_DISC_ID, LOUNGE_ECHELONS_CAT_ID, LOUNGE_ECHELONS_CT_CAT_ID, WAR_LOUNGE_COMP_DISC_CAT_ID, WAR_LOUNGE_ECHELONS_CAT_ID, CT_WAR_LOUNGE_ECHELONS_CAT_ID]
-    
 
-testing_bot_key = None
 real_bot_key = None
+beta_bot_key = None
+testing_bot_key = None
 bot_invite_link = "https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=116800&scope=bot"
 
 
@@ -314,11 +314,13 @@ def create_folders():
 
 #Bring in the bot key and LoungeAPI key
 def private_data_init():
-    global testing_bot_key
     global real_bot_key
+    global beta_bot_key
+    global testing_bot_key
     with open(common.PRIVATE_INFO_FILE, "r") as f:
-        testing_bot_key = f.readline().strip("\n")
         real_bot_key = f.readline().strip("\n")
+        beta_bot_key = f.readline().strip("\n")
+        testing_bot_key = f.readline().strip("\n")
         LoungeAPIFunctions.code = f.readline().strip("\n")
 
 #Initialize everything
@@ -979,6 +981,8 @@ atexit.register(save_data)
 initialize()
 if common.in_testing_server:
     client.run(testing_bot_key)
+elif common.running_beta:
+    client.run(beta_bot_key)
 else:
     client.run(real_bot_key)
     

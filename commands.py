@@ -1051,7 +1051,7 @@ class ServerDefaultCommands:
     
     @staticmethod
     async def large_time_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        if not common.in_testing_server:
+        if not common.running_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change server default for hiding large times on tables")
         
         server_id = message.guild.id
@@ -1074,7 +1074,7 @@ class ServerDefaultCommands:
 
     @staticmethod              
     async def mii_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        if not common.in_testing_server:
+        if not common.running_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change miis default for this server")
 
         server_id = message.guild.id
@@ -1098,7 +1098,7 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def graph_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        if not common.in_testing_server:
+        if not common.running_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change default graph for this server")
 
         server_id = message.guild.id
@@ -1120,7 +1120,7 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def theme_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        if not common.in_testing_server:
+        if not common.running_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change default table theme for this server")
         
         server_id = message.guild.id
@@ -2030,7 +2030,7 @@ class TablingCommands:
                             await message.channel.send(file=file, embed=embed)
                             await message3.delete()
                             if should_send_notification and common.current_notification != "":
-                                await message.channel.send(common.current_notification)
+                                await message.channel.send(common.current_notification.replace("{SERVER_PREFIX}", server_prefix))
                     finally:
                         if os.path.exists(table_image_path):
                             os.remove(table_image_path)
