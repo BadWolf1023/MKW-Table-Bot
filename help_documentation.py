@@ -17,7 +17,7 @@ other_help_file_list = ['other_help_1.txt', 'other_help_2.txt']
 
 default_help_key = 'help'
 tabling_help_key = 'tabling'
-HELP_KEY_FILES = {"help":main_help_file_list,
+HELP_KEY_FILES = {default_help_key:main_help_file_list,
                   tabling_help_key:tabling_help_file_list,
                   "serverdefaults":server_defaults_help_file_list,
                   "flags":flags_help_file_list,
