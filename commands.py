@@ -1477,7 +1477,7 @@ class TablingCommands:
             await message.channel.send(to_send)
             return
         
-        if len(args) == 1:
+        if len(args) < 3:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
             to_send += "\n**To change the tag of the 8th player on the list to KG, do:** *" + server_prefix + "changetag 8 KG*"
             await message.channel.send(to_send)
