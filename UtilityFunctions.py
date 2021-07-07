@@ -130,6 +130,20 @@ def removeBotAdmin(admin_id:str):
         common.botAdminsFileIsOpen = False
         return True
     
+def isfloat(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+    
+def isint(value):
+    try:
+        int(value)
+        return True
+    except ValueError:
+        return False
+    
 def initialize():
     common.botAdmins.clear()
     common.botAdmins.update(readBotAdminsFile())

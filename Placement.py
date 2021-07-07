@@ -9,8 +9,10 @@ import UtilityFunctions
 DEBUGGING = False
 DISCONNECTION_TIME = (999,999,999)
 BOGUS_TIME_LIMIT = (5,59,999)
+MINIMUM_DELTA_VALUE = -10
+MAXIMUM_DELTA_VALUE = 10
 
-class Placement(object):
+class Placement:
 
     
     def _createTime_(self, time):
@@ -34,18 +36,30 @@ class Placement(object):
             
         return (int(minute), int(second), int(millisecond))
     
+    def _process_delta_(self, delta):
+        new_delta = float(0)
+        if delta is not None and UtilityFunctions.isfloat(delta):
+            return float(delta)
+        return new_delta
+    
     def is_disconnected(self):
         return self.time == DISCONNECTION_TIME
+    
+    def is_delta_unlikely(self):
+        if self.delta is None:
+            return False
+        return self.delta < MINIMUM_DELTA_VALUE or self.delta > MAXIMUM_DELTA_VALUE
     
     def is_bogus_time(self):
         if self.is_disconnected():
             return False
         return self.time > BOGUS_TIME_LIMIT
     
-    def __init__(self, player, place, time):
+    def __init__(self, player, place, time, delta=None):
         self.player = player
         self.place = place
         self.time = self._createTime_(time)
+        self.delta = self._process_delta_(delta)
         
     
     def __lt__(self, other):
@@ -63,6 +77,9 @@ class Placement(object):
     
     def get_fc_and_name(self):
         return self.player.FC, self.player.name
+    
+    def get_time(self):
+        return self.time
     
     def get_time_string(self):
         minutes = str(self.time[0])

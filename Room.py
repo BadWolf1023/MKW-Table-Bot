@@ -272,6 +272,8 @@ class Room(object):
         #TODO: Handle VR?
         vr = str(-1)
         
+        delta = allRows[7].string #Not true delta, but significant delta (above .5)
+        
         time = str(allRows[8].string)
         
         playerName = str(allRows[9].string)
@@ -279,7 +281,7 @@ class Room(object):
         while len(allRows) > 0:
             del allRows[0]
         
-        return FC, roomPosition, role, vr, time, playerName
+        return FC, roomPosition, role, vr, delta, time, playerName
     
     def getRaceInfoFromList(self, textList):
         '''Utility Function'''
@@ -331,14 +333,14 @@ class Room(object):
                     races.insert(0, Race.Race(raceTime, matchID, raceNumber, roomID, roomType, cc, track))
                     foundRaceHeader = True
                 else:
-                    FC, roomPosition, role, vr, time, playerName = self.getPlacementInfo(line)
+                    FC, roomPosition, role, vr, delta, time, playerName = self.getPlacementInfo(line)
                     if races[0].hasFC(FC):
                         FC = FC + "-2"
                     plyr = Player.Player(FC, playerName, role, roomPosition, vr)
                     
                     if plyr.FC in self.name_changes:
                         plyr.name = self.name_changes[plyr.FC] + " (Tabler Changed)"
-                    p = Placement.Placement(plyr, -1, time)
+                    p = Placement.Placement(plyr, -1, time, delta)
                     races[0].addPlacement(p)
         
         #We have a memory leak, and it's not incredibly clear how BS4 objects work and if

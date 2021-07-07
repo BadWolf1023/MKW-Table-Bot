@@ -5,6 +5,7 @@ Created on Jul 12, 2020
 '''
 import UtilityFunctions
 import UserDataProcessing
+from Placement import DISCONNECTION_TIME
 
 CTGP_CTWW_ROOM_TYPE = 'vs_54'
 BATTLE_ROOM_TYPE = 'bt'
@@ -61,7 +62,8 @@ track_name_abbreviation_mappings = {
 def set_ctgp_region(new_region:str):
     global CTGP_CTWW_ROOM_TYPE
     CTGP_CTWW_ROOM_TYPE = new_region
-class Race(object):
+    
+class Race:
     '''
     classdocs
     '''
@@ -163,6 +165,7 @@ class Race(object):
     def getFCs(self):
         return [pl.player.FC for pl in self.placements]
     
+    
     def getTrackNameWithoutAuthor(self):
         if self.track is None or self.track == "None":
             return "No track"
@@ -211,6 +214,30 @@ class Race(object):
                     if placement_2.player.FC not in ties:
                         ties.append(placement_2.player.FC)       
         return ties
+    
+    def get_placement_times_as_set(self) -> set:
+        return set(placement.get_time() for placement in self.placements)
+    
+    #Specialized function
+    def times_are_subset_of(self, other_race) -> bool:
+        race_times_set = self.get_placement_times_as_set()
+        other_race_times_set = other_race.get_placement_times_as_set()
+        return other_race_times_set.issubset(race_times_set)
+    
+    def times_are_subset_of_and_not_all_blank(self, other_race) -> bool:
+        race_times_set = self.get_placement_times_as_set()
+        race_times_set.discard(DISCONNECTION_TIME) #Discard disconnection 
+        other_race_times_set = other_race.get_placement_times_as_set()
+        other_race_times_set.discard(DISCONNECTION_TIME)
+        #If there were no times left after removing blank times, then the entire room had blank times, which is a different error
+        if len(race_times_set) == 0 or len(other_race_times_set) == 0:
+            return False
+        
+        return other_race_times_set.issubset(race_times_set)
+    
+    def has_unusual_delta_time(self):
+        return any(True for placement in self.placements if placement.is_delta_unlikely())
+        
     
     def getPlayerObjects(self):
         players = []

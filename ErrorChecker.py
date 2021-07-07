@@ -19,6 +19,8 @@ _RACERS_TIED = 41
 _PLAYERS_CHANGED_DURING_GP = 51
 _TABLE_EDITED = 61
 _ROOM_SIZE_EDITED = 62
+_MULTIPLE_RACES_WITH_SAME_TIMES = 71
+_LARGE_DELTA_OCURRED = 72
 
 EC_Messages = {_SINGLE_BLANK_RACE_TIME: "Room had a single blank race time. If there were no disconnections, table unreliable for this GP. If someone disconnected and DC points are being counted, this will count as a DC (and you can ignore this warning).",
                _MULTIPLE_BLANK_RACE_TIMES: "Room had a multiple blank race times (but not all times were blank). If there were no disconnections, table unreliable for this GP. If multiple people disconnected and DC points are being counted, these will count as a DCs (and you can ignore this warning).",
@@ -27,7 +29,9 @@ EC_Messages = {_SINGLE_BLANK_RACE_TIME: "Room had a single blank race time. If t
                _WRONG_PLAYER_COUNT_RACE: "The number of players doesn't match how many should be playing.",
                _SINGLE_LARGE_TIME : "One player had a large finish time (anti-cheat or mkwx error). Table unreliable for this GP.",
                _MULTIPLE_LARGE_TIMES : "Multiple players had large finish times (anti-cheat or mkwx error). Table unreliable for this GP.",
-               _RACERS_TIED:"2 or more racers finished with the exact same time."}
+               _RACERS_TIED:"2 or more racers finished with the exact same time.",
+               _MULTIPLE_RACES_WITH_SAME_TIMES:"",
+               _LARGE_DELTA_OCURRED:""}
 
 EC_Messages_Alternative = {_SINGLE_BLANK_RACE_TIME: "One blank race time. If no disconnections, table unreliable for this GP. If someone disconnected and DC points are being counted, this will count as a DC (and you can ignore this warning).",
                _MULTIPLE_BLANK_RACE_TIMES: "Room had a multiple blank race times (but not all times were blank). If there were no disconnections, table unreliable for this GP. If multiple people disconnected and DC points are being counted, these will count as a DCs (and you can ignore this warning).",
@@ -36,7 +40,9 @@ EC_Messages_Alternative = {_SINGLE_BLANK_RACE_TIME: "One blank race time. If no 
                _WRONG_PLAYER_COUNT_RACE: "One or more players missing.",
                _SINGLE_LARGE_TIME : "One player had a large finish time (anti-cheat or mkwx error).",
                _MULTIPLE_LARGE_TIMES : "Multiple players had large finish times (anti-cheat or mkwx error).",
-               _RACERS_TIED:"2 or more racers finished with the exact same time."}
+               _RACERS_TIED:"2 or more racers finished with the exact same time.",
+               _MULTIPLE_RACES_WITH_SAME_TIMES:"",
+               _LARGE_DELTA_OCURRED:""}
 
 
 
@@ -51,8 +57,7 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
     startrace -= 1
     
     
-    
-    for race in room.races[startrace:endrace]:
+    for raceInd, race in enumerate(room.races[startrace:endrace], startrace):
         errors = []
         blank_time_counter = 0
         for placement in race.placements:
@@ -75,6 +80,18 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
             
         if blank_time_counter == len(race.placements):
             errors = [EC_Messages_Alternative[_ENTIRE_ROOM_BLANK_RACE_TIMES]]
+            
+        #Check if this race's times are the same as any of the previous races times (excluding blank times)
+        prior_races = room.races[startrace:raceInd]
+        for prior_race in prior_races:
+            if race.times_are_subset_of_and_not_all_blank(prior_race):
+                errors.append("This race had the exact same race times as a previous race. Table unreliable for this GP.")
+                
+        if race.has_unusual_delta_time():
+            errors.append("This race had players with impossible deltas (lag). Table unreliable for this GP.")
+            
+            
+        
             
         if race.raceNumber in room.forcedRoomSize:
             errors.append("Room size changed to " + str(room.forcedRoomSize[race.raceNumber]) + " players for this race.")

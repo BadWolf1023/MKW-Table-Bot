@@ -8,15 +8,19 @@ import re
 from datetime import datetime, timedelta
 import UserDataProcessing
 import aiohttp
-
+import codecs
 
 current_mkwx_soups = None
 mkwx_soup_last_updated = None
 mkwx_cache_time = timedelta(seconds=10)
 
 
+
 wiimmfi_url = 'https://wiimmfi.de'
 mkwxURL = 'https://wiimmfi.de/stats/mkwx'
+submkwxURL = f"{mkwxURL}/list/"
+special_test_cases = {f"{submkwxURL}r0000000":("Special room: Room has times with high deltas and a race with times that are the same as another race's times", "testing_rooms/SameTimeHighDelta.html")}
+
 
 async def fetch(session, url):
     async with session.get(url) as response:
@@ -25,6 +29,14 @@ async def fetch(session, url):
 
 async def getRoomHTML(roomLink):
     print(str(datetime.now().time()) + ": getRoomHTML(" + roomLink + ") is making an HTTPS request.")
+    
+    if roomLink in special_test_cases:
+        description, local_file_path = special_test_cases[roomLink]
+        fp = codecs.open(local_file_path, "r", "utf-8")
+        html_data = fp.read()
+        fp.close()
+        return html_data
+        
     async with aiohttp.ClientSession() as session:
         return await fetch(session, roomLink)
 
@@ -56,7 +68,7 @@ async def getMKWXSoup():
 
 
 async def getrLIDSoup(rLID):
-    roomHTML = await getRoomHTML(mkwxURL + "/list/" + rLID)
+    roomHTML = await getRoomHTML(submkwxURL + rLID)
     temp = BeautifulSoup(roomHTML, "html.parser")
     if temp.find(text="No match found!") is None:
         return temp
@@ -74,7 +86,7 @@ async def getRoomData(rid_or_rlid):
         #Check if the rLID is a valid link (bogus input check, or the link may have expired)
         rLIDSoup = await getrLIDSoup(rid_or_rlid)
         if rLIDSoup is not None:
-            return mkwxURL + "/list/" + rid_or_rlid, rid_or_rlid, rLIDSoup
+            return submkwxURL + rid_or_rlid, rid_or_rlid, rLIDSoup
         else:
             return None, None, None
         

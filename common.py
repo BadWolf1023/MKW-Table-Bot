@@ -283,4 +283,7 @@ async def safe_send(message:discord.Message, content=None, embed=None, delete_af
         await safe_send_missing_permissions(message, delete_after=10)
 
 
+
+  
+
         
