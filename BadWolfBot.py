@@ -760,6 +760,7 @@ async def on_message(message: discord.Message):
 #Read discord.py's documentation of on_ready function to understand why certain things are done in this function
 @client.event
 async def on_ready():
+    print(f"Logging in as {client.user}")
     global user_flag_exceptions
     global finished_on_ready
     
@@ -927,6 +928,7 @@ def save_data():
     pkl_bad_wolf_facts()
     Stats.backup_files()
     Stats.dump_to_stats_file()
+    print(f"{str(datetime.now())}: Finished saving data")
     
 
 def get_size(objct, seen=None):
