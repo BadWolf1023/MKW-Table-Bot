@@ -123,7 +123,7 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 **06-30-2021:**
 - TableBot code is released on Github
 
-**Version 11.0.0 released on TBD:**
+**Version 11.0.0 released on IN PROGRESS:**
 - ?defaultpsb added so server admins can set a default for their server if large times should be ignored or not
 - ?defaultmiis added so server admins can turn on/off miis in the footer by default for their server
 - Documentation overhaul, rather than a list of commands, help is now structured as sections with questions (?help with many subcommands added)
