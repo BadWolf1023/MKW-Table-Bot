@@ -342,7 +342,7 @@ async def on_message(message: discord.Message):
         return
     if not finished_on_ready:
         return
-    print(message.content)
+    
     has_pref = None
     server_prefix = common.default_prefix
     try:
@@ -672,13 +672,13 @@ async def on_message(message: discord.Message):
                         await commands.OtherCommands.vr_command(this_bot, message, args, old_command, createEmptyTableBot()) #create a new one so it won't interfere with any room they might have loaded (like a table)
                 
                 elif args[0] in WORLDWIDE_TERMS:
-                    await commands.OtherCommands.wws_command(client, this_bot, message, args, old_command, ww_type=Race.RT_WW_ROOM_TYPE)
+                    await commands.OtherCommands.wws_command(client, this_bot, message, ww_type=Race.RT_WW_ROOM_TYPE)
                 
                 elif args[0] in CTWW_TERMS:
-                    await commands.OtherCommands.wws_command(client, this_bot, message, args, old_command, ww_type=Race.CTGP_CTWW_ROOM_TYPE)  
+                    await commands.OtherCommands.wws_command(client, this_bot, message, ww_type=Race.CTGP_CTWW_ROOM_TYPE)  
                 
                 elif args[0] in BATTLES_TERMS:
-                    await commands.OtherCommands.wws_command(client, this_bot, message, args, old_command, ww_type=Race.BATTLE_ROOM_TYPE)
+                    await commands.OtherCommands.wws_command(client, this_bot, message, ww_type=Race.BATTLE_ROOM_TYPE)
                 
                 elif args[0] in MERGE_ROOM_TERMS:
                     await commands.TablingCommands.merge_room_command(message, this_bot, args, server_prefix, is_lounge_server)
