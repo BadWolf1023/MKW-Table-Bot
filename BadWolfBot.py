@@ -158,7 +158,8 @@ if common.in_testing_server:
     #MogiUpdate.rt_summary_channels = {"1":851745996396560405, "2":None, "3":None, "4":None, "4-5":770109830957498428, "5":None, "6":None, "7":None, "squadqueue":742947723237392514}
     #MogiUpdate.ct_summary_channels = {"1":740574415057846323, "2":None, "3":None, "4":None, "4-5":None, "5":None, "6":None, "7":None, "squadqueue":742947723237392514}
     
-    common.lounge_staff_roles.add(740659173695553667) #Admin in test server
+    common.lounge_staff_roles.add(740659173695553667)
+    
     
 
 switch_status = True
