@@ -136,8 +136,8 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - Mid-GP subs are supported for mogiupdate commands
 
 **Version 13.0.0 released on TBD:**
-- TableBot changes form HTML parsing to mkwx JSON, updating itself every 10 seconds
-- Paves way for faster ?wp commands since ?wp no longer pings mkwx. Paves way for automatic table updating, allowing rooms to be started before the first race finishes
+- TableBot changes from HTML parsing to mkwx JSON, updating itself every 10 seconds, and forms a picture of rooms and times
+- Paves way for faster ?wp commands since ?wp no longer pings mkwx. Paves way for automatic table updating and allows rooms to be started before the first race finishes
 
 **Version 14.0.0 released on TBD:**
 - TableBot support components (new Discord buttons) and intelligently displays buttons based on errors in recent races, typing commands greatly reduced
