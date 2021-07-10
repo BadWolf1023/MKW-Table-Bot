@@ -11,6 +11,7 @@ import commands
 import Lounge
 import TableBotExceptions
 import common
+import MogiUpdate
 #External library imports for this file
 import discord
 from discord.ext import tasks
@@ -151,24 +152,34 @@ needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS
 ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | LOUNGE_TABLE_SUBMISSION_TERMS | LOUNGE_PENDING_TABLE_SUBMISSION_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | LOUNGE_NAME_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS
 
 
-if common.in_testing_server:
-    #lounge_server_id = 739733336871665696
-    #RT_UPDATER_CHANNEL = 851745996396560405
-    #CT_UPDATER_CHANNEL = 742947685652365392
-    #MogiUpdate.rt_summary_channels = {"1":851745996396560405, "2":None, "3":None, "4":None, "4-5":770109830957498428, "5":None, "6":None, "7":None, "squadqueue":742947723237392514}
-    #MogiUpdate.ct_summary_channels = {"1":740574415057846323, "2":None, "3":None, "4":None, "4-5":None, "5":None, "6":None, "7":None, "squadqueue":742947723237392514}
-    
-    common.lounge_staff_roles.add(740659173695553667)
-    
-    
-
 switch_status = True
 
 table_bots = {}
 user_flag_exceptions = set()
 
-lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.lounge_server_id, common.main_lounge_can_report_table)
+lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.MKW_LOUNGE_SERVER_ID, common.main_lounge_can_report_table)
 
+if common.in_testing_server:
+    common.MKW_LOUNGE_SERVER_ID = common.BAD_WOLF_SERVER_ID
+    MogiUpdate.rt_summary_channels.clear()
+    MogiUpdate.rt_summary_channels.update({"1":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID})
+    MogiUpdate.ct_summary_channels.clear()
+    MogiUpdate.ct_summary_channels.update({"1":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID})
+    common.mkw_lounge_staff_roles.clear()
+    common.mkw_lounge_staff_roles.update(common.BAD_WOLF_SERVER_STAFF_ROLES)
+    lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.BAD_WOLF_SERVER_ID, common.main_lounge_can_report_table)
+    lounge_submissions.channels_mapping = common.TESTING_SERVER_LOUNGE_UPDATES
+
+elif common.running_beta:
+    common.MKW_LOUNGE_SERVER_ID = common.BAD_WOLF_SERVER_ID
+    MogiUpdate.rt_summary_channels.clear()
+    MogiUpdate.rt_summary_channels.update({"1":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID})
+    MogiUpdate.ct_summary_channels.clear()
+    MogiUpdate.ct_summary_channels.update({"1":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID})
+    common.mkw_lounge_staff_roles.clear()
+    common.mkw_lounge_staff_roles.update(common.BAD_WOLF_SERVER_STAFF_ROLES)
+    common.mkw_lounge_staff_roles.add(common.BAD_WOLF_SERVER_EVERYONE_ROLE_ID)
+    lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.BAD_WOLF_SERVER_ID, common.main_lounge_can_report_table)
 
 
 bad_wolf_facts = []
@@ -189,7 +200,7 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     
     
     for role in message_author.roles:
-        if role.id in common.lounge_staff_roles:
+        if role.id in common.mkw_lounge_staff_roles:
             return True
     
     
@@ -351,7 +362,7 @@ async def on_message(message: discord.Message):
         server_id = message.guild.id
         channel_id = message.channel.id
         author_id = message.author.id
-        is_lounge_server = server_id == common.lounge_server_id
+        is_lounge_server = server_id == common.MKW_LOUNGE_SERVER_ID
         
         server_prefix = ServerFunctions.get_server_prefix(server_id)
         has_pref = has_prefix(message.content, server_prefix)
@@ -379,9 +390,9 @@ async def on_message(message: discord.Message):
         
         
         """if message.content.strip().lower() == 'addme':
-            lounge_staff_roles.add(740659173695553667)
+            mkw_lounge_staff_roles.add(740659173695553667)
         elif message.content.strip().lower() == 'removeme':
-            lounge_staff_roles.remove(740659173695553667)
+            mkw_lounge_staff_roles.remove(740659173695553667)
         """
         
         
@@ -852,10 +863,10 @@ async def stay_alive_503():
 #"finished" in Lounge - the definition of what is finished can be found in the ChannelBot class
 @tasks.loop(minutes=1)
 async def freeFinishedTableBotsLounge():
-    if common.lounge_server_id in table_bots:
-        for lounge_bot_channel_id in table_bots[common.lounge_server_id]:
-            if table_bots[common.lounge_server_id][lounge_bot_channel_id].isFinishedLounge(): #if the table bot is inactive, delete it
-                table_bots[common.lounge_server_id][lounge_bot_channel_id].freeLock()
+    if common.MKW_LOUNGE_SERVER_ID in table_bots:
+        for lounge_bot_channel_id in table_bots[common.MKW_LOUNGE_SERVER_ID]:
+            if table_bots[common.MKW_LOUNGE_SERVER_ID][lounge_bot_channel_id].isFinishedLounge(): #if the table bot is inactive, delete it
+                table_bots[common.MKW_LOUNGE_SERVER_ID][lounge_bot_channel_id].freeLock()
         
 
 def load_tablebot_pickle():

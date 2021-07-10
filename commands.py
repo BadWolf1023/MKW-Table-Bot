@@ -46,7 +46,6 @@ vr_is_on = False
 
 
 
-
 async def sendRoomWarNotLoaded(message: discord.Message, serverPrefix:str, is_lounge=False):
     if is_lounge:
         return await message.channel.send(f"Room is not loaded! Use the command `{serverPrefix}sw mogiformat numberOfTeams` to load a room.")  
@@ -683,13 +682,13 @@ class LoungeCommands:
     
     
     @staticmethod
-    def correct_server_check(guild, failure_message, server_id=common.lounge_server_id):
+    def correct_server_check(guild, failure_message, server_id=common.MKW_LOUNGE_SERVER_ID):
         if guild.id != server_id:
             raise TableBotExceptions.WrongServer(failure_message)
         return True
     
     @staticmethod
-    def updater_channel_check(channel, failure_message, valid_channel_ids={common.RT_UPDATER_CHANNEL, common.CT_UPDATER_CHANNEL}):
+    def updater_channel_check(channel, failure_message, valid_channel_ids={common.MKW_LOUNGE_RT_UPDATER_CHANNEL, common.MKW_LOUNGE_CT_UPDATER_CHANNEL}):
         if channel.id not in valid_channel_ids:
             raise TableBotExceptions.WrongUpdaterChannel(failure_message)
         return True
@@ -931,13 +930,13 @@ class LoungeCommands:
     @staticmethod
     async def ct_mogi_update(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
         LoungeCommands.correct_server_check(message.guild, "cannot submit table update for CT mogi", lounge_server_updates.server_id)
-        LoungeCommands.__mogi_update__(client, this_bot, message, args, lounge_server_updates, is_primary=False)
+        await LoungeCommands.__mogi_update__(client, this_bot, message, args, lounge_server_updates, is_primary=False)
         
         
     @staticmethod
     async def rt_mogi_update(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
         LoungeCommands.correct_server_check(message.guild, "cannot submit table update for RT mogi", lounge_server_updates.server_id)
-        LoungeCommands.__mogi_update__(client, this_bot, message, args, lounge_server_updates, is_primary=True)
+        await LoungeCommands.__mogi_update__(client, this_bot, message, args, lounge_server_updates, is_primary=True)
     
     
     @staticmethod
