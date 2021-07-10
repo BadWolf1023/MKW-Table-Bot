@@ -23,8 +23,8 @@ MAX_PREFIX_LENGTH = 3
 current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = True
-running_beta = False
+in_testing_server = False
+running_beta = True
 
 #TableBot variables, for ChannelBots
 inactivity_time_period = timedelta(hours=2, minutes=30)
@@ -49,7 +49,7 @@ LORENZI_FLAG_PAGE_URL_NO_PREVIEW = f"<{LORENZI_FLAG_PAGE_URL}>"
 SERVER_SETTINGS_PATH = "discord_server_settings/"
 FLAG_IMAGES_PATH = "flag_images/"
 FONT_PATH = "fonts/"
-HELP_PATH = "documentation/"
+HELP_PATH = "help/"
 MIIS_PATH = "miis/"
 TABLE_HEADERS_PATH = "table_headers/"
 DATA_PATH = "tablebot_data/"
@@ -180,6 +180,8 @@ AUTO_BAN_THRESHOLD = 18
 blacklisted_command_count = defaultdict(int)
 BOT_ABUSE_REPORT_CHANNEL = None
 
+COMMAND_TRIGGER_CHARS = set(c for c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
 def set_bot_abuse_report_channel(client):
     global BOT_ABUSE_REPORT_CHANNEL
     BOT_ABUSE_REPORT_CHANNEL = client.get_channel(BOT_ABUSE_REPORT_CHANNEL_ID)
@@ -203,7 +205,7 @@ TESTING_SERVER_LOUNGE_UPDATES = LoungeUpdateChannels(
     updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
     preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
     type_text_primary="RT",
-    updater_channel_id_secondary=BAD_WOLF_SERVER_NORMAL_TESTING_ONE_CHANNEL_ID,
+    updater_channel_id_secondary=BAD_WOLF_SERVER_NORMAL_TESTING_TWO_CHANNEL_ID,
     updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
     preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
     type_text_secondary="CT")
@@ -219,7 +221,7 @@ lounge_channel_mappings = {MKW_LOUNGE_SERVER_ID:LoungeUpdateChannels(
     type_text_secondary="CT"),
     
     BAD_WOLF_SERVER_ID:LoungeUpdateChannels(
-    updater_channel_id_primary=BAD_WOLF_SERVER_BETA_TESTING_ONE_CHANNEL_ID,
+    updater_channel_id_primary=BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID,
     updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
     preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
     type_text_primary="RT",

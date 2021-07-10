@@ -355,21 +355,40 @@ async def on_message(message: discord.Message):
     if not finished_on_ready:
         return
     
-    has_pref = None
-    server_prefix = common.default_prefix
     try:
         
         server_id = message.guild.id
         channel_id = message.channel.id
         author_id = message.author.id
         is_lounge_server = server_id == common.MKW_LOUNGE_SERVER_ID
-        
         server_prefix = ServerFunctions.get_server_prefix(server_id)
-        has_pref = has_prefix(message.content, server_prefix)
+        message_has_prefix = has_prefix(message.content, server_prefix)
         if has_my_name(message.content):
             await send_bad_wolf_fact(message)
         #Message doesn't start with the server's prefix and isn't ?help
-        if not has_pref and not message.content.lower()=="?help" and not (client.user.mentioned_in(message) and 'help' in message.content.strip().lower()):
+        
+        #Suggested refactor
+        #if command_is_spam(command):
+            #return
+        #if user_is_blacklisted(message):
+            #if should_send_blacklist_message(message):
+                #send_blacklist_message(message)
+            #return
+        #if user_is_blacklisted(message):
+            #if should_send_blacklist_message(message):
+                #send_blacklist_message(message)
+            #return
+        #if should_send_help(message):
+        #    send_help()
+        #if is_prefix_change(message):
+        #    change_server_prefix_command()
+        
+        #if should_verify_room(message):
+            #verify_room()
+            
+            
+        #The following code has unusual control methods. Refactor with the above suggestion.
+        if not message_has_prefix and not message.content.lower()=="?help" and not (client.user.mentioned_in(message) and 'help' in message.content.strip().lower()):
             if message.channel.category_id not in TEMPORARY_VR_CATEGORIES:
                 return
             else:
@@ -382,21 +401,13 @@ async def on_message(message: discord.Message):
                     
         
         command = strip_prefix(message.content, server_prefix)
-        old_command = copy.copy(command)
-        if command == "" or len([c for c in command if c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"]) == 0:
+        if command == "" or len([c for c in command if c in common.COMMAND_TRIGGER_CHARS]) == 0:
             return
         args = command.split()
         
         
         
-        """if message.content.strip().lower() == 'addme':
-            mkw_lounge_staff_roles.add(740659173695553667)
-        elif message.content.strip().lower() == 'removeme':
-            mkw_lounge_staff_roles.remove(740659173695553667)
-        """
-        
-        
-        if has_prefix:
+        if message_has_prefix:
             if len(args) > 0:
                 if not commands.vr_is_on and (args[0] in VERIFY_ROOM_TERMS):
                     return
@@ -426,10 +437,10 @@ async def on_message(message: discord.Message):
                     else:
                         if args[0] in VERIFY_ROOM_TERMS:
                             if commands.vr_is_on:
-                                await commands.OtherCommands.vr_command(this_bot, message, args, old_command)
+                                await commands.OtherCommands.vr_command(this_bot, message, args, command)
                         if str_msg[0] == "?":
                             if args[0] in FC_TERMS:
-                                await commands.OtherCommands.fc_command(message, args, old_command)
+                                await commands.OtherCommands.fc_command(message, args, command)
                         return
                     
                 else:
@@ -465,7 +476,6 @@ async def on_message(message: discord.Message):
                                 
                 #Core commands
                 elif this_bot.manualWarSetUp:
-                    command = old_command
                     await commands.TablingCommands.manual_war_setup(message, this_bot, command)
                 
                 elif this_bot.prev_command_sw:
@@ -648,10 +658,10 @@ async def on_message(message: discord.Message):
                     await commands.TablingCommands.all_players_command(message, this_bot, server_prefix, is_lounge_server)
                 
                 elif args[0] in FC_TERMS:
-                    await commands.OtherCommands.fc_command(message, args, old_command)
+                    await commands.OtherCommands.fc_command(message, args, command)
                 
                 elif args[0] in MII_TERMS:
-                    await commands.OtherCommands.mii_command(message, args, old_command)
+                    await commands.OtherCommands.mii_command(message, args, command)
                 
                 elif args[0] in SET_WAR_NAME_TERMS:
                     await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, is_lounge_server, command)
@@ -681,7 +691,7 @@ async def on_message(message: discord.Message):
                 
                 elif args[0] in VERIFY_ROOM_TERMS:
                     if commands.vr_is_on:
-                        await commands.OtherCommands.vr_command(this_bot, message, args, old_command, createEmptyTableBot()) #create a new one so it won't interfere with any room they might have loaded (like a table)
+                        await commands.OtherCommands.vr_command(this_bot, message, args, command, createEmptyTableBot()) #create a new one so it won't interfere with any room they might have loaded (like a table)
                 
                 elif args[0] in WORLDWIDE_TERMS:
                     await commands.OtherCommands.wws_command(client, this_bot, message, ww_type=Race.RT_WW_ROOM_TYPE)
@@ -765,9 +775,7 @@ async def on_message(message: discord.Message):
         await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please use {server_prefix}log to tell me what happened. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
         raise
     else:
-        if has_pref: #No exceptions, and we did send a response, so online
-            pass
-
+        pass
 
 #Read discord.py's documentation of on_ready function to understand why certain things are done in this function
 @client.event
