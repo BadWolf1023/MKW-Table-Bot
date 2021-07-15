@@ -1,3 +1,5 @@
+Updated: July 14th, 2021
+
 This document servers as an overview of MKW Table Bot's releases over time, along with milestones. Many minor updates addressing bugs and text issues were issued between releases, but these are considered the large releases.
 
 **Version 1.0.0 released on 08-01-2020:**
@@ -124,12 +126,15 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - TableBot code is released on Github
 
 **Version 11.0.0 released on IN PROGRESS:**
+Finished:
 - ?defaultpsb added so server admins can set a default for their server if large times should be ignored or not
 - ?defaultmiis added so server admins can turn on/off miis in the footer by default for their server
-- Documentation overhaul, rather than a list of commands, help is now structured as sections with questions (?help with many subcommands added)
 - Display red errors header and display errors for races that have the same finish times
 - Display red errors header and display errors for races that have large deltas
 - Bring back green header
+In progress:
+- Documentation overhaul, rather than a list of commands, help is now structured as sections with questions (?help with many subcommands added)
+- Shortened Links (tinyurl) for MKW Lounge mogi updates. Discord locks on iOS when long links are clicked, so this should provide iOS users with a way to load the mmr preview link or admin panel link without locking.
 
 **Version 12.0.0 released on TBD:**
 - If users do not have a flag set, flags are automatically added to the tables based on the user's mii location data
