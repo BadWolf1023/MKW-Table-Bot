@@ -12,11 +12,12 @@ import Lounge
 import TableBotExceptions
 import common
 import MogiUpdate
+import URLShortener
+
 #External library imports for this file
 import discord
 from discord.ext import tasks
 import traceback
-import copy
 import sys
 import atexit
 import signal
@@ -28,6 +29,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import aiohttp
 import os
+
 
 finished_on_ready = False
 
@@ -329,11 +331,17 @@ def private_data_init():
     global real_bot_key
     global beta_bot_key
     global testing_bot_key
+    
+    def read_next_token(file_handle, seperation_key = ":") -> str:
+        return file_handle.readline().strip("\n").split(seperation_key)[1].strip()
+    
     with open(common.PRIVATE_INFO_FILE, "r") as f:
-        real_bot_key = f.readline().strip("\n")
-        beta_bot_key = f.readline().strip("\n")
-        testing_bot_key = f.readline().strip("\n")
-        LoungeAPIFunctions.code = f.readline().strip("\n")
+        real_bot_key = read_next_token(f)
+        beta_bot_key = read_next_token(f)
+        testing_bot_key = read_next_token(f)
+        URLShortener.BITLY_API_TOKEN = read_next_token(f)
+        URLShortener.reload_module()
+        LoungeAPIFunctions.code = read_next_token(f)
 
 #Initialize everything
 def initialize():

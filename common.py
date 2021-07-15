@@ -317,8 +317,9 @@ async def safe_send(message:discord.Message, content=None, embed=None, delete_af
     except discord.errors.Forbidden: #Missing permissions
         await safe_send_missing_permissions(message, delete_after=10)
 
-
-
   
-
-        
+#Function only for testing purposes. Do not use this in the main program code.
+def run_async_function_no_loop(function_to_call):
+    import asyncio
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(function_to_call)
