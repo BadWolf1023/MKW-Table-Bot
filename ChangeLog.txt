@@ -132,9 +132,9 @@ Finished:
 - Display red errors header and display errors for races that have the same finish times
 - Display red errors header and display errors for races that have large deltas
 - Bring back green header
+- Shortened Links (tinyurl) for MKW Lounge mogi updates. Discord locks on iOS when long links are clicked, so this should provide iOS users with a way to load the mmr preview link or admin panel link without locking.
 In progress:
 - Documentation overhaul, rather than a list of commands, help is now structured as sections with questions (?help with many subcommands added)
-- Shortened Links (tinyurl) for MKW Lounge mogi updates. Discord locks on iOS when long links are clicked, so this should provide iOS users with a way to load the mmr preview link or admin panel link without locking.
 
 **Version 12.0.0 released on TBD:**
 - If users do not have a flag set, flags are automatically added to the tables based on the user's mii location data
