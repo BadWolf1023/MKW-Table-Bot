@@ -41,6 +41,7 @@ import itertools
 import discord
 import os
 from datetime import datetime
+import URLShortener
 
 vr_is_on = False
 
@@ -823,7 +824,14 @@ class LoungeCommands:
                             embed.add_field(name='Submitted from:', value=message.channel.mention)
                             embed.add_field(name='Submitted by:', value=message.author.mention)
                             embed.add_field(name='Discord ID:', value=str(message.author.id))
+                            shortened_admin_panel_link = "No Link"
+                            try:
+                                admin_link_tiny_url = await URLShortener.tinyurl_shorten_url(updater_link)
+                                shortened_admin_panel_link = f"[Admin Panel]({admin_link_tiny_url})"
+                            except:
+                                pass
                             
+                            embed.add_field(name='Short Admin Link:', value=shortened_admin_panel_link)
                             embed.set_image(url="attachment://" + table_image_path)
                             embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                             embed.set_footer(text="Updaters: Login to the admin panel before clicking the link.")
@@ -840,6 +848,14 @@ class LoungeCommands:
                                                 colour = discord.Colour.dark_red()
                                             )
                             embed.add_field(name="Submission ID:", value=id_to_submit)
+                            shortened_preview_link = "No Link"
+                            try:
+                                preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
+                                shortened_preview_link = f"[Preview]({preview_link_tiny_url})"
+                            except:
+                                pass
+                            
+                            embed.add_field(name='Short Preview Link:', value=shortened_preview_link)
                             embed.set_image(url="attachment://" + table_image_path)
                             embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                             embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
@@ -899,6 +915,14 @@ class LoungeCommands:
                         embed.add_field(name='Submitted by:', value=message.author.mention)
                         embed.add_field(name='Discord ID:', value=str(message.author.id))
                         
+                        shortened_admin_panel_link = "No Link"
+                        try:
+                            admin_link_tiny_url = await URLShortener.tinyurl_shorten_url(updater_link)
+                            shortened_admin_panel_link = f"[Admin Panel]({admin_link_tiny_url})"
+                        except:
+                            pass
+                            
+                        embed.add_field(name='Short Admin Link:', value=shortened_admin_panel_link)
                         
                         embed.set_image(url="attachment://" + table_image_path)
                         embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
@@ -916,6 +940,16 @@ class LoungeCommands:
                                             colour = discord.Colour.dark_red()
                                         )
                         embed.add_field(name='Submission ID:', value=str(id_to_submit))
+                        
+                        shortened_preview_link = "No Link"
+                        try:
+                            preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
+                            shortened_preview_link = f"[Preview]({preview_link_tiny_url})"
+                        except:
+                            pass
+                        
+                        embed.add_field(name='Short Preview Link:', value=shortened_preview_link)
+                        
                         embed.set_image(url="attachment://" + table_image_path)
                         embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                         embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
