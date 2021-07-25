@@ -22,23 +22,24 @@ Let's break that down. It's not as complicated as it seems.
 *Example:* `{SERVER_PREFIX}sw 6v6 2 r1234567 gps=1` will try to load that room (see Terminology section above) and start a table with 2 teams having 6 players on each team. The table will be 1 GP.
 
 
-
 **I messed up my table pretty badly. How can I reset it?**
 Before you reset your table, MKW Table Bot keeps a history of all the changes you made. You can undo your changes one at a time by doing `{SERVER_PREFIX}undo`
 If you still want to completely reset everything, do `{SERVER_PREFIX}reset`. This cannot be undone, so be careful.
 
-**Someone disconnected, and MKW Table Bot is now displaying an error. What do I do?**
-To see a list of all the disconnections for the room, run `?dcs`
-Read this list carefully.
-**UNFINISHED**
+**Someone disconnected, and MKW Table Bot shows an error that they are missing. What do I do?**
+To see a list of all the disconnections for the room, do `{SERVER_PREFIX}dcs`. Each disconnection on this list has a number, which we'll call **dcnumber**. Look at the race that Table Bot says they are missing on. If the person was on the results __of the race that Table Bot says they are missing on__, do `{SERVER_PREFIX}dc dcnumber on`. If they were not on the results of the race that Table Bot says they were missing on, do `{SERVER_PREFIX}dc dcnumber before`.
+*Example:* `{SERVER_PREFIX}dc 1 on` will save that the first disconnection was on the results of the race they disconnected on.
 
 **We played a race that shouldn't be scored on the table. How can I remove it?**
-?removerace
-**UNFINISHED**
+You can remove a race by doing `{SERVER_PREFIX}removerace racenumber`.
+*Note:* Because this command is highly unstable, if you are going to remove a race, do it immediately after it has been played, prior to doing any other editing commands.
+*Example:* `{SERVER_PREFIX}removerace 5` will remove the 5th race from the table.
 
 **Someone's tag is incorrect on the table. How do I change their tag?**
-?changetag
-
+You can use the `{SERVER_PREFIX}changetag` to display a numbered list of players. Then, do  `{SERVER_PREFIX}changetag playerNumber newTag`
+*Note:* If the player you want to change the tag for is registered in Lounge, you can do `{SERVER_PREFIX}changetag LoungeName newTag`
+*Example:* `{SERVER_PREFIX}changetag 1 A` will change the first player on the list to "A"
+*Example:* `{SERVER_PREFIX}changetag BadWolf C` will change BadWolf's tag on the table to C
 
 **How can I change the style of the table?**
 For a list of table themes you can use, use the command `{SERVER_PREFIX}theme`
@@ -57,15 +58,23 @@ Yes. There are two ways to do this.
 *Example:* `{SERVER_PREFIX}size 2` will change the view size to two races. So if the room has played 4 races, the first column of the table will be race #1 and race #2 and the second column of the table will be race #3 and race #4.
 *Note:* For scoring purposes, the number of races in a GP is always considered to be 4. This command just changes how the table is *displayed.*
 
+**How do I see a list of the races that have been played?**
+Do `{SERVER_PREFIX}races`
 
+**How do I see a list of all players who have been in the room?**
+Do `{SERVER_PREFIX}allplayers` or `{SERVER_PREFIX}ap` to display a list of all players in the room, along with their LoungeNames, if they have one.
 
+**How do I see a list of FCs for everyone who has been in the room?**
+Do `{SERVER_PREFIX}fcs` to display a list of all players in the room with their FCs, along with their LoungeNames, if they have one.
+
+**How can I see the finish times of a race?**
+Do `{SERVER_PREFIX}raceresults raceNumber` or `{SERVER_PREFIX}rr raceNumber`.
+Note: Want to just see the last race's finish times? Do `{SERVER_PREFIX}rr` (without a raceNumber).
 
 #These commands also modify the table, but can be undone using the ?undo command
-REMOVE_RACE_TERMS = {"removerace"}
 PLAYER_PENALTY_TERMS = {"pen", "penalty"}
 TEAM_PENALTY_TERMS = {"teampen", "teampenalty"}
 EDIT_PLAYER_SCORE_TERMS = {"edit"}
-PLAYER_DISCONNECT_TERMS = {"dc", "dcs"}
 MERGE_ROOM_TERMS = {"mr", "mergeroom"}
 SET_WAR_NAME_TERMS = {"setwarname"}
 CHANGE_PLAYER_NAME_TERMS = {'changename'}
@@ -73,16 +82,11 @@ CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize"}
 EARLY_DC_TERMS = {'earlydc'}
 QUICK_EDIT_TERMS = {'quickedit', 'qe'}
 
-DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
-
 
 
 #Commands that require a war to be started, but don't modify the war/room/table in any way
 TABLE_TEXT_TERMS = {"tt", "tabletext"}
 WAR_PICTURE_TERMS = {"wp", "warpicture"}
 RACE_RESULTS_TERMS = {"rr", "raceresults"}
-RACES_TERMS = {"races"}
 RXX_TERMS = {"rxx", "rlid"}
-ALL_PLAYERS_TERMS = {"allplayers", "ap"}
-FCS_TERMS = {"fcs"}
 CURRENT_ROOM_TERMS = {"currentroom"}
