@@ -69,7 +69,7 @@ Do `{SERVER_PREFIX}fcs` to display a list of all players in the room with their 
 
 **How can I see the finish times of a race?**
 Do `{SERVER_PREFIX}raceresults raceNumber` or `{SERVER_PREFIX}rr raceNumber`.
-Note: Want to just see the last race's finish times? Do `{SERVER_PREFIX}rr` (without a raceNumber).
+*Note:* Want to just see the last race's finish times? Do `{SERVER_PREFIX}rr` (without a raceNumber).
 
 #These commands also modify the table, but can be undone using the ?undo command
 PLAYER_PENALTY_TERMS = {"pen", "penalty"}
