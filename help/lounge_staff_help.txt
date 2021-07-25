@@ -1,0 +1,11 @@
+**I'm a Reporter or higher in Lounge, and I want to...**
+**...approve or deny a table submission:**
+• To approve a table submission, in the table submission channel, do `{SERVER_PREFIX}approve submissionID`
+• To deny a table submission, in the table submission channel, do `{SERVER_PREFIX}deny submissionID (reason)`. Providing a reason is optional, but consider putting why it was denied along with pinging whoever submitted the table.
+*Q:* What do I put for submissionID?
+*A:* Each submission gets a number and is displayed on the submission. See here: <https://bit.ly/3ByL2rX>
+
+**...check if there are any submissions that haven't been approved or denied:**
+Use `{SERVER_PREFIX}pending` in the table submission channel to get a list of all the submissions that haven't been approved or denied yet.
+
+*Forest's Updater Bot documentation will be placed here soon...*
