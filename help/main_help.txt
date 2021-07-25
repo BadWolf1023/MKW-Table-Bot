@@ -3,7 +3,8 @@
 For help related to tabling, do: `{SERVER_PREFIX}help tabling`
 For help related to changing MKW TableBot's default settings in your server, do: `{SERVER_PREFIX}help serverdefaults`
 For help related to flags on tables, do: `{SERVER_PREFIX}help flags`
-For help related to Mogi Lounge commands, do: `{SERVER_PREFIX}help lounge`
+For help related to submitting a table in Lounge, do: `{SERVER_PREFIX}help submittable`
+For help related to Lounge's Reporters and Updaters commands, do: `{SERVER_PREFIX}help reporters`
 For help with anything else, do: `{SERVER_PREFIX}help other`
 
 *Note:* When you are reading this help documentation, anything inside of parentheses is optional. For example, `{SERVER_PREFIX}setflag (flagcode)` would mean that you do not have to give a **flagcode** when using the command.
