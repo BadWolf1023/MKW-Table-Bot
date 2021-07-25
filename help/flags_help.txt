@@ -1,8 +1,8 @@
 **How can I change my flag on tables?**
 To change your flag on future tables, use the command `{SERVER_PREFIX}setflag flagcode`
 To remove your flag from future tables, use the command `{SERVER_PREFIX}setflag`
-*Example:* `?setflag ca` sets your flag to the Canadian flag.
-*Example:* `?setflag` removes your flag from future tables.
+*Example:* `{SERVER_PREFIX}setflag ca` sets your flag to the Canadian flag.
+*Example:* `{SERVER_PREFIX}setflag` removes your flag from future tables.
 
 **What flag do I currently have set?**
 MKW Table Bot will send a picture of your flag if you use the command `{SERVER_PREFIX}getflag`
