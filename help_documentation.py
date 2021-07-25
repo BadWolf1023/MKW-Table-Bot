@@ -11,7 +11,8 @@ main_help_file_list = ['main_help.txt']
 tabling_help_file_list = ['tabling_help_1.txt', 'tabling_help_2.txt']
 server_defaults_help_file_list = ['server_defaults_help.txt']
 flags_help_file_list = ['flags_help.txt']
-lounge_help_file_list = ['lounge_help.txt']
+lounge_reporter_help_file_list = ['lounge_staff_help_1.txt','lounge_staff_help_2.txt','lounge_staff_help_3.txt']
+lounge_submitting_tables_help_file_list = ['lounge_table_submission_help.txt']
 other_help_file_list = ['other_help_1.txt', 'other_help_2.txt']
 
 
@@ -21,7 +22,13 @@ HELP_KEY_FILES = {default_help_key:main_help_file_list,
                   tabling_help_key:tabling_help_file_list,
                   "serverdefaults":server_defaults_help_file_list,
                   "flags":flags_help_file_list,
-                  "lounge":lounge_help_file_list,
+                  "submittable":lounge_submitting_tables_help_file_list,
+                  "submitable":lounge_submitting_tables_help_file_list,
+                  "submit table":lounge_submitting_tables_help_file_list,
+                  "reporter":lounge_reporter_help_file_list,
+                  "reporters":lounge_reporter_help_file_list,
+                  "updater":lounge_reporter_help_file_list,
+                  "updaters":lounge_reporter_help_file_list,
                   "other":other_help_file_list
                   }
 
@@ -60,6 +67,8 @@ async def send_help(message, is_lounge_server, args:List[str], prefix=common.def
                 if len(help_text) > 1:
                     help_text = help_text.replace("{SERVER_PREFIX}", prefix)
                     await message.channel.send(help_text)
+                else:
+                    break
                     
 async def send_quickstart(discord_message_obj):
     quick_start = "No quickstart."
