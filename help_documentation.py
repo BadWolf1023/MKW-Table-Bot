@@ -18,6 +18,31 @@ other_help_file_list = ['other_help_1.txt', 'other_help_2.txt']
 
 default_help_key = 'help'
 tabling_help_key = 'tabling'
+start_war_help_file_list = ['start_war_help.txt']
+reset_undo_help_file_list = ['reset_undo_help.txt']
+dc_help_file_list = ['dc_help.txt']
+remove_race_help_file_list = ['remove_race_help.txt']
+change_tag_help_file_list = ['change_tag_help.txt']
+style_help_file_list = ['style_help.txt']
+graph_help_file_list = ['graph_help.txt']
+race_size_help_file_list = ['race_size_help.txt']
+races_help_file_list = ['races_help.txt']
+all_players_help_file_list = ['all_players_help.txt']
+fcs_help_file_list = ['fcs_help.txt']
+race_results_help_file_list = ['race_results_help.txt']
+
+TABLING_HELP_FILES = {"1":start_war_help_file_list,
+                      "2":reset_undo_help_file_list,
+                      "3":dc_help_file_list,
+                      "4":remove_race_help_file_list,
+                      "5":change_tag_help_file_list,
+                      "6":style_help_file_list,
+                      "7":graph_help_file_list,
+                      "8":race_size_help_file_list,
+                      "9":races_help_file_list,
+                      "10":all_players_help_file_list,
+                      "11":fcs_help_file_list,
+                      "12":race_results_help_file_list}
 HELP_KEY_FILES = {default_help_key:main_help_file_list,
                   tabling_help_key:tabling_help_file_list,
                   "serverdefaults":server_defaults_help_file_list,
@@ -32,6 +57,14 @@ HELP_KEY_FILES = {default_help_key:main_help_file_list,
                   "other":other_help_file_list
                   }
 
+for tabling_help_list in TABLING_HELP_FILES.values():
+    for index, file_name in enumerate(tabling_help_list):
+        tabling_help_list[index] = f"{common.TABLING_HELP_PATH}{file_name}"
+
+for help_list in HELP_KEY_FILES.values():
+    for index, file_name in enumerate(tabling_help_list):
+        tabling_help_list[index] = f"{common.HELP_PATH}{file_name}"
+    
 QUICKSTART_FILE = f"{common.HELP_PATH}quickstart.txt"
 
 def get_help_files(args:List[str]):
@@ -58,9 +91,8 @@ async def send_help(message, is_lounge_server, args:List[str], prefix=common.def
         return
     help_files = HELP_KEY_FILES[help_key]
     for help_text_file in help_files:
-        help_file = f"{common.HELP_PATH}{help_text_file}"
-        if os.path.isfile(help_file):
-            with open(help_file, "r") as f:
+        if os.path.isfile(help_text_file):
+            with open(help_text_file, "r") as f:
                 help_text = ""
                 for line in f:
                     help_text += line

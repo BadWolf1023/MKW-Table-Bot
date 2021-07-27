@@ -1,0 +1,94 @@
+**Terminology:**
+*FC* means friend code on Mario Kart Wii. If you are not registered in Mogi Lounge, you'll need to give commands your friend code.
+*LoungeName* is the name that someone has in Mogi Lounge.
+*Mention* means you ping the person. Mentions only work if the person being mentioned is registered in Mogi Lounge.
+*RXX* is the number in your room's mkwx URL. It looks like r#######. For example, the rxx number of <https://wiimmfi.de/stats/mkwx/list/r1234567> is r1234567.
+
+**How do I start a table with MKW Table Bot?**
+To start a table, use the command `{SERVER_PREFIX}startwar warFormat numberOfTeams (FC/LoungeName/Mention/RXX) (psb=yes/no) (gps=numberOfGPs) (miis=yes/no)`
+Let's break that down. It's not as complicated as it seems.
+- *warFormat* is the format your room is. For example, FFA, 2v2, 3v3, 4v4, 5v5, and 6v6 are all valid for *warFormat*
+- *numberOfTeams* is simply the number of teams that are playing. For example, a 2v2v2 has 3 teams.
+- If you do not give a *FC/LoungeName/Mention/RXX*, MKW Table Bot will try to find you in a room. Otherwise, MKW Table Bot will try to start a table for what is given to *FC/LoungeName/Mention/RXX* (eg starting a table for a given FC).
+- If you want to ignore large time errors, use *psb=yes* - otherwise, to display large time errors, use *psb=no* - if *psb=* is not specified, the default in the Discord server will be used.
+- The default number of GPs on tables for MKW Table Bot tables is 3 GPs. If you wanted to table 8 GPs, you would use *gps=8*. You can make the table any number of GPs, up to 15 GPs. If *gps=* is not specified, the default in the Discord server will be used.
+- If you want the mii heads displayed beneath the table, use *miis=yes* - and if you don't, use *miis=no* - if *miis=* is not specified, the default in the Discord server will be used.
+*Note:* `{SERVER_PREFIX}sw` and `{SERVER_PREFIX}starttable` work as well!
+*Note:* If you are not registered in Mogi Lounge, you cannot start a table for yourself. Instead, you must give your FC that you're playing on.
+*IMPORTANT:* This command ONLY works if the room has **finished** at least one race.
+*Example:* `{SERVER_PREFIX}sw 2v2 6` will try find you in a room and start a table with 6 teams having 2 players on each team.
+*Example:* `{SERVER_PREFIX}sw ffa 10 1234-5678-9012` will try to find that FC in a room and start an FFA table with 10 players.
+*Example:* `{SERVER_PREFIX}sw 5v5 2 psb=yes gps=5 miis=no` will try find you in a room and start a table with 2 teams having 5 players on each team. Large time errors will be hidden, the table will be 5 GPs, and mii pictures beneath the table will be off.
+*Example:* `{SERVER_PREFIX}sw 6v6 2 r1234567 gps=1` will try to load that room (see Terminology section above) and start a table with 2 teams having 6 players on each team. The table will be 1 GP.
+
+
+**I messed up my table pretty badly. How can I reset it?**
+Before you reset your table, MKW Table Bot keeps a history of all the changes you made. You can undo your changes one at a time by doing `{SERVER_PREFIX}undo`
+If you still want to completely reset everything, do `{SERVER_PREFIX}reset`. This cannot be undone, so be careful.
+
+**Someone disconnected, and MKW Table Bot shows an error that they are missing. What do I do?**
+To see a list of all the disconnections for the room, do `{SERVER_PREFIX}dcs`. Each disconnection on this list has a number, which we'll call **dcnumber**. Look at the race that Table Bot says they are missing on. If the person was on the results __of the race that Table Bot says they are missing on__, do `{SERVER_PREFIX}dc dcnumber on`. If they were not on the results of the race that Table Bot says they were missing on, do `{SERVER_PREFIX}dc dcnumber before`.
+*Example:* `{SERVER_PREFIX}dc 1 on` will save that the first disconnection was on the results of the race they disconnected on.
+
+**We played a race that shouldn't be scored on the table. How can I remove it?**
+You can remove a race by doing `{SERVER_PREFIX}removerace racenumber`.
+*Note:* Because this command is highly unstable, if you are going to remove a race, do it immediately after it has been played, prior to doing any other editing commands.
+*Example:* `{SERVER_PREFIX}removerace 5` will remove the 5th race from the table.
+
+**Someone's tag is incorrect on the table. How do I change their tag?**
+You can use the `{SERVER_PREFIX}changetag` to display a numbered list of players. Then, do  `{SERVER_PREFIX}changetag playerNumber newTag`
+*Note:* If the player you want to change the tag for is registered in Lounge, you can do `{SERVER_PREFIX}changetag LoungeName newTag`
+*Example:* `{SERVER_PREFIX}changetag 1 A` will change the first player on the list to "A"
+*Example:* `{SERVER_PREFIX}changetag BadWolf C` will change BadWolf's tag on the table to C
+
+**How can I change the style of the table?**
+For a list of table themes you can use, use the command `{SERVER_PREFIX}theme`
+To change the theme of your table, use the command `{SERVER_PREFIX}theme themenumber`
+*Example:* `{SERVER_PREFIX}theme 2` will change the table's theme to **Dark Theme**
+
+**How can I change (or turn off) the graph of the table?**
+For a list of graphs you can use, use the command `{SERVER_PREFIX}graph`
+To change the graph on your table, use the command `{SERVER_PREFIX}graph graphnumber`
+*Example:* `{SERVER_PREFIX}graph 2` will change the table's graph to **Absolute**
+
+**Can the table be shown by race instead of by 4-race GPs?**
+Yes. There are two ways to do this.
+- The first way is temporary: to see the table broken down by race, do `{SERVER_PREFIX}wp race`
+- The second way changes the view size for your table until you reset or start a new table. To change the number of races that are displayed in each section of the table, do `?size displaysize`
+*Example:* `{SERVER_PREFIX}size 2` will change the view size to two races. So if the room has played 4 races, the first column of the table will be race #1 and race #2 and the second column of the table will be race #3 and race #4.
+*Note:* For scoring purposes, the number of races in a GP is always considered to be 4. This command just changes how the table is *displayed.*
+
+**How do I see a list of the races that have been played?**
+Do `{SERVER_PREFIX}races`
+
+**How do I see a list of all players who have been in the room?**
+Do `{SERVER_PREFIX}allplayers` or `{SERVER_PREFIX}ap` to display a list of all players in the room, along with their LoungeNames, if they have one.
+
+**How do I see a list of FCs for everyone who has been in the room?**
+Do `{SERVER_PREFIX}fcs` to display a list of all players in the room with their FCs, along with their LoungeNames, if they have one.
+
+**How can I see the finish times of a race?**
+Do `{SERVER_PREFIX}raceresults raceNumber` or `{SERVER_PREFIX}rr raceNumber`.
+*Note:* Want to just see the last race's finish times? Do `{SERVER_PREFIX}rr` (without a raceNumber).
+
+
+
+#These commands also modify the table, but can be undone using the ?undo command
+PLAYER_PENALTY_TERMS = {"pen", "penalty"}
+TEAM_PENALTY_TERMS = {"teampen", "teampenalty"}
+EDIT_PLAYER_SCORE_TERMS = {"edit"}
+MERGE_ROOM_TERMS = {"mr", "mergeroom"}
+SET_WAR_NAME_TERMS = {"setwarname"}
+CHANGE_PLAYER_NAME_TERMS = {'changename'}
+CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize"}
+EARLY_DC_TERMS = {'earlydc'}
+QUICK_EDIT_TERMS = {'quickedit', 'qe'}
+
+
+
+#Commands that require a war to be started, but don't modify the war/room/table in any way
+TABLE_TEXT_TERMS = {"tt", "tabletext"}
+WAR_PICTURE_TERMS = {"wp", "warpicture"}
+RACE_RESULTS_TERMS = {"rr", "raceresults"}
+RXX_TERMS = {"rxx", "rlid"}
+CURRENT_ROOM_TERMS = {"currentroom"}
