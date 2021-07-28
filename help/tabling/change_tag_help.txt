@@ -1,0 +1,8 @@
+**Someone's tag is incorrect on the table. How do I change their tag?**
+You can use the `{SERVER_PREFIX}changetag` to display a numbered list of players. Then, do  `{SERVER_PREFIX}changetag playerNumber newTag`
+*Note:* If the player you want to change the tag for is registered in Lounge, you can do `{SERVER_PREFIX}changetag LoungeName newTag`
+*Example:* `{SERVER_PREFIX}changetag 1 A` will change the first player on the list to "A"
+*Example:* `{SERVER_PREFIX}changetag BadWolf C` will change BadWolf's tag on the table to C
+
+**Terminology:**
+*LoungeName* is the name that someone has in Mogi Lounge.

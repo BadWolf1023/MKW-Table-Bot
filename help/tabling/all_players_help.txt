@@ -1,0 +1,2 @@
+**How do I see a list of all players who have been in the room?**
+Do `{SERVER_PREFIX}allplayers` or `{SERVER_PREFIX}ap` to display a list of all players in the room, along with their LoungeNames, if they have one.

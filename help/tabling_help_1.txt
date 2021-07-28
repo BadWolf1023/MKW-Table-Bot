@@ -1,17 +1,18 @@
 To read the help for a question on this list, do `{SERVER_PREFIX}help number`. For example, `{SERVER_PREFIX}help 1` will give help for the first question on this list.
 
 `1.` How do I start a table with MKW Table Bot?
-`2.`
-`3.`
-`4.`
-`5.`
-`6.`
-`7.`
-`8.`
-`9.`
-`10.`
-`11.`
-`12.`
+`2.` I messed up my table pretty badly. How can I reset it?
+`3.` Someone disconnected, and MKW Table Bot shows an error that they are missing. What do I do?
+`3.5.`Someone disconnected, and MKW Table Bot shows that they have a blank time. What do I do?
+`4.` We played a race that shouldn't be scored on the table. How can I remove it?
+`5.` Someone's tag is incorrect on the table. How do I change their tag?
+`6.` How can I change the style of the table?
+`7.` How can I change (or turn off) the graph of the table?
+`8.` Can the table be shown by race instead of by 4-race GPs?
+`9.` How do I see a list of the races that have been played?
+`10.` How do I see a list of all players who have been in the room?
+`11.` How do I see a list of FCs for everyone who has been in the room?
+`12.` How can I see the finish times of a race?
 `13.`
 `14.`
 `15.`

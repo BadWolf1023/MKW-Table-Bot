@@ -1,0 +1,3 @@
+**I messed up my table pretty badly. How can I reset it?**
+Before you reset your table, MKW Table Bot keeps a history of all the changes you made. You can undo your changes one at a time by doing `{SERVER_PREFIX}undo`
+If you still want to completely reset everything, do `{SERVER_PREFIX}reset`. This cannot be undone, so be careful.

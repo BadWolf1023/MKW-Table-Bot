@@ -1,0 +1,4 @@
+**How can I change the style of the table?**
+For a list of table themes you can use, use the command `{SERVER_PREFIX}theme`
+To change the theme of your table, use the command `{SERVER_PREFIX}theme themenumber`
+*Example:* `{SERVER_PREFIX}theme 2` will change the table's theme to **Dark Theme**
