@@ -23,7 +23,7 @@ MAX_PREFIX_LENGTH = 3
 current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = True
+in_testing_server = False
 running_beta = False
 
 #TableBot variables, for ChannelBots
@@ -136,10 +136,12 @@ BAD_WOLF_ID = 706120725882470460
 
 
 #Lounge stuff
-MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?type=rt&import="
-MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?type=ct&import="
-MKW_LOUNGE_RT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/rt/?import="
-MKW_LOUNGE_CT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/ct/?import="
+MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?ladder_id=1&event_data="
+MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?ladder_id=2&event_data="
+MKW_LOUNGE_RT_UPDATER_LINK = MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK
+MKW_LOUNGE_CT_UPDATER_LINK = MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK
+DEPRECATED_MKW_LOUNGE_RT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/rt/?import="
+DEPRECATED_MKW_LOUNGE_CT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/ct/?import="
 MKW_LOUNGE_RT_UPDATER_CHANNEL = 758161201682841610
 MKW_LOUNGE_CT_UPDATER_CHANNEL = 758161224202059847
 MKW_LOUNGE_RT_REPORTER_ID = 389252697284542465

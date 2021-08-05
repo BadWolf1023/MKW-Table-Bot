@@ -183,9 +183,9 @@ def create_player_json(player:Tuple[str, int, int, int], sub_in=False, sub_out=F
     player_json["races"] = player[2]
     player_json["score"] = player[1]
     if sub_in:
-        player_json["is_sub_in"] = True
+        player_json["subbed_in"] = True
     if sub_out:
-        player_json["is_sub_out"] = True
+        player_json["subbed_out"] = True
         if not sub_in: #People who sub in and sub out do not lose mmr
             player_json["multiplier"] = 12/player[2]
     

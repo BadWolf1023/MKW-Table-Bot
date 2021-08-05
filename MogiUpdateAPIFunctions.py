@@ -7,7 +7,7 @@ Created on Sep 23, 2020
 from typing import List, Dict, Tuple
 import aiohttp
 
-lounge_mmr_api_url = 'https://mariokartboards.com/lounge/json/player.php'
+lounge_mmr_api_url = 'https://mariokartboards.com/lounge/api/ladderplayer.php'
 
 
 async def getJSONData(full_url):
@@ -56,29 +56,32 @@ def _reverseEngineerResults(lounge_names_mapping: List[Tuple[str, str, int]], js
         return None, [] #Corrupt data
         
     mappings = {}
+    player_id_json_name = "player_id"
+    player_name_json_name = "player_name"
+    current_mmr_json_name = "current_mmr"
     for player_data in json_data:
         #Corrupt data check
-        if "pid" not in player_data or "name" not in player_data or "current_mmr" not in player_data:
+        if player_id_json_name not in player_data or player_name_json_name not in player_data or current_mmr_json_name not in player_data:
             return None, []
         #Corrupt data check
-        if isinstance(player_data["pid"], str) and player_data["pid"].isnumeric():
-            player_data["pid"] = int(player_data["pid"])
+        if isinstance(player_data[player_id_json_name], str) and player_data[player_id_json_name].isnumeric():
+            player_data[player_id_json_name] = int(player_data[player_id_json_name])
             
-        if isinstance(player_data["current_mmr"], str) and player_data["current_mmr"].isnumeric():
-            player_data["current_mmr"] = int(player_data["current_mmr"])
+        if isinstance(player_data[current_mmr_json_name], str) and player_data[current_mmr_json_name].isnumeric():
+            player_data[current_mmr_json_name] = int(player_data[current_mmr_json_name])
 
         
-        if not isinstance(player_data["pid"], int):
+        if not isinstance(player_data[player_id_json_name], int):
             return None, []
         
-        if not isinstance(player_data["current_mmr"], int):
+        if not isinstance(player_data[current_mmr_json_name], int):
             return None, []
         
         
-        jsonLookupName = getLookup(player_data["name"])
+        jsonLookupName = getLookup(player_data[player_name_json_name])
         for lookupName, lounge_name, score in lounge_names_mapping:
             if lookupName == jsonLookupName:
-                mappings[lounge_name] = (player_data["pid"], score, player_data["current_mmr"])
+                mappings[lounge_name] = (player_data[player_id_json_name], score, player_data[current_mmr_json_name])
                 break
     
     #Final incorrect data check
@@ -100,21 +103,27 @@ async def getPlayerIDs(mogi_players: List[Tuple[str, int]], is_rt=True, mogiPlay
     
     full_url = lounge_mmr_api_url
     if is_rt:
-        full_url = addFilter(full_url, "type", ["rt"])
+        full_url = addFilter(full_url, "ladder_id", ["1"]) #RT is 1 for this API
     else:
-        full_url = addFilter(full_url, "type", ["ct"])
-    full_url = addFilter(full_url, "name", lounge_names)
+        full_url = addFilter(full_url, "ladder_id", ["2"]) #CT is 2 for this API
+    full_url = addFilter(full_url, "player_names", lounge_names)
     data = await getJSONData(full_url)
     
     
     if data is None:
-        print("Bad request to Lounge API... The website is either down or went offline for a split second. Try again.")
+        print("Bad request to 255MP's Lounge Player Data API... The website is either down or went offline for a split second. Try again.")
         return None, None
     if "error" in data:
-        print("Bad request to Lounge API... The website gave back corrupt data. Try again. If this continues, you really need to tell Bad Wolf.")
+        print("Bad request to 255MP's Lounge Player Data API... The website gave back corrupt data. Try again. If this continues, you really need to tell Bad Wolf.")
+        return None, None
+    if "status" not in data or data["status"] != "success":
+        print("Bad request to 255MP's Lounge Player Data API... The website gave back corrupt data. Try again. If this continues, you really need to tell Bad Wolf.")
+        return None, None
+    if "results" not in data or not isinstance(data["results"], list):
+        print("Bad request to 255MP's Lounge Player Data API... The website gave back corrupt data. Try again. If this continues, you really need to tell Bad Wolf.")
         return None, None
     
-    return _reverseEngineerResults(lounge_names_mapping, data)
+    return _reverseEngineerResults(lounge_names_mapping, data["results"])
     
     
     

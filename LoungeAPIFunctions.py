@@ -1,6 +1,6 @@
 from typing import List, Dict
 code = None
-loungeAPIURL = "https://mariokartboards.com/lounge/json/wiimmfi.php"
+loungeAPIURL = "https://mariokartboards.com/lounge/api/wiimmfi.php"
 
 import aiohttp
 from datetime import datetime
@@ -21,10 +21,10 @@ def addFilter(url, filter_type, data):
 
 def parseData(data:List[Dict], loungeVerifiedOnly=True):
     if data is None:
-        print("Bad request to Lounge API... Data was None.")
+        print("Bad request to 255MP's Wiimmfi API... Data was None.")
         return None, None
     if "error" in data:
-        print("Bad request to Lounge API... Error in data.")
+        print("Bad request to 255MP's Wiimmfi API... Error in data.")
         return None, None
     
     id_lounge = {}
