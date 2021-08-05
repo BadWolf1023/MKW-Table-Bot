@@ -13,6 +13,7 @@ import TableBotExceptions
 import common
 import MogiUpdate
 import URLShortener
+import AbuseTracking
 
 #External library imports for this file
 import discord
@@ -247,39 +248,18 @@ def has_prefix(command, pref=common.default_prefix):
         return False
     return command.startswith(pref)
 
-async def check_default_change_pref(message:discord.Message):
-    if len(message.content) <= len("setprefix"):
-        return False
-    
-    if message.content.split()[0].lower().strip() in ["?setprefix"]:
-        if not message.author.guild_permissions.administrator:
-            await message.channel.send("Can't change prefix, you're not an administrator in this server.")
-            return True
-        args = message.content.split()
-        if len(args) < 2:
-            await message.channel.send("Give a prefix. Prefix not changed.")
-            return True
-        new_prefix = message.content[len("?setprefix"):].strip("\n").strip()
-        if len(new_prefix) < 1:
-            await message.channel.send("Cannot set an empty prefix. Prefix not changed.")
-            return True
-        if len(new_prefix) > common.MAX_PREFIX_LENGTH:
-            await message.channel.send(f"Prefixes must be {common.MAX_PREFIX_LENGTH} characters or less.")
-            return True
-        
-        was_success = ServerFunctions.change_server_prefix(str(message.guild.id), new_prefix)
-        if was_success:
-            await message.channel.send("Prefix changed to: " + new_prefix) 
-        else:
-            await message.channel.send("Error setting prefix. Prefix not changed.") 
-        return True
-    return False
-
 def has_my_name(message:str):
     return False
     return "tablebot" in message.lower().replace(" ", "")
 
-
+def is_vr_command(message:discord.Message):
+    str_msg = message.content.strip()
+    if str_msg[0] not in {"?", "!"}:
+        return False
+    str_msg = str_msg.lstrip("?!").strip()
+    return str_msg.lower() in VERIFY_ROOM_TERMS
+    
+def command_is_spam():
 
 
 last_fact_times = {}
@@ -371,21 +351,25 @@ async def on_message(message: discord.Message):
         is_lounge_server = server_id == common.MKW_LOUNGE_SERVER_ID
         server_prefix = ServerFunctions.get_server_prefix(server_id)
         message_has_prefix = has_prefix(message.content, server_prefix)
-        if has_my_name(message.content):
-            await send_bad_wolf_fact(message)
+
         #Message doesn't start with the server's prefix and isn't ?help
+        if command_is_spam(command):
+            return
         
         #Suggested refactor
-        #if command_is_spam(command):
-            #return
-        #if user_is_blacklisted(message):
-            #if should_send_blacklist_message(message):
-                #send_blacklist_message(message)
-            #return
-        #if user_is_blacklisted(message):
-            #if should_send_blacklist_message(message):
-                #send_blacklist_message(message)
-            #return
+        if not message_has_prefix:
+            if is_vr_command(message):
+                this_bot = check_create_channel_bot(message)
+                commands.OtherCommands.vr_command(this_bot, message, args, command)
+                pass #Send VR command
+        else:
+            
+            if user_is_blacklisted(message):
+                if should_send_blacklist_message(message):
+                    send_blacklist_message(message)
+                return
+            
+            
         #if should_send_help(message):
         #    send_help()
         #if is_prefix_change(message):
@@ -431,9 +415,6 @@ async def on_message(message: discord.Message):
             else:
                 await help_documentation.send_help(message, is_lounge_server, args, server_prefix)
         else:
-            was_default_change_pref = await check_default_change_pref(message)
-            if was_default_change_pref:
-                return
             
             
             #temporary vr check
@@ -533,6 +514,7 @@ async def on_message(message: discord.Message):
                     
                 #Fun commands
                 elif args[0] in STATS_TERMS:
+                    await AbuseTracking.abuse_track_check(message)
                     num_wars = getNumActiveWars()
                     stats_str = Stats.stats(num_wars, client)
                     if stats_str is None:
@@ -541,9 +523,11 @@ async def on_message(message: discord.Message):
                         await message.channel.send(stats_str)
                 
                 elif (args[0] in ["badwolf"]) or (len(args) > 1 and (args[0] in ["bad"] and args[1] in ["wolf"])):
+                    await AbuseTracking.abuse_track_check(message)
                     await message.channel.send(file=discord.File(common.BADWOLF_PICTURE_FILE))    
                 
                 elif args[0] in INVITE_TERMS:
+                    await AbuseTracking.abuse_track_check(message)
                     await message.channel.send(bot_invite_link)              
                 
                 

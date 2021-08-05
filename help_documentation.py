@@ -6,6 +6,7 @@ Created on Jun 25, 2021
 from typing import List
 import os
 import common
+import AbuseTracking
 
 main_help_file_list = ['main_help.txt']
 tabling_help_file_list = ['tabling_help_1.txt', 'tabling_help_2.txt']
@@ -90,6 +91,7 @@ def get_help_files(args:List[str]):
 
 
 async def send_help(message, is_lounge_server, args:List[str], prefix=common.default_prefix):
+    await AbuseTracking.abuse_track_check(message)
     help_key, help_files = get_help_files(args)
     
     """if is_lounge_server and help_key == tabling_help_key:
@@ -107,6 +109,7 @@ async def send_help(message, is_lounge_server, args:List[str], prefix=common.def
                     break
                     
 async def send_quickstart(discord_message_obj):
+    await AbuseTracking.abuse_track_check(discord_message_obj)
     quick_start = "No quickstart."
     with open(QUICKSTART_FILE, "r") as f:
         quick_start = f.read()
