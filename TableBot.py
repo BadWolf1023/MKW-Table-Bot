@@ -26,11 +26,13 @@ styles = {"1":("Default", "default style"),
           "5":("200 League", "200l"),
           "6":("America's Cup", "americas"),
           "7":("Euro League", "euro"),
-          "8":("ãƒžãƒªã‚ªã‚«ãƒ¼ãƒˆãƒ�ãƒ¼ãƒ ãƒªãƒ¼ã‚°æˆ¦", "japan"),
+          "8":("マリオカートチームリーグ戦", "japan"),
           "9":("Clan War League", "cwl"),
           "10":("Runners Assemble", "runners"),
           "11":("Mario Kart Worlds", "mkworlds")
           }
+
+
 
 lorenzi_graph_key = "#graph"
 #The key and first item of the tuple are sent when the list of options is requested, the second value is the code Lorenzi's site uses 
