@@ -26,25 +26,32 @@ def parseData(data:List[Dict], loungeVerifiedOnly=True):
     if "error" in data:
         print("Bad request to 255MP's Wiimmfi API... Error in data.")
         return None, None
+    if "status" not in data or data["status"] != "success":
+        print("Bad request to 255MP's Wiimmfi API... Status didn't exist or wasn't success.")
+        return None, None
+    if "results" not in data or not isinstance(data["results"], list):
+        print("Bad request to 255MP's Wiimmfi API... Results didn't exist or weren't a list")
+        return None, None
+    data_results = data["results"]
     
     id_lounge = {}
     fc_id = {}
     cur_time = datetime.now()
-    for player in data:
+    for player in data_results:
         if loungeVerifiedOnly:
             if player['lounge_verified']:
-                id_lounge[player['discord_id']] = player['name']
-                fc_id[player['fc']] = (player['discord_id'], cur_time)
+                id_lounge[player['discord_user_id']] = player['name']
+                fc_id[player['fc']] = (player['discord_user_id'], cur_time)
         else:
             if player['verified']:
-                id_lounge[player['discord_id']] = player['name']
-                fc_id[player['fc']] = (player['discord_id'], cur_time)
+                id_lounge[player['discord_user_id']] = player['name']
+                fc_id[player['fc']] = (player['discord_user_id'], cur_time)
     return id_lounge, fc_id
 
 
 async def getByDiscordIDs(discordIDs:List[str], loungeVerifiedOnly=True):
     fullAPIURL = loungeAPIURL + "?code=" + code
-    fullURL = addFilter(fullAPIURL, "discord_id", discordIDs)
+    fullURL = addFilter(fullAPIURL, "discord_user_ids", discordIDs)
     data = None
     try:
         data = await getOnlineData(fullURL)
@@ -54,7 +61,7 @@ async def getByDiscordIDs(discordIDs:List[str], loungeVerifiedOnly=True):
     
 async def getByLoungeNames(loungeNames:List[str], loungeVerifiedOnly=True):
     fullAPIURL = loungeAPIURL + "?code=" + code
-    fullURL = addFilter(fullAPIURL, "name", loungeNames)
+    fullURL = addFilter(fullAPIURL, "player_names", loungeNames)
     data = None
     try:
         data = await getOnlineData(fullURL)
@@ -64,7 +71,7 @@ async def getByLoungeNames(loungeNames:List[str], loungeVerifiedOnly=True):
 
 async def getByFCs(FCs:List[str], loungeVerifiedOnly=True):
     fullAPIURL = loungeAPIURL + "?code=" + code
-    fullURL = addFilter(fullAPIURL, "fc", FCs)
+    fullURL = addFilter(fullAPIURL, "fcs", FCs)
     data = None
     try:
         data = await getOnlineData(fullURL)
