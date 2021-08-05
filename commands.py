@@ -24,7 +24,9 @@ import Race
 import MogiUpdate
 import Lounge
 import TableBotExceptions
+import AbuseTracking
 import common
+
 
 
 #Other library imports, other people codes
@@ -62,31 +64,6 @@ async def send_missing_permissions(channel:discord.TextChannel, content=None, de
     except discord.errors.Forbidden: #We can't send messages
         pass
     
-
-async def abuse_track_check(message:discord.Message):
-    await blacklisted_user_check(message)
-    
-    author_id = message.author.id
-    common.bot_abuse_tracking[author_id] += 1
-    if common.bot_abuse_tracking[author_id] == common.WARN_THRESHOLD:
-        await message.channel.send(f"{message.author.mention} slow down, you're sending too many commands. To avoid getting banned, wait 5 minutes before sending another command.")
-    elif common.bot_abuse_tracking[author_id] == common.AUTO_BAN_THRESHOLD: #certain spam
-        UserDataProcessing.add_Blacklisted_user(str(author_id), "Automated ban - you spammed the bot. This hurts users everywhere because it slows down the bot for everyone. You can appeal in 1 week to a bot admin or in Bad Wolf's server.")
-        if common.BOT_ABUSE_REPORT_CHANNEL is not None:
-            common.BOT_ABUSE_REPORT_CHANNEL.send(f"Automatic ban for spamming bot:\nDiscord: {str(message.author)}\nDiscord ID: {author_id}\nDisplay name: {message.author.display_name}\nLast message: {message.content}")
-        raise TableBotExceptions.BlacklistedUser("blacklisted user")
-    return True
-
-#Raises BlacklistedUser Exception if the author of the message is blacklisted
-#Sends a notification once in a while that they are blacklisted
-async def blacklisted_user_check(message:discord.Message, notify_threshold=15):
-    author_id = message.author.id
-    if str(author_id) in UserDataProcessing.blacklisted_Users and author_id != common.BAD_WOLF_ID:
-        if common.blacklisted_command_count[author_id] % notify_threshold == 0:
-            await message.channel.send("You have been blacklisted by a bot admin. You are not allowed to use this bot. Reason: " + str(UserDataProcessing.blacklisted_Users[str(author_id)]), delete_after=10)
-        common.blacklisted_command_count[author_id] += 1
-        raise TableBotExceptions.BlacklistedUser("blacklisted user")
-    return True
         
             
         
@@ -102,8 +79,9 @@ class BadWolfCommands:
             raise TableBotExceptions.NotBadWolf(failure_message)
         return True
     
-    async def get_logs_command(self, message:discord.Message):
-        await abuse_track_check()
+    @staticmethod
+    async def get_logs_command(message:discord.Message):
+        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot give logs")
         
         if os.path.exists(common.FEEDBACK_LOGS_FILE):
@@ -117,6 +95,7 @@ class BadWolfCommands:
     #Adds or removes a discord ID to/from the bot admins
     @staticmethod
     async def bot_admin_change(message:discord.Message, args:List[str], adding=True):
+        await AbuseTracking.abuse_track_check(message)
         if len(args) <= 1:
             await message.channel.send("Give a Discord ID.")
             return
@@ -133,22 +112,26 @@ class BadWolfCommands:
     
     @staticmethod
     async def add_bot_admin_command(message:discord.Message, args:List[str]):
+        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot add bot admin")
         await BadWolfCommands.bot_admin_change(message, args, adding=True)
         
     @staticmethod
     async def remove_bot_admin_command(message:discord.Message, args:List[str]):
+        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot remove bot admin")
         await BadWolfCommands.bot_admin_change(message, args, adding=False)
     
     @staticmethod
     async def server_process_memory_command(message:discord.Message):
+        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot show server memory usage")
         command_output = subprocess.check_output('top -b -o +%MEM | head -n 22', shell=True, text=True)
         await message.channel.send(command_output)
         
     @staticmethod
     async def add_fact_command(message:discord.Message, command:str, bad_wolf_facts:List[str], data_save):
+        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot add fact")
         fact = " ".join(command.split()[1:]).strip()
         if len(fact) == 0:
@@ -162,6 +145,7 @@ class BadWolfCommands:
     
     @staticmethod
     async def remove_fact_command(message:discord.Message, args:List[str], bad_wolf_facts:List[str], data_save):
+        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot remove fact")
         index = "".join(args[1:])
         if not index.isnumeric() or int(index) < 0 or int(index) >= len(bad_wolf_facts):
@@ -174,6 +158,7 @@ class BadWolfCommands:
   
     @staticmethod
     async def garbage_collect_command(message:discord.Message):
+        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot garbage collect")
         gc.collect()
         await message.channel.send("Collected")
@@ -181,6 +166,7 @@ class BadWolfCommands:
     
     @staticmethod
     async def send_all_facts_command(message:discord.Message, bad_wolf_facts:List[str]):
+        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot display facts")
         if len(bad_wolf_facts) > 0:
             await message.channel.send("\n".join(bad_wolf_facts))
@@ -188,12 +174,14 @@ class BadWolfCommands:
     
     @staticmethod
     async def total_clear_command(message:discord.Message, lounge_update_data):
+        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot clear lounge table submission cooldown tracking")
         lounge_update_data.update_cooldowns.clear()
         await message.channel.send("Cleared.")
         
     @staticmethod
     async def dump_data_command(message:discord.Message, data_dump_function):
+        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot dump data")
         successful = await UserDataProcessing.dump_data()
         data_dump_function()
@@ -231,17 +219,20 @@ class BotAdminCommands:
             
     @staticmethod
     async def remove_blacklisted_word_command(message:discord.Message, args:List[str]):
+        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot remove blacklisted word")
         await BadWolfCommands.blacklisted_word_change(message, args, adding=False)
     
     @staticmethod
     async def add_blacklisted_word_command(message:discord.Message, args:List[str]):
+        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot add blacklisted word")
         await BadWolfCommands.blacklisted_word_change(message, args, adding=True)
         
     
     @staticmethod
     async def blacklist_user_command(message:discord.Message, args:List[str], command:str):
+        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot blacklist user")
         
         if len(args) < 2:
@@ -282,17 +273,19 @@ class BotAdminCommands:
     
     @staticmethod
     async def add_flag_exception_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]):
+        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot give user ID a flag exception privilege")
         await BadWolfCommands.change_flag_exception(message, args, user_flag_exceptions, adding=True)
     
     @staticmethod      
-    
     async def remove_flag_exception_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]):
+        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot remove user ID's flag exception privilege")
         await BadWolfCommands.change_flag_exception(message, args, user_flag_exceptions, adding=False)
     
     @staticmethod
     async def change_ctgp_region_command(message:discord.Message, args:List[str]):
+        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot change CTGP CTWW region")
         if len(args) <= 1:
             await message.channel.send("You must give a new CTGP region to use for displaying CTGP WWs.")
@@ -302,6 +295,7 @@ class BotAdminCommands:
     
     @staticmethod
     async def global_vr_command(message:discord.Message, on=True):
+        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot change vr on/off")
 
         global vr_is_on
@@ -321,6 +315,7 @@ class OtherCommands:
     
     @staticmethod
     async def get_flag_command(message:discord.Message, server_prefix:str):
+        await AbuseTracking.abuse_track_check(message)
         author_id = message.author.id
         flag = UserDataProcessing.get_flag(author_id)
         if flag is None:
@@ -339,7 +334,8 @@ class OtherCommands:
         await message.channel.send(file=file, embed=embed)
         
     @staticmethod
-    async def set_flag_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]):  
+    async def set_flag_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]): 
+        await AbuseTracking.abuse_track_check(message) 
         author_id = message.author.id
         if len(args) > 1:
             #if 2nd argument is numeric, it's a discord ID
@@ -382,6 +378,7 @@ class OtherCommands:
 
     @staticmethod
     async def log_feedback_command(message:discord.Message, args:List[str], command:str):
+        await AbuseTracking.abuse_track_check(message)
         if len(args) > 1:
             to_log = f"{message.author} - {message.author.id}: {command}"
             common.log_text(to_log, common.FEEDBACK_LOGGING_TYPE)
@@ -389,6 +386,7 @@ class OtherCommands:
 
     @staticmethod
     async def lounge_name_command(message:discord.Message):
+        await AbuseTracking.abuse_track_check(message)
         author_id = message.author.id
         discordIDToLoad = str(author_id)
         await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
@@ -401,6 +399,7 @@ class OtherCommands:
 
     @staticmethod
     async def fc_command(message:discord.Message, args:List[str], old_command:str):
+        await AbuseTracking.abuse_track_check(message)
         discordIDToLoad = None
         id_lounge = {}
         fc_id = {}
@@ -449,6 +448,7 @@ class OtherCommands:
       
     @staticmethod
     async def mii_command(message:discord.Message, args:List[str], old_command:str):
+        await AbuseTracking.abuse_track_check(message)
         if common.MIIS_DISABLED:
             await message.channel.send("This command is temporarily disabled.")
             return
@@ -498,6 +498,7 @@ class OtherCommands:
                     
     @staticmethod
     async def wws_command(client, this_bot:TableBot.ChannelBot, message:discord.Message, ww_type=Race.RT_WW_ROOM_TYPE):
+        await AbuseTracking.abuse_track_check(message)
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
             delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
@@ -596,6 +597,7 @@ class OtherCommands:
 
     @staticmethod           
     async def vr_command(this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], old_command:str, temp_bot):
+        await AbuseTracking.abuse_track_check(message)
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
             delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
@@ -699,6 +701,7 @@ class LoungeCommands:
     
     @staticmethod
     async def get_lock_command(message:discord.Message, this_bot:TableBot.ChannelBot):
+        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot display lock")
         
         if this_bot.getRoom() is None or this_bot.getRoom().getSetupUser() is None:
@@ -715,6 +718,7 @@ class LoungeCommands:
         
     @staticmethod
     async def transfer_lock_command(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot):
+        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot transfer lock")
         LoungeCommands.has_authority_in_server_check(message.author, "cannot transfer lock")
         
@@ -966,12 +970,14 @@ class LoungeCommands:
     
     @staticmethod
     async def ct_mogi_update(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
+        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot submit table update for CT mogi", lounge_server_updates.server_id)
         await LoungeCommands.__mogi_update__(client, this_bot, message, args, lounge_server_updates, is_primary=False)
         
         
     @staticmethod
     async def rt_mogi_update(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
+        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot submit table update for RT mogi", lounge_server_updates.server_id)
         await LoungeCommands.__mogi_update__(client, this_bot, message, args, lounge_server_updates, is_primary=True)
     
@@ -1043,6 +1049,7 @@ class LoungeCommands:
 
     @staticmethod
     async def approve_submission_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
+        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot approve table submission", lounge_server_updates.server_id)
         LoungeCommands.has_authority_in_server_check(message.author, "cannot approve table submission", authority_check=lounge_server_updates.report_table_authority_check)
         LoungeCommands.updater_channel_check(message.channel, "cannot approve table submission", lounge_server_updates.get_updater_channel_ids())
@@ -1051,6 +1058,7 @@ class LoungeCommands:
     
     @staticmethod
     async def deny_submission_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
+        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot deny table submission", lounge_server_updates.server_id)
         LoungeCommands.has_authority_in_server_check(message.author, "cannot deny table submission", authority_check=lounge_server_updates.report_table_authority_check)
         LoungeCommands.updater_channel_check(message.channel, "cannot deny table submission", lounge_server_updates.get_updater_channel_ids())
@@ -1059,6 +1067,7 @@ class LoungeCommands:
     
     @staticmethod
     async def pending_submissions_command(message:discord.Message, lounge_server_updates:Lounge.Lounge):
+        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot display pending table submissions", lounge_server_updates.server_id)
         LoungeCommands.has_authority_in_server_check(message.author, "cannot display pending table submissions", authority_check=lounge_server_updates.report_table_authority_check)
        
@@ -1088,6 +1097,7 @@ class ServerDefaultCommands:
     
     @staticmethod
     async def large_time_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
+        await AbuseTracking.abuse_track_check(message)
         if not common.running_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change server default for hiding large times on tables")
         
@@ -1111,6 +1121,7 @@ class ServerDefaultCommands:
 
     @staticmethod              
     async def mii_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
+        await AbuseTracking.abuse_track_check(message)
         if not common.running_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change miis default for this server")
 
@@ -1135,6 +1146,7 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def graph_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
+        await AbuseTracking.abuse_track_check(message)
         if not common.running_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change default graph for this server")
 
@@ -1157,6 +1169,7 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def theme_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
+        await AbuseTracking.abuse_track_check(message)
         if not common.running_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change default table theme for this server")
         
@@ -1179,6 +1192,7 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def change_server_prefix_command(message:discord.Message, args:List[str]):
+        await AbuseTracking.abuse_track_check(message)
         ServerDefaultCommands.server_admin_check(message.author, "cannot change prefix")
         server_id = message.guild.id
         
@@ -1208,6 +1222,7 @@ class TablingCommands:
     
     @staticmethod
     async def reset_command(message:discord.Message, table_bots):
+        await AbuseTracking.abuse_track_check(message)
         server_id = message.guild.id
         channel_id = message.channel.id
         del(table_bots[server_id][channel_id])
@@ -1215,6 +1230,7 @@ class TablingCommands:
     
     @staticmethod
     async def display_races_played_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
@@ -1223,6 +1239,7 @@ class TablingCommands:
                     
     @staticmethod
     async def fcs_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
@@ -1231,6 +1248,7 @@ class TablingCommands:
     
     @staticmethod
     async def rxx_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
@@ -1239,7 +1257,7 @@ class TablingCommands:
 
     @staticmethod
     async def team_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-  
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1294,7 +1312,7 @@ class TablingCommands:
     
     @staticmethod
     async def disconnections_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1361,7 +1379,7 @@ class TablingCommands:
 
     @staticmethod
     async def player_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-  
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1402,6 +1420,7 @@ class TablingCommands:
 
     @staticmethod
     async def change_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1461,7 +1480,7 @@ class TablingCommands:
     #Code is quite similar to chane_player_tag_command, potential refactor opportunity?
     @staticmethod
     async def change_player_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
-    
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1503,7 +1522,7 @@ class TablingCommands:
 
     @staticmethod
     async def change_player_tag_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
-
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1553,6 +1572,7 @@ class TablingCommands:
     #Refactor this method to make it more readable
     @staticmethod
     async def start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str, permission_check:Callable):
+        await AbuseTracking.abuse_track_check(message)
         server_id = message.guild.id
         author_id = message.author.id
         if not is_lounge_server or permission_check(message.author) or (len(args) - command.count(" gps=") - command.count(" sui=") - command.count(" psb=")) <= 3:
@@ -1724,6 +1744,7 @@ class TablingCommands:
     
     @staticmethod                  
     async def after_start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
+        await AbuseTracking.abuse_track_check(message)
         this_bot.prev_command_sw = False
         this_bot.manualWarSetUp = False
         if args[0].lower().strip() not in ['yes', 'no', 'y', 'n']:
@@ -1786,6 +1807,7 @@ class TablingCommands:
 
     @staticmethod                  
     async def merge_room_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return                  
@@ -1824,6 +1846,7 @@ class TablingCommands:
     
     @staticmethod
     async def table_theme_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1843,6 +1866,7 @@ class TablingCommands:
     
     @staticmethod
     async def table_graph_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
@@ -1859,6 +1883,7 @@ class TablingCommands:
              
     @staticmethod           
     async def all_players_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1870,6 +1895,7 @@ class TablingCommands:
     
     @staticmethod
     async def set_war_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, old_command:str):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         elif len(args) < 2:
@@ -1881,6 +1907,7 @@ class TablingCommands:
             
     @staticmethod
     async def undo_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):   
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1894,6 +1921,7 @@ class TablingCommands:
     
     @staticmethod
     async def early_dc_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool): 
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1926,6 +1954,7 @@ class TablingCommands:
     
     @staticmethod
     async def change_room_size_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1955,6 +1984,7 @@ class TablingCommands:
     
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else: 
@@ -1973,6 +2003,7 @@ class TablingCommands:
                     
     @staticmethod
     async def war_picture_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         server_id = message.guild.id
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)                   
@@ -2075,6 +2106,7 @@ class TablingCommands:
     
     @staticmethod
     async def table_text_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         server_id = message.guild.id
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
@@ -2090,6 +2122,7 @@ class TablingCommands:
             
     @staticmethod
     async def manual_war_setup(message:discord.Message, this_bot:ChannelBot, command:str):
+        await AbuseTracking.abuse_track_check(message)
         this_bot.manualWarSetUp = False
         
         if this_bot.getRoom() is None or not this_bot.getRoom().is_initialized():
@@ -2166,6 +2199,7 @@ class TablingCommands:
     
     @staticmethod
     async def remove_race_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -2194,6 +2228,7 @@ class TablingCommands:
     
     @staticmethod     
     async def gp_display_size_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -2217,6 +2252,7 @@ class TablingCommands:
     
     @staticmethod
     async def quick_edit_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
@@ -2274,6 +2310,7 @@ class TablingCommands:
     
     @staticmethod
     async def current_room_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
+        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server) 
         elif len(this_bot.getRoom().races) >= 1:

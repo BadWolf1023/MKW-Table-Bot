@@ -175,7 +175,7 @@ botAdminsFileIsOpen = False
 botAdmins = set()
 
 #Abuse tracking
-bot_abuse_tracking = defaultdict(int)
+bot_abuse_tracking = defaultdict(lambda: [0, []])
 BOT_ABUSE_REPORT_CHANNEL_ID = 766272946091851776
 SPAM_THRESHOLD = 13
 WARN_THRESHOLD = 13
@@ -326,3 +326,4 @@ def run_async_function_no_loop(function_to_call):
     import asyncio
     loop = asyncio.get_event_loop()
     loop.run_until_complete(function_to_call)
+    

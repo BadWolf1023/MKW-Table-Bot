@@ -1,7 +1,7 @@
 from discord.utils import escape_markdown, escape_mentions
 import os
 import common
-
+from typing import List
 
     
         
@@ -143,6 +143,25 @@ def isint(value):
         return True
     except ValueError:
         return False
+
+#Takes a list of strings and concatenates them until a new concatenation would push it over the limit given
+#Separator is what will separate each concatenation
+def chunk_join(str_items:List[str], limit=2047, separator="\n"):
+    if len(str_items) == 0:
+        return [""]
+    
+    to_return = []
+    to_return.append(str_items[0])
+    for item in str_items[1:]:
+        new_length = len(to_return[-1]) + len(separator) + len(item)
+        if new_length > limit:
+            to_return.append(item)
+        else:
+            to_return[-1] = to_return[-1] + separator + item
+    return to_return
+        
+    
+    
     
 def initialize():
     common.botAdmins.clear()
