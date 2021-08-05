@@ -810,7 +810,7 @@ class LoungeCommands:
 
                             embed = discord.Embed(
                                                 title = "",
-                                                description="[Click to load this update in the admin panel]("+ updater_link + ")",
+                                                description="[Click to preview this update]("+ updater_link + ")",
                                                 colour = discord.Colour.dark_red()
                                             )
                             file = discord.File(table_image_path)
@@ -827,14 +827,13 @@ class LoungeCommands:
                             shortened_admin_panel_link = "No Link"
                             try:
                                 admin_link_tiny_url = await URLShortener.tinyurl_shorten_url(updater_link)
-                                shortened_admin_panel_link = f"[Admin Panel]({admin_link_tiny_url})"
+                                shortened_admin_panel_link = f"[Preview]({admin_link_tiny_url})"
                             except:
                                 pass
                             
-                            embed.add_field(name='Short Admin Link:', value=shortened_admin_panel_link)
+                            embed.add_field(name='Short Preview Link:', value=shortened_admin_panel_link)
                             embed.set_image(url="attachment://" + table_image_path)
                             embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
-                            embed.set_footer(text="Updaters: Login to the admin panel before clicking the link.")
                             
                             
                             sent_message = await updater_channel.send(file=file, embed=embed)
@@ -850,8 +849,11 @@ class LoungeCommands:
                             embed.add_field(name="Submission ID:", value=id_to_submit)
                             shortened_preview_link = "No Link"
                             try:
-                                preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
-                                shortened_preview_link = f"[Preview]({preview_link_tiny_url})"
+                                if preview_link == updater_link:
+                                    shortened_preview_link = shortened_admin_panel_link
+                                else:
+                                    preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
+                                    shortened_preview_link = f"[Preview]({preview_link_tiny_url})"
                             except:
                                 pass
                             
@@ -901,7 +903,7 @@ class LoungeCommands:
 
                         embed = discord.Embed(
                                             title = "",
-                                            description="[Click to load this update in the admin panel]("+ updater_link + ")",
+                                            description="[Click to preview this update]("+ updater_link + ")",
                                             colour = discord.Colour.dark_red()
                                         )
                         file = discord.File(table_image_path)
@@ -918,16 +920,14 @@ class LoungeCommands:
                         shortened_admin_panel_link = "No Link"
                         try:
                             admin_link_tiny_url = await URLShortener.tinyurl_shorten_url(updater_link)
-                            shortened_admin_panel_link = f"[Admin Panel]({admin_link_tiny_url})"
+                            shortened_admin_panel_link = f"[Preview]({admin_link_tiny_url})"
                         except:
                             pass
                             
-                        embed.add_field(name='Short Admin Link:', value=shortened_admin_panel_link)
+                        embed.add_field(name='Short Preview Link:', value=shortened_admin_panel_link)
                         
                         embed.set_image(url="attachment://" + table_image_path)
-                        embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
-                        embed.set_footer(text="Updaters: Login to the admin panel before clicking the link.")
-                        
+                        embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")                        
                         
                         sent_message = await updater_channel.send(file=file, embed=embed)
                         lounge_server_updates.add_report(id_to_submit, sent_message, summary_channel_id)
@@ -943,8 +943,11 @@ class LoungeCommands:
                         
                         shortened_preview_link = "No Link"
                         try:
-                            preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
-                            shortened_preview_link = f"[Preview]({preview_link_tiny_url})"
+                            if updater_link == preview_link:
+                                shortened_preview_link = shortened_admin_panel_link
+                            else:
+                                preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
+                                shortened_preview_link = f"[Preview]({preview_link_tiny_url})"
                         except:
                             pass
                         
