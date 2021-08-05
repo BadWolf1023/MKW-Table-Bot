@@ -75,7 +75,7 @@ DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
 
 #Commands that require a war to be started, but don't modify the war/room/table in any way
 TABLE_TEXT_TERMS = {"tt", "tabletext"}
-WAR_PICTURE_TERMS = {"wp", "warpicture"}
+WAR_PICTURE_TERMS = {"wp", "warpicture", "wo", "w;", "w["}
 RACE_RESULTS_TERMS = {"rr", "raceresults"}
 RACES_TERMS = {"races"}
 RXX_TERMS = {"rxx", "rlid"}
@@ -162,7 +162,7 @@ user_flag_exceptions = set()
 lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.MKW_LOUNGE_SERVER_ID, common.main_lounge_can_report_table)
 
 if common.in_testing_server:
-    common.MKW_LOUNGE_SERVER_ID = common.BAD_WOLF_SERVER_ID
+    #common.MKW_LOUNGE_SERVER_ID = common.BAD_WOLF_SERVER_ID
     MogiUpdate.rt_summary_channels.clear()
     MogiUpdate.rt_summary_channels.update({"1":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID})
     MogiUpdate.ct_summary_channels.clear()
@@ -411,7 +411,8 @@ async def on_message(message: discord.Message):
         command = strip_prefix(message.content, server_prefix)
         if command == "" or len([c for c in command if c in common.COMMAND_TRIGGER_CHARS]) == 0:
             return
-        args = command.split()
+        old_args = command.split()
+        args = [arg.lower() for arg in command.split()]
         
         
         
