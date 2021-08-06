@@ -81,7 +81,6 @@ class BadWolfCommands:
     
     @staticmethod
     async def get_logs_command(message:discord.Message):
-        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot give logs")
         
         if os.path.exists(common.FEEDBACK_LOGS_FILE):
@@ -95,7 +94,6 @@ class BadWolfCommands:
     #Adds or removes a discord ID to/from the bot admins
     @staticmethod
     async def bot_admin_change(message:discord.Message, args:List[str], adding=True):
-        await AbuseTracking.abuse_track_check(message)
         if len(args) <= 1:
             await message.channel.send("Give a Discord ID.")
             return
@@ -112,26 +110,22 @@ class BadWolfCommands:
     
     @staticmethod
     async def add_bot_admin_command(message:discord.Message, args:List[str]):
-        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot add bot admin")
         await BadWolfCommands.bot_admin_change(message, args, adding=True)
         
     @staticmethod
     async def remove_bot_admin_command(message:discord.Message, args:List[str]):
-        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot remove bot admin")
         await BadWolfCommands.bot_admin_change(message, args, adding=False)
     
     @staticmethod
     async def server_process_memory_command(message:discord.Message):
-        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot show server memory usage")
         command_output = subprocess.check_output('top -b -o +%MEM | head -n 22', shell=True, text=True)
         await message.channel.send(command_output)
         
     @staticmethod
     async def add_fact_command(message:discord.Message, command:str, bad_wolf_facts:List[str], data_save):
-        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot add fact")
         fact = " ".join(command.split()[1:]).strip()
         if len(fact) == 0:
@@ -145,7 +139,6 @@ class BadWolfCommands:
     
     @staticmethod
     async def remove_fact_command(message:discord.Message, args:List[str], bad_wolf_facts:List[str], data_save):
-        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot remove fact")
         index = "".join(args[1:])
         if not index.isnumeric() or int(index) < 0 or int(index) >= len(bad_wolf_facts):
@@ -158,7 +151,6 @@ class BadWolfCommands:
   
     @staticmethod
     async def garbage_collect_command(message:discord.Message):
-        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot garbage collect")
         gc.collect()
         await message.channel.send("Collected")
@@ -166,7 +158,6 @@ class BadWolfCommands:
     
     @staticmethod
     async def send_all_facts_command(message:discord.Message, bad_wolf_facts:List[str]):
-        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot display facts")
         if len(bad_wolf_facts) > 0:
             await message.channel.send("\n".join(bad_wolf_facts))
@@ -174,14 +165,12 @@ class BadWolfCommands:
     
     @staticmethod
     async def total_clear_command(message:discord.Message, lounge_update_data):
-        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot clear lounge table submission cooldown tracking")
         lounge_update_data.update_cooldowns.clear()
         await message.channel.send("Cleared.")
         
     @staticmethod
     async def dump_data_command(message:discord.Message, data_dump_function):
-        await AbuseTracking.abuse_track_check(message)
         BadWolfCommands.is_badwolf_check(message.author, "cannot dump data")
         successful = await UserDataProcessing.dump_data()
         data_dump_function()
@@ -219,20 +208,17 @@ class BotAdminCommands:
             
     @staticmethod
     async def remove_blacklisted_word_command(message:discord.Message, args:List[str]):
-        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot remove blacklisted word")
         await BadWolfCommands.blacklisted_word_change(message, args, adding=False)
     
     @staticmethod
     async def add_blacklisted_word_command(message:discord.Message, args:List[str]):
-        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot add blacklisted word")
         await BadWolfCommands.blacklisted_word_change(message, args, adding=True)
         
     
     @staticmethod
     async def blacklist_user_command(message:discord.Message, args:List[str], command:str):
-        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot blacklist user")
         
         if len(args) < 2:
@@ -273,19 +259,16 @@ class BotAdminCommands:
     
     @staticmethod
     async def add_flag_exception_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]):
-        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot give user ID a flag exception privilege")
         await BadWolfCommands.change_flag_exception(message, args, user_flag_exceptions, adding=True)
     
     @staticmethod      
     async def remove_flag_exception_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]):
-        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot remove user ID's flag exception privilege")
         await BadWolfCommands.change_flag_exception(message, args, user_flag_exceptions, adding=False)
     
     @staticmethod
     async def change_ctgp_region_command(message:discord.Message, args:List[str]):
-        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot change CTGP CTWW region")
         if len(args) <= 1:
             await message.channel.send("You must give a new CTGP region to use for displaying CTGP WWs.")
@@ -295,7 +278,6 @@ class BotAdminCommands:
     
     @staticmethod
     async def global_vr_command(message:discord.Message, on=True):
-        await AbuseTracking.abuse_track_check(message)
         BotAdminCommands.is_bot_admin_check(message.author, "cannot change vr on/off")
 
         global vr_is_on
@@ -315,7 +297,6 @@ class OtherCommands:
     
     @staticmethod
     async def get_flag_command(message:discord.Message, server_prefix:str):
-        await AbuseTracking.abuse_track_check(message)
         author_id = message.author.id
         flag = UserDataProcessing.get_flag(author_id)
         if flag is None:
@@ -335,7 +316,6 @@ class OtherCommands:
         
     @staticmethod
     async def set_flag_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]): 
-        await AbuseTracking.abuse_track_check(message) 
         author_id = message.author.id
         if len(args) > 1:
             #if 2nd argument is numeric, it's a discord ID
@@ -378,7 +358,6 @@ class OtherCommands:
 
     @staticmethod
     async def log_feedback_command(message:discord.Message, args:List[str], command:str):
-        await AbuseTracking.abuse_track_check(message)
         if len(args) > 1:
             to_log = f"{message.author} - {message.author.id}: {command}"
             common.log_text(to_log, common.FEEDBACK_LOGGING_TYPE)
@@ -386,7 +365,6 @@ class OtherCommands:
 
     @staticmethod
     async def lounge_name_command(message:discord.Message):
-        await AbuseTracking.abuse_track_check(message)
         author_id = message.author.id
         discordIDToLoad = str(author_id)
         await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
@@ -399,7 +377,6 @@ class OtherCommands:
 
     @staticmethod
     async def fc_command(message:discord.Message, args:List[str], old_command:str):
-        await AbuseTracking.abuse_track_check(message)
         discordIDToLoad = None
         id_lounge = {}
         fc_id = {}
@@ -448,7 +425,6 @@ class OtherCommands:
       
     @staticmethod
     async def mii_command(message:discord.Message, args:List[str], old_command:str):
-        await AbuseTracking.abuse_track_check(message)
         if common.MIIS_DISABLED:
             await message.channel.send("This command is temporarily disabled.")
             return
@@ -498,7 +474,6 @@ class OtherCommands:
                     
     @staticmethod
     async def wws_command(client, this_bot:TableBot.ChannelBot, message:discord.Message, ww_type=Race.RT_WW_ROOM_TYPE):
-        await AbuseTracking.abuse_track_check(message)
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
             delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
@@ -597,7 +572,6 @@ class OtherCommands:
 
     @staticmethod           
     async def vr_command(this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], old_command:str, temp_bot):
-        await AbuseTracking.abuse_track_check(message)
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
             delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
@@ -701,7 +675,6 @@ class LoungeCommands:
     
     @staticmethod
     async def get_lock_command(message:discord.Message, this_bot:TableBot.ChannelBot):
-        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot display lock")
         
         if this_bot.getRoom() is None or this_bot.getRoom().getSetupUser() is None:
@@ -718,7 +691,6 @@ class LoungeCommands:
         
     @staticmethod
     async def transfer_lock_command(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot):
-        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot transfer lock")
         LoungeCommands.has_authority_in_server_check(message.author, "cannot transfer lock")
         
@@ -746,7 +718,7 @@ class LoungeCommands:
     
     @staticmethod
     async def __mogi_update__(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge, is_primary=True):
-        
+        command_incorrect_format_message = "The format of this command is: `?" + args[0] + " TierNumber RacesPlayed (TableText)`\n- **TierNumber** must be a number. For RTs, between 1 and 8. For CTs, between 1 and 6. If you are trying to submit a squadqueue table, **TierNumber** should be: squadqueue\n-**RacesPlayed** must be a number, between 1 and 32."
         cooldown = lounge_server_updates.get_user_update_submit_cooldown(message.author.id)
         updater_channel_id, updater_link, preview_link, type_text = lounge_server_updates.get_information(is_primary)
         
@@ -754,230 +726,133 @@ class LoungeCommands:
             await message.channel.send("You have already submitted a table very recently. Please wait " + str(cooldown) + " more seconds before submitting another table.", delete_after=10)
             return
         
-        if len(args) < 2:
-            await message.channel.send("The format of this command is: ?" + args[0] + " TierNumber (TableText)\nIf you want to submit the table that you're doing with MKW Table Bot, you can just do ?" + args[0] + " TierNumber")
+        if len(args) < 3:
+            await message.channel.send(command_incorrect_format_message)
             return
         
 
         tier_number, summary_channel_id = MogiUpdate.get_tier_and_summary_channel_id(args[1], is_primary)
         if tier_number is None:
-            await message.channel.send("The format of this command is: ?" + args[0] + " TierNumber (TableText) - TierNumber must be a number. For RTs, must be between 1 and 8. For CTs, must be between 1 and 6. If you are trying to submit a squadqueue table, <tierNumber> should be: squadqueue")
+            await message.channel.send(command_incorrect_format_message)
             return
         
-        if len(args) == 2:
-            #check if they have war going currently
-            if this_bot.getWar() is None or this_bot.getRoom() is None:
-                await message.channel.send("You must start a war to use this command - if you want to submit a table you did manually, put in the table text")
-            elif len(this_bot.getRoom().getRaces()) < 12:
-                await message.channel.send("Cannot submit a table that has less than 12 races.")
-            else:
-                lounge_server_updates.update_user_cooldown(message.author)
-                delete_me = await message.channel.send("Submitting table... please wait...")
-                original_table_text, table_sorted_data = SK.get_war_table_DCS(this_bot)
-                with_style_and_graph_table_text = original_table_text + this_bot.get_lorenzi_style_and_graph(prepend_newline=True)
-                url_table_text = urllib.parse.quote(with_style_and_graph_table_text)
-                image_url = common.base_url_lorenzi + url_table_text
-                
-                table_image_path = str(message.id) + ".png"
-                image_download_success = await common.download_image(image_url, table_image_path)
-                try:
-                    if not image_download_success:
-                        await message.channel.send("Could not get image for table.")
-                        return
-                    #did the room have *any* errors? Regardless of ignoring any type of error
-                    war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0
-                    tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0
-                    header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
-                    footer_combine_success = True
+        races_played = args[2]
+        if not races_played.isnumeric() or int(args[2]) < 1 or int(args[2]) > 32:
+            await message.channel.send(command_incorrect_format_message)
+            return
+        races_played = int(args[2])
+            
         
-                    if header_combine_success and this_bot.getWar().displayMiis:
-                        footer_combine_success = ImageCombine.add_miis_to_table(this_bot, table_sorted_data, table_image_path=table_image_path, out_image_path=table_image_path)
-                    if not header_combine_success or not footer_combine_success:
-                        await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")  
-                    else:
-                        error_code, _, json_data = await MogiUpdate.textInputUpdate(original_table_text, tier_number, is_rt=is_primary)
-                        
-                        if error_code != MogiUpdate.SUCCESS_EC:
-                            if error_code is None:
-                                await message.channel.send("Couldn't submit table. An unknown error occurred.")
-                            elif error_code == MogiUpdate.PLAYER_NOT_FOUND_EC:
-                                missing_players = json_data
-                                await message.channel.send("Couldn't submit table. The following players could not be found: **" + "**, **".join(missing_players) + "**\nCheck your submission for correct names. If your table has subs, they must be in this format: Sarah(4)/Jacob(8)")
-                            else:
-                                await message.channel.send("Couldn't submit table. Reason: *" + MogiUpdate.table_text_errors[error_code] + "*")
-                    
-                        else:
-                            updater_channel = client.get_channel(updater_channel_id)
-                            preview_link += urllib.parse.quote(json_data)
-                            updater_link += urllib.parse.quote(json_data)
-
-
-                            embed = discord.Embed(
-                                                title = "",
-                                                description="[Click to preview this update]("+ updater_link + ")",
-                                                colour = discord.Colour.dark_red()
-                                            )
-                            file = discord.File(table_image_path)
-                            lounge_server_updates.add_counter()
-                            id_to_submit = lounge_server_updates.get_counter()
-                            
-                            embed.add_field(name="Submission ID:", value=str(id_to_submit))
-                            embed.add_field(name="Tier", value=tier_number)
-                            summary_channel = client.get_channel(summary_channel_id)
-                            embed.add_field(name="Approving to:", value=(summary_channel.mention if summary_channel is not None else "Can't find channel"))
-                            embed.add_field(name='Submitted from:', value=message.channel.mention)
-                            embed.add_field(name='Submitted by:', value=message.author.mention)
-                            embed.add_field(name='Discord ID:', value=str(message.author.id))
-                            shortened_admin_panel_link = "No Link"
-                            try:
-                                admin_link_tiny_url = await URLShortener.tinyurl_shorten_url(updater_link)
-                                shortened_admin_panel_link = f"[Preview]({admin_link_tiny_url})"
-                            except:
-                                pass
-                            
-                            embed.add_field(name='Short Preview Link:', value=shortened_admin_panel_link)
-                            embed.set_image(url="attachment://" + table_image_path)
-                            embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
-                            
-                            
-                            sent_message = await updater_channel.send(file=file, embed=embed)
-                            lounge_server_updates.add_report(id_to_submit, sent_message, summary_channel_id)
-                            
-                            
-                            file = discord.File(table_image_path)
-                            embed = discord.Embed(
-                                                title = "Successfully submitted to " + type_text + " Reporters and " + type_text + " Updaters",
-                                                description="[Click to preview this update]("+ preview_link + ")",
-                                                colour = discord.Colour.dark_red()
-                                            )
-                            embed.add_field(name="Submission ID:", value=id_to_submit)
-                            shortened_preview_link = "No Link"
-                            try:
-                                if preview_link == updater_link:
-                                    shortened_preview_link = shortened_admin_panel_link
-                                else:
-                                    preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
-                                    shortened_preview_link = f"[Preview]({preview_link_tiny_url})"
-                            except:
-                                pass
-                            
-                            embed.add_field(name='Short Preview Link:', value=shortened_preview_link)
-                            embed.set_image(url="attachment://" + table_image_path)
-                            embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
-                            embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
-                            await message.channel.send(file=file, embed=embed)
-                finally:
-                    if os.path.exists(table_image_path):
-                        os.remove(table_image_path)
-                lounge_server_updates.update_user_cooldown(message.author)   
-                await delete_me.delete()   
+    
+        lounge_server_updates.update_user_cooldown(message.author)
+        delete_me = await message.channel.send("Submitting table... please wait...")
+        temp = message.content
+        command_removed = temp[temp.lower().index(args[0])+len(args[0]):].strip("\n\t ")
+        tier_number_removed = command_removed[command_removed.lower().index(args[1])+len(args[1]):].strip("\n\t ")
+        table_text = command_removed[tier_number_removed.lower().index(args[2])+len(args[2]):].strip("\n\t ")
+        
+        
+        error_code, newTableText, json_data = await MogiUpdate.textInputUpdate(table_text, tier_number, races_played, is_rt=is_primary)
+        
+        
+        if error_code != MogiUpdate.SUCCESS_EC:
+            if error_code is None:
+                await message.channel.send("Couldn't submit table. An unknown error occurred.")
+            elif error_code == MogiUpdate.PLAYER_NOT_FOUND_EC:
+                missing_players = json_data
+                await message.channel.send("Couldn't submit table. The following players could not be found: **" + "**, **".join(missing_players) + "**\nCheck your submission for correct names. If your table has subs, they must be in this format: Sarah(4)/Jacob(8)")
+            else:
+                await message.channel.send("Couldn't submit table. Reason: *" + MogiUpdate.table_text_errors[error_code] + "*")
+    
+        
         else:
-            lounge_server_updates.update_user_cooldown(message.author)
-            delete_me = await message.channel.send("Submitting table... please wait...")
-            temp = message.content
-            command_removed = temp[temp.lower().index(args[0])+len(args[0]):].strip("\n\t ")
-            table_text = command_removed[command_removed.lower().index(args[1])+len(args[1]):].strip("\n\t ")
-            
-            error_code, newTableText, json_data = await MogiUpdate.textInputUpdate(table_text, tier_number, is_rt=is_primary)
-            
-            
-            if error_code != MogiUpdate.SUCCESS_EC:
-                if error_code is None:
-                    await message.channel.send("Couldn't submit table. An unknown error occurred.")
-                elif error_code == MogiUpdate.PLAYER_NOT_FOUND_EC:
-                    missing_players = json_data
-                    await message.channel.send("Couldn't submit table. The following players could not be found: **" + "**, **".join(missing_players) + "**\nCheck your submission for correct names. If your table has subs, they must be in this format: Sarah(4)/Jacob(8)")
+            url_table_text = urllib.parse.quote(newTableText)
+            image_url = common.base_url_lorenzi + url_table_text
+            table_image_path = str(message.id) + ".png"
+            image_download_success = await common.download_image(image_url, table_image_path)
+            try:
+                if not image_download_success:
+                    await message.channel.send("Could not get image for table.")
                 else:
-                    await message.channel.send("Couldn't submit table. Reason: *" + MogiUpdate.table_text_errors[error_code] + "*")
-        
-            
-            else:
-                url_table_text = urllib.parse.quote(newTableText)
-                image_url = common.base_url_lorenzi + url_table_text
-                table_image_path = str(message.id) + ".png"
-                image_download_success = await common.download_image(image_url, table_image_path)
-                try:
-                    if not image_download_success:
-                        await message.channel.send("Could not get image for table.")
-                    else:
-                        updater_channel = client.get_channel(updater_channel_id)
-                        preview_link += urllib.parse.quote(json_data)
-                        updater_link += urllib.parse.quote(json_data)
+                    updater_channel = client.get_channel(updater_channel_id)
+                    preview_link += urllib.parse.quote(json_data)
+                    updater_link += urllib.parse.quote(json_data)
 
 
-                        embed = discord.Embed(
-                                            title = "",
-                                            description="[Click to preview this update]("+ updater_link + ")",
-                                            colour = discord.Colour.dark_red()
-                                        )
-                        file = discord.File(table_image_path)
-                        lounge_server_updates.add_counter()
-                        id_to_submit = lounge_server_updates.get_counter()
-                        embed.add_field(name='Submission ID:', value=str(id_to_submit))
-                        embed.add_field(name="Tier", value=tier_number)
-                        summary_channel = client.get_channel(summary_channel_id)
-                        embed.add_field(name="Approving to:", value=(summary_channel.mention if summary_channel is not None else "Can't find channel"))
-                        embed.add_field(name='Submitted from:', value=message.channel.mention)
-                        embed.add_field(name='Submitted by:', value=message.author.mention)
-                        embed.add_field(name='Discord ID:', value=str(message.author.id))
-                        
-                        shortened_admin_panel_link = "No Link"
-                        try:
-                            admin_link_tiny_url = await URLShortener.tinyurl_shorten_url(updater_link)
-                            shortened_admin_panel_link = f"[Preview]({admin_link_tiny_url})"
-                        except:
-                            pass
-                            
-                        embed.add_field(name='Short Preview Link:', value=shortened_admin_panel_link)
-                        
-                        embed.set_image(url="attachment://" + table_image_path)
-                        embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")                        
-                        
-                        sent_message = await updater_channel.send(file=file, embed=embed)
-                        lounge_server_updates.add_report(id_to_submit, sent_message, summary_channel_id)
+                    embed = discord.Embed(
+                                        title = "",
+                                        description="[Click to preview this update]("+ updater_link + ")",
+                                        colour = discord.Colour.dark_red()
+                                    )
+                    file = discord.File(table_image_path)
+                    lounge_server_updates.add_counter()
+                    id_to_submit = lounge_server_updates.get_counter()
+                    embed.add_field(name='Submission ID', value=str(id_to_submit))
+                    embed.add_field(name="Tier", value=tier_number)
+                    embed.add_field(name="Races Played", value=races_played)
+                    summary_channel = client.get_channel(summary_channel_id)
+                    embed.add_field(name="Approving to", value=(summary_channel.mention if summary_channel is not None else "Can't find channel"))
+                    embed.add_field(name='Submitted from', value=message.channel.mention)
+                    embed.add_field(name='Submitted by', value=message.author.mention)
+                    embed.add_field(name='Discord ID', value=str(message.author.id))
                     
-                        
-                        file = discord.File(table_image_path)
-                        embed = discord.Embed(
-                                            title = "Successfully submitted to " + type_text + " Reporters and " + type_text + " Updaters",
-                                            description="[Click to preview this update]("+ preview_link + ")",
-                                            colour = discord.Colour.dark_red()
-                                        )
-                        embed.add_field(name='Submission ID:', value=str(id_to_submit))
-                        
-                        shortened_preview_link = "No Link"
-                        try:
-                            if updater_link == preview_link:
-                                shortened_preview_link = shortened_admin_panel_link
-                            else:
-                                preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
-                                shortened_preview_link = f"[Preview]({preview_link_tiny_url})"
-                        except:
-                            pass
-                        
-                        embed.add_field(name='Short Preview Link:', value=shortened_preview_link)
-                        
-                        embed.set_image(url="attachment://" + table_image_path)
-                        embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
-                        embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
-                        
-                        await message.channel.send(file=file, embed=embed)
-                finally:
-                    if os.path.exists(table_image_path):
-                        os.remove(table_image_path)
-            lounge_server_updates.update_user_cooldown(message.author)
-            await delete_me.delete()
+                    shortened_admin_panel_link = "No Link"
+                    try:
+                        admin_link_tiny_url = await URLShortener.tinyurl_shorten_url(updater_link)
+                        shortened_admin_panel_link = f"[Preview]({admin_link_tiny_url})"
+                    except:
+                        pass
+                    
+                    embed.add_field(name='Short Preview Link:', value=shortened_admin_panel_link)
+                    
+                    embed.set_image(url="attachment://" + table_image_path)
+                    embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")                        
+                    
+                    sent_message = await updater_channel.send(file=file, embed=embed)
+                    lounge_server_updates.add_report(id_to_submit, sent_message, summary_channel_id)
+                
+                    
+                    file = discord.File(table_image_path)
+                    embed = discord.Embed(
+                                        title = "Successfully submitted to " + type_text + " Reporters and " + type_text + " Updaters",
+                                        description="[Click to preview this update]("+ preview_link + ")",
+                                        colour = discord.Colour.dark_red()
+                                    )
+                    embed.add_field(name='Submission ID', value=str(id_to_submit))
+                    embed.add_field(name='Races Played', value=str(races_played))
+                    
+                    
+                    shortened_preview_link = "No Link"
+                    try:
+                        if updater_link == preview_link:
+                            shortened_preview_link = shortened_admin_panel_link
+                        else:
+                            preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
+                            shortened_preview_link = f"[Preview]({preview_link_tiny_url})"
+                    except:
+                        pass
+                    
+                    embed.add_field(name='Short Preview Link:', value=shortened_preview_link)
+                    
+                    embed.set_image(url="attachment://" + table_image_path)
+                    embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
+                    embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
+                    
+                    await message.channel.send(file=file, embed=embed)
+            finally:
+                if os.path.exists(table_image_path):
+                    os.remove(table_image_path)
+        lounge_server_updates.update_user_cooldown(message.author)
+        await delete_me.delete()
     
     @staticmethod
     async def ct_mogi_update(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
-        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot submit table update for CT mogi", lounge_server_updates.server_id)
         await LoungeCommands.__mogi_update__(client, this_bot, message, args, lounge_server_updates, is_primary=False)
         
         
     @staticmethod
     async def rt_mogi_update(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
-        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot submit table update for RT mogi", lounge_server_updates.server_id)
         await LoungeCommands.__mogi_update__(client, this_bot, message, args, lounge_server_updates, is_primary=True)
     
@@ -1049,7 +924,6 @@ class LoungeCommands:
 
     @staticmethod
     async def approve_submission_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
-        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot approve table submission", lounge_server_updates.server_id)
         LoungeCommands.has_authority_in_server_check(message.author, "cannot approve table submission", authority_check=lounge_server_updates.report_table_authority_check)
         LoungeCommands.updater_channel_check(message.channel, "cannot approve table submission", lounge_server_updates.get_updater_channel_ids())
@@ -1058,7 +932,6 @@ class LoungeCommands:
     
     @staticmethod
     async def deny_submission_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
-        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot deny table submission", lounge_server_updates.server_id)
         LoungeCommands.has_authority_in_server_check(message.author, "cannot deny table submission", authority_check=lounge_server_updates.report_table_authority_check)
         LoungeCommands.updater_channel_check(message.channel, "cannot deny table submission", lounge_server_updates.get_updater_channel_ids())
@@ -1067,7 +940,6 @@ class LoungeCommands:
     
     @staticmethod
     async def pending_submissions_command(message:discord.Message, lounge_server_updates:Lounge.Lounge):
-        await AbuseTracking.abuse_track_check(message)
         LoungeCommands.correct_server_check(message.guild, "cannot display pending table submissions", lounge_server_updates.server_id)
         LoungeCommands.has_authority_in_server_check(message.author, "cannot display pending table submissions", authority_check=lounge_server_updates.report_table_authority_check)
        
@@ -1097,7 +969,6 @@ class ServerDefaultCommands:
     
     @staticmethod
     async def large_time_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        await AbuseTracking.abuse_track_check(message)
         if not common.running_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change server default for hiding large times on tables")
         
@@ -1121,7 +992,6 @@ class ServerDefaultCommands:
 
     @staticmethod              
     async def mii_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        await AbuseTracking.abuse_track_check(message)
         if not common.running_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change miis default for this server")
 
@@ -1146,7 +1016,6 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def graph_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        await AbuseTracking.abuse_track_check(message)
         if not common.running_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change default graph for this server")
 
@@ -1169,7 +1038,6 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def theme_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        await AbuseTracking.abuse_track_check(message)
         if not common.running_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change default table theme for this server")
         
@@ -1192,7 +1060,6 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def change_server_prefix_command(message:discord.Message, args:List[str]):
-        await AbuseTracking.abuse_track_check(message)
         ServerDefaultCommands.server_admin_check(message.author, "cannot change prefix")
         server_id = message.guild.id
         
@@ -1222,7 +1089,6 @@ class TablingCommands:
     
     @staticmethod
     async def reset_command(message:discord.Message, table_bots):
-        await AbuseTracking.abuse_track_check(message)
         server_id = message.guild.id
         channel_id = message.channel.id
         del(table_bots[server_id][channel_id])
@@ -1230,7 +1096,6 @@ class TablingCommands:
     
     @staticmethod
     async def display_races_played_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
@@ -1239,7 +1104,6 @@ class TablingCommands:
                     
     @staticmethod
     async def fcs_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
@@ -1248,7 +1112,6 @@ class TablingCommands:
     
     @staticmethod
     async def rxx_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
@@ -1257,7 +1120,6 @@ class TablingCommands:
 
     @staticmethod
     async def team_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1312,7 +1174,6 @@ class TablingCommands:
     
     @staticmethod
     async def disconnections_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1379,7 +1240,6 @@ class TablingCommands:
 
     @staticmethod
     async def player_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1420,7 +1280,6 @@ class TablingCommands:
 
     @staticmethod
     async def change_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1480,7 +1339,6 @@ class TablingCommands:
     #Code is quite similar to chane_player_tag_command, potential refactor opportunity?
     @staticmethod
     async def change_player_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1522,7 +1380,6 @@ class TablingCommands:
 
     @staticmethod
     async def change_player_tag_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1572,7 +1429,6 @@ class TablingCommands:
     #Refactor this method to make it more readable
     @staticmethod
     async def start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str, permission_check:Callable):
-        await AbuseTracking.abuse_track_check(message)
         server_id = message.guild.id
         author_id = message.author.id
         if not is_lounge_server or permission_check(message.author) or (len(args) - command.count(" gps=") - command.count(" sui=") - command.count(" psb=")) <= 3:
@@ -1744,7 +1600,6 @@ class TablingCommands:
     
     @staticmethod                  
     async def after_start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        await AbuseTracking.abuse_track_check(message)
         this_bot.prev_command_sw = False
         this_bot.manualWarSetUp = False
         if args[0].lower().strip() not in ['yes', 'no', 'y', 'n']:
@@ -1807,7 +1662,6 @@ class TablingCommands:
 
     @staticmethod                  
     async def merge_room_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return                  
@@ -1846,7 +1700,6 @@ class TablingCommands:
     
     @staticmethod
     async def table_theme_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1866,7 +1719,6 @@ class TablingCommands:
     
     @staticmethod
     async def table_graph_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
@@ -1883,7 +1735,6 @@ class TablingCommands:
              
     @staticmethod           
     async def all_players_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1895,7 +1746,6 @@ class TablingCommands:
     
     @staticmethod
     async def set_war_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, old_command:str):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         elif len(args) < 2:
@@ -1907,7 +1757,6 @@ class TablingCommands:
             
     @staticmethod
     async def undo_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):   
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1921,7 +1770,6 @@ class TablingCommands:
     
     @staticmethod
     async def early_dc_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool): 
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1954,7 +1802,6 @@ class TablingCommands:
     
     @staticmethod
     async def change_room_size_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1984,7 +1831,6 @@ class TablingCommands:
     
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else: 
@@ -2003,7 +1849,6 @@ class TablingCommands:
                     
     @staticmethod
     async def war_picture_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         server_id = message.guild.id
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)                   
@@ -2106,7 +1951,6 @@ class TablingCommands:
     
     @staticmethod
     async def table_text_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         server_id = message.guild.id
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
@@ -2122,7 +1966,6 @@ class TablingCommands:
             
     @staticmethod
     async def manual_war_setup(message:discord.Message, this_bot:ChannelBot, command:str):
-        await AbuseTracking.abuse_track_check(message)
         this_bot.manualWarSetUp = False
         
         if this_bot.getRoom() is None or not this_bot.getRoom().is_initialized():
@@ -2199,7 +2042,6 @@ class TablingCommands:
     
     @staticmethod
     async def remove_race_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -2228,7 +2070,6 @@ class TablingCommands:
     
     @staticmethod     
     async def gp_display_size_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -2252,7 +2093,6 @@ class TablingCommands:
     
     @staticmethod
     async def quick_edit_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
@@ -2310,7 +2150,6 @@ class TablingCommands:
     
     @staticmethod
     async def current_room_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
-        await AbuseTracking.abuse_track_check(message)
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server) 
         elif len(this_bot.getRoom().races) >= 1:
