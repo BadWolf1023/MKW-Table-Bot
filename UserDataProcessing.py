@@ -350,7 +350,8 @@ def read_valid_flags_file(filename=common.FLAG_CODES_FILE):
         for line in f:
             flag_codes.add(line.strip("\n").strip().lower())
     return flag_codes
-    
+
+
 def initialize():
     global discordID_Flags
     global discordID_Lounges

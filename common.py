@@ -23,7 +23,7 @@ MAX_PREFIX_LENGTH = 3
 current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = False
+in_testing_server = True
 running_beta = False
 
 #TableBot variables, for ChannelBots
@@ -175,19 +175,15 @@ botAdminsFileIsOpen = False
 botAdmins = set()
 
 #Abuse tracking
-bot_abuse_tracking = defaultdict(lambda: [0, []])
 BOT_ABUSE_REPORT_CHANNEL_ID = 766272946091851776
 SPAM_THRESHOLD = 13
 WARN_THRESHOLD = 13
 AUTO_BAN_THRESHOLD = 18
-blacklisted_command_count = defaultdict(int)
-BOT_ABUSE_REPORT_CHANNEL = None
+
 
 COMMAND_TRIGGER_CHARS = set(c for c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-def set_bot_abuse_report_channel(client):
-    global BOT_ABUSE_REPORT_CHANNEL
-    BOT_ABUSE_REPORT_CHANNEL = client.get_channel(BOT_ABUSE_REPORT_CHANNEL_ID)
+
 
 
 def author_is_lounge_staff(message_author):
