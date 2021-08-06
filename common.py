@@ -13,7 +13,7 @@ import discord
 from pathlib import Path
 from collections import defaultdict
 
-version = "11.0.0"
+version = "11.1.0"
 
 MIIS_DISABLED = False
 
@@ -23,7 +23,7 @@ MAX_PREFIX_LENGTH = 3
 current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = True
+in_testing_server = False
 running_beta = False
 
 #TableBot variables, for ChannelBots
