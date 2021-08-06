@@ -87,6 +87,8 @@ FEEDBACK_LOGS_FILE = f"{LOGGING_PATH}feedback_logs.txt"
 #It only logs commands that are sent to it
 MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}messages_logging.txt"
 
+FULL_MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}/full_logging.txt"
+
 
 DEFAULT_LARGE_TIME_FILE = f"{SERVER_SETTINGS_PATH}server_large_time_defaults.txt"
 DEFAULT_PREFIX_FILE = f"{SERVER_SETTINGS_PATH}server_prefixes.txt"
@@ -97,12 +99,14 @@ DEFAULT_MII_FILE = f"{SERVER_SETTINGS_PATH}server_mii_defaults.txt"
 ERROR_LOGGING_TYPE = "error"
 MESSAGE_LOGGING_TYPE = "messagelogging"
 FEEDBACK_LOGGING_TYPE = "feedback"
+FULL_MESSAGE_LOGGING_TYPE = "fullmessagelogging"
 
 ALL_PATHS = {LOGGING_PATH, SERVER_SETTINGS_PATH, DATA_PATH}
 
 FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    FEEDBACK_LOGS_FILE,
                    MESSAGE_LOGGING_FILE,
+                   FULL_MESSAGE_LOGGING_FILE,
                    DEFAULT_LARGE_TIME_FILE,
                    DEFAULT_PREFIX_FILE,
                    DEFAULT_TABLE_THEME_FILE_NAME,
@@ -248,6 +252,10 @@ def check_create(file_name):
         f = open(file_name, "w")
         f.close()
 
+def full_command_log(message):
+    to_log = f"Server Name: {message.guild} - Server ID: {message.guild.id} - Channel: {message.channel} - Channel ID: {message.channel.id} - User: {message.author} - User ID: {message.author.id} - User Name: {message.author.display_name} - Command: {message.content}"
+    log_text(to_log, FULL_MESSAGE_LOGGING_TYPE)
+    
 def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
     logging_file = MESSAGE_LOGGING_FILE
     if logging_type == ERROR_LOGGING_TYPE:
@@ -256,6 +264,8 @@ def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
         logging_file = FEEDBACK_LOGS_FILE
     if logging_type == MESSAGE_LOGGING_TYPE:
         logging_file = MESSAGE_LOGGING_FILE
+    if logging_type == FULL_MESSAGE_LOGGING_TYPE:
+        logging_file = FULL_MESSAGE_LOGGING_FILE
         
     check_create(logging_file)
     with open(logging_file, "a+") as f:

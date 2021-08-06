@@ -89,6 +89,8 @@ class BadWolfCommands:
             await message.channel.send(file=discord.File(common.ERROR_LOGS_FILE))
         if os.path.exists(common.MESSAGE_LOGGING_FILE):
             await message.channel.send(file=discord.File(common.MESSAGE_LOGGING_FILE))
+        if os.path.exists(common.FULL_MESSAGE_LOGGING_FILE):
+            await message.channel.send(file=discord.File(common.FULL_MESSAGE_LOGGING_FILE))
 
         
     #Adds or removes a discord ID to/from the bot admins

@@ -907,7 +907,8 @@ def get_size(objct, seen=None):
 
 def log_command_sent(message:discord.Message):
     common.log_text(f"Sever: {message.guild} - Channel: {message.channel} - User: {message.author} - Command: {message.content}")
-
+    common.full_command_log(message)
+    
 #This function dumps everything we have pulled recently from the API
 #in our two dictionaries to local storage and the main dictionaries      
 @tasks.loop(hours=24)
