@@ -743,16 +743,28 @@ class LoungeCommands:
             await message.channel.send(command_incorrect_format_message)
             return
         races_played = int(args[2])
+        
+        table_text = ""
+        
+        if len(args) == 3:
+            if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
+                await message.channel.send("Room is not loaded. You must have a room loaded if you do not give TableText to this command. Otherwise, do `?" + args[0] + " TierNumber RacesPlayed TableText`")
+                return
+            else:
+                table_text, _ = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, server_id=message.guild.id, discord_escape=True)
+        else:
+            temp = message.content
+            command_removed = temp[temp.lower().index(args[0])+len(args[0]):].strip("\n\t ")
+            tier_number_removed = command_removed[command_removed.lower().index(args[1])+len(args[1]):].strip("\n\t ")
+            table_text = command_removed[tier_number_removed.lower().index(args[2])+len(args[2]):].strip("\n\t ")
+            
+                    
             
         
     
         lounge_server_updates.update_user_cooldown(message.author)
         delete_me = await message.channel.send("Submitting table... please wait...")
-        temp = message.content
-        command_removed = temp[temp.lower().index(args[0])+len(args[0]):].strip("\n\t ")
-        tier_number_removed = command_removed[command_removed.lower().index(args[1])+len(args[1]):].strip("\n\t ")
-        table_text = command_removed[tier_number_removed.lower().index(args[2])+len(args[2]):].strip("\n\t ")
-        
+
         
         error_code, newTableText, json_data = await MogiUpdate.textInputUpdate(table_text, tier_number, races_played, is_rt=is_primary)
         
@@ -885,12 +897,10 @@ class LoungeCommands:
                 
                 if is_approval:
                     submissionEmbed = submissionMessage.embeds[0]
+                    submissionEmbed.remove_field(6)
                     submissionEmbed.remove_field(5)
-                    submissionEmbed.remove_field(4)
-                    submissionEmbed.remove_field(3)
-                    submissionEmbed.remove_field(2)
-                    submissionEmbed.set_field_at(1, name="Approved by:", value=message.author.mention)
-                    submissionEmbed.add_field(name="Approval link:", value="[Message](" + submissionMessage.jump_url + ")")
+                    submissionEmbed.set_field_at(3, name="Approved by:", value=message.author.mention)
+                    submissionEmbed.set_field_at(4, name="Approval link:", value="[Message](" + submissionMessage.jump_url + ")")
                     
                     summaryChannelRetrieved = True
                     if summaryChannelID is None:

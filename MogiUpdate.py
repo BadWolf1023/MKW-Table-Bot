@@ -636,7 +636,6 @@ async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=No
     
     json_data["teams"] = create_teams_JSON(team_map, races_played, squadqueue)
     json_dump = json.dumps(json_data, separators=(',', ':'))
-    print(json_dump)
     
     return SUCCESS_EC, newTableText, json_dump
 
