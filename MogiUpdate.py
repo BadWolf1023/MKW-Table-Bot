@@ -177,24 +177,25 @@ def isJSONCorrupt(jsonData, mogiPlayerAmount=12):
 def createJSON(players, mult=default_multiplier):
     pass
 
+#- Global races played will always be the actual number of races played
+# - Individual player races played will be the actual number of races they played as well
+# - Multiplier for each person will be global races played ÷ 12
+# - Updater Bot will leave all multipliers alone, even on subs/subbees. Updater Bot will not change any JSON except for the following: Updater Bot must change gain/loss prevention and full gain/loss on JSON appropriately for sub ins and sub outs.
 def create_player_json(player:Tuple[str, int, int, int], races_played=12, sub_in=False, sub_out=False, squadqueue=False):
     player_json = {}
     player_json["player_id"] = player[3]
-    if races_played != player[2]:
-        player_json["races"] = player[2]
     player_json["score"] = player[1]
+    
+    if races_played != player[2]:
+        player_json["races"] = player[2] #since the races they played is not the global race count, change their individual race count appropriately
+    
     if sub_in:
         player_json["subbed_in"] = True
     if sub_out:
         player_json["subbed_out"] = True
-        if not sub_in: #People who sub in and sub out do not lose mmr
-            player_json["multiplier"] = races_played/player[2]
     
-    
-    if squadqueue:
-        if "multiplier" not in player_json:
-            player_json["multiplier"] = 1
-        player_json["multiplier"] = player_json["multiplier"] * 1.0
+    if races_played != 12: #Default multiplier is 1.0, so if 12 races are played, 1.0 is the right multiplier and we don't need to include it
+        player_json["multiplier"] = round(races_played / 12, 3) #Multiplier for each person will be global races played ÷ 12
         
     return player_json
     
