@@ -18,9 +18,9 @@ blacklisted_command_count = defaultdict(int)
 BOT_ABUSE_REPORT_CHANNEL = None
 
 WARN_MESSAGES_PER_SECOND_RATE = .45
-BAN_RATE_MESSAGES_PER_SECOND = .55
-MIN_MESSAGES_NEEDED_BEFORE_WARN = 5
-MIN_MESSAGES_NEEDED_BEFORE_BAN = 7
+BAN_RATE_MESSAGES_PER_SECOND = .48
+MIN_MESSAGES_NEEDED_BEFORE_WARN = 6
+MIN_MESSAGES_NEEDED_BEFORE_BAN = 8
 
 def is_hitting_warn_rate(author_id):
     num_messages_sent = len(bot_abuse_tracking[author_id][1])
