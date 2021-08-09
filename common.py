@@ -11,7 +11,6 @@ import TableBotExceptions
 from collections import namedtuple
 import discord
 from pathlib import Path
-from collections import defaultdict
 
 version = "11.1.0"
 
