@@ -6,6 +6,7 @@ Created on Sep 23, 2020
 
 from typing import List, Dict, Tuple
 import aiohttp
+import UtilityFunctions
 
 lounge_mmr_api_url = 'https://mariokartboards.com/lounge/api/ladderplayer.php'
 
@@ -67,7 +68,7 @@ def _reverseEngineerResults(lounge_names_mapping: List[Tuple[str, str, int]], js
         if isinstance(player_data[player_id_json_name], str) and player_data[player_id_json_name].isnumeric():
             player_data[player_id_json_name] = int(player_data[player_id_json_name])
             
-        if isinstance(player_data[current_mmr_json_name], str) and player_data[current_mmr_json_name].isnumeric():
+        if isinstance(player_data[current_mmr_json_name], str) and UtilityFunctions.isint(player_data[current_mmr_json_name]):
             player_data[current_mmr_json_name] = int(player_data[current_mmr_json_name])
 
         
