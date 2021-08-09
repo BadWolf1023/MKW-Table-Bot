@@ -450,7 +450,7 @@ async def on_message(message: discord.Message):
                 await commands.LoungeCommands.approve_submission_command(client, message, args, lounge_submissions)
                 
             elif args[0] in LOUNGE_TABLE_SUBMISSION_DENY_TERMS:
-                await commands.LoungeCommands.approve_submission_command(client, message, args, lounge_submissions)
+                await commands.LoungeCommands.deny_submission_command(client, message, args, lounge_submissions)
                 
             elif args[0] in LOUNGE_PENDING_TABLE_SUBMISSION_TERMS:
                 await commands.LoungeCommands.pending_submissions_command(message, lounge_submissions)
