@@ -80,13 +80,13 @@ table_text_errors = {INVALID_RT_NUM_EC:"Tier number is not an RT Tier",
                      INVALID_CT_NUM_EC:"Tier number is not a CT Tier",
                      TOO_MANY_TEAMS_EC:"The table text doesn't match a mogi format - there are too many or too few teams",
                      DIFFERING_NUM_PLAYERS_EC:"Each team must have the same amount of players",
-                     WRONG_PLAYER_COUNT:"Submitted tables must have exactly 12 players. If you want to submit a table with subs, they must look like this: Jacob(1)/Sarah(2/3)",
+                     WRONG_PLAYER_COUNT:"Submitted tables must have exactly 12 players. If you want to submit a table with subs, they must put the number of races they played in parentheses, like this: Jacob(5)/Sarah(7)",
                      BAD_TABLE:"Your table is wrong. Each team must have a tag. For FFAs, just put FFA at the top of the table. Don't put any other tags for 'teams' in FFAs.",
                      PLAYER_BAD_STRING:"Each player must have a name and a score - check Lorenzi's site for help_documentation if you don't know how to table",
-                     SUB_BAD_STRING:"Subs must be in the following format: Jacob(1)/Sarah(2/3) - If you had a sub in the middle of the GP, ping reporter for manual table submission.",
-                     SUB_WRONG_RACE_COUNT:"Subs races must add up to 12 (eg Jacob(1)/Sarah(2/3))",
-                     SUB_WRONG_GP_COUNT:"Subs GPs must be exactly 3. (eg 25|12|23) - If you had a sub in the middle of the GP, ping reporter for manual table submission.",
-                     PLAYER_NOT_FOUND_EC:"One of the players was not found in your table. I can't handle new (placement) players. If you're trying to submit a table with subs, subs must look like this: Jacob(1)/Sarah(2/3)",
+                     SUB_BAD_STRING:"Subs must be in the following format: Jacob(5)/Sarah(7)\nNote that the number of races played is in parentheses after each player.",
+                     SUB_WRONG_RACE_COUNT:"Subs races must add up to the number of races (eg if races played was 12, the subs races must add up to 12: Jacob(5)/Sarah(7))",
+                     SUB_WRONG_GP_COUNT:"Subs GPs are ambiguous.\nSuppose you had the following sub: Jacob(5)/Sarah(7)\nColumn 1 must be the first 4 races Jacob played, Column 2 must be the last race Jacob played. Column 3 must be the first 4 races Sarah played, and Column 4 must be the last 3 races Sarah played.",
+                     PLAYER_NOT_FOUND_EC:"One of the players was not found in your table. I can't handle new (placement) players. If you're trying to submit a table with subs, subs must look like this: Jacob(5)/Sarah(7)",
                      CORRUPT_DATA_EC:"Received corrupt data from API. (This isn't your fault. This shouldn't have happened in the first place.) You can try submitting again, but it probably won't work."}
         
 valid_formats = {1, 2, 3, 4, 6}
@@ -177,26 +177,29 @@ def isJSONCorrupt(jsonData, mogiPlayerAmount=12):
 def createJSON(players, mult=default_multiplier):
     pass
 
-def create_player_json(player:Tuple[str, int, int, int], sub_in=False, sub_out=False, squadqueue=False):
+#- Global races played will always be the actual number of races played
+# - Individual player races played will be the actual number of races they played as well
+# - Multiplier for each person will be global races played ÷ 12
+# - Updater Bot will leave all multipliers alone, even on subs/subbees. Updater Bot will not change any JSON except for the following: Updater Bot must change gain/loss prevention and full gain/loss on JSON appropriately for sub ins and sub outs.
+def create_player_json(player:Tuple[str, int, int, int], races_played=12, sub_in=False, sub_out=False, squadqueue=False):
     player_json = {}
     player_json["player_id"] = player[3]
-    player_json["races"] = player[2]
     player_json["score"] = player[1]
-    if sub_in:
-        player_json["is_sub_in"] = True
-    if sub_out:
-        player_json["is_sub_out"] = True
-        if not sub_in: #People who sub in and sub out do not lose mmr
-            player_json["multiplier"] = 12/player[2]
     
-    if squadqueue:
-        if "multiplier" not in player_json:
-            player_json["multiplier"] = 1
-        player_json["multiplier"] = player_json["multiplier"] * 1.0
+    if races_played != player[2]:
+        player_json["races"] = player[2] #since the races they played is not the global race count, change their individual race count appropriately
+    
+    if sub_in:
+        player_json["subbed_in"] = True
+    if sub_out:
+        player_json["subbed_out"] = True
+    
+    if races_played != 12: #Default multiplier is 1.0, so if 12 races are played, 1.0 is the right multiplier and we don't need to include it
+        player_json["multiplier"] = round(races_played / 12, 3) #Multiplier for each person will be global races played ÷ 12
         
     return player_json
     
-def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], squadqueue=False):
+def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], races_played=12, squadqueue=False):
     teams_JSON = []
     for team in team_map:
         team_json = []
@@ -214,7 +217,7 @@ def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], squadqueue=Fals
                             sub_out = True
                     
 
-                team_json.append(create_player_json(player, sub_in=sub_in, sub_out=sub_out, squadqueue=squadqueue))
+                team_json.append(create_player_json(player, races_played, sub_in=sub_in, sub_out=sub_out, squadqueue=squadqueue))
         teams_JSON.append({"players":team_json})
     return teams_JSON
            
@@ -321,79 +324,62 @@ def pop_paranthesees(name:str):
     if start_paran == -1 or end_paran == -1 or start_paran > end_paran:
         return name, None
     new_name = name[:start_paran] + name[end_paran+1:]
-    gp_str =  name[start_paran+1:end_paran].strip()
+    races_player_str =  name[start_paran+1:end_paran].strip()
     
-    if gp_str == '':
+    if races_player_str == '':
         return name, SUB_BAD_STRING
     
     if new_name == '':
         return name, SUB_BAD_STRING
     
-    return new_name, gp_str
+    return new_name, races_player_str
 
 
     
 
-def determine_subs_scores(subs, scores):
-    all_valid_possibilities = {"1", "2", "3", "4", "8", "12", "23"}
-    one_gp_terms = {}
-    two_gp_terms = {}
-    removal_chars = {" ", "g", "p", "/", "-", "\\", "|"}
+def determine_subs_scores(subs, scores, races_played=12):
+    #TODO: Check if 
+    all_valid_possibilities = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
+                               "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29",
+                               "30", "31", "32"}
+
     sub_scores = []
-    races_so_far = 0
+
+    total_races_played = 0
+    for index, (sub_name, sub_races_played) in enumerate(subs):
+        if sub_races_played not in all_valid_possibilities:
+            return SUB_WRONG_RACE_COUNT
+        subs[index] = (sub_name, int(sub_races_played))
+        total_races_played += subs[index][1]
     
-    formatting_1 = 0 #They do by race count
-    formatting_2 = 0 #They do by GPs played
-    formatting_3 = 0 #They do by which GPs played, most common formatting
-    for _, gps in subs:
-        gps = "".join([c for c in gps.lower() if c not in removal_chars])
-        if not gps in all_valid_possibilities:
-            return SUB_BAD_STRING
-        formatting_1 += int(gps)
-        formatting_2 += sum([4*int(char) for char in gps])
-        formatting_3 += sum([4 if char in ["1", "2", "3"] else 100 for char in gps])
-        
-    if formatting_1 == 12:
-        one_gp_terms = {"4"}
-        two_gp_terms = {"8"}
-    elif formatting_3 == 12:
-        one_gp_terms = {"1", "2", "3"}
-        two_gp_terms = {"12", "23"}
-    elif formatting_2 == 12:
-        one_gp_terms = {"1"}
-        two_gp_terms = {"2"}
-        
+    if total_races_played != races_played:
+        return SUB_WRONG_RACE_COUNT
+    
+    def determine_columns_needed(subs):
+        needed = 0
+        for sub_name, sub_races_played in subs:
+            full_columns = sub_races_played // 4
+            partial_columns = 0 if (sub_races_played % 4 == 0) else 1
+            needed += full_columns + partial_columns
+        return needed
+    
+    columns_needed = determine_columns_needed(subs)
+    
+    if columns_needed != len(scores):
+        return SUB_WRONG_GP_COUNT
         
 
-    
-    for sub_name, gps in subs:
-        gps = "".join([c for c in gps.lower() if c not in removal_chars])
-        if gps in one_gp_terms:
-            if races_so_far == 0:
-                sub_scores.append((sub_name, scores[0], 4))
-            elif races_so_far == 4:
-                sub_scores.append((sub_name, scores[1], 4))
-            elif races_so_far == 8:
-                sub_scores.append((sub_name, scores[2], 4))
-            else:
-                return SUB_WRONG_RACE_COUNT
-            races_so_far += 4
-        elif gps in two_gp_terms:
-            if races_so_far == 0:
-                sub_scores.append((sub_name, sum(scores[0:2]), 8))
-            elif races_so_far == 4:
-                sub_scores.append((sub_name, sum(scores[1:3]), 8))
-            else:
-                return SUB_WRONG_RACE_COUNT
-            races_so_far += 8
-        else:
-            return SUB_WRONG_RACE_COUNT
+    cur_column = 0
+    for sub_name, sub_races_played in subs:
+        columns_needed_for_sub = determine_columns_needed([(sub_name, sub_races_played)])
+        sub_scores.append((sub_name, sum(scores[cur_column:cur_column+columns_needed_for_sub]), sub_races_played))
+        cur_column += columns_needed_for_sub
     return sub_scores
                 
             
             
 
-def getSubScores(name:str, scores):
+def getSubScores(name:str, scores, races_played=12):
             
     players = []
     start_ind = 0
@@ -419,36 +405,32 @@ def getSubScores(name:str, scores):
     
     for player in players:
         subs.append(pop_paranthesees(player))
-    
-    
-    
+        
     #Check to see if an error code (int) is in the 2nd index
     #If it is, just return the player name as normal and their score (will throw an error to
     #the user that the player name couldn't be found)
-    for player_name, gps_str in subs:
-        if not isinstance(player_name, str) or player_name == "" or\
-        not isinstance(gps_str, str) or gps_str == "":
-            return [(name, sum(scores))]
+    
+    #TODO: Here is where we modify code to support mid-gp subs
+    for player_name, races_player_str in subs:
+        if not isinstance(player_name, str) or player_name == "" or not isinstance(races_player_str, str) or races_player_str == "":
+            return [(name, sum(scores), races_played)]
     
     if len(subs) > 1:
-        if len(scores) != 3:
-            return SUB_WRONG_GP_COUNT
-        else:
-            sub_scores = determine_subs_scores(subs, scores)
-            if sub_scores is None:
-                return [(name, sum(scores))]
-            return sub_scores
+        sub_scores = determine_subs_scores(subs, scores, races_played)
+        if sub_scores is None:
+            return [(name, sum(scores), races_played)]
+        return sub_scores
         
     else:
-        return [(name, sum(scores))]
+        return [(name, sum(scores), races_played)]
         
-    return [(name, sum(scores))]
+    return [(name, sum(scores), races_played)]
 
 def fix_name(name:str):
     return name.replace('\u00E9', "e")
 
 
-def getNameAndScore(line:str):
+def getNameAndScore(line:str, races_played=12):
     scores = []
     curNum = ""
     for ind, char in reversed(list(enumerate(line))):
@@ -457,9 +439,9 @@ def getNameAndScore(line:str):
             name = remove_flag(line[:ind+1].strip())
             name = fix_name(name)
             if name == "":
-                return [(None, sum(scores))]
+                return [(None, sum(scores), races_played)]
             scores.reverse() #We appended backwards
-            return getSubScores(name, scores)
+            return getSubScores(name, scores, races_played)
             
         
         curNum = char+curNum
@@ -473,12 +455,12 @@ def getNameAndScore(line:str):
         elif char.isnumeric():
             continue
         else:
-            return [(None, sum(scores))]
+            return [(None, sum(scores), races_played)]
 
-    return [(None, sum(scores))] #Empty string
+    return [(None, sum(scores), races_played)] #Empty string
         
 
-def getPlayersAndScores(table_lines:List[str]):
+def getPlayersAndScores(table_lines:List[str], races_played=12):
     teams = []
     start_of_team = True
     for line in table_lines:
@@ -490,7 +472,7 @@ def getPlayersAndScores(table_lines:List[str]):
                 teams.append([])
             start_of_team = False
             
-            linePackage = getNameAndScore(line)
+            linePackage = getNameAndScore(line, races_played)
             #Check if it's an error code
             if isinstance(linePackage, int):
                 return linePackage, None
@@ -580,7 +562,7 @@ def determine_tier(id_mapping, is_rt=True):
     
             
 
-async def textInputUpdate(tableText:str, tier:str, warFormat=None, is_rt=True):
+async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=None, is_rt=True):
     squadqueue = False
     if tier == "squadqueue":
         squadqueue = True
@@ -597,7 +579,7 @@ async def textInputUpdate(tableText:str, tier:str, warFormat=None, is_rt=True):
     else:
         numTeams = num_teams_mapping_reverse[warFormat]
     
-    EC, players_and_scores = getPlayersAndScores(table_lines)
+    EC, players_and_scores = getPlayersAndScores(table_lines, races_played)
     if EC != SUCCESS_EC:
         return EC, None, players_and_scores
     
@@ -625,6 +607,7 @@ async def textInputUpdate(tableText:str, tier:str, warFormat=None, is_rt=True):
     
     json_data = {}
     json_data["format"] = str(warFormat)
+    json_data["races"] = races_played
     
     
 
@@ -652,7 +635,7 @@ async def textInputUpdate(tableText:str, tier:str, warFormat=None, is_rt=True):
     if not success:
         return None, None, None
     
-    json_data["teams"] = create_teams_JSON(team_map, squadqueue)
+    json_data["teams"] = create_teams_JSON(team_map, races_played, squadqueue)
     json_dump = json.dumps(json_data, separators=(',', ':'))
     
     return SUCCESS_EC, newTableText, json_dump

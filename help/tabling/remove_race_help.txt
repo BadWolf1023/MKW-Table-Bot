@@ -1,0 +1,4 @@
+**We played a race that shouldn't be scored on the table. How can I remove it?**
+You can remove a race by doing `{SERVER_PREFIX}removerace racenumber`.
+*Note:* Because this command is highly unstable, if you are going to remove a race, do it immediately after it has been played, prior to doing any other editing commands.
+*Example:* `{SERVER_PREFIX}removerace 5` will remove the 5th race from the table.

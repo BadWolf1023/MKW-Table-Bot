@@ -1,0 +1,2 @@
+**How do I see a list of the races that have been played?**
+Do `{SERVER_PREFIX}races`

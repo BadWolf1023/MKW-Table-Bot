@@ -1,0 +1,20 @@
+TO DO:
+Turn this into more readable documentation.
+
+To update strike counts, use the !strike command.
+Specify RT or CT, the number of strikes, and the player names.
+If any players reach the strike limit, the bot will mention that in the summary channel.
+Example #1: To give Cheeseburger and French Fries two RT strikes each, type !strike rt 2 Cheeseburger, French Fries.
+Example #2: To remove four CT strikes from Milkshake, type !strike ct -4 Milkshake.
+
+To update tables submitted through Table Bot, use the !submit command.
+Specify the Table Bot table ID; confirm the names, scores, race counts, subs, and MMR changes on the update preview that presents; and then react with :white_check_mark: to confirm the update (or :x: to deny it).
+The bot will automatically run the @RankBot command for promotions/demotions after uploading an image of the update to the summary channel.
+Example #3: To update table #9001, type !submit 9001, verify the results, and then react with :white_check_mark:.
+
+For manually-submitted tables, first update the table manually in the site as per usual, and then use the !table command.
+Specify RT or CT and the Lounge Leaderboard table ID.
+An image of the update will be uploaded to the summary channel.
+Example #4: To generate an image of the manually-updated CT table #1183, type !table ct 1183 (https://mariokartboards.com/lounge/ladder/table.php?wid=1183&type=ct).
+
+Please continue to react to strikes and penalties as you update them. Let us know if you have any questions or encounter any issues.

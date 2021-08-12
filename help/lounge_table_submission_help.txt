@@ -1,0 +1,11 @@
+**We finished our mogi. How do I submit the table to Reporters/Updaters?**
+• If you are tabling on MKW Table Bot and do not have any subs:
+Use `{SERVER_PREFIX}rtupdate tiernumber numberofraces` for Regular Tracks, or `{SERVER_PREFIX}ctupdate tiernumber numberofraces` for Custom Tracks.
+
+• If you are making the table on Lorenzi's website:
+Use `{SERVER_PREFIX}rtupdate tiernumber numberofraces tabletext` for Regular Tracks, or `{SERVER_PREFIX}ctupdate tiernumber numberofraces tabletext` for Custom Tracks.
+*Q:* What's "tabletext"? What format should subs be in?
+*A:* Check out this example: <https://bit.ly/3BB9zwr> - the number of races each sub has played should be in parentheses after their name. Eg Sarah(5)/Jacob(7)
+
+*Important:* If your table submission contains a player that has not been placed yet, you'll need to ping a Reporter and ask them to place that player.
+*Note:* Doing a squad queue? Put squadqueue for `tiernumber`. Otherwise, put the number of the tier you played in (eg 2).

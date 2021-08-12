@@ -24,7 +24,9 @@ import Race
 import MogiUpdate
 import Lounge
 import TableBotExceptions
+import AbuseTracking
 import common
+
 
 
 #Other library imports, other people codes
@@ -41,6 +43,7 @@ import itertools
 import discord
 import os
 from datetime import datetime
+import URLShortener
 
 vr_is_on = False
 
@@ -61,31 +64,6 @@ async def send_missing_permissions(channel:discord.TextChannel, content=None, de
     except discord.errors.Forbidden: #We can't send messages
         pass
     
-
-async def abuse_track_check(message:discord.Message):
-    await blacklisted_user_check(message)
-    
-    author_id = message.author.id
-    common.bot_abuse_tracking[author_id] += 1
-    if common.bot_abuse_tracking[author_id] == common.WARN_THRESHOLD:
-        await message.channel.send(f"{message.author.mention} slow down, you're sending too many commands. To avoid getting banned, wait 5 minutes before sending another command.")
-    elif common.bot_abuse_tracking[author_id] == common.AUTO_BAN_THRESHOLD: #certain spam
-        UserDataProcessing.add_Blacklisted_user(str(author_id), "Automated ban - you spammed the bot. This hurts users everywhere because it slows down the bot for everyone. You can appeal in 1 week to a bot admin or in Bad Wolf's server.")
-        if common.BOT_ABUSE_REPORT_CHANNEL is not None:
-            common.BOT_ABUSE_REPORT_CHANNEL.send(f"Automatic ban for spamming bot:\nDiscord: {str(message.author)}\nDiscord ID: {author_id}\nDisplay name: {message.author.display_name}\nLast message: {message.content}")
-        raise TableBotExceptions.BlacklistedUser("blacklisted user")
-    return True
-
-#Raises BlacklistedUser Exception if the author of the message is blacklisted
-#Sends a notification once in a while that they are blacklisted
-async def blacklisted_user_check(message:discord.Message, notify_threshold=15):
-    author_id = message.author.id
-    if str(author_id) in UserDataProcessing.blacklisted_Users and author_id != common.BAD_WOLF_ID:
-        if common.blacklisted_command_count[author_id] % notify_threshold == 0:
-            await message.channel.send("You have been blacklisted by a bot admin. You are not allowed to use this bot. Reason: " + str(UserDataProcessing.blacklisted_Users[str(author_id)]), delete_after=10)
-        common.blacklisted_command_count[author_id] += 1
-        raise TableBotExceptions.BlacklistedUser("blacklisted user")
-    return True
         
             
         
@@ -101,8 +79,8 @@ class BadWolfCommands:
             raise TableBotExceptions.NotBadWolf(failure_message)
         return True
     
-    async def get_logs_command(self, message:discord.Message):
-        await abuse_track_check()
+    @staticmethod
+    async def get_logs_command(message:discord.Message):
         BadWolfCommands.is_badwolf_check(message.author, "cannot give logs")
         
         if os.path.exists(common.FEEDBACK_LOGS_FILE):
@@ -111,6 +89,8 @@ class BadWolfCommands:
             await message.channel.send(file=discord.File(common.ERROR_LOGS_FILE))
         if os.path.exists(common.MESSAGE_LOGGING_FILE):
             await message.channel.send(file=discord.File(common.MESSAGE_LOGGING_FILE))
+        if os.path.exists(common.FULL_MESSAGE_LOGGING_FILE):
+            await message.channel.send(file=discord.File(common.FULL_MESSAGE_LOGGING_FILE))
 
         
     #Adds or removes a discord ID to/from the bot admins
@@ -285,7 +265,6 @@ class BotAdminCommands:
         await BadWolfCommands.change_flag_exception(message, args, user_flag_exceptions, adding=True)
     
     @staticmethod      
-    
     async def remove_flag_exception_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]):
         BotAdminCommands.is_bot_admin_check(message.author, "cannot remove user ID's flag exception privilege")
         await BadWolfCommands.change_flag_exception(message, args, user_flag_exceptions, adding=False)
@@ -338,7 +317,7 @@ class OtherCommands:
         await message.channel.send(file=file, embed=embed)
         
     @staticmethod
-    async def set_flag_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]):  
+    async def set_flag_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]): 
         author_id = message.author.id
         if len(args) > 1:
             #if 2nd argument is numeric, it's a discord ID
@@ -741,7 +720,7 @@ class LoungeCommands:
     
     @staticmethod
     async def __mogi_update__(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge, is_primary=True):
-        
+        command_incorrect_format_message = "The format of this command is: `?" + args[0] + " TierNumber RacesPlayed (TableText)`\n- **TierNumber** must be a number. For RTs, between 1 and 8. For CTs, between 1 and 6. If you are trying to submit a squadqueue table, **TierNumber** should be: squadqueue\n-**RacesPlayed** must be a number, between 1 and 32."
         cooldown = lounge_server_updates.get_user_update_submit_cooldown(message.author.id)
         updater_channel_id, updater_link, preview_link, type_text = lounge_server_updates.get_information(is_primary)
         
@@ -749,183 +728,136 @@ class LoungeCommands:
             await message.channel.send("You have already submitted a table very recently. Please wait " + str(cooldown) + " more seconds before submitting another table.", delete_after=10)
             return
         
-        if len(args) < 2:
-            await message.channel.send("The format of this command is: ?" + args[0] + " TierNumber (TableText)\nIf you want to submit the table that you're doing with MKW Table Bot, you can just do ?" + args[0] + " TierNumber")
+        if len(args) < 3:
+            await message.channel.send(command_incorrect_format_message)
             return
         
 
         tier_number, summary_channel_id = MogiUpdate.get_tier_and_summary_channel_id(args[1], is_primary)
         if tier_number is None:
-            await message.channel.send("The format of this command is: ?" + args[0] + " TierNumber (TableText) - TierNumber must be a number. For RTs, must be between 1 and 8. For CTs, must be between 1 and 6. If you are trying to submit a squadqueue table, <tierNumber> should be: squadqueue")
+            await message.channel.send(command_incorrect_format_message)
             return
         
-        if len(args) == 2:
-            #check if they have war going currently
-            if this_bot.getWar() is None or this_bot.getRoom() is None:
-                await message.channel.send("You must start a war to use this command - if you want to submit a table you did manually, put in the table text")
-            elif len(this_bot.getRoom().getRaces()) < 12:
-                await message.channel.send("Cannot submit a table that has less than 12 races.")
-            else:
-                lounge_server_updates.update_user_cooldown(message.author)
-                delete_me = await message.channel.send("Submitting table... please wait...")
-                original_table_text, table_sorted_data = SK.get_war_table_DCS(this_bot)
-                with_style_and_graph_table_text = original_table_text + this_bot.get_lorenzi_style_and_graph(prepend_newline=True)
-                url_table_text = urllib.parse.quote(with_style_and_graph_table_text)
-                image_url = common.base_url_lorenzi + url_table_text
-                
-                table_image_path = str(message.id) + ".png"
-                image_download_success = await common.download_image(image_url, table_image_path)
-                try:
-                    if not image_download_success:
-                        await message.channel.send("Could not get image for table.")
-                        return
-                    #did the room have *any* errors? Regardless of ignoring any type of error
-                    war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0
-                    tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0
-                    header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
-                    footer_combine_success = True
+        races_played = args[2]
+        if not races_played.isnumeric() or int(args[2]) < 1 or int(args[2]) > 32:
+            await message.channel.send(command_incorrect_format_message)
+            return
+        races_played = int(args[2])
         
-                    if header_combine_success and this_bot.getWar().displayMiis:
-                        footer_combine_success = ImageCombine.add_miis_to_table(this_bot, table_sorted_data, table_image_path=table_image_path, out_image_path=table_image_path)
-                    if not header_combine_success or not footer_combine_success:
-                        await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")  
-                    else:
-                        error_code, _, json_data = await MogiUpdate.textInputUpdate(original_table_text, tier_number, is_rt=is_primary)
-                        
-                        if error_code != MogiUpdate.SUCCESS_EC:
-                            if error_code is None:
-                                await message.channel.send("Couldn't submit table. An unknown error occurred.")
-                            elif error_code == MogiUpdate.PLAYER_NOT_FOUND_EC:
-                                missing_players = json_data
-                                await message.channel.send("Couldn't submit table. The following players could not be found: **" + "**, **".join(missing_players) + "**\nCheck your submission for correct names. If your table has subs, they must be in this format: Sarah(4)/Jacob(8)")
-                            else:
-                                await message.channel.send("Couldn't submit table. Reason: *" + MogiUpdate.table_text_errors[error_code] + "*")
-                    
-                        else:
-                            updater_channel = client.get_channel(updater_channel_id)
-                            preview_link += urllib.parse.quote(json_data)
-                            updater_link += urllib.parse.quote(json_data)
-
-
-                            embed = discord.Embed(
-                                                title = "",
-                                                description="[Click to load this update in the admin panel]("+ updater_link + ")",
-                                                colour = discord.Colour.dark_red()
-                                            )
-                            file = discord.File(table_image_path)
-                            lounge_server_updates.add_counter()
-                            id_to_submit = lounge_server_updates.get_counter()
-                            
-                            embed.add_field(name="Submission ID:", value=str(id_to_submit))
-                            embed.add_field(name="Tier", value=tier_number)
-                            summary_channel = client.get_channel(summary_channel_id)
-                            embed.add_field(name="Approving to:", value=(summary_channel.mention if summary_channel is not None else "Can't find channel"))
-                            embed.add_field(name='Submitted from:', value=message.channel.mention)
-                            embed.add_field(name='Submitted by:', value=message.author.mention)
-                            embed.add_field(name='Discord ID:', value=str(message.author.id))
-                            
-                            embed.set_image(url="attachment://" + table_image_path)
-                            embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
-                            embed.set_footer(text="Updaters: Login to the admin panel before clicking the link.")
-                            
-                            
-                            sent_message = await updater_channel.send(file=file, embed=embed)
-                            lounge_server_updates.add_report(id_to_submit, sent_message, summary_channel_id)
-                            
-                            
-                            file = discord.File(table_image_path)
-                            embed = discord.Embed(
-                                                title = "Successfully submitted to " + type_text + " Reporters and " + type_text + " Updaters",
-                                                description="[Click to preview this update]("+ preview_link + ")",
-                                                colour = discord.Colour.dark_red()
-                                            )
-                            embed.add_field(name="Submission ID:", value=id_to_submit)
-                            embed.set_image(url="attachment://" + table_image_path)
-                            embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
-                            embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
-                            await message.channel.send(file=file, embed=embed)
-                finally:
-                    if os.path.exists(table_image_path):
-                        os.remove(table_image_path)
-                lounge_server_updates.update_user_cooldown(message.author)   
-                await delete_me.delete()   
+        table_text = ""
+        
+        if len(args) == 3:
+            if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
+                await message.channel.send("Room is not loaded. You must have a room loaded if you do not give TableText to this command. Otherwise, do `?" + args[0] + " TierNumber RacesPlayed TableText`")
+                return
+            else:
+                table_text, _ = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, server_id=message.guild.id, discord_escape=True)
         else:
-            lounge_server_updates.update_user_cooldown(message.author)
-            delete_me = await message.channel.send("Submitting table... please wait...")
             temp = message.content
             command_removed = temp[temp.lower().index(args[0])+len(args[0]):].strip("\n\t ")
-            table_text = command_removed[command_removed.lower().index(args[1])+len(args[1]):].strip("\n\t ")
+            tier_number_removed = command_removed[command_removed.lower().index(args[1])+len(args[1]):].strip("\n\t ")
+            table_text = command_removed[tier_number_removed.lower().index(args[2])+len(args[2]):].strip("\n\t ")
             
-            error_code, newTableText, json_data = await MogiUpdate.textInputUpdate(table_text, tier_number, is_rt=is_primary)
-            
-            
-            if error_code != MogiUpdate.SUCCESS_EC:
-                if error_code is None:
-                    await message.channel.send("Couldn't submit table. An unknown error occurred.")
-                elif error_code == MogiUpdate.PLAYER_NOT_FOUND_EC:
-                    missing_players = json_data
-                    await message.channel.send("Couldn't submit table. The following players could not be found: **" + "**, **".join(missing_players) + "**\nCheck your submission for correct names. If your table has subs, they must be in this format: Sarah(4)/Jacob(8)")
-                else:
-                    await message.channel.send("Couldn't submit table. Reason: *" + MogiUpdate.table_text_errors[error_code] + "*")
-        
-            
-            else:
-                url_table_text = urllib.parse.quote(newTableText)
-                image_url = common.base_url_lorenzi + url_table_text
-                table_image_path = str(message.id) + ".png"
-                image_download_success = await common.download_image(image_url, table_image_path)
-                try:
-                    if not image_download_success:
-                        await message.channel.send("Could not get image for table.")
-                    else:
-                        updater_channel = client.get_channel(updater_channel_id)
-                        preview_link += urllib.parse.quote(json_data)
-                        updater_link += urllib.parse.quote(json_data)
-
-
-                        embed = discord.Embed(
-                                            title = "",
-                                            description="[Click to load this update in the admin panel]("+ updater_link + ")",
-                                            colour = discord.Colour.dark_red()
-                                        )
-                        file = discord.File(table_image_path)
-                        lounge_server_updates.add_counter()
-                        id_to_submit = lounge_server_updates.get_counter()
-                        embed.add_field(name='Submission ID:', value=str(id_to_submit))
-                        embed.add_field(name="Tier", value=tier_number)
-                        summary_channel = client.get_channel(summary_channel_id)
-                        embed.add_field(name="Approving to:", value=(summary_channel.mention if summary_channel is not None else "Can't find channel"))
-                        embed.add_field(name='Submitted from:', value=message.channel.mention)
-                        embed.add_field(name='Submitted by:', value=message.author.mention)
-                        embed.add_field(name='Discord ID:', value=str(message.author.id))
-                        
-                        
-                        embed.set_image(url="attachment://" + table_image_path)
-                        embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
-                        embed.set_footer(text="Updaters: Login to the admin panel before clicking the link.")
-                        
-                        
-                        sent_message = await updater_channel.send(file=file, embed=embed)
-                        lounge_server_updates.add_report(id_to_submit, sent_message, summary_channel_id)
                     
-                        
-                        file = discord.File(table_image_path)
-                        embed = discord.Embed(
-                                            title = "Successfully submitted to " + type_text + " Reporters and " + type_text + " Updaters",
-                                            description="[Click to preview this update]("+ preview_link + ")",
-                                            colour = discord.Colour.dark_red()
-                                        )
-                        embed.add_field(name='Submission ID:', value=str(id_to_submit))
-                        embed.set_image(url="attachment://" + table_image_path)
-                        embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
-                        embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
-                        
-                        await message.channel.send(file=file, embed=embed)
-                finally:
-                    if os.path.exists(table_image_path):
-                        os.remove(table_image_path)
-            lounge_server_updates.update_user_cooldown(message.author)
-            await delete_me.delete()
+            
+        
+    
+        lounge_server_updates.update_user_cooldown(message.author)
+        delete_me = await message.channel.send("Submitting table... please wait...")
+
+        
+        error_code, newTableText, json_data = await MogiUpdate.textInputUpdate(table_text, tier_number, races_played, is_rt=is_primary)
+        
+        
+        if error_code != MogiUpdate.SUCCESS_EC:
+            if error_code is None:
+                await message.channel.send("Couldn't submit table. An unknown error occurred.")
+            elif error_code == MogiUpdate.PLAYER_NOT_FOUND_EC:
+                missing_players = json_data
+                await message.channel.send("Couldn't submit table. The following players could not be found: **" + "**, **".join(missing_players) + "**\nCheck your submission for correct names. If your table has subs, they must be in this format: Sarah(4)/Jacob(8)")
+            else:
+                await message.channel.send("Couldn't submit table. Reason: *" + MogiUpdate.table_text_errors[error_code] + "*")
+    
+        
+        else:
+            url_table_text = urllib.parse.quote(newTableText)
+            image_url = common.base_url_lorenzi + url_table_text
+            table_image_path = str(message.id) + ".png"
+            image_download_success = await common.download_image(image_url, table_image_path)
+            try:
+                if not image_download_success:
+                    await message.channel.send("Could not get image for table.")
+                else:
+                    updater_channel = client.get_channel(updater_channel_id)
+                    preview_link += urllib.parse.quote(json_data)
+                    updater_link += urllib.parse.quote(json_data)
+
+
+                    embed = discord.Embed(
+                                        title = "",
+                                        description="[Click to preview this update]("+ updater_link + ")",
+                                        colour = discord.Colour.dark_red()
+                                    )
+                    file = discord.File(table_image_path)
+                    lounge_server_updates.add_counter()
+                    id_to_submit = lounge_server_updates.get_counter()
+                    embed.add_field(name='Submission ID', value=str(id_to_submit))
+                    embed.add_field(name="Tier", value=tier_number)
+                    embed.add_field(name="Races Played", value=races_played)
+                    summary_channel = client.get_channel(summary_channel_id)
+                    embed.add_field(name="Approving to", value=(summary_channel.mention if summary_channel is not None else "Can't find channel"))
+                    embed.add_field(name='Submitted from', value=message.channel.mention)
+                    embed.add_field(name='Submitted by', value=message.author.mention)
+                    embed.add_field(name='Discord ID', value=str(message.author.id))
+                    
+                    shortened_admin_panel_link = "No Link"
+                    try:
+                        admin_link_tiny_url = await URLShortener.tinyurl_shorten_url(updater_link)
+                        shortened_admin_panel_link = f"[Preview]({admin_link_tiny_url})"
+                    except:
+                        pass
+                    
+                    embed.add_field(name='Short Preview Link:', value=shortened_admin_panel_link)
+                    
+                    embed.set_image(url="attachment://" + table_image_path)
+                    embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")                        
+                    
+                    sent_message = await updater_channel.send(file=file, embed=embed)
+                    lounge_server_updates.add_report(id_to_submit, sent_message, summary_channel_id)
+                
+                    
+                    file = discord.File(table_image_path)
+                    embed = discord.Embed(
+                                        title = "Successfully submitted to " + type_text + " Reporters and " + type_text + " Updaters",
+                                        description="[Click to preview this update]("+ preview_link + ")",
+                                        colour = discord.Colour.dark_red()
+                                    )
+                    embed.add_field(name='Submission ID', value=str(id_to_submit))
+                    embed.add_field(name='Races Played', value=str(races_played))
+                    
+                    
+                    shortened_preview_link = "No Link"
+                    try:
+                        if updater_link == preview_link:
+                            shortened_preview_link = shortened_admin_panel_link
+                        else:
+                            preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
+                            shortened_preview_link = f"[Preview]({preview_link_tiny_url})"
+                    except:
+                        pass
+                    
+                    embed.add_field(name='Short Preview Link:', value=shortened_preview_link)
+                    
+                    embed.set_image(url="attachment://" + table_image_path)
+                    embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
+                    embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
+                    
+                    await message.channel.send(file=file, embed=embed)
+            finally:
+                if os.path.exists(table_image_path):
+                    os.remove(table_image_path)
+        lounge_server_updates.update_user_cooldown(message.author)
+        await delete_me.delete()
     
     @staticmethod
     async def ct_mogi_update(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
@@ -965,12 +897,10 @@ class LoungeCommands:
                 
                 if is_approval:
                     submissionEmbed = submissionMessage.embeds[0]
+                    submissionEmbed.remove_field(6)
                     submissionEmbed.remove_field(5)
-                    submissionEmbed.remove_field(4)
-                    submissionEmbed.remove_field(3)
-                    submissionEmbed.remove_field(2)
-                    submissionEmbed.set_field_at(1, name="Approved by:", value=message.author.mention)
-                    submissionEmbed.add_field(name="Approval link:", value="[Message](" + submissionMessage.jump_url + ")")
+                    submissionEmbed.set_field_at(3, name="Approved by:", value=message.author.mention)
+                    submissionEmbed.set_field_at(4, name="Approval link:", value="[Message](" + submissionMessage.jump_url + ")")
                     
                     summaryChannelRetrieved = True
                     if summaryChannelID is None:
@@ -1202,7 +1132,6 @@ class TablingCommands:
 
     @staticmethod
     async def team_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-  
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1257,7 +1186,6 @@ class TablingCommands:
     
     @staticmethod
     async def disconnections_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1324,7 +1252,6 @@ class TablingCommands:
 
     @staticmethod
     async def player_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-  
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1424,7 +1351,6 @@ class TablingCommands:
     #Code is quite similar to chane_player_tag_command, potential refactor opportunity?
     @staticmethod
     async def change_player_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
-    
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1466,7 +1392,6 @@ class TablingCommands:
 
     @staticmethod
     async def change_player_tag_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
-
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return

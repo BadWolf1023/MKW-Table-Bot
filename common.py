@@ -11,20 +11,19 @@ import TableBotExceptions
 from collections import namedtuple
 import discord
 from pathlib import Path
-from collections import defaultdict
 
-version = "11.0.0"
+version = "11.1.0"
 
 MIIS_DISABLED = False
 
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
 
-current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators have more table bot defaults they can set for their server."
+current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
 in_testing_server = False
-running_beta = True
+running_beta = False
 
 #TableBot variables, for ChannelBots
 inactivity_time_period = timedelta(hours=2, minutes=30)
@@ -50,6 +49,7 @@ SERVER_SETTINGS_PATH = "discord_server_settings/"
 FLAG_IMAGES_PATH = "flag_images/"
 FONT_PATH = "fonts/"
 HELP_PATH = "help/"
+TABLING_HELP_PATH = f"{HELP_PATH}tabling/"
 MIIS_PATH = "miis/"
 TABLE_HEADERS_PATH = "table_headers/"
 DATA_PATH = "tablebot_data/"
@@ -86,6 +86,8 @@ FEEDBACK_LOGS_FILE = f"{LOGGING_PATH}feedback_logs.txt"
 #It only logs commands that are sent to it
 MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}messages_logging.txt"
 
+FULL_MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}/full_logging.txt"
+
 
 DEFAULT_LARGE_TIME_FILE = f"{SERVER_SETTINGS_PATH}server_large_time_defaults.txt"
 DEFAULT_PREFIX_FILE = f"{SERVER_SETTINGS_PATH}server_prefixes.txt"
@@ -96,12 +98,14 @@ DEFAULT_MII_FILE = f"{SERVER_SETTINGS_PATH}server_mii_defaults.txt"
 ERROR_LOGGING_TYPE = "error"
 MESSAGE_LOGGING_TYPE = "messagelogging"
 FEEDBACK_LOGGING_TYPE = "feedback"
+FULL_MESSAGE_LOGGING_TYPE = "fullmessagelogging"
 
 ALL_PATHS = {LOGGING_PATH, SERVER_SETTINGS_PATH, DATA_PATH}
 
 FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    FEEDBACK_LOGS_FILE,
                    MESSAGE_LOGGING_FILE,
+                   FULL_MESSAGE_LOGGING_FILE,
                    DEFAULT_LARGE_TIME_FILE,
                    DEFAULT_PREFIX_FILE,
                    DEFAULT_TABLE_THEME_FILE_NAME,
@@ -135,10 +139,12 @@ BAD_WOLF_ID = 706120725882470460
 
 
 #Lounge stuff
-MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?type=rt&import="
-MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?type=ct&import="
-MKW_LOUNGE_RT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/rt/?import="
-MKW_LOUNGE_CT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/ct/?import="
+MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?ladder_id=1&event_data="
+MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?ladder_id=2&event_data="
+MKW_LOUNGE_RT_UPDATER_LINK = MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK
+MKW_LOUNGE_CT_UPDATER_LINK = MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK
+DEPRECATED_MKW_LOUNGE_RT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/rt/?import="
+DEPRECATED_MKW_LOUNGE_CT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/ct/?import="
 MKW_LOUNGE_RT_UPDATER_CHANNEL = 758161201682841610
 MKW_LOUNGE_CT_UPDATER_CHANNEL = 758161224202059847
 MKW_LOUNGE_RT_REPORTER_ID = 389252697284542465
@@ -172,19 +178,15 @@ botAdminsFileIsOpen = False
 botAdmins = set()
 
 #Abuse tracking
-bot_abuse_tracking = defaultdict(int)
 BOT_ABUSE_REPORT_CHANNEL_ID = 766272946091851776
 SPAM_THRESHOLD = 13
 WARN_THRESHOLD = 13
 AUTO_BAN_THRESHOLD = 18
-blacklisted_command_count = defaultdict(int)
-BOT_ABUSE_REPORT_CHANNEL = None
+
 
 COMMAND_TRIGGER_CHARS = set(c for c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-def set_bot_abuse_report_channel(client):
-    global BOT_ABUSE_REPORT_CHANNEL
-    BOT_ABUSE_REPORT_CHANNEL = client.get_channel(BOT_ABUSE_REPORT_CHANNEL_ID)
+
 
 
 def author_is_lounge_staff(message_author):
@@ -249,6 +251,10 @@ def check_create(file_name):
         f = open(file_name, "w")
         f.close()
 
+def full_command_log(message):
+    to_log = f"Server Name: {message.guild} - Server ID: {message.guild.id} - Channel: {message.channel} - Channel ID: {message.channel.id} - User: {message.author} - User ID: {message.author.id} - User Name: {message.author.display_name} - Command: {message.content}"
+    log_text(to_log, FULL_MESSAGE_LOGGING_TYPE)
+    
 def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
     logging_file = MESSAGE_LOGGING_FILE
     if logging_type == ERROR_LOGGING_TYPE:
@@ -257,6 +263,8 @@ def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
         logging_file = FEEDBACK_LOGS_FILE
     if logging_type == MESSAGE_LOGGING_TYPE:
         logging_file = MESSAGE_LOGGING_FILE
+    if logging_type == FULL_MESSAGE_LOGGING_TYPE:
+        logging_file = FULL_MESSAGE_LOGGING_FILE
         
     check_create(logging_file)
     with open(logging_file, "a+") as f:
@@ -317,8 +325,10 @@ async def safe_send(message:discord.Message, content=None, embed=None, delete_af
     except discord.errors.Forbidden: #Missing permissions
         await safe_send_missing_permissions(message, delete_after=10)
 
-
-
   
-
-        
+#Function only for testing purposes. Do not use this in the main program code.
+def run_async_function_no_loop(function_to_call):
+    import asyncio
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(function_to_call)
+    

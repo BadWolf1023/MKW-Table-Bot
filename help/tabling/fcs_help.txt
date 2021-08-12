@@ -1,0 +1,6 @@
+**How do I see a list of FCs for everyone who has been in the room?**
+Do `{SERVER_PREFIX}fcs` to display a list of all players in the room with their FCs, along with their LoungeNames, if they have one.
+
+**Terminology:**
+*FC* means friend code on Mario Kart Wii.
+*LoungeName* is the name that someone has in Mogi Lounge.

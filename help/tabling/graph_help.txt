@@ -1,0 +1,4 @@
+**How can I change (or turn off) the graph of the table?**
+For a list of graphs you can use, use the command `{SERVER_PREFIX}graph`
+To change the graph on your table, use the command `{SERVER_PREFIX}graph graphnumber`
+*Example:* `{SERVER_PREFIX}graph 2` will change the table's graph to **Absolute**

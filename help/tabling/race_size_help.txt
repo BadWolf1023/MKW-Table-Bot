@@ -1,0 +1,6 @@
+**Can the table be shown by race instead of by 4-race GPs?**
+Yes. There are two ways to do this.
+- The first way is temporary: to see the table broken down by race, do `{SERVER_PREFIX}wp race`
+- The second way changes the view size for your table until you reset or start a new table. To change the number of races that are displayed in each section of the table, do `?size displaysize`
+*Example:* `{SERVER_PREFIX}size 2` will change the view size to two races. So if the room has played 4 races, the first column of the table will be race #1 and race #2 and the second column of the table will be race #3 and race #4.
+*Note:* For scoring purposes, the number of races in a GP is always considered to be 4. This command just changes how the table is *displayed.*
