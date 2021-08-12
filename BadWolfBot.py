@@ -935,7 +935,43 @@ def pickle_CTGP_region():
             return
         except:
             print("Could not dump pickle for CTGP region for ?ctww. Exception occurred.")
+def do_lounge_name_matching():
+    lounge_name_list_path = "C:/Users/willg/Desktop/all_lounge.txt"
+    import csv
+    dict_data = {}
+    txt_file = "mapping.txt"
+    print("Started building map.")
+    with open(lounge_name_list_path) as f:
+        for name in f:
+            name = name.strip().strip("\n")
+            discord_id = UserDataProcessing.get_DiscordID_By_LoungeName(name).strip("\n")
+            dict_data[name] = discord_id if discord_id != "" else "None"
+    print("Finished building map.")
+    
+    no_space_no_caps_names = [name.replace(" ","").lower().replace("\t","").replace("\n","") for name in dict_data]
+    for name in no_space_no_caps_names:
+        if no_space_no_caps_names.count(name) != 1:
+            print(name)
+    
+    dids = [did for did in dict_data.values() if did != ""]
+    for did in dids:
+        if dids.count(did) != 1:
+            print(did)
+            
+            
+    try:
+        with open(txt_file,'w') as g:
+            for name, discord_id in dict_data.items():
+                g.write(f"{discord_id}\n")
+            
+    except IOError:
+        print("I/O error")
+    
 
+        
+    print("Finished exporting as CSV.")
+        
+    
 def save_data():
     print(f"{str(datetime.now())}: Saving data")
     successful = UserDataProcessing.non_async_dump_data()
@@ -948,6 +984,8 @@ def save_data():
     pkl_bad_wolf_facts()
     Stats.backup_files()
     Stats.dump_to_stats_file()
+    
+    do_lounge_name_matching()
     print(f"{str(datetime.now())}: Finished saving data")
     
 
