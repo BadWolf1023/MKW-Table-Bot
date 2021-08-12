@@ -24,7 +24,6 @@ import Race
 import MogiUpdate
 import Lounge
 import TableBotExceptions
-import AbuseTracking
 import common
 
 
@@ -745,13 +744,19 @@ class LoungeCommands:
         races_played = int(args[2])
         
         table_text = ""
+        #Used if using Table Bot table
+        using_table_bot_table = False
+        table_sorted_data = None
         
         if len(args) == 3:
             if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
                 await message.channel.send("Room is not loaded. You must have a room loaded if you do not give TableText to this command. Otherwise, do `?" + args[0] + " TierNumber RacesPlayed TableText`")
                 return
             else:
-                table_text, _ = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, server_id=message.guild.id, discord_escape=True)
+                table_text, table_sorted_data = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, server_id=message.guild.id, discord_escape=True)
+                table_text = table_text + this_bot.get_lorenzi_style_and_graph(prepend_newline=True)
+                using_table_bot_table = True
+        
         else:
             temp = message.content
             command_removed = temp[temp.lower().index(args[0])+len(args[0]):].strip("\n\t ")
@@ -788,6 +793,20 @@ class LoungeCommands:
                 if not image_download_success:
                     await message.channel.send("Could not get image for table.")
                 else:
+                    
+                    if using_table_bot_table:
+                        war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0
+                        tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0
+                        header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
+                        footer_combine_success = True
+            
+                        if header_combine_success and this_bot.getWar().displayMiis:
+                            footer_combine_success = ImageCombine.add_miis_to_table(this_bot, table_sorted_data, table_image_path=table_image_path, out_image_path=table_image_path)
+                        if not header_combine_success or not footer_combine_success:
+                            await delete_me.delete()
+                            await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")
+                            return
+                        
                     updater_channel = client.get_channel(updater_channel_id)
                     preview_link += urllib.parse.quote(json_data)
                     updater_link += urllib.parse.quote(json_data)
