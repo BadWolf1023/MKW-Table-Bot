@@ -18,44 +18,44 @@ UNKNOWN_ROOM_TYPE = 'unk'
 
 track_name_abbreviation_mappings = {
     #Mushroom Cup
-    "Wii Luigi Circuit (Nintendo)": ("LC", "ãƒ«ã‚¤ã‚µ"),
-    "Wii Moo Moo Meadows (Nintendo)": ("MMM", "ãƒ¢ãƒ¢ã‚«ãƒ³"),
-    "Wii Mushroom Gorge (Nintendo)": ("MG", "ã‚­ãƒŽã‚­ãƒ£ãƒ‹"),
-    "Wii Toad's Factory (Nintendo)": ("TF", "å·¥å ´"),
+    "Wii Luigi Circuit (Nintendo)": ("LC", "ルイサ"),
+    "Wii Moo Moo Meadows (Nintendo)": ("MMM", "モモカン"),
+    "Wii Mushroom Gorge (Nintendo)": ("MG", "キノキャニ"),
+    "Wii Toad's Factory (Nintendo)": ("TF", "工場"),
     #Flower Cup
-    "Wii Mario Circuit (Nintendo)":("MC", "ãƒžãƒªã‚µ"),
-    "Wii Coconut Mall (Nintendo)": ("CM", "ã‚³ã‚³ãƒ¢"),
-    "Wii DK Summit (Nintendo)":("DKS", "ã‚¹ãƒŽãƒœ"),
-    "Wii Wario's Gold Mine (Nintendo)":("WGM", "é‰±å±±"),
+    "Wii Mario Circuit (Nintendo)":("MC", "マリサ"),
+    "Wii Coconut Mall (Nintendo)": ("CM", "ココモ"),
+    "Wii DK Summit (Nintendo)":("DKS", "スノボ"),
+    "Wii Wario's Gold Mine (Nintendo)":("WGM", "鉱山"),
     #Star Cup
-    "Wii Daisy Circuit (Nintendo)": ("DC", "ãƒ‡ã‚¤ã‚µ"),
-    "Wii Koopa Cape (Nintendo)": ("KC", "å²¬"),
-    "Wii Maple Treeway (Nintendo)": ("MT", "ãƒ¡ã‚¤ãƒ—ãƒ«"),
-    "Wii Grumble Volcano (Nintendo)": ("GV", "ç�«å±±"),
+    "Wii Daisy Circuit (Nintendo)": ("DC", "デイサ"),
+    "Wii Koopa Cape (Nintendo)": ("KC", "岬"),
+    "Wii Maple Treeway (Nintendo)": ("MT", "メイプル"),
+    "Wii Grumble Volcano (Nintendo)": ("GV", "火山"),
     #Special Cup
-    "Wii Dry Dry Ruins (Nintendo)": ("DDR", "é�ºè·¡"),
-    "Wii Moonview Highway (Nintendo)": ("MvH", "ãƒ ãƒ³ãƒª"),
+    "Wii Dry Dry Ruins (Nintendo)": ("DDR", "遺跡"),
+    "Wii Moonview Highway (Nintendo)": ("MvH", "ムンリ"),
     "Wii Bowser's Castle (Nintendo)": "BCWii",
-    "Wii Rainbow Road (Nintendo)": ("RR", "è™¹"),
+    "Wii Rainbow Road (Nintendo)": ("RR", "虹"),
     #Shell Cup
-    "GCN Peach Beach (Nintendo)": ("rPB", "ãƒ”ãƒ¼ãƒ�ãƒ“ãƒ¼ãƒ�"),
-    "DS Yoshi Falls (Nintendo)": ("rYF", "ãƒ¨ã‚·ãƒ•ã‚©"),
-    "SNES Ghost Valley 2 (Nintendo)": ("GV2", "æ²¼"),
-    "N64 Mario Raceway (Nintendo)": ("rMR", "64ãƒžãƒªã‚µ"),
+    "GCN Peach Beach (Nintendo)": ("rPB", "ピーチビーチ"),
+    "DS Yoshi Falls (Nintendo)": ("rYF", "ヨシフォ"),
+    "SNES Ghost Valley 2 (Nintendo)": ("GV2", "沼"),
+    "N64 Mario Raceway (Nintendo)": ("rMR", "64マリサ"),
     #Banana Cup
-    "N64 Sherbet Land (Nintendo)": ("rSL", "ã‚·ãƒ£ãƒ™ãƒ©ãƒ³"),
-    "GBA Shy Guy Beach (Nintendo)": ("SGB", "å…µæµœ"),
-    "DS Delfino Square (Nintendo)": ("rDS", "ãƒ¢ãƒ³ãƒ†"),
-    "GCN Waluigi Stadium (Nintendo)": ("rWS", "ãƒ¯ãƒ«ã‚¹ã‚¿"),
+    "N64 Sherbet Land (Nintendo)": ("rSL", "シャベラン"),
+    "GBA Shy Guy Beach (Nintendo)": ("SGB", "兵浜"),
+    "DS Delfino Square (Nintendo)": ("rDS", "モンテ"),
+    "GCN Waluigi Stadium (Nintendo)": ("rWS", "ワルスタ"),
     #Leaf Cup
-    "DS Desert Hills (Nintendo)": ("rDH", "ã�•ã�°ã��"),
+    "DS Desert Hills (Nintendo)": ("rDH", "さばく"),
     "GBA Bowser Castle 3 (Nintendo)": "BC3",
-    "N64 DK's Jungle Parkway (Nintendo)": ("rJP", "ã‚¸ãƒ£ãƒ³ãƒ‘"),
-    "GCN Mario Circuit (Nintendo)": ("GCN MC", "GCãƒžãƒªã‚µ"),
+    "N64 DK's Jungle Parkway (Nintendo)": ("rJP", "ジャンパ"),
+    "GCN Mario Circuit (Nintendo)": ("GCN MC", "GCマリサ"),
     #Lightning Cup
-    "SNES Mario Circuit 3 (Nintendo)": ("MC3", "SFCãƒžãƒªã‚µ"),
-    "DS Peach Gardens (Nintendo)": ("rPG", "ãƒ”ãƒ�ã‚¬"),
-    "GCN DK Mountain (Nintendo)": ("DKM", "å±±"),
+    "SNES Mario Circuit 3 (Nintendo)": ("MC3", "SFCマリサ"),
+    "DS Peach Gardens (Nintendo)": ("rPG", "ピチガ"),
+    "GCN DK Mountain (Nintendo)": ("DKM", "山"),
     "N64 Bowser's Castle (Nintendo)": ("BC64", "64BC")
     }
 
@@ -322,7 +322,7 @@ class Race:
         
     def __str__(self):
         curStr = "Race #" + str(self.raceNumber) + " - " + UtilityFunctions.process_name(self.getTrackNameWithoutAuthor()) + " - " + str(self.cc) + "cc" + \
-         "\nMatch start time: " + str(self.matchTime)
+         "\nMatch end time: " + str(self.matchTime)
         placementsSTR = ""
         for placement in self.placements:
             placementsSTR += str("\n\t" + str(placement))
