@@ -42,7 +42,6 @@ def is_hitting_ban_rate(author_id):
         return False
     
     rate_of_messages = num_messages_sent / total_message_span.total_seconds()
-    print(rate_of_messages)
     return rate_of_messages > BAN_RATE_MESSAGES_PER_SECOND
     
     
