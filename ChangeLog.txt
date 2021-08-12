@@ -1,4 +1,4 @@
-Updated: August 6th, 2021
+Updated: August 12th, 2021
 
 This document servers as an overview of MKW Table Bot's releases over time, along with milestones. Many minor updates addressing bugs and text issues were issued between releases, but these are considered the large releases.
 
