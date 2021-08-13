@@ -3,7 +3,6 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
-import War
 import Room
 import UserDataProcessing
 from discord.utils import escape_markdown, escape_mentions
