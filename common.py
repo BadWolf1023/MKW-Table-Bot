@@ -332,3 +332,9 @@ def run_async_function_no_loop(function_to_call):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(function_to_call)
     
+async def safe_delete(message):
+    try:
+        await message.delete()
+    except discord.errors.NotFound:
+        pass
+    

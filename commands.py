@@ -618,7 +618,7 @@ class OtherCommands:
                     await message.channel.send(f"Could not find {UtilityFunctions.process_name(' '.join(old_command.split()[1:]))} in a room. (This could be an error if I couldn't their FC in the database.)")             
         
         if not successful or room_data is None or rLID is None:
-            await message2.delete()
+            await common.safe_delete(message2)
             return
         FC_List = [fc for fc in room_data]
         await updateData(* await LoungeAPIFunctions.getByFCs(FC_List))
@@ -645,7 +645,7 @@ class OtherCommands:
                 str_msg += "\n\nFailed"
                 
         await message.channel.send(f"{str_msg}```")
-        await message2.delete()
+        await common.safe_delete(message2)
              
 
 
@@ -753,7 +753,7 @@ class LoungeCommands:
                 await message.channel.send("Room is not loaded. You must have a room loaded if you do not give TableText to this command. Otherwise, do `?" + args[0] + " TierNumber RacesPlayed TableText`")
                 return
             else:
-                table_text, table_sorted_data = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, server_id=message.guild.id, discord_escape=True)
+                table_text, table_sorted_data = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, missingRacePts=this_bot.dc_points, server_id=message.guild.id, discord_escape=True)
                 table_text = table_text + this_bot.get_lorenzi_style_and_graph(prepend_newline=True)
                 using_table_bot_table = True
         
@@ -803,7 +803,7 @@ class LoungeCommands:
                         if header_combine_success and this_bot.getWar().displayMiis:
                             footer_combine_success = ImageCombine.add_miis_to_table(this_bot, table_sorted_data, table_image_path=table_image_path, out_image_path=table_image_path)
                         if not header_combine_success or not footer_combine_success:
-                            await delete_me.delete()
+                            await common.safe_delete(delete_me)
                             await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")
                             return
                         
@@ -876,7 +876,7 @@ class LoungeCommands:
                 if os.path.exists(table_image_path):
                     os.remove(table_image_path)
         lounge_server_updates.update_user_cooldown(message.author)
-        await delete_me.delete()
+        await common.safe_delete(delete_me)
     
     @staticmethod
     async def ct_mogi_update(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge):
@@ -1616,7 +1616,7 @@ class TablingCommands:
                         this_bot.setWar(None)
                         this_bot.setRoom(None)
                     
-                    await message2.delete()
+                    await common.safe_delete(message2)
                     if populate_mii_task is not None:
                         await populate_mii_task
         else:
@@ -1928,7 +1928,7 @@ class TablingCommands:
                     step = this_bot.get_race_size()
                     if len(args) > 1 and args[1] in {'byrace', 'race'}:
                         step = 1
-                    table_text, table_sorted_data = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=use_lounge_otherwise_mii, use_miis=usemiis, lounge_replace=lounge_replace, server_id=server_id, step=step)
+                    table_text, table_sorted_data = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=use_lounge_otherwise_mii, use_miis=usemiis, lounge_replace=lounge_replace, server_id=server_id, missingRacePts=this_bot.dc_points, step=step)
                     table_text_with_style_and_graph = table_text + this_bot.get_lorenzi_style_and_graph(prepend_newline=True)
                     display_url_table_text = urllib.parse.quote(table_text)
                     true_url_table_text = urllib.parse.quote(table_text_with_style_and_graph)
@@ -1950,7 +1950,7 @@ class TablingCommands:
                         if header_combine_success and this_bot.getWar().displayMiis:
                             footer_combine_success = ImageCombine.add_miis_to_table(this_bot, table_sorted_data, table_image_path=table_image_path, out_image_path=table_image_path)
                         if not header_combine_success or not footer_combine_success:
-                            await message3.delete() 
+                            await common.safe_delete(message3)
                             await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")  
                         else:
                             embed = discord.Embed(
@@ -1972,7 +1972,7 @@ class TablingCommands:
                                 temp = temp[:2048-len(error_message)] + error_message
                             embed.set_footer(text=temp)
                             await message.channel.send(file=file, embed=embed)
-                            await message3.delete()
+                            await common.safe_delete(message3)
                             if should_send_notification and common.current_notification != "":
                                 await message.channel.send(common.current_notification.replace("{SERVER_PREFIX}", server_prefix))
                     finally:
@@ -1988,7 +1988,7 @@ class TablingCommands:
             return
         else:
             try:
-                table_text, _ = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, server_id=server_id, discord_escape=True)
+                table_text, _ = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, server_id=server_id, missingRacePts=this_bot.dc_points, discord_escape=True)
                 await message.channel.send(table_text)
             except AttributeError:
                 await message.channel.send("Table Bot has a bug, and this mkwx room triggered it. I cannot tally your scores.")
