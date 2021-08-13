@@ -12,6 +12,8 @@ BOGUS_TIME_LIMIT = (5,59,999)
 MINIMUM_DELTA_VALUE = -10
 MAXIMUM_DELTA_VALUE = 10
 
+NO_DELTA_DISPLAY_RANGE = (-.5, .5)
+
 class Placement:
 
     
@@ -81,6 +83,9 @@ class Placement:
     def get_time(self):
         return self.time
     
+    def should_display_delta(self):
+        return self.delta < NO_DELTA_DISPLAY_RANGE[0] or self.delta > NO_DELTA_DISPLAY_RANGE[1]
+    
     def get_time_string(self):
         minutes = str(self.time[0])
         seconds = str(self.time[1])
@@ -94,9 +99,15 @@ class Placement:
         return minutes + ":" + seconds + "." + milliseconds
     
     def __str__(self):
-        if self.time == DISCONNECTION_TIME:
-            return  str(self.place) +  ". " + UtilityFunctions.process_name(self.player.name + lounge_add(self.player.FC)) + " - " +"DISCONNECTED"
-        return str(self.place) +  ". " + UtilityFunctions.process_name(self.player.name + lounge_add(self.player.FC)) + " - " + self.get_time_string() 
+        to_return = f"{self.place}. {UtilityFunctions.process_name(self.player.name + lounge_add(self.player.FC))} - "
+        if self.is_disconnected():
+            to_return += "DISCONNECTED"
+        else:
+            to_return += self.get_time_string()
+        
+        if self.should_display_delta():
+            to_return += f" - **{self.delta}s lag start**"
+        return to_return
         
      
         
