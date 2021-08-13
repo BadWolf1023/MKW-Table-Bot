@@ -1,4 +1,4 @@
-Updated: August 12th, 2021
+Updated: August 13th, 2021
 
 This document servers as an overview of MKW Table Bot's releases over time, along with milestones. Many minor updates addressing bugs and text issues were issued between releases, but these are considered the large releases.
 
@@ -142,6 +142,13 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - Japanese text fixed for ?vr
 - Minor text updates
 - Miis, table theme, table graphs, and headers added to Lounge table submissions if tabling with table bot
+
+**Version 11.3.0 released on 08-13-2021:**
+- Added lag to race results
+- Users get 2 warnings now before getting banned
+- Minor text updates
+- Bug fixes
+- Lounge update
 
 In progress:
 - Documentation overhaul, rather than a list of commands, help is now structured as sections with questions (?help with many subcommands added)
