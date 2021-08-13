@@ -4,7 +4,6 @@ Created on Aug 5, 2021
 @author: willg
 '''
 import discord
-from discord.ext import tasks
 import common
 import UserDataProcessing
 import UtilityFunctions
@@ -12,7 +11,7 @@ import TableBotExceptions
 from collections import defaultdict
 from datetime import datetime
 
-bot_abuse_tracking = defaultdict(lambda: [0, [], [], False])
+bot_abuse_tracking = defaultdict(lambda: [0, [], [], 0])
 blacklisted_command_count = defaultdict(int)
 
 BOT_ABUSE_REPORT_CHANNEL = None
@@ -54,21 +53,24 @@ async def abuse_track_check(message:discord.Message):
     bot_abuse_tracking[author_id][1].append(message.content)
     bot_abuse_tracking[author_id][2].append(datetime.now())
     messages_sent = bot_abuse_tracking[author_id][1]
-    if is_hitting_ban_rate(author_id) and bot_abuse_tracking[author_id][3]: #certain spam and we already warned them
-        UserDataProcessing.add_Blacklisted_user(str(author_id), "Automated ban - you spammed the bot. This hurts users everywhere because it slows down the bot for everyone. You can appeal in 1 week to a bot admin or in Bad Wolf's server.")
+    if is_hitting_ban_rate(author_id) and bot_abuse_tracking[author_id][3] >= 2: #certain spam and we already warned them
+        UserDataProcessing.add_Blacklisted_user(str(author_id), "Automated ban - you spammed the bot. This hurts users everywhere because it slows down the bot for everyone. You can appeal in 1 week to a bot admin or in Bad Wolf's server - to join the server, use the invite code: K937DqM")
         if BOT_ABUSE_REPORT_CHANNEL is not None:
             to_send = f"Automatic ban for spamming bot:\nDiscord: {str(message.author)}\nDiscord ID: {author_id}\nDisplay name: {message.author.display_name}\nDiscord Server: {message.guild}\nDiscord Server ID: {message.guild.id}\nMessages Sent:"
             messages_to_send_back = UtilityFunctions.chunk_join([to_send] + messages_sent)
             for message_to_send in messages_to_send_back:
                 await BOT_ABUSE_REPORT_CHANNEL.send(message_to_send)
         raise TableBotExceptions.BlacklistedUser("blacklisted user")
-    if is_hitting_warn_rate(author_id) and not bot_abuse_tracking[author_id][3]: #potential spam, warn them if we haven't already
-        bot_abuse_tracking[author_id][3] = True
+    if is_hitting_warn_rate(author_id): #potential spam, warn them if we haven't already
+        bot_abuse_tracking[author_id][3] += 1
+        should_send_abuse_report = bot_abuse_tracking[author_id][3] == 1
         await message.channel.send(f"{message.author.mention} slow down, you're sending too many commands. To avoid getting banned, wait 5 minutes before sending another command.")
-        to_send = f"The following users were warned:\nDiscord: {str(message.author)}\nDiscord ID: {author_id}\nDisplay name: {message.author.display_name}\nDiscord Server: {message.guild}\nDiscord Server ID: {message.guild.id}\nMessages Sent:"
-        messages_to_send_back = UtilityFunctions.chunk_join([to_send] + messages_sent)
-        for message_to_send in messages_to_send_back:
-            await BOT_ABUSE_REPORT_CHANNEL.send(message_to_send)
+        if should_send_abuse_report:
+            to_send = f"The following users were warned:\nDiscord: {str(message.author)}\nDiscord ID: {author_id}\nDisplay name: {message.author.display_name}\nDiscord Server: {message.guild}\nDiscord Server ID: {message.guild.id}\nMessages Sent:"
+            messages_to_send_back = UtilityFunctions.chunk_join([to_send] + messages_sent)
+            for message_to_send in messages_to_send_back:
+                await BOT_ABUSE_REPORT_CHANNEL.send(message_to_send)
+        raise TableBotExceptions.WarnedUser("warned user")
 
     return True
 

@@ -680,7 +680,9 @@ async def on_message(message: discord.Message):
         lounge_submissions.clear_user_cooldown(message.author)
         await common.safe_send(message, "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work.")
     except TableBotExceptions.BlacklistedUser:
-        pass #Already sent blacklisted message, if necessary
+        log_command_sent(message)
+    except TableBotExceptions.WarnedUser:
+        log_command_sent(message)
     except TableBotExceptions.NotBadWolf as not_bad_wolf_exception:
         await common.safe_send(message, f"You are not Bad Wolf: {not_bad_wolf_exception}")
     except TableBotExceptions.NotBotAdmin as not_bot_admin_exception:
