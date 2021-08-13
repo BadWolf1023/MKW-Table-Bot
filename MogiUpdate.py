@@ -24,7 +24,7 @@ from typing import Tuple
 
 from typing import List
 rt_tier_mappings = {"1":"Tier 1", "2":"Tier 2", "3":"Tier 3", "4":"Tier 4","4-5":"Tier 4", "5":"Tier 5", "6":"Tier 6", "7":"Tier 7", "8":"Top 50"}
-ct_tier_mappings = {"1":"Tier 1", "2":"Tier 2", "3":"Tier 3", "4":"Tier 4", "5":"Tier 5", "6":"Tier 6"}
+ct_tier_mappings = {"1":"Tier 1", "2":"Tier 2", "3":"Tier 3", "4":"Tier 4", "5":"Tier 5", "6":"Tier 6", "7":"Tier 7"}
 
 
 
@@ -114,6 +114,7 @@ ct_summary_channels = {"1":520810732280086558,
                        "4":521133102425309196,
                        "5":721942047023431682,
                        "6":841730154929848410,
+                       "7":875532331081957478,
                        "squadqueue":793265898436821072}
 
 def get_tier_and_summary_channel_id(tier:str, is_rt=True):
@@ -153,6 +154,8 @@ def get_tier_and_summary_channel_id(tier:str, is_rt=True):
             return "5", ct_summary_channels["5"]
         if tier in ["t6", "6", "tier6"]:
             return "6", ct_summary_channels["6"]
+        if tier in ["t7", "7", "tier7"]:
+            return "7", ct_summary_channels["7"]
         if tier in ["queuebot", "queue", "duoqueue", "triqueue", "trioqueue", "squad", "squadqueue"]:
             return "squadqueue", ct_summary_channels["squadqueue"]
     return None, None
@@ -179,7 +182,7 @@ def createJSON(players, mult=default_multiplier):
 
 #- Global races played will always be the actual number of races played
 # - Individual player races played will be the actual number of races they played as well
-# - Multiplier for each person will be global races played ÷ 12
+# - Multiplier for each person will be global races played ï¿½ 12
 # - Updater Bot will leave all multipliers alone, even on subs/subbees. Updater Bot will not change any JSON except for the following: Updater Bot must change gain/loss prevention and full gain/loss on JSON appropriately for sub ins and sub outs.
 def create_player_json(player:Tuple[str, int, int, int], races_played=12, sub_in=False, sub_out=False, squadqueue=False):
     player_json = {}
@@ -195,7 +198,7 @@ def create_player_json(player:Tuple[str, int, int, int], races_played=12, sub_in
         player_json["subbed_out"] = True
     
     if races_played != 12: #Default multiplier is 1.0, so if 12 races are played, 1.0 is the right multiplier and we don't need to include it
-        player_json["multiplier"] = round(races_played / 12, 3) #Multiplier for each person will be global races played ÷ 12
+        player_json["multiplier"] = round(races_played / 12, 3) #Multiplier for each person will be global races played ï¿½ 12
         
     return player_json
     
