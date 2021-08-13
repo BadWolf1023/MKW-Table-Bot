@@ -46,6 +46,8 @@ class NotLoungeServer(WrongServer):
 
 class BlacklistedUser(NotAuthorized):
     pass
+class WarnedUser(NotAuthorized):
+    pass
 
 
 class WarSetupFailure(Exception):
