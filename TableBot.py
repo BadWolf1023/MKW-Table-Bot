@@ -41,6 +41,8 @@ graphs = {"1":("None", "default graph"),
           "3":("Difference (Two Teams Only)", "diff")
           }
 
+DEFAULT_DC_POINTS = 3
+
 class ChannelBot(object):
     '''
     classdocs
@@ -64,6 +66,7 @@ class ChannelBot(object):
         
         self.should_send_mii_notification = True
         self.set_style_and_graph(server_id)
+        self.set_dc_points(server_id)
         self.race_size = 4
         
     def set_race_size(self, new_race_size:int):
@@ -75,11 +78,16 @@ class ChannelBot(object):
         self.graph = ServerFunctions.get_server_graph(server_id)
         self.style = ServerFunctions.get_server_table_theme(server_id)
     
+    def set_dc_points(self, server_id):
+        #self.dc_points = ServerFunctions.get_dc_points(server_id)
+        self.dc_points = DEFAULT_DC_POINTS
+    
     def get_lorenzi_style_and_graph(self, prepend_newline=True):
         result = '\n' if prepend_newline else ''
         result += self.get_lorenzi_style_str() + "\n"
         result += self.get_lorenzi_graph_str()
         return result
+    
     def get_lorenzi_style_str(self) -> str:
         if self.style not in styles:
             return f"{lorenzi_style_key} {styles['1'][1]}"
@@ -169,6 +177,7 @@ class ChannelBot(object):
                 del self.miis[fc]
             except:
                 pass
+            
     async def populate_miis(self, message_id:str):
         if common.MIIS_DISABLED:
             return
