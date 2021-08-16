@@ -12,6 +12,7 @@ import UserDataProcessing
 from _collections import defaultdict
 import UtilityFunctions
 from TagAI import getTagSmart
+from typing import List
 import common
 
 class Room(object):
@@ -50,15 +51,15 @@ class Room(object):
             races_old = self.races
             
             
-        self.races = races
+        self.races:List[Race.Race] = races
         self.roomID = roomID
         if self.races is None:
-            self.races = self.getRacesList(roomSoup, races_old)
+            self.races:List[Race.Race] = self.getRacesList(roomSoup, races_old)
         if len(self.races) > 0:
             self.roomID = self.races[0].roomID
         else:
             self.rLIDs = None
-            self.races = None
+            self.races:List[Race.Race] = None
             self.roomID = None
             raise Exception
         
@@ -75,6 +76,17 @@ class Room(object):
                 if race.placements_changed:
                     return True
         return False
+    
+    def has_manual_placements(self):
+        if self.races is not None:
+            return any(race.has_manual_placements() for race in self.races)
+        
+    def get_manual_placements(self):
+        result = []
+        if self.races is not None:
+            for race in self.races:
+                result.extend(race.get_manual_placements())
+        return result
     
 
     #Outside caller should use this, it will add the removed race to the class' history
@@ -149,7 +161,7 @@ class Room(object):
     
             
     def setRaces(self, races):
-        self.races = races
+        self.races:List[Race.Race] = races
         
     def getRaces(self):
         return self.races
@@ -340,7 +352,7 @@ class Room(object):
                     
                     if plyr.FC in self.name_changes:
                         plyr.name = self.name_changes[plyr.FC] + " (Tabler Changed)"
-                    p = Placement.Placement(plyr, -1, time, delta)
+                    p = Placement.Placement(plyr, -1, time, delta=delta)
                     races[0].addPlacement(p)
         
         #We have a memory leak, and it's not incredibly clear how BS4 objects work and if
