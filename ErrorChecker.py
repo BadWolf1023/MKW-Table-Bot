@@ -98,6 +98,9 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
         if race.placements_changed:
             errors.append("Placements changed by tabler for this race.")
         
+        if race.has_manual_placements():
+            errors.append("Players added by tabler to this race.")
+        
         #check if list is empty
         if len(errors) > 0:
             race_errors[int(race.raceNumber)] = errors
