@@ -46,7 +46,6 @@ class War(object):
         self.ignoreLargeTimes = ignoreLargeTimes
         self.displayMiis = displayMiis
         self.teamPenalties = defaultdict(int)
-        self.forcedRoomSize = {}
         self.teams = None
         
         
@@ -227,7 +226,6 @@ class War(object):
         save_state['manualEdits'] = self.manualEdits.copy()
         save_state['teamPenalties'] = self.teamPenalties.copy()
         
-        save_state['forcedRoomSize'] = self.forcedRoomSize.copy()
         save_state['teams'] = self.teams.copy()
         return save_state
     
