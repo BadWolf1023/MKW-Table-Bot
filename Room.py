@@ -33,7 +33,9 @@ class Room(object):
         self.forcedRoomSize = {}
         self.miis = {}
         #Dict with mapping race # to list of manual placement objects - these cannot strictly be direct references, but may either be copies or direct references to the actual Placement objects
-        self.manual_placements = {} #List of tuples (old placement, new placement) ?
+        #Race number maps to [[old_placement, new_placement], [old_placement, new_placement], [old_placement, None]...]
+        #None for new_placement if matching couldn't work
+        self.manual_placements = {} 
         
         
 
