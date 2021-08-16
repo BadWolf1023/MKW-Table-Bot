@@ -17,7 +17,10 @@ NO_DELTA_DISPLAY_RANGE = (-.5, .5)
 class Placement:
 
     
-    def _createTime_(self, time):
+    def _createTime_(self, time, manual_placement):
+        if manual_placement:
+            return DISCONNECTION_TIME
+        
         temp = ""
         minute = "-1"
         second = "-1"
@@ -60,7 +63,7 @@ class Placement:
     def __init__(self, player, place, time, delta=None, manual_placement=False):
         self.player = player
         self.place = place
-        self.time = self._createTime_(time)
+        self.time = self._createTime_(time, manual_placement)
         self.delta = self._process_delta_(delta)
         self.manual_placement = manual_placement
         
@@ -102,7 +105,7 @@ class Placement:
     def __str__(self):
         to_return = f"{self.place}. {UtilityFunctions.process_name(self.player.name + lounge_add(self.player.FC))} - "
         if self.is_disconnected():
-            to_return += "DISCONNECTED"
+            to_return += "BLANK TIME"
         else:
             to_return += self.get_time_string()
         
