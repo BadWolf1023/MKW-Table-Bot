@@ -90,7 +90,17 @@ class Race:
     def hasFC(self, FC):
         return False if self.getPlacement(FC) is None else True
         
-        
+    
+    def has_manual_placements(self):
+        return len(self.get_manual_placements()) != 0
+    
+    def get_manual_placements(self):
+        result = []
+        for placement in self.placements:
+            if placement.manual_placement:
+                result.append(placement)
+        return result
+    
     def numRacers(self):
         if (self.placements is None):
             return 0
