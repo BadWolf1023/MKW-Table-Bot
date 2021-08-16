@@ -65,6 +65,10 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
                 fc, name = placement.get_fc_and_name()
                 errors.append(name + lounge_add(fc, lounge_replace) + " had a blank race time. Disconnected unless mkwx bug. Not giving DC points for this race - use ?changeroomsize if they were not on the results of this race")
                 blank_time_counter += 1
+            if placement.is_manual_placement():
+                fc, name = placement.get_fc_and_name()
+                errors.append(name + lounge_add(fc, lounge_replace) + " was manually added to this race by the tabler. Use ?qe to change their position")
+                blank_time_counter += 1
             if not ignoreLargeTimes:
                 if placement.is_bogus_time():
                     fc, name = placement.get_fc_and_name()
