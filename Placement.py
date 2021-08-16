@@ -57,11 +57,12 @@ class Placement:
             return False
         return self.time > BOGUS_TIME_LIMIT
     
-    def __init__(self, player, place, time, delta=None):
+    def __init__(self, player, place, time, delta=None, manual_placement=False):
         self.player = player
         self.place = place
         self.time = self._createTime_(time)
         self.delta = self._process_delta_(delta)
+        self.manual_placement = manual_placement
         
     
     def __lt__(self, other):
