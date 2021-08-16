@@ -32,6 +32,8 @@ class Room(object):
         self.set_up_user_display_name = display_name
         self.forcedRoomSize = {}
         self.miis = {}
+        #Dict with mapping race # to list of manual placement objects - these cannot strictly be direct references, but may either be copies or direct references to the actual Placement objects
+        self.manual_placements = {} #List of tuples (old placement, new placement) ?
         
         
 
@@ -88,6 +90,17 @@ class Room(object):
                 result.extend(race.get_manual_placements())
         return result
     
+    def update_manual_placements_after_race_removal(self, raceIndex):
+        temp_manual_placements = {}
+        for race_num, race_manual_placements in self.manual_placements.items():
+            if (raceIndex + 1) == race_num:
+                continue
+            if (raceIndex + 1) > race_num:
+                temp_manual_placements[race_num] = race_manual_placements
+            else:
+                temp_manual_placements[race_num-1] = race_manual_placements
+        self.manual_placements.clear()
+        self.manual_placements.update(temp_manual_placements)
 
     #Outside caller should use this, it will add the removed race to the class' history
     def remove_race(self, raceIndex):
@@ -96,6 +109,7 @@ class Room(object):
             remove_success = self.__remove_race__(raceIndex)
             if remove_success:
                 self.removed_races.append((raceIndex, raceName))
+                self.update_manual_placements_after_race_removal(raceIndex)
             return remove_success, (raceIndex, raceName)
         return False, None
     
@@ -484,9 +498,6 @@ class Room(object):
     def forceRoomSize(self, raceNum, roomSize):
         self.forcedRoomSize[raceNum] = roomSize
     
-    def getRoomSize(self, raceNum):
-        if raceNum in self.forcedRoomSize:
-            return self.forcedRoomSize[raceNum]
        
     #This is not the entire save state of the class, but rather, the save state for edits made by the user 
     def get_recoverable_save_state(self):
@@ -500,6 +511,7 @@ class Room(object):
         save_state['forcedRoomSize'] = self.forcedRoomSize.copy()
         save_state['rLIDs'] = self.rLIDs.copy()
         save_state['races'] = {}
+        save_state['manual_placements'] =  self.manual_placements.copy()
         for race in self.races:
             matchID = race.matchID
             recoverable_save_state = race.get_recoverable_state()
