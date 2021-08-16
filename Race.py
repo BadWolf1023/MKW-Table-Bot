@@ -218,7 +218,8 @@ class Race:
             for placement_2 in self.placements:
                 if placement_1.player.FC != placement_2.player.FC and placement_1 == placement_2\
                 and not placement_1.is_bogus_time() and not placement_2.is_bogus_time()\
-                and not placement_1.is_disconnected() and not placement_1.is_disconnected():
+                and not placement_1.is_disconnected() and not placement_1.is_disconnected()\
+                and not placement_1.is_manual_placement() and not placement_2.is_manual_placement():
                     if placement_1.player.FC not in ties:
                         ties.append(placement_1.player.FC)
                     if placement_2.player.FC not in ties:
