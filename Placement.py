@@ -7,6 +7,7 @@ from UserDataProcessing import lounge_add
 import UtilityFunctions
 
 DEBUGGING = False
+MANUAL_PLACEMENT_TIME = (1000, 1000, 1000)
 DISCONNECTION_TIME = (999,999,999)
 BOGUS_TIME_LIMIT = (5,59,999)
 MINIMUM_DELTA_VALUE = -10
@@ -19,7 +20,7 @@ class Placement:
     
     def _createTime_(self, time, manual_placement):
         if manual_placement:
-            return DISCONNECTION_TIME
+            return MANUAL_PLACEMENT_TIME
         
         temp = ""
         minute = "-1"
@@ -50,13 +51,18 @@ class Placement:
     def is_disconnected(self):
         return self.time == DISCONNECTION_TIME
     
+    def is_manual_placement(self):
+        return self.time == MANUAL_PLACEMENT_TIME
+    
     def is_delta_unlikely(self):
         if self.delta is None:
             return False
         return self.delta < MINIMUM_DELTA_VALUE or self.delta > MAXIMUM_DELTA_VALUE
     
+
+    
     def is_bogus_time(self):
-        if self.is_disconnected():
+        if self.is_disconnected() or self.is_manual_placement():
             return False
         return self.time > BOGUS_TIME_LIMIT
     
@@ -104,7 +110,7 @@ class Placement:
     
     def __str__(self):
         to_return = f"{self.place}. {UtilityFunctions.process_name(self.player.name + lounge_add(self.player.FC))} - "
-        if self.is_disconnected():
+        if self.is_disconnected() or self.is_manual_placement():
             to_return += "BLANK TIME"
         else:
             to_return += self.get_time_string()
