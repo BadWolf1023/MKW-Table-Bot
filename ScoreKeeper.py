@@ -43,6 +43,8 @@ alternate_Matrices = {
     [15, 13 ,12, 10, 8, 7, 6, 5, 3, 2, 1, 0]
     ]}
 
+MAX_RACERS = 12
+
 def print_scores(fc_score, fc_player):
     for fc, score in sorted(fc_score.items(), key=lambda x: x[1], reverse=True):
         print(fc_player[fc] + " (" + fc + "): " + str(score))
@@ -91,13 +93,19 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
                         
         if raceNum in curRoom.forcedRoomSize:
             mkwxNumRacers = curRoom.forcedRoomSize[raceNum]
+        
+        if mkwxNumRacers > MAX_RACERS:
+            mkwxNumRacers = MAX_RACERS #Handle when more than 13 players are in a race, possible due to new command ?addplacement
             
         for placement in race.getPlacements():
             placement_score = 0
+            placement_place = placement.place
+            if placement_place > MAX_RACERS:
+                placement_place = MAX_RACERS
             if server_id in alternate_Matrices:
-                placement_score = alternate_Matrices[server_id][mkwxNumRacers-1][placement.place-1]
+                placement_score = alternate_Matrices[server_id][mkwxNumRacers-1][placement_place-1]
             else:
-                placement_score = scoreMatrix[mkwxNumRacers-1][placement.place-1]
+                placement_score = scoreMatrix[mkwxNumRacers-1][placement_place-1]
             
             fc_score[placement.player.FC].append( placement_score )
     #Fille awkward sized arrays with 0
