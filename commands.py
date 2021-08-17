@@ -1138,7 +1138,8 @@ class TablingCommands:
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
-            await message.channel.send(this_bot.getRoom().getFCPlayerListString())
+            num_races_for_war = this_bot.getWar().get_num_races_for_war()
+            await message.channel.send(this_bot.getRoom().getFCPlayerListString(end_race=num_races_for_war))
     
     
     @staticmethod
@@ -1282,8 +1283,9 @@ class TablingCommands:
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
     
+        num_races_for_war = this_bot.getWar().get_num_races_for_war()
         if len(args) == 1:
-            to_send = this_bot.getRoom().get_sorted_player_list_string()
+            to_send = this_bot.getRoom().get_sorted_player_list_string(end_race=num_races_for_war)
             to_send += "\n**To give the 2nd player on the list a 15 point penalty:** *" + server_prefix + "penalty 2 15*"
             await message.channel.send(to_send)
             return
@@ -1294,7 +1296,7 @@ class TablingCommands:
         
         playerNum = args[1]
         amount = args[2]
-        players = this_bot.getRoom().get_sorted_player_list()
+        players = this_bot.getRoom().get_sorted_player_list(end_race=num_races_for_war)
         if not playerNum.isnumeric():
             pass
         else:
@@ -1322,8 +1324,9 @@ class TablingCommands:
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
 
+        num_races_for_war = this_bot.getWar().get_num_races_for_war()
         if len(args) == 1:
-            to_send = this_bot.getRoom().get_sorted_player_list_string()
+            to_send = this_bot.getRoom().get_sorted_player_list_string(end_race=num_races_for_war)
             to_send += "\n**To edit the GP3 score of the 7th player on the list to 37 points:** *" + server_prefix + "edit 7 3 37*"
             await message.channel.send(to_send)
             return
@@ -1336,12 +1339,12 @@ class TablingCommands:
         playerNum = command.split()[1].strip()
         GPNum = args[2]
         amount = args[3]
-        players = this_bot.getRoom().get_sorted_player_list()
+        players = this_bot.getRoom().get_sorted_player_list(end_race=num_races_for_war)
         if not GPNum.isnumeric() or not amount.isnumeric():
             await message.channel.send("GP Number and amount must all be numbers. Do " + server_prefix + "edit for an example on how to use this command.")
             return
 
-        players = this_bot.getRoom().get_sorted_player_list()
+        players = this_bot.getRoom().get_sorted_player_list(end_race=num_races_for_war)
         numGPs = this_bot.getWar().numberOfGPs
         GPNum = int(GPNum)
         amount = int(amount)
@@ -1381,8 +1384,9 @@ class TablingCommands:
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
     
+        num_races_for_war = this_bot.getWar().get_num_races_for_war()
         if len(args) < 3:
-            to_send = this_bot.getRoom().get_sorted_player_list_string()
+            to_send = this_bot.getRoom().get_sorted_player_list_string(end_race=num_races_for_war)
             to_send += "\n**To change the name of the 8th player on the list to \"joe\", do:** *" + server_prefix + "changename 8 joe*"
             await message.channel.send(to_send)
             return
@@ -1390,7 +1394,7 @@ class TablingCommands:
 
         playerNum = command.split()[1].strip()
         new_name = " ".join(command.split()[2:])
-        players = this_bot.getRoom().get_sorted_player_list()
+        players = this_bot.getRoom().get_sorted_player_list(end_race=num_races_for_war)
         if playerNum.isnumeric():
             playerNum = int(playerNum)
             if playerNum < 1 or playerNum > len(players):
@@ -1427,9 +1431,9 @@ class TablingCommands:
             to_send = "You cannot change a player's tag in an FFA. FFAs have no teams."
             await message.channel.send(to_send)
             return
-        
+        num_races_for_war = this_bot.getWar().get_num_races_for_war()
         if len(args) < 3:
-            to_send = this_bot.getRoom().get_sorted_player_list_string()
+            to_send = this_bot.getRoom().get_sorted_player_list_string(end_race=num_races_for_war)
             to_send += "\n**To change the tag of the 8th player on the list to KG, do:** *" + server_prefix + "changetag 8 KG*"
             await message.channel.send(to_send)
             return
@@ -1437,7 +1441,7 @@ class TablingCommands:
         elif len(args) >= 3:
             playerNum = command.split()[1].strip()
             new_tag = " ".join(command.split()[2:])
-            players = this_bot.getRoom().get_sorted_player_list()
+            players = this_bot.getRoom().get_sorted_player_list(end_race=num_races_for_war)
             if playerNum.isnumeric():
                 playerNum = int(playerNum)
                 if playerNum < 1 or playerNum > len(players):
@@ -1657,8 +1661,8 @@ class TablingCommands:
     
     
         fc_tags = {}
-        numGPS = this_bot.getWar().numberOfGPs
-        players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
+        num_races_for_war = this_bot.getWar().get_num_races_for_war()
+        players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, num_races_for_war).items())
         player_fcs_tags, hasANoneTag = getTagsSmart(players, this_bot.getWar().playersPerTeam)
         if hasANoneTag:
             player_fcs_tags = {}
@@ -1776,11 +1780,12 @@ class TablingCommands:
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
-    
-        players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, len(this_bot.getRoom().races)).items())
+        
+        num_races_for_war = this_bot.getWar().get_num_races_for_war()
+        players = list(this_bot.getRoom().getFCPlayerListStartEnd(start_race=1, end_race=num_races_for_war).items())
         FC_List = [fc for fc, _ in players]
         await updateData(* await LoungeAPIFunctions.getByFCs(FC_List))
-        await message.channel.send(this_bot.getRoom().get_players_list_string())
+        await message.channel.send(this_bot.getRoom().get_players_list_string(start_race=1, end_race=num_races_for_war))
     
     @staticmethod
     async def set_war_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, old_command:str):
@@ -1902,7 +1907,8 @@ class TablingCommands:
                 
                 this_bot.updateWPCoolDown()
                 message2 = await message.channel.send("Updating room...")
-                players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, this_bot.getWar().numberOfGPs*4).items())
+                num_races_for_war = this_bot.getWar().get_num_races_for_war()
+                players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, num_races_for_war).items())
                 FC_List = [fc for fc, _ in players]
                 
                 await updateData(* await LoungeAPIFunctions.getByFCs(FC_List))
@@ -2011,9 +2017,9 @@ class TablingCommands:
             this_bot.setWar(None)
             return
     
-        numGPS = this_bot.getWar().numberOfGPs
+        num_races_for_war = this_bot.getWar().get_num_races_for_war()
         
-        players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
+        players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, num_races_for_war).items())
         player_fcs_tags, hasANoneTag = getTagsSmart(players, this_bot.getWar().playersPerTeam)
         if hasANoneTag:
             player_fcs_tags = {}
@@ -2134,15 +2140,16 @@ class TablingCommands:
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
+            num_races_for_war = this_bot.getWar().get_num_races_for_war()
             if len(args) == 1:
-                to_send = this_bot.getRoom().get_sorted_player_list_string()
+                to_send = this_bot.getRoom().get_sorted_player_list_string(end_race=num_races_for_war)
                 to_send += "\n**To change the placement of the 8th player on the list for the 7th race to 4th place, do:** *" + server_prefix + "quickedit 8 7 4*"
                 await message.channel.send(to_send)
             elif len(args) == 4:
                 playerNum = command.split()[1].strip()
                 raceNum = args[2]
                 placement = args[3]
-                players = this_bot.getRoom().get_sorted_player_list()
+                players = this_bot.getRoom().get_sorted_player_list(end_race=num_races_for_war)
                 
                 if not raceNum.isnumeric():
                     await message.channel.send("The race number must be a number.")
