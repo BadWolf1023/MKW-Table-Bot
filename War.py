@@ -47,7 +47,9 @@ class War(object):
         self.displayMiis = displayMiis
         self.teamPenalties = defaultdict(int)
         self.teams = None
-        
+    
+    def get_num_races_for_war(self):
+        return self.numberOfGPs * 4
         
     def setWarFormat(self, formatting, numberOfTeams):
         if formatting not in self.__formatMapping:
