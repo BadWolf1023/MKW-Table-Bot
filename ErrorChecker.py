@@ -53,11 +53,11 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
     if startrace is None:
         startrace = 1
     if endrace is None:
-        endrace = len(room.races)
+        endrace = len(room.getRaces())
     startrace -= 1
     
     
-    for raceInd, race in enumerate(room.races[startrace:endrace], startrace):
+    for raceInd, race in enumerate(room.getRaces()[startrace:endrace], startrace):
         errors = []
         blank_time_counter = 0
         if race.times_are_all_blank():
@@ -86,7 +86,7 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
                     errors.append(this_name + lounge_add(this_fc, lounge_replace) + "'s finish time: " + this_placement.get_time_string() + " - use ?qe to change their position")
                 
         #Check if this race's times are the same as any of the previous races times (excluding blank times)
-        prior_races = room.races[startrace:raceInd]
+        prior_races = room.getRaces()[startrace:raceInd]
         for prior_race in prior_races:
             if race.times_are_subset_of_and_not_all_blank(prior_race):
                 errors.append("This race had the exact same race times as a previous race. Table is incorrect for this GP.")
@@ -123,7 +123,7 @@ def get_war_errors_players(war, room, lounge_replace=True, ignoreLargeTimes=Fals
     startrace = 0
     endrace = war.getNumberOfGPS()*4
     dc_on_or_before = room.dc_on_or_before
-    for race in room.races[startrace:endrace]:
+    for race in room.getRaces()[startrace:endrace]:
         if race.getNumberOfPlayers() != numberOfPlayers:
             race_errors[int(race.raceNumber)] = []
             try:
@@ -159,7 +159,7 @@ def get_war_errors_players(war, room, lounge_replace=True, ignoreLargeTimes=Fals
                 
             
     by_gp = defaultdict(list)
-    for race in room.races[startrace:endrace]:
+    for race in room.getRaces()[startrace:endrace]:
         race_num = race.raceNumber
         gp_num = int((race_num-1)/4)
         by_gp[gp_num].append(race)
