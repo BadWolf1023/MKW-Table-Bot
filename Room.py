@@ -134,7 +134,7 @@ class Room(object):
         return removed_str
     
     
-    def getFCPlayerList(self, start_race=1,end_race=12, ignore_manual_player_additions=False):
+    def getFCPlayerList(self, start_race=1,end_race=None, ignore_manual_player_additions=False):
         fcNameDict = {}
         if end_race is None:
             end_race = len(self.races)

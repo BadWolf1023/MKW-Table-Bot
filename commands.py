@@ -1876,8 +1876,9 @@ class TablingCommands:
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
-        else: 
-            await updateData(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs()))
+        else:
+            num_races_set_for_war = this_bot.getWar().get_num_races_for_war()
+            await updateData(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs(end_race=num_races_set_for_war)))
             if len(args) == 1:
                 await message.channel.send(str(this_bot.getRoom().races[-1]))
             else:
