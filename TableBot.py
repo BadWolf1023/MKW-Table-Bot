@@ -189,10 +189,12 @@ class ChannelBot(object):
             self.populating = True
             if self.getRoom() is not None:
                 self.remove_miis_with_missing_files()
-                all_fcs_in_room = self.getRoom().getFCs()
+                war_num_races = self.getWar().get_num_races_for_war()
+                all_fcs_in_room = self.getRoom().getFCs(end_race=war_num_races)
+                
                 if all_fcs_in_room != self.miis.keys():
                     with concurrent.futures.ThreadPoolExecutor(max_workers=12) as executor:
-                        future_to_fc = {executor.submit(MiiPuller.get_mii_blocking, fc, message_id): fc for fc in self.getRoom().getFCs() if fc not in self.miis }
+                        future_to_fc = {executor.submit(MiiPuller.get_mii_blocking, fc, message_id): fc for fc in all_fcs_in_room if fc not in self.miis }
                         for future in concurrent.futures.as_completed(future_to_fc):
                             fc = future_to_fc[future]
                             try:
