@@ -235,6 +235,13 @@ class Race:
         other_race_times_set = other_race.get_placement_times_as_set()
         return other_race_times_set.issubset(race_times_set)
     
+    def times_are_all_blank(self) -> bool:
+        race_times_set = self.get_placement_times_as_set()
+        race_times_set.discard(DISCONNECTION_TIME) #Discard disconnection 
+        #If there were no times left after removing blank times, then the entire room had blank times
+        return len(race_times_set) == 0
+
+    
     def times_are_subset_of_and_not_all_blank(self, other_race) -> bool:
         race_times_set = self.get_placement_times_as_set()
         race_times_set.discard(DISCONNECTION_TIME) #Discard disconnection 

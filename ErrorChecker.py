@@ -60,31 +60,31 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
     for raceInd, race in enumerate(room.races[startrace:endrace], startrace):
         errors = []
         blank_time_counter = 0
-        for placement in race.placements:
-            if placement.is_disconnected():
-                fc, name = placement.get_fc_and_name()
-                errors.append(name + lounge_add(fc, lounge_replace) + " had a blank race time. Disconnected unless mkwx bug. Not giving DC points for this race - use ?changeroomsize if they were not on the results of this race")
-                blank_time_counter += 1
-            if placement.is_manual_placement():
-                fc, name = placement.get_fc_and_name()
-                errors.append(name + lounge_add(fc, lounge_replace) + " was manually added to this race by the tabler. Use ?qe to change their position")
-                blank_time_counter += 1
-            if not ignoreLargeTimes:
-                if placement.is_bogus_time():
-                    fc, name = placement.get_fc_and_name()
-                    errors.append(name + lounge_add(fc, lounge_replace) + " had large finish time: " + placement.get_time_string() + " - use ?qe to change their position")
-        
-        ties = race.getTies()
-        if len(ties) > 0:
-            errors.append("Ties occurred (check table for errors):")
-            for this_fc in sorted(ties, key=lambda fc:race.getPlacement(fc)):
-                this_placement = race.getPlacement(this_fc)
-                _, this_name = this_placement.get_fc_and_name()
-                errors.append(this_name + lounge_add(this_fc, lounge_replace) + "'s finish time: " + this_placement.get_time_string() + " - use ?qe to change their position")
-            
-        if blank_time_counter == len(race.placements):
+        if race.times_are_all_blank():
             errors = [EC_Messages_Alternative[_ENTIRE_ROOM_BLANK_RACE_TIMES]]
+        else:
+            for placement in race.placements:
+                if placement.is_disconnected():
+                    fc, name = placement.get_fc_and_name()
+                    errors.append(name + lounge_add(fc, lounge_replace) + " had a blank race time. Disconnected unless mkwx bug. Not giving DC points for this race - use ?changeroomsize if they were not on the results of this race")
+                    blank_time_counter += 1
+                if placement.is_manual_placement():
+                    fc, name = placement.get_fc_and_name()
+                    errors.append(name + lounge_add(fc, lounge_replace) + " was manually added to this race by the tabler. Use ?qe to change their position")
+                    blank_time_counter += 1
+                if not ignoreLargeTimes:
+                    if placement.is_bogus_time():
+                        fc, name = placement.get_fc_and_name()
+                        errors.append(name + lounge_add(fc, lounge_replace) + " had large finish time: " + placement.get_time_string() + " - use ?qe to change their position")
             
+            ties = race.getTies()
+            if len(ties) > 0:
+                errors.append("Ties occurred (check table for errors):")
+                for this_fc in sorted(ties, key=lambda fc:race.getPlacement(fc)):
+                    this_placement = race.getPlacement(this_fc)
+                    _, this_name = this_placement.get_fc_and_name()
+                    errors.append(this_name + lounge_add(this_fc, lounge_replace) + "'s finish time: " + this_placement.get_time_string() + " - use ?qe to change their position")
+                
         #Check if this race's times are the same as any of the previous races times (excluding blank times)
         prior_races = room.races[startrace:raceInd]
         for prior_race in prior_races:
