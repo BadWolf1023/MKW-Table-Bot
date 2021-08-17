@@ -176,7 +176,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     for x in range(numGPs):
         GPs.append(calculateGPScoresDCS(x+1, room, missingRacePts, server_id))
         
-    fcs_players = room.getFCPlayerListStartEnd(1, numGPs*4)
+    fcs_players = room.getFCPlayerListStartEnd(1,war.get_num_races_for_war())
     
     
     FC_table_str = {}
