@@ -257,7 +257,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
                 FC_table_str[fc][1] -= amount
 
     #build table string
-    numRaces = min( (len(room.races), war.getNumberOfGPS()*4) )
+    numRaces = min( (len(room.getRaces()), war.getNumberOfGPS()*4) )
     table_str = "#title " + war.getTableWarName(numRaces) + "\n"
     curTeam = None
     teamCounter = 0
