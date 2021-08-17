@@ -37,6 +37,10 @@ class Room(object):
         #None for new_placement if matching couldn't work
         self.manual_placements = {} 
         
+        #Variable is only set if the player added was by name, but the name was not a valid lounge name
+        #Temporarily stores the player and adds it or throws it away based on the tabler's response
+        self.potential_player_addition = None
+        
         
 
     
