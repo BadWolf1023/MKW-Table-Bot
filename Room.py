@@ -134,11 +134,11 @@ class Room(object):
         return removed_str
     
     
-    def getFCPlayerList(self, startrace=1,endrace=12, ignore_manual_player_additions=False):
+    def getFCPlayerList(self, start_race=1,end_race=12, ignore_manual_player_additions=False):
         fcNameDict = {}
-        if endrace is None:
-            endrace = len(self.races)
-        for race in self.races[startrace-1:endrace]:
+        if end_race is None:
+            end_race = len(self.races)
+        for race in self.races[start_race-1:end_race]:
             for placement in race.getPlacements():
                 if ignore_manual_player_additions and placement.is_manual_placement():
                     continue
@@ -146,8 +146,8 @@ class Room(object):
                 fcNameDict[FC] = name
         return fcNameDict
     
-    def getFCPlayerListString(self, startrace=1,endrace=12, lounge_replace=True):
-        FCPL = self.getFCPlayerList(startrace, endrace)
+    def getFCPlayerListString(self, start_race=1,end_race=12, lounge_replace=True):
+        FCPL = self.getFCPlayerList(start_race, end_race)
         to_build = ""
         for fc, name in FCPL.items():
             to_build += fc + ": " + UtilityFunctions.process_name(name + UserDataProcessing.lounge_add(fc, lounge_replace)) + "\n"
@@ -160,10 +160,10 @@ class Room(object):
         self.playerPenalties[fc] += amount
         
     
-    def getFCPlayerListStartEnd(self, startRace, endRace):
+    def getFCPlayerListStartEnd(self, start_race, end_race):
         fcNameDict = {}
         for raceNumber, race in enumerate(self.races, 1):
-            if raceNumber >= startRace and raceNumber <= endRace: 
+            if raceNumber >= start_race and raceNumber <= end_race: 
                 for placement in race.getPlacements():
                     FC, name = placement.get_fc_and_name()
                     fcNameDict[FC] = name
@@ -199,23 +199,6 @@ class Room(object):
                 resultText += f"**- Room #{i} URL:** https://wiimmfi.de/stats/mkwx/list/{rxx}  |  **rxx number:** {rxx}\n"
         return resultText
             
-    
-    def getMissingPlayersPerRace(self):
-        numGPS = int(len(self.races)/4 + 1)
-        GPPlayers = []
-        missingPlayers = []
-        for GPNum in range(numGPS):
-            GPPlayers.append(self.getFCPlayerListStartEnd((GPNum*4)+1, (GPNum+1)*4))
-        
-        for raceNum, race in enumerate(self.races):
-            thisGPPlayers = GPPlayers[int(raceNum/4)]
-            missingPlayersThisRace = []
-            if raceNum % 4 != 0: #not the start of the GP:
-                for fc, player in thisGPPlayers.items():
-                    if fc not in race.getFCs():
-                        missingPlayersThisRace.append((fc, player))
-            missingPlayers.append(missingPlayersThisRace)
-        return missingPlayers
     
     def getMissingOnRace(self, numGPS):
         GPPlayers = []
@@ -261,21 +244,21 @@ class Room(object):
     
     #method that returns the players in a consistent, sorted order - first by getTagSmart, then by FC (for tie breaker)
     #What is returned is a list of tuples (fc, player_name)
-    def get_sorted_player_list(self, startrace=1, endrace=12):
-        players = list(self.getFCPlayerListStartEnd(startrace, endrace).items())
+    def get_sorted_player_list(self, start_race=1, end_race=12):
+        players = list(self.getFCPlayerListStartEnd(start_race, end_race).items())
         return sorted(players, key=lambda x: (getTagSmart(x[1]), x[0]))
        
        
-    def get_sorted_player_list_string(self, startrace=1, endrace=12, lounge_replace=True):
-        players = self.get_sorted_player_list(startrace, endrace)
+    def get_sorted_player_list_string(self, start_race=1, end_race=12, lounge_replace=True):
+        players = self.get_sorted_player_list(start_race, end_race)
         to_build = ""
         for list_num, (fc, player) in enumerate(players, 1):
             to_build += str(list_num) + ". " + UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, lounge_replace)) + "\n"
         return to_build
             
             
-    def get_players_list_string(self, startrace=1, endrace=12, lounge_replace=True):
-        player_list = self.get_sorted_player_list(startrace, endrace)
+    def get_players_list_string(self, start_race=1, end_race=12, lounge_replace=True):
+        player_list = self.get_sorted_player_list(start_race, end_race)
         build_str = ""
         for counter, (fc, player) in enumerate(player_list, 1):
             build_str += str(counter) + ". " + UtilityFunctions.process_name(player)
