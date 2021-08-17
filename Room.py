@@ -175,11 +175,11 @@ class Room(object):
     def setNameForFC(self, FC, name):
         self.name_changes[FC] = name
     
-    def getFCs(self, ignore_manual_player_additions=False):
-        return self.getFCPlayerList(endrace=None, ignore_manual_player_additions=ignore_manual_player_additions).keys()
+    def getFCs(self, start_race=1, end_race=None, ignore_manual_player_additions=False):
+        return self.getFCPlayerList(start_race=start_race, end_race=end_race, ignore_manual_player_additions=ignore_manual_player_additions).keys()
     
-    def getPlayers(self, ignore_manual_player_additions=False):
-        return self.getFCPlayerList(endrace=None, ignore_manual_player_additions=ignore_manual_player_additions).values()
+    def getPlayers(self, start_race=1, end_race=None, ignore_manual_player_additions=False):
+        return self.getFCPlayerList(start_race=start_race, end_race=end_race, ignore_manual_player_additions=ignore_manual_player_additions).values()
     
             
     def setRaces(self, races):
