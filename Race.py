@@ -248,32 +248,7 @@ class Race:
     
     def has_unusual_delta_time(self):
         return any(True for placement in self.placements if placement.is_delta_unlikely())
-        
     
-    def getPlayerObjects(self):
-        players = []
-        for placement in self.placements:
-            players.append(placement.player)
-        return players
-    
-    def getPlayersByPlaceInRoom(self):
-        players = self.getPlayerObjects()
-        try:
-            players.sort(key=lambda p: int(p.positionInRoom))
-        except ValueError:
-            print("This actually happened - position in room wasn't a number.")
-            players.sort(key=lambda p: p.positionInRoom)
-        return players
-    
-    def getPlayersByPlaceInRoomString(self):
-        sortedPlayers = self.getPlayersByPlaceInRoom()
-        to_build = ""
-        for player in sortedPlayers:
-            lounge_name = UtilityFunctions.process_name(UserDataProcessing.lounge_get(player.FC))
-            if lounge_name is None or len(lounge_name) == 0:
-                lounge_name = "No Lounge"
-            to_build += "**" + str(player.positionInRoom) + ". " + lounge_name + "** - " + UtilityFunctions.process_name(player.name) + "\n"
-        return to_build
     
     def FCInPlacements(self, FC):
         for placement in self.placements:

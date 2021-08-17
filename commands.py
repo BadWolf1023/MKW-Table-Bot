@@ -2194,15 +2194,6 @@ class TablingCommands:
             else:
                 await message.channel.send("Do " + server_prefix + "quickedit to learn how to use this command.")        
     
-    @staticmethod
-    async def current_room_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
-        if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server) 
-        elif len(this_bot.getRoom().races) >= 1:
-            await updateData(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs()))
-            await message.channel.send(this_bot.getRoom().races[-1].getPlayersByPlaceInRoomString())
-
-
 
 
 

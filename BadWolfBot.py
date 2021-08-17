@@ -83,7 +83,6 @@ RACES_TERMS = {"races"}
 RXX_TERMS = {"rxx", "rlid"}
 ALL_PLAYERS_TERMS = {"allplayers", "ap"}
 FCS_TERMS = {"fcs"}
-CURRENT_ROOM_TERMS = {"currentroom"}
 
 
 #General commands that do not require a war to be started (stateless commands)
@@ -491,9 +490,6 @@ async def on_message(message: discord.Message):
             elif args[0] in REMOVE_RACE_TERMS:
                 await commands.TablingCommands.remove_race_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
-            elif args[0] in CURRENT_ROOM_TERMS:
-                await commands.TablingCommands.current_room_command(message, this_bot, server_prefix, is_lounge_server
-                                                    )
             elif args[0] in ADD_FLAG_EXCEPTION_TERMS:
                 await commands.BotAdminCommands.add_flag_exception_command(message, args, user_flag_exceptions)
                     
