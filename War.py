@@ -178,10 +178,10 @@ class War(object):
         
             
         for raceNum, error_messages in sorted(errors.items(), key=lambda x:x[0]):
-            if raceNum > len(room.races):
+            if raceNum > len(room.getRaces()):
                 build_string += "   Race #" + str(raceNum) + ":\n"
             else:
-                build_string += "   Race #" + str(raceNum) + " (" + room.races[raceNum-1].getTrackNameWithoutAuthor() + "):\n"
+                build_string += "   Race #" + str(raceNum) + " (" + room.getRaces()[raceNum-1].getTrackNameWithoutAuthor() + "):\n"
             
             for error_message in error_messages:
                 build_string += "\t- " + error_message + "\n"
