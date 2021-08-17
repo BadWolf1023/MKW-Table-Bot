@@ -1267,6 +1267,13 @@ class TablingCommands:
         
         await message.channel.send('"' + UtilityFunctions.process_name(str(on_or_before)) + '" needs to be either "on" or "before". Do ' + server_prefix + "dcs for an example on how to use this command.")
 
+    @staticmethod
+    async def after_add_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
+        pass
+    
+    @staticmethod
+    async def add_player_command(mmessage:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
+        pass
 
 
     @staticmethod

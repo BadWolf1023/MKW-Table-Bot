@@ -61,6 +61,7 @@ PLAYER_PENALTY_TERMS = {"pen", "penalty"}
 TEAM_PENALTY_TERMS = {"teampen", "teampenalty"}
 EDIT_PLAYER_SCORE_TERMS = {"edit"}
 PLAYER_DISCONNECT_TERMS = {"dc", "dcs"}
+ADD_PLAYER_TERMS = {"addplayer"}
 MERGE_ROOM_TERMS = {"mr", "mergeroom"}
 SET_WAR_NAME_TERMS = {"setwarname"}
 CHANGE_PLAYER_NAME_TERMS = {'changename'}
@@ -414,6 +415,12 @@ async def on_message(message: discord.Message):
             elif this_bot.prev_command_sw:
                 await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix)
             
+            elif this_bot.prev_command_add_player_not_in_lounge:
+                await commands.TablingCommands.after_add_player_command(message, this_bot, args, server_prefix)
+                
+            elif args[0] in ADD_PLAYER_TERMS:
+                await commands.TablingCommands.add_player_command(message, this_bot, args, server_prefix, is_lounge_server, command)
+                
             elif args[0] in GARBAGE_COLLECT_TERMS:
                 commands.BadWolfCommands.garbage_collect_command(message)
                 
