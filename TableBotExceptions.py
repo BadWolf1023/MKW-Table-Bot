@@ -52,6 +52,7 @@ class WarnedUser(NotAuthorized):
 
 class WarSetupFailure(Exception):
     pass
+
 #Exceptions that might be thrown when war is started
 class InvalidWarFormatException(WarSetupFailure):
     pass
@@ -60,4 +61,14 @@ class InvalidNumberOfPlayersException(WarSetupFailure):
     pass
 
 class WarSetupStillRunning(WarSetupFailure):
+    pass
+
+#Exceptions regarding Adding Players
+class AddPlayerFailure(Exception):
+    pass
+
+class NoMoreFCGeneration(AddPlayerFailure):
+    pass
+
+class NoMorePlayerNameGeneration(AddPlayerFailure):
     pass
