@@ -134,12 +134,14 @@ class Room(object):
         return removed_str
     
     
-    def getFCPlayerList(self, startrace=1,endrace=12):
+    def getFCPlayerList(self, startrace=1,endrace=12, ignore_manual_player_additions=False):
         fcNameDict = {}
         if endrace is None:
             endrace = len(self.races)
         for race in self.races[startrace-1:endrace]:
             for placement in race.getPlacements():
+                if ignore_manual_player_additions and placement.is_manual_placement():
+                    continue
                 FC, name = placement.get_fc_and_name()
                 fcNameDict[FC] = name
         return fcNameDict
@@ -173,11 +175,11 @@ class Room(object):
     def setNameForFC(self, FC, name):
         self.name_changes[FC] = name
     
-    def getFCs(self):
-        return self.getFCPlayerList(endrace=None).keys()
+    def getFCs(self, ignore_manual_player_additions=False):
+        return self.getFCPlayerList(endrace=None, ignore_manual_player_additions=ignore_manual_player_additions).keys()
     
-    def getPlayers(self):
-        return self.getFCPlayerList(endrace=None).values()
+    def getPlayers(self, ignore_manual_player_additions=False):
+        return self.getFCPlayerList(endrace=None, ignore_manual_player_additions=ignore_manual_player_additions).values()
     
             
     def setRaces(self, races):
