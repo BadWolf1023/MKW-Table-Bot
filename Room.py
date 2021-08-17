@@ -14,6 +14,12 @@ import UtilityFunctions
 from TagAI import getTagSmart
 from typing import List
 import common
+import TableBotExceptions
+
+MAXIMUM_FC_GENERATION = 15
+MAXIMUM_PLAYER_NAME_GENERATION = 15
+BASE_FC_FOR_GENERATION = "0000-0000-0000"
+BASE_PLAYER_NAME_FOR_GENERATION = "Player "
 
 class Room(object):
     '''
@@ -36,11 +42,34 @@ class Room(object):
         #Race number maps to [[old_placement, new_placement], [old_placement, new_placement], [old_placement, None]...]
         #None for new_placement if matching couldn't work
         self.manual_placements = {} 
-        
+        self.FC_generation_counter = 0
+        self.name_generation_counter = 1
         #Variable is only set if the player added was by name, but the name was not a valid lounge name
         #Temporarily stores the player and adds it or throws it away based on the tabler's response
         self.potential_player_addition = None
         
+    
+    def __get_generated_fc__(self):
+        if self.FC_generation_counter >= MAXIMUM_FC_GENERATION:
+            raise TableBotExceptions.NoMoreFCGeneration()
+        to_add = str(self.FC_generation_counter)
+        return BASE_FC_FOR_GENERATION[:-len(to_add)] + to_add
+    
+    def generate_new_fc(self):
+        generated_FC = self.__get_generated_fc__()
+        self.FC_generation_counter += 1
+        return generated_FC
+    
+    def __get_generated_player_name__(self):
+        if self.name_generation_counter > MAXIMUM_PLAYER_NAME_GENERATION: #starts at 1
+            raise TableBotExceptions.NoMorePlayerNameGeneration()
+        to_add = str(self.name_generation_counter)
+        return BASE_PLAYER_NAME_FOR_GENERATION + to_add
+    
+    def generate_new_player_name(self):
+        generated_player_name = self.__get_generated_player_name__()
+        self.name_generation_counter += 1
+        return generated_player_name
         
 
     
