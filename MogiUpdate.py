@@ -18,10 +18,6 @@ three_deep_flatten = lambda t: [item for L1 in t for L2 in L1 for item in L2]
 from typing import Tuple
 
 
-"""
-{"format":"6","tier":"Tier 1","teams":[{"players":[{"is_sub_out":true,"multiplier":1,"player_id":3,"races":12,"score":15},{"multiplier":1,"player_id":1041,"races":12,"score":13},{"is_sub_in":true,"multiplier":1,"player_id":281,"races":12,"score":319},{"multiplier":1,"player_id":232,"races":12,"score":17},{"multiplier":1,"player_id":820,"races":12,"score":23},{"multiplier":1,"player_id":857,"races":12,"score":27},{"multiplier":1,"player_id":115,"races":12,"score":19}]},{"players":[{"multiplier":1,"player_id":323,"races":12,"score":29},{"multiplier":1,"player_id":1995,"races":12,"score":50},{"multiplier":1,"player_id":1347,"races":12,"score":55},{"multiplier":1,"player_id":1533,"races":12,"score":23},{"is_gainloss_prevented":true,player_id":349,"races":12,"score":59},{"multiplier":1,"player_id":2231,"races":12,"score":80}]}]}
-{'format':'2','tier':'Tier 1','teams':[{'players':[{'player_id':1961,'races':12,'score':45},{'player_id':1913,'races':12,'score':25}]},{'players':[{'player_id':2409,'races':12,'score':40},{'player_id':824,'races':12,'score':24}]},{'players':[{'player_id':40,'races':12,'score':57},{'player_id':1739,'races':12,'score':45}]},{'players':[{'player_id':402,'races':12,'score':56},{'player_id':2195,'races':12,'score':46}]},{'players':[{'player_id':1567,'races':12,'score':50},{'player_id':2270,'races':12,'score':36}]},{'players':[{'player_id':375,'races':12,'score':30},{'player_id':1154,'races':12,'score':0}]}]}"""
-
 from typing import List
 rt_tier_mappings = {"1":"Tier 1", "2":"Tier 2", "3":"Tier 3", "4":"Tier 4","4-5":"Tier 4", "5":"Tier 5", "6":"Tier 6", "7":"Tier 7", "8":"Top 50"}
 ct_tier_mappings = {"1":"Tier 1", "2":"Tier 2", "3":"Tier 3", "4":"Tier 4", "5":"Tier 5", "6":"Tier 6", "7":"Tier 7"}
@@ -515,9 +511,7 @@ def map_to_teams(players_and_scores, id_mapping):
         for player_line in team:
             players_and_scores_new[-1].append([])
             for data in player_line:
-                num_races = 12
-                if len(data) > 2:
-                    num_races = data[2]
+                num_races = data[2]
                 lookup = getLookup(data[0])
                 if lookup not in id_mapping_new:
                     success = False
