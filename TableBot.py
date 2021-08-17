@@ -69,6 +69,8 @@ class ChannelBot(object):
         self.set_dc_points(server_id)
         self.race_size = 4
         
+        self.prev_command_add_player_not_in_lounge = False
+        
     def set_race_size(self, new_race_size:int):
         self.race_size = new_race_size
     def get_race_size(self):
