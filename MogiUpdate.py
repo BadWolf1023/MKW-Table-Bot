@@ -174,22 +174,16 @@ def getTierFromChannelID(summaryChannelID:int) -> str:
     return "Unknown Tier"
     
 
-def isJSONCorrupt(jsonData, mogiPlayerAmount=12):
-    pass
-
-def createJSON(players, mult=default_multiplier):
-    pass
-
 #- Global races played will always be the actual number of races played
 # - Individual player races played will be the actual number of races they played as well
-# - Multiplier for each person will be global races played � 12
+# - Multiplier for each person will be global races played / 12
 # - Updater Bot will leave all multipliers alone, even on subs/subbees. Updater Bot will not change any JSON except for the following: Updater Bot must change gain/loss prevention and full gain/loss on JSON appropriately for sub ins and sub outs.
-def create_player_json(player:Tuple[str, int, int, int], races_played=12, sub_in=False, sub_out=False, squadqueue=False):
+def create_player_json(player:Tuple[str, int, int, int], races_for_mogi=12, sub_in=False, sub_out=False, squadqueue=False):
     player_json = {}
     player_json["player_id"] = player[3]
     player_json["score"] = player[1]
     
-    if races_played != player[2]:
+    if races_for_mogi != player[2]:
         player_json["races"] = player[2] #since the races they played is not the global race count, change their individual race count appropriately
     
     if sub_in:
@@ -197,12 +191,12 @@ def create_player_json(player:Tuple[str, int, int, int], races_played=12, sub_in
     if sub_out:
         player_json["subbed_out"] = True
     
-    if races_played != 12: #Default multiplier is 1.0, so if 12 races are played, 1.0 is the right multiplier and we don't need to include it
-        player_json["multiplier"] = round(races_played / 12, 3) #Multiplier for each person will be global races played � 12
+    if races_for_mogi != 12: #Default multiplier is 1.0, so if 12 races are played, 1.0 is the right multiplier and we don't need to include it
+        player_json["multiplier"] = round(races_for_mogi / 12, 3) #Multiplier for each person will be global races played � 12
         
     return player_json
     
-def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], races_played=12, squadqueue=False):
+def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], races_for_mogi=12, squadqueue=False):
     teams_JSON = []
     for team in team_map:
         team_json = []
@@ -220,7 +214,7 @@ def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], races_played=12
                             sub_out = True
                     
 
-                team_json.append(create_player_json(player, races_played, sub_in=sub_in, sub_out=sub_out, squadqueue=squadqueue))
+                team_json.append(create_player_json(player, races_for_mogi, sub_in=sub_in, sub_out=sub_out, squadqueue=squadqueue))
         teams_JSON.append({"players":team_json})
     return teams_JSON
            
@@ -565,7 +559,7 @@ def determine_tier(id_mapping, is_rt=True):
     
             
 
-async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=None, is_rt=True):
+async def textInputUpdate(tableText:str, tier:str, races_for_mogi=12, warFormat=None, is_rt=True):
     squadqueue = False
     if tier == "squadqueue":
         squadqueue = True
@@ -582,7 +576,7 @@ async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=No
     else:
         numTeams = num_teams_mapping_reverse[warFormat]
     
-    EC, players_and_scores = getPlayersAndScores(table_lines, races_played)
+    EC, players_and_scores = getPlayersAndScores(table_lines, races_for_mogi)
     if EC != SUCCESS_EC:
         return EC, None, players_and_scores
     
@@ -610,7 +604,7 @@ async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=No
     
     json_data = {}
     json_data["format"] = str(warFormat)
-    json_data["races"] = races_played
+    json_data["races"] = races_for_mogi
     
     
 
@@ -638,7 +632,7 @@ async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=No
     if not success:
         return None, None, None
     
-    json_data["teams"] = create_teams_JSON(team_map, races_played, squadqueue)
+    json_data["teams"] = create_teams_JSON(team_map, races_for_mogi, squadqueue)
     json_dump = json.dumps(json_data, separators=(',', ':'))
     
     return SUCCESS_EC, newTableText, json_dump

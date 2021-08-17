@@ -1865,8 +1865,8 @@ class TablingCommands:
         roomSize = int(args[2])
         if raceNum < 1 or raceNum > len(this_bot.getRoom().races):
             await message.channel.send("The room hasn't played race #" + str(raceNum) + " yet.")      
-        elif roomSize < 2 or roomSize > 12:
-            await message.channel.send("Room size must be between 2 and 12 players. (24P support may come eventually).")      
+        elif roomSize < 2 or roomSize > SK.MAX_RACERS:
+            await message.channel.send(f"Room size must be between 2 and {SK.MAX_RACERS} players. (24P support may come eventually).")      
         else:
             this_bot.add_save_state(message.content)
             this_bot.getRoom().forceRoomSize(raceNum, roomSize)
