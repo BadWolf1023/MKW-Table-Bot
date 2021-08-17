@@ -151,7 +151,7 @@ class ChannelBot(object):
         
         
     def getBotunlockedInStr(self):
-        if self.room is None or self.room.set_up_user is None or self.room.races is None or len(self.room.races) < 12:
+        if self.room is None or self.room.set_up_user is None or self.room.getRaces() is None or len(self.room.getRaces()) < 12:
             return None
         
         time_passed_since_lounge_finish = datetime.now() - self.loungeFinishTime
@@ -217,14 +217,14 @@ class ChannelBot(object):
         
     def updateLoungeFinishTime(self):
         if self.loungeFinishTime is None and self.room is not None \
-            and self.room.is_initialized() and self.room.races is not None and len(self.room.races) >= 12:
+            and self.room.is_initialized() and self.room.getRaces() is not None and len(self.room.getRaces()) >= 12:
                 self.loungeFinishTime = datetime.now()
     
     
     async def update_room(self) -> bool:
         if self.room is None:
             return False
-        success = await self.room.update_room()
+        success = await self.room.update_room(max_races=self.getWar().get_num_races_for_war())
         self.updateLoungeFinishTime()
         return success
 
@@ -311,7 +311,7 @@ class ChannelBot(object):
         return True, player_data, room_str, rLID
     
     
-    async def load_room_smart(self, load_me):
+    async def load_room_smart(self, load_me, max_races=None):
         rLIDs = []
         soups = []
         success = False
@@ -324,7 +324,7 @@ class ChannelBot(object):
                 break
         else:
             roomSoup = WiimfiSiteFunctions.combineSoups(soups)
-            temp = Room.Room(rLIDs, roomSoup)
+            temp = Room.Room(rLIDs, roomSoup, max_races=max_races)
             
             
             if temp.is_initialized():

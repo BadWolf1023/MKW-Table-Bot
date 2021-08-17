@@ -1509,11 +1509,12 @@ class TablingCommands:
                     #Case 5: Lounge name: No mention, len(args) > 3, neither rLID nor FC
                     successful = False
                     discordIDToLoad = None
+                    max_races = numgps * 4
                     if len(args) == 3 or (len(args) > 3 and (numGPsPos == 3 or iLTPos == 3 or miisPos == 3)):
                         discordIDToLoad = str(author_id)
                         await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]) )
                         FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-                        successful = await this_bot.load_room_smart([FCs])
+                        successful = await this_bot.load_room_smart([FCs], max_races=max_races)
                         if not successful:
                             await message.channel.send("Could not find you in a room. **Did you finish the first race?**")
                     elif len(args) > 3:
@@ -1521,16 +1522,16 @@ class TablingCommands:
                             discordIDToLoad = str(message.raw_mentions[0])
                             await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
                             FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-                            successful = await this_bot.load_room_smart([FCs])
+                            successful = await this_bot.load_room_smart([FCs], max_races=max_races)
                             if not successful:
                                 lookup_name = UtilityFunctions.process_name(str(message.mentions[0].name))
                                 await message.channel.send(f"Could not find {lookup_name} in a room. **Did they finish the first race?**")                      
                         elif _is_rLID(args[3]):
-                            successful = await this_bot.load_room_smart([args[3]])
+                            successful = await this_bot.load_room_smart([args[3]], max_races=max_races)
                             if not successful:
                                 await message.channel.send("Could not find this rxx number. Is the room over 24 hours old?")                                            
                         elif _is_fc(args[3]):
-                            successful = await this_bot.load_room_smart([args[3]])
+                            successful = await this_bot.load_room_smart([args[3]], max_races=max_races)
                             if not successful:
                                 await message.channel.send("Could not find this FC in a room. **Did they finish the first race?**")
                         else:
@@ -1542,7 +1543,7 @@ class TablingCommands:
                             their_name = their_name.strip()
                             await updateData( * await LoungeAPIFunctions.getByLoungeNames([their_name]))
                             FCs = UserDataProcessing.getFCsByLoungeName(their_name)
-                            successful = await this_bot.load_room_smart([FCs])
+                            successful = await this_bot.load_room_smart([FCs], max_races=max_races)
                             if not successful:
                                 processed_lookup_name = UtilityFunctions.process_name(their_name)
                                 await message.channel.send(f"Could not find {processed_lookup_name} in a room. **Did they finish the first race?**")                      
@@ -1734,7 +1735,7 @@ class TablingCommands:
         this_bot.getRoom().rLIDs.insert(0, rLID)
         updated = await this_bot.update_room()
         if updated:
-            await message.channel.send("Rooms successfully merge. Number of races played: " + str(len(this_bot.getRoom().races)))
+            await message.channel.send("Rooms successfully merge. Number of races played: " + str(len(this_bot.getRoom().getRaces())))
         else:
             this_bot.setWar(None)
             this_bot.setRoom(None)
@@ -1828,13 +1829,13 @@ class TablingCommands:
     
         gpNum = int(args[1])
         raceNum = (gpNum * 4) - 3
-        if raceNum < 1 or raceNum > len(this_bot.getRoom().races):
+        if raceNum < 1 or raceNum > len(this_bot.getRoom().getRaces()):
             await message.channel.send("The room hasn't started GP" + str(gpNum) + " yet.")
             return
     
         if len(args) >= 3:
             if args[2] == 'before' or args[2] == 'notonresults':
-                roomSize = this_bot.getRoom().races[raceNum-1].getNumberOfPlayers()
+                roomSize = this_bot.getRoom().getRaces()[raceNum-1].getNumberOfPlayers()
         
         if roomSize is None:
             roomSize = this_bot.getWar().get_num_players()
@@ -1863,7 +1864,7 @@ class TablingCommands:
         
         raceNum = int(args[1])
         roomSize = int(args[2])
-        if raceNum < 1 or raceNum > len(this_bot.getRoom().races):
+        if raceNum < 1 or raceNum > len(this_bot.getRoom().getRaces()):
             await message.channel.send("The room hasn't played race #" + str(raceNum) + " yet.")      
         elif roomSize < 2 or roomSize > SK.MAX_RACERS:
             await message.channel.send(f"Room size must be between 2 and {SK.MAX_RACERS} players. (24P support may come eventually).")      
@@ -1880,14 +1881,14 @@ class TablingCommands:
             num_races_set_for_war = this_bot.getWar().get_num_races_for_war()
             await updateData(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs(end_race=num_races_set_for_war)))
             if len(args) == 1:
-                await message.channel.send(str(this_bot.getRoom().races[-1]))
+                await message.channel.send(str(this_bot.getRoom().getRaces()[-1]))
             else:
                 if args[1].isnumeric():
                     raceNum = int(args[1])
-                    if raceNum < 1 or raceNum > len(this_bot.getRoom().races):
+                    if raceNum < 1 or raceNum > len(this_bot.getRoom().getRaces()):
                         await message.channel.send("You haven't played that many races yet!")
                     else:
-                        await message.channel.send(str(this_bot.getRoom().races[raceNum-1]))
+                        await message.channel.send(str(this_bot.getRoom().getRaces()[raceNum-1]))
                 else:
                     await message.channel.send("That's not a race number!")
                     
@@ -1921,7 +1922,7 @@ class TablingCommands:
                     await message2.edit(content=str("Room updated. Room has finished " + \
                                                     str(len(this_bot.getRoom().getRaces())) +\
                                                     " races. Last race: " +\
-                                                    str(this_bot.getRoom().races[-1].getTrackNameWithoutAuthor())))
+                                                    str(this_bot.getRoom().getRaces()[-1].getTrackNameWithoutAuthor())))
                     message3 = await message.channel.send("Getting table...")
                     usemiis, miiArgRequested, _ = getUseMiis(args)
                     uselounge, loungeArgRequested = getUseLoungeNames(args)
@@ -1975,8 +1976,8 @@ class TablingCommands:
                             
                             file = discord.File(table_image_path, filename=table_image_path)
                             numRaces = 0
-                            if this_bot.getRoom() is not None and this_bot.getRoom().races is not None:
-                                numRaces = min( (len(this_bot.getRoom().races), this_bot.getRoom().getNumberOfGPS()*4) )
+                            if this_bot.getRoom() is not None and this_bot.getRoom().getRaces() is not None:
+                                numRaces = min( (len(this_bot.getRoom().getRaces()), this_bot.getRoom().getNumberOfGPS()*4) )
                             embed.set_author(name=this_bot.getWar().getWarName(numRaces), icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                             embed.set_image(url="attachment://" + table_image_path)
                             
@@ -2100,7 +2101,7 @@ class TablingCommands:
             return
             
         raceNum = int(args[1])
-        if raceNum < 1 or raceNum > len(this_bot.getRoom().races):
+        if raceNum < 1 or raceNum > len(this_bot.getRoom().getRaces()):
             await message.channel.send("You haven't played that many races yet!")
             return
     
@@ -2178,15 +2179,15 @@ class TablingCommands:
                         placement = int(placement)
                         if playerNum < 1 or playerNum > len(players):
                             await message.channel.send("The player number must be on this list (between 1 and " + str(len(players)) + ").")
-                        elif raceNum < 1 or raceNum > len(this_bot.getRoom().races):
+                        elif raceNum < 1 or raceNum > len(this_bot.getRoom().getRaces()):
                             await message.channel.send("The room hasn't played race #" + str(raceNum))
-                        elif placement < 1 or placement > len(this_bot.getRoom().races[raceNum-1].placements):
-                            await message.channel.send("Race #" + str(raceNum) + " only has " + str(len(this_bot.getRoom().races[raceNum-1].placements)) + "racers, cannot change their place.")
+                        elif placement < 1 or placement > len(this_bot.getRoom().getRaces()[raceNum-1].placements):
+                            await message.channel.send("Race #" + str(raceNum) + " only has " + str(len(this_bot.getRoom().getRaces()[raceNum-1].placements)) + "racers, cannot change their place.")
                         else:
                             playerFC = players[playerNum-1][0]
-                            if this_bot.getRoom().races[raceNum-1].FCInPlacements(playerFC):
+                            if this_bot.getRoom().getRaces()[raceNum-1].FCInPlacements(playerFC):
                                 this_bot.add_save_state(message.content)
-                                this_bot.getRoom().races[raceNum-1].changePlacement(playerFC, placement)
+                                this_bot.getRoom().getRaces()[raceNum-1].changePlacement(playerFC, placement)
                                 await message.channel.send("Changed " + UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " place to " + str(placement) + " for race #" + str(raceNum) + "."))
                             else:
                                 await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " is not in race #" + str(raceNum)))           

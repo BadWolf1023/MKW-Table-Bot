@@ -25,11 +25,11 @@ class Room(object):
     '''
     classdocs
     '''
-    def __init__(self, rLIDs, roomSoup, races=None, roomID=None, set_up_user=None, display_name=""):
+    def __init__(self, rLIDs, roomSoup, races=None, roomID=None, set_up_user=None, display_name="", max_races=None):
         self.name_changes = {}
         self.removed_races = []
         
-        self.initialize(rLIDs, roomSoup, races, roomID)
+        self.initialize(rLIDs, roomSoup, races, roomID, max_races=max_races)
         self.playerPenalties = defaultdict(int)
         
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
@@ -73,7 +73,7 @@ class Room(object):
         
 
     
-    def initialize(self, rLIDs, roomSoup, races=None, roomID=None):
+    def initialize(self, rLIDs, roomSoup, races=None, roomID=None, max_races=None):
         self.rLIDs = rLIDs
         
         if roomSoup is None:
@@ -85,43 +85,45 @@ class Room(object):
         
         races_old = None
         if 'races' in self.__dict__:
-            races_old = self.races
+            races_old = self.getRaces()
             
             
         self.races:List[Race.Race] = races
         self.roomID = roomID
-        if self.races is None:
+        if self.getRaces() is None:
             self.races:List[Race.Race] = self.getRacesList(roomSoup, races_old)
-        if len(self.races) > 0:
-            self.roomID = self.races[0].roomID
+        if len(self.getRaces()) > 0:
+            self.roomID = self.getRaces()[0].roomID
         else:
             self.rLIDs = None
             self.races:List[Race.Race] = None
             self.roomID = None
             raise Exception
+        if max_races is not None:
+            self.races = self.races[:max_races]
         
         
     
     
     def is_initialized(self):
-        return self.races is not None and self.rLIDs is not None and len(self.rLIDs) > 0
+        return self.getRaces() is not None and self.rLIDs is not None and len(self.rLIDs) > 0
         
     
     def had_positions_changed(self):
-        if self.races is not None:
-            for race in self.races:
+        if self.getRaces() is not None:
+            for race in self.getRaces():
                 if race.placements_changed:
                     return True
         return False
     
     def has_manual_placements(self):
-        if self.races is not None:
-            return any(race.has_manual_placements() for race in self.races)
+        if self.getRaces() is not None:
+            return any(race.has_manual_placements() for race in self.getRaces())
         
     def get_manual_placements(self):
         result = []
-        if self.races is not None:
-            for race in self.races:
+        if self.getRaces() is not None:
+            for race in self.getRaces():
                 result.extend(race.get_manual_placements())
         return result
     
@@ -139,8 +141,8 @@ class Room(object):
 
     #Outside caller should use this, it will add the removed race to the class' history
     def remove_race(self, raceIndex):
-        if raceIndex >= 0 and raceIndex < len(self.races):
-            raceName = self.races[raceIndex].getTrackNameWithoutAuthor()
+        if raceIndex >= 0 and raceIndex < len(self.getRaces()):
+            raceName = self.getRaces()[raceIndex].getTrackNameWithoutAuthor()
             remove_success = self.__remove_race__(raceIndex)
             if remove_success:
                 self.removed_races.append((raceIndex, raceName))
@@ -150,7 +152,7 @@ class Room(object):
     
     def __remove_race__(self, raceIndex, races=None):
         if races is None:
-            races=self.races
+            races=self.getRaces()
         if raceIndex >= 0 and raceIndex < len(races):
             del races[raceIndex]
             return True
@@ -166,8 +168,8 @@ class Room(object):
     def getFCPlayerList(self, start_race=1,end_race=None, ignore_manual_player_additions=False):
         fcNameDict = {}
         if end_race is None:
-            end_race = len(self.races)
-        for race in self.races[start_race-1:end_race]:
+            end_race = len(self.getRaces())
+        for race in self.getRaces()[start_race-1:end_race]:
             for placement in race.getPlacements():
                 if ignore_manual_player_additions and placement.is_manual_placement():
                     continue
@@ -191,7 +193,7 @@ class Room(object):
     
     def getFCPlayerListStartEnd(self, start_race, end_race):
         fcNameDict = {}
-        for raceNumber, race in enumerate(self.races, 1):
+        for raceNumber, race in enumerate(self.getRaces(), 1):
             if raceNumber >= start_race and raceNumber <= end_race: 
                 for placement in race.getPlacements():
                     FC, name = placement.get_fc_and_name()
@@ -214,8 +216,16 @@ class Room(object):
     def setRaces(self, races):
         self.races:List[Race.Race] = races
         
-    def getRaces(self):
-        return self.races
+    def getRaces(self, start_race=None, end_race=None):
+        if self.races is None:
+            return None
+        
+        if start_race is None:
+            start_race = 1
+        if end_race is None:
+            end_race = len(self.races)
+        start_race -= 1
+        return self.races[start_race:end_race]
     
     def getRXXText(self):
         resultText = ""
@@ -236,7 +246,7 @@ class Room(object):
             GPPlayers.append(self.getFCPlayerListStartEnd((GPNum*4)+1, (GPNum+1)*4))
         
         wentMissingThisGP = []
-        for raceNum, race in enumerate(self.races[0:numGPS*4]):
+        for raceNum, race in enumerate(self.getRaces(end_race=numGPS*4)):
             if raceNum/4 >= len(GPPlayers): #To avoid any issues if they put less GPs than the room has
                 break
             thisGPPlayers = GPPlayers[int(raceNum/4)]
@@ -259,7 +269,7 @@ class Room(object):
         missingPlayersByRace = self.getMissingOnRace(numberOfGPs)
         missingPlayersAmount = sum([len(x) for x in missingPlayersByRace])
         if missingPlayersAmount == 0:
-            last_race = self.races[-1]
+            last_race = self.getRaces()[-1]
             return False, "No one has DCed. Last race: " + str(last_race.track) + " (Race #" + str(last_race.raceNumber) + ")"
         else:
             counter = 1
@@ -267,7 +277,7 @@ class Room(object):
             for raceNum, missing_players in enumerate(missingPlayersByRace, 1):
                 for fc, player in sorted(missing_players):
                     build_string += "\t" + str(counter) + ". **"
-                    build_string += UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, replace_lounge)) + "** disconnected on or before race #" + str(raceNum) + " (" + str(self.races[raceNum-1].getTrackNameWithoutAuthor()) + ")\n"
+                    build_string += UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, replace_lounge)) + "** disconnected on or before race #" + str(raceNum) + " (" + str(self.getRaces()[raceNum-1].getTrackNameWithoutAuthor()) + ")\n"
                     counter+=1
             return True, build_string
     
@@ -416,9 +426,9 @@ class Room(object):
     #Soup level functions
     
     def getNumberOfGPS(self):
-        return int((len(self.races)-1)/4)+1
+        return int((len(self.getRaces())-1)/4)+1
     
-    async def update_room(self):
+    async def update_room(self, max_races=None):
         if self.is_initialized():
             soups = []
             rLIDs = []
@@ -432,7 +442,7 @@ class Room(object):
             
             to_return = False
             if tempSoup is not None:
-                self.initialize(rLIDs, tempSoup)
+                self.initialize(rLIDs, tempSoup, max_races=max_races)
                 tempSoup.decompose()
                 del tempSoup
                 to_return = True
@@ -444,19 +454,19 @@ class Room(object):
         return False
         
     def getRacesPlayed(self):
-        return [r.track for r in self.races]
+        return [r.track for r in self.getRaces()]
     
     def get_races_abbreviated(self, last_x_races=None):
         if last_x_races is None:
             temp = []
-            for ind,race in enumerate(self.races, 1):
+            for ind,race in enumerate(self.getRaces(), 1):
                 if race.getAbbreviatedName() is None:
                     return None
                 temp.append(str(ind) + ". " + race.getAbbreviatedName())
             return " | ".join(temp)
         else:
             temp = []
-            for ind,race in enumerate(self.races[-last_x_races:], 1):
+            for ind,race in enumerate(self.getRaces()[-last_x_races:], 1):
                 if race.getAbbreviatedName() is None:
                     return None
                 temp.append(str(ind) + ". " + race.getAbbreviatedName())
