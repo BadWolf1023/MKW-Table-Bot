@@ -2,6 +2,8 @@ from discord.utils import escape_markdown, escape_mentions
 import os
 import common
 from typing import List
+import discord
+from pathlib import Path
 
     
         
@@ -161,7 +163,19 @@ def chunk_join(str_items:List[str], limit=2047, separator="\n"):
     return to_return
         
     
-    
+async def safe_send_file(message:discord.Message, content):
+    file_name = str(message.id) + ".txt"
+    Path('./attachments').mkdir(parents=True, exist_ok=True)
+    file_path = "./attachments/" + file_name
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(content)
+        
+    txt_file = discord.File(file_path, filename=file_name)
+    try:
+        await message.channel.send(file=txt_file)
+    finally:
+        if os.path.exists(file_path):
+            os.remove(file_path)
     
 def initialize():
     common.botAdmins.clear()
