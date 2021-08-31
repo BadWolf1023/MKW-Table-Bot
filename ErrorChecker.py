@@ -95,7 +95,8 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
             
         if race.raceNumber in room.forcedRoomSize:
             errors.append("Room size changed to " + str(room.forcedRoomSize[race.raceNumber]) + " players for this race.")
-        if race.placements_changed:
+        
+        if room.placements_changed_for_racenum(race.raceNumber):
             errors.append("Placements changed by tabler for this race.")
         
         #check if list is empty

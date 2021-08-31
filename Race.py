@@ -81,8 +81,6 @@ class Race:
             self.track = "Unknown Track"
         self.cc = cc
         self.placements = []
-        self.placements_changed = False
-        self.placement_history = []
         self.region = None
         
     
@@ -135,21 +133,16 @@ class Race:
             roomRating = sum(all_ratings) // len(all_ratings)
         return roomRating
     
-    def changePlacement(self, FC, newNum):
-        newNum -= 1
-        for index, placement in enumerate(self.placements):
-            if placement.player.FC == FC:
-                self.insertPlacement(index, newNum)
-                return True
-        return False
+    def applyPlacementChanges(self, placement_changes):
+        for (old_position_number, new_position_number) in placement_changes:
+            self.insertPlacement(old_position_number, new_position_number)
     
-    def insertPlacement(self, originalNum, newNum):
-        self.placements_changed = True
-        self.placements.insert(newNum, self.placements.pop(originalNum))
-        self.placement_history.append((originalNum, newNum))
+    def insertPlacement(self, old_position_number, new_position_number):
+        self.placements.insert(new_position_number-1, self.placements.pop(old_position_number-1))
+        [print(p) for p in self.placements]
         for place, placement in enumerate(self.placements, 1):
             placement.place = place
-        
+
     
     def getPlacements(self):
         return self.placements
@@ -158,6 +151,11 @@ class Race:
         for p in self.placements:
             if p.player.FC == fc:
                 return p
+            
+    def getPlacementNumber(self, fc):
+        for placement_num, p in enumerate(self.placements, 1):
+            if p.player.FC == fc:
+                return placement_num
     
     def getNumberOfPlayers(self):
         return len(self.placements)
@@ -308,17 +306,6 @@ class Race:
             return "Private"
         return "Unknown"
         
-        
-    def get_recoverable_state(self):
-        save_state = {}
-        save_state['placement_history'] = self.placement_history.copy()
-        save_state['placements_changed'] = self.placements_changed
-        return  save_state
-    
-    def restore_save_state(self, save_state):
-        self.placement_history = save_state['placement_history']
-        self.placements_changed = save_state['placements_changed']
-        return True
         
     def __str__(self):
         curStr = "Race #" + str(self.raceNumber) + " - " + UtilityFunctions.process_name(self.getTrackNameWithoutAuthor()) + " - " + str(self.cc) + "cc" + \

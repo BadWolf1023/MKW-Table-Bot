@@ -12,30 +12,48 @@ import UserDataProcessing
 from _collections import defaultdict
 import UtilityFunctions
 from TagAI import getTagSmart
-import common
+
+#Function takes a default dictionary, the key being a number, and makes any keys that are greater than the threshold one less, then removes that threshold, if it exists
+def generic_dictionary_shifter(old_dict, threshold):
+    new_dict = defaultdict(old_dict.default_factory)
+    for k, v in old_dict.items():
+        if k == threshold:
+            continue
+        if k > threshold:
+            new_dict[k-1] = v
+        else:
+            new_dict[k] = v
+    return new_dict
 
 class Room(object):
     '''
     classdocs
     '''
-    def __init__(self, rLIDs, roomSoup, races=None, roomID=None, set_up_user=None, display_name=""):
+    def __init__(self, rLIDs, roomSoup):
         self.name_changes = {}
         self.removed_races = []
         
-        self.initialize(rLIDs, roomSoup, races, roomID)
+        #Key will be the race number, value will be a list of all the placements changed for the race
+        self.placement_history = defaultdict(list)
+        
+        #Dictionary - key is race number, value is the number of players for the race that the tabler specified
+        self.forcedRoomSize = defaultdict(int) #This contains the races that have their size changed by the tabler - when a race is removed, we
+        #need to change all the LATER races (the races that happened after the removed race) down by one race
+
         self.playerPenalties = defaultdict(int)
         
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
         self.dc_on_or_before = defaultdict(dict)
-        self.set_up_user = set_up_user
-        self.set_up_user_display_name = display_name
-        self.forcedRoomSize = {}
+        self.set_up_user = None
+        self.set_up_user_display_name = ""
+        
         self.miis = {}
         
+        self.initialize(rLIDs, roomSoup)
         
 
     
-    def initialize(self, rLIDs, roomSoup, races=None, roomID=None):
+    def initialize(self, rLIDs, roomSoup):
         self.rLIDs = rLIDs
         
         if roomSoup is None:
@@ -44,23 +62,18 @@ class Room(object):
             #TODO: Here? Caller should?
             roomSoup.decompose()
             raise Exception
+            
+            
+
+        self.races = self.getRacesList(roomSoup)
         
-        races_old = None
-        if 'races' in self.__dict__:
-            races_old = self.races
-            
-            
-        self.races = races
-        self.roomID = roomID
-        if self.races is None:
-            self.races = self.getRacesList(roomSoup, races_old)
         if len(self.races) > 0:
             self.roomID = self.races[0].roomID
-        else:
+        else: #Hmmmm, if there are no races, what should we do? We currently unload the room... edge case...
             self.rLIDs = None
             self.races = None
             self.roomID = None
-            raise Exception
+            raise Exception #And this is why the room unloads when that internal error occurs
         
         
     
@@ -70,20 +83,40 @@ class Room(object):
         
     
     def had_positions_changed(self):
-        if self.races is not None:
-            for race in self.races:
-                if race.placements_changed:
-                    return True
+        for changes in self.placement_history.values():
+            if len(changes) > 0:
+                return True
         return False
     
+    def placements_changed_for_racenum(self, race_num):
+        return race_num in self.placement_history and len(self.placement_history[race_num]) > 0
+    
+    def changePlacement(self, race_num, player_FC, new_placement):
+        #We need to get their original placement on the race
+        original_placement = self.races[race_num-1].getPlacementNumber(player_FC)
+        position_change = (original_placement, new_placement)
+        print(f"original placement: {original_placement}, new placement: {new_placement}")
+        self.placement_history[race_num].append(position_change)
+        print(self.placement_history[race_num])
+        
+        self.races[race_num-1].applyPlacementChanges([position_change])
 
+    
+
+    
     #Outside caller should use this, it will add the removed race to the class' history
-    def remove_race(self, raceIndex):
+    #Okay, final step: when we remove a race, whatever room size changes and quickedits and dc_on_or_before for races after the removed race need to all shift down by one
+    def remove_race(self, race_num):
+        raceIndex = race_num-1
         if raceIndex >= 0 and raceIndex < len(self.races):
             raceName = self.races[raceIndex].getTrackNameWithoutAuthor()
             remove_success = self.__remove_race__(raceIndex)
             if remove_success:
                 self.removed_races.append((raceIndex, raceName))
+                #Update dcs, quickedits, and room size changes
+                self.forcedRoomSize = generic_dictionary_shifter(self.forcedRoomSize, race_num)
+                self.dc_on_or_before = generic_dictionary_shifter(self.dc_on_or_before, race_num)
+                self.placement_history = generic_dictionary_shifter(self.placement_history, race_num)
             return remove_success, (raceIndex, raceName)
         return False, None
     
@@ -314,7 +347,7 @@ class Room(object):
         
         return raceTime, matchID, raceNumber, roomID, roomType, cc, track, placements
       
-    def getRacesList(self, roomSoup, races_old=None):
+    def getRacesList(self, roomSoup):
         #Utility function
         tableLines = roomSoup.find_all("tr")
         
@@ -348,21 +381,22 @@ class Room(object):
         while len(tableLines) > 0:
             del tableLines[0]
         
+        #First, we number all races
         for raceNum, race in enumerate(races, 1):
             race.raceNumber = raceNum
         
-        if races_old is not None:
-            for race in races_old:
-                if race.placements_changed:
-                    races[race.raceNumber-1].placements_changed = True
-                    for (index, newIndex) in race.placement_history:
-                        races[race.raceNumber-1].insertPlacement(index, newIndex)
-                        
+        #Next, we remove races
         for removed_race_ind, _ in self.removed_races:
             self.__remove_race__(removed_race_ind, races)
             
+        #Next, we need to renumber the races
         for raceNum, race in enumerate(races, 1):
             race.raceNumber = raceNum
+        
+        #Next, we apply quick edits
+        for race_number, race in enumerate(races, 1):
+            if race_number in self.placement_history:
+                race.applyPlacementChanges(self.placement_history[race_number])
         
         return races
     
@@ -487,29 +521,12 @@ class Room(object):
         save_state['dc_on_or_before'] = self.dc_on_or_before.copy()
         save_state['forcedRoomSize'] = self.forcedRoomSize.copy()
         save_state['rLIDs'] = self.rLIDs.copy()
-        save_state['races'] = {}
-        for race in self.races:
-            matchID = race.matchID
-            recoverable_save_state = race.get_recoverable_state()
-            try:
-                save_state['races'][matchID] = recoverable_save_state
-            except Exception as e:
-                common.log_text(f"Error in Room.get_recoverable_save_state() putting race in dictionary: {str(matchID)}", common.ERROR_LOGGING_TYPE)
-                common.log_text(str(e), common.ERROR_LOGGING_TYPE)
+        save_state['races'] = self.races.copy()
+        save_state['placement_history'] = self.placement_history.copy()
         
         return save_state
     
     def restore_save_state(self, save_state):
         for save_attr, save_value in save_state.items():
-            if save_attr != 'races':
-                self.__dict__[save_attr] = save_value
-        races_save_state = save_state['races']
-        for race in self.races:
-            if race.matchID in races_save_state:
-                race.restore_save_state(races_save_state[race.matchID])
+            self.__dict__[save_attr] = save_value
                 
-        
-        
-        
-    
-        
