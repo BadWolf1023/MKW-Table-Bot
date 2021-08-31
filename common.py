@@ -86,7 +86,10 @@ FEEDBACK_LOGS_FILE = f"{LOGGING_PATH}feedback_logs.txt"
 #It only logs commands that are sent to it
 MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}messages_logging.txt"
 
-FULL_MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}/full_logging.txt"
+FULL_LOGGING_FILE_NAME = "full_logging"
+FULL_MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}/{FULL_LOGGING_FILE_NAME}.txt"
+
+WHO_IS_LIMIT = 100
 
 
 DEFAULT_LARGE_TIME_FILE = f"{SERVER_SETTINGS_PATH}server_large_time_defaults.txt"
@@ -173,7 +176,7 @@ mkw_lounge_staff_roles = set([387347888935534593, #Boss
 
 reporter_plus_roles = set([393600567781621761, #RT Updater
                               520808645252874240, #CT Updater
-                              393600567781621761, #RT Reporter
+                              389252697284542465, #RT Reporter
                               520808674411937792 #CT Reporter
                               ]) | mkw_lounge_staff_roles
 
@@ -271,7 +274,7 @@ def check_create(file_name):
         f.close()
 
 def full_command_log(message):
-    to_log = f"Server Name: {message.guild} - Server ID: {message.guild.id} - Channel: {message.channel} - Channel ID: {message.channel.id} - User: {message.author} - User ID: {message.author.id} - User Name: {message.author.display_name} - Command: {message.content}"
+    to_log = f"Server Name: {message.guild} ({len(message.guild.members)} members)- Server ID: {message.guild.id} - Channel: {message.channel} - Channel ID: {message.channel.id} - User: {message.author} - User ID: {message.author.id} - User Name: {message.author.display_name} - Command: {message.content}"
     log_text(to_log, FULL_MESSAGE_LOGGING_TYPE)
     
 def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
