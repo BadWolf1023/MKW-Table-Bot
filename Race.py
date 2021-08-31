@@ -139,7 +139,6 @@ class Race:
     
     def insertPlacement(self, old_position_number, new_position_number):
         self.placements.insert(new_position_number-1, self.placements.pop(old_position_number-1))
-        [print(p) for p in self.placements]
         for place, placement in enumerate(self.placements, 1):
             placement.place = place
 
