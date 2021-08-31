@@ -12,6 +12,7 @@ import UserDataProcessing
 from _collections import defaultdict
 import UtilityFunctions
 from TagAI import getTagSmart
+from copy import copy, deepcopy
 
 #Function takes a default dictionary, the key being a number, and makes any keys that are greater than the threshold one less, then removes that threshold, if it exists
 def generic_dictionary_shifter(old_dict, threshold):
@@ -95,10 +96,7 @@ class Room(object):
         #We need to get their original placement on the race
         original_placement = self.races[race_num-1].getPlacementNumber(player_FC)
         position_change = (original_placement, new_placement)
-        print(f"original placement: {original_placement}, new placement: {new_placement}")
-        self.placement_history[race_num].append(position_change)
-        print(self.placement_history[race_num])
-        
+        self.placement_history[race_num].append(position_change)        
         self.races[race_num-1].applyPlacementChanges([position_change])
 
     
@@ -521,8 +519,8 @@ class Room(object):
         save_state['dc_on_or_before'] = self.dc_on_or_before.copy()
         save_state['forcedRoomSize'] = self.forcedRoomSize.copy()
         save_state['rLIDs'] = self.rLIDs.copy()
-        save_state['races'] = self.races.copy()
-        save_state['placement_history'] = self.placement_history.copy()
+        save_state['races'] = deepcopy(self.races)
+        save_state['placement_history'] = copy(self.placement_history)
         
         return save_state
     
