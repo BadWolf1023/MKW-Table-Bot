@@ -105,27 +105,35 @@ class Room(object):
         
     
     
-    def is_initialized(self):
+    def is_initialized(self) -> bool:
         return self.getRaces() is not None and self.rLIDs is not None and len(self.rLIDs) > 0
         
     
-    def had_positions_changed(self):
+    def had_positions_changed(self) -> bool:
         if self.getRaces() is not None:
             for race in self.getRaces():
                 if race.placements_changed:
                     return True
         return False
     
-    def has_manual_placements(self):
+    def has_manual_placements(self) -> bool:
         if self.getRaces() is not None:
             return any(race.has_manual_placements() for race in self.getRaces())
         
-    def get_manual_placements(self):
+    def get_manual_placements(self) -> List[Placement.Placement]:
         result = []
         if self.getRaces() is not None:
             for race in self.getRaces():
                 result.extend(race.get_manual_placements())
         return result
+    
+    def add_manual_placement(self, to_add, race_num:int) -> bool:
+        pass
+    
+    def remove_manual_placement(self, to_remove, race_num:int) -> bool:
+        pass
+    
+    
     
     def update_manual_placements_after_race_removal(self, raceIndex):
         temp_manual_placements = {}
