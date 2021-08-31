@@ -63,8 +63,8 @@ EDIT_PLAYER_SCORE_TERMS = {"edit"}
 PLAYER_DISCONNECT_TERMS = {"dc", "dcs"}
 MERGE_ROOM_TERMS = {"mr", "mergeroom"}
 SET_WAR_NAME_TERMS = {"setwarname"}
-CHANGE_PLAYER_NAME_TERMS = {'changename'}
-CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag', 'setteam', 'settag'}
+CHANGE_PLAYER_NAME_TERMS = {'changename', 'cn'}
+CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag', 'setteam', 'settag', 'ct'}
 CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize"}
 EARLY_DC_TERMS = {'earlydc'}
 QUICK_EDIT_TERMS = {'quickedit', 'qe'}
@@ -210,7 +210,7 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     
     
     if this_bot is not None and this_bot.getWar() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
-        return this_bot.getRoom().getSetupUser() is None or this_bot.getRoom().getSetupUser() == message_author.id
+        return this_bot.getRoom().canModifyTable(message_author.id) #Fixed! Check ALL people who can modify table, not just the person who started it!
     
     if command not in needPermissionCommands:
         return True
