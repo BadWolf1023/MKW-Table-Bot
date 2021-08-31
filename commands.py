@@ -671,52 +671,10 @@ class LoungeCommands:
             raise TableBotExceptions.WrongUpdaterChannel(failure_message)
         return True
     
-    
-
-    
-    @staticmethod
-    async def get_lock_command(message:discord.Message, this_bot:TableBot.ChannelBot):
-        LoungeCommands.correct_server_check(message.guild, "cannot display lock")
-        
-        if this_bot.getRoom() is None or this_bot.getRoom().getSetupUser() is None:
-            await message.channel.send("Bot is not locked to any user.")
-            return
-    
-        room_lounge_names = this_bot.getRoom().get_loungenames_can_modify_table()
-        to_send = "The bot is locked to players in this room: **"
-        to_send += ", ".join(room_lounge_names)
-        to_send += "**.\n"
-        to_send += "The setup user who has the main lock is **" + str(this_bot.getRoom().getSetupUser()) + f"- {this_bot.getRoom().set_up_user_display_name}**"
-        
-        await message.channel.send(to_send)   
-        
-    @staticmethod
-    async def transfer_lock_command(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot):
-        LoungeCommands.correct_server_check(message.guild, "cannot transfer lock")
-        LoungeCommands.has_authority_in_server_check(message.author, "cannot transfer lock")
-        
-        if this_bot.getRoom() is None or this_bot.getRoom().getSetupUser() is None:
-            await message.channel.send("Cannot transfer lock. Bot not locked to any user.")
-            return
-    
-        if len(args) <= 1:
-            await message.channel.send("You must give their Discord ID. This is the long number you can get in Discord's Developer Mode.")       
-            return
-    
-        newUser = args[1]
-        if not newUser.isnumeric():
-            await message.channel.send("You must give their Discord ID. This is the long number you can get in Discord's Developer Mode.")
-            return
-    
-        newUser = int(newUser)
-        this_bot.getRoom().set_up_user = newUser
-        this_bot.getRoom().set_up_user_display_name = ""
-        await message.channel.send("Lock transferred to: " + str(newUser))
 
     
     #TODO: Refactor this - in an rushed effort to release this, the code is sloppy.
     #It should be refactored as this is some of the worst code in TableBot
-    
     @staticmethod
     async def __mogi_update__(client, this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge, is_primary=True):
         command_incorrect_format_message = "The format of this command is: `?" + args[0] + " TierNumber RacesPlayed (TableText)`\n- **TierNumber** must be a number. For RTs, between 1 and 8. For CTs, between 1 and 7. If you are trying to submit a squadqueue table, **TierNumber** should be: squadqueue\n-**RacesPlayed** must be a number, between 1 and 32."
@@ -2090,11 +2048,10 @@ class TablingCommands:
             await message.channel.send("You haven't played that many races yet!")
             return
     
-        await message.channel.send("Feature under development. Please use with caution as it may have unintended side effects on your table.")
         command, save_state = this_bot.get_save_state(message.content)
-        success, removed_race = this_bot.getRoom().remove_race(raceNum-1)
+        success, removed_race = this_bot.getRoom().remove_race(raceNum)
         if not success:
-            await message.channel.send("Removing this race failed. (I did say it was under development!)")
+            await message.channel.send("Removing this race failed.")
         else:
             this_bot.add_save_state(command, save_state)
             await message.channel.send(f"Removed race #{removed_race[0]+1}: {removed_race[1]}")
@@ -2171,7 +2128,8 @@ class TablingCommands:
                             playerFC = players[playerNum-1][0]
                             if this_bot.getRoom().races[raceNum-1].FCInPlacements(playerFC):
                                 this_bot.add_save_state(message.content)
-                                this_bot.getRoom().races[raceNum-1].changePlacement(playerFC, placement)
+                                #TODO: This needs to call change placement on ROOM, not Race
+                                this_bot.getRoom().changePlacement(raceNum, playerFC, placement)
                                 await message.channel.send("Changed " + UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " place to " + str(placement) + " for race #" + str(raceNum) + "."))
                             else:
                                 await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " is not in race #" + str(raceNum)))           

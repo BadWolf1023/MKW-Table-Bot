@@ -22,7 +22,7 @@ MAX_PREFIX_LENGTH = 3
 current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = False
+in_testing_server = True
 running_beta = False
 
 #TableBot variables, for ChannelBots
@@ -147,10 +147,6 @@ DEPRECATED_MKW_LOUNGE_RT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/
 DEPRECATED_MKW_LOUNGE_CT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/ct/?import="
 MKW_LOUNGE_RT_UPDATER_CHANNEL = 758161201682841610
 MKW_LOUNGE_CT_UPDATER_CHANNEL = 758161224202059847
-MKW_LOUNGE_RT_REPORTER_ID = 389252697284542465
-MKW_LOUNGE_RT_UPDATER_ID = 393600567781621761
-MKW_LOUNGE_CT_REPORTER_ID = 520808674411937792
-MKW_LOUNGE_CT_UPDATER_ID = 520808645252874240
 MKW_LOUNGE_SERVER_ID = 387347467332485122
 
 BAD_WOLF_SERVER_ID = 739733336871665696
@@ -166,8 +162,23 @@ BAD_WOLF_SERVER_NORMAL_TESTING_TWO_CHANNEL_ID = 863234379718721546
 BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID = 863238405269749760
 
 #Rather than using the builtin set declaration {}, I did an iterable because BadWolfBot.py kept giving an error in Eclipse, even though everything ran fine - this seems to have suppressed the error which was giving me major OCD
-#in order: Boss, Higher Tier Arb, Lower Tier Arb, Higher Tier CT Arb, Lower Tier CT Arb, RT Updater, CT Updater, RT Reporter, CT Reporter, Developer
-mkw_lounge_staff_roles = set([387347888935534593, 399382503825211393, 399384750923579392, 521149807994208295, 792891432301625364, 393600567781621761, 520808645252874240, 389252697284542465, 520808674411937792, 521154917675827221, 748367398905708634, 748367393264238663])
+mkw_lounge_staff_roles = set([387347888935534593, #Boss
+                              792805904047276032, #CT Admin
+                              399382503825211393, #HT RT Arb
+                              399384750923579392, #LT RT Arb
+                              521149807994208295, #HT CT Arb
+                              792891432301625364, #LT CT Arb
+                              521154917675827221, #Developer Access
+                              740659173695553667]) #Admin in test server
+
+reporter_plus_roles = set([393600567781621761, #RT Updater
+                              520808645252874240, #CT Updater
+                              393600567781621761, #RT Reporter
+                              520808674411937792 #CT Reporter
+                              ]) | mkw_lounge_staff_roles
+
+table_bot_support_plus_roles = reporter_plus_roles | set([748367398905708634])
+                              
 
 
 
@@ -188,15 +199,23 @@ COMMAND_TRIGGER_CHARS = set(c for c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN
 
 
 
-
-def author_is_lounge_staff(message_author):
+def author_has_id_in(message_author, role_ids):
     for role in message_author.roles:
-        if role.id in mkw_lounge_staff_roles:
+        if role.id in role_ids:
             return True
     return False
 
+def author_is_lounge_staff(message_author):
+    return author_has_id_in(message_author, mkw_lounge_staff_roles)
+
+def author_is_reporter_plus(message_author):
+    return author_has_id_in(message_author, reporter_plus_roles)
+
+def author_is_table_bot_support_plus(message_author):
+    return author_has_id_in(message_author, table_bot_support_plus_roles)
+
 def main_lounge_can_report_table(message_author):
-    return author_is_lounge_staff(message_author) or message_author.id == BAD_WOLF_ID
+    return author_is_reporter_plus(message_author) or message_author.id == BAD_WOLF_ID
 
 
 LoungeUpdateChannels = namedtuple('LoungeUpdateChannels', ['updater_channel_id_primary', 'updater_link_primary', 'preview_link_primary', 'type_text_primary',
