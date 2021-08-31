@@ -61,7 +61,6 @@ PLAYER_PENALTY_TERMS = {"pen", "penalty"}
 TEAM_PENALTY_TERMS = {"teampen", "teampenalty"}
 EDIT_PLAYER_SCORE_TERMS = {"edit"}
 PLAYER_DISCONNECT_TERMS = {"dc", "dcs"}
-ADD_PLAYER_TERMS = {"addplayer"}
 MERGE_ROOM_TERMS = {"mr", "mergeroom"}
 SET_WAR_NAME_TERMS = {"setwarname"}
 CHANGE_PLAYER_NAME_TERMS = {'changename'}
@@ -83,6 +82,7 @@ RACES_TERMS = {"races"}
 RXX_TERMS = {"rxx", "rlid"}
 ALL_PLAYERS_TERMS = {"allplayers", "ap"}
 FCS_TERMS = {"fcs"}
+CURRENT_ROOM_TERMS = {"currentroom"}
 
 
 #General commands that do not require a war to be started (stateless commands)
@@ -150,7 +150,7 @@ ADD_BOT_ADMIN_TERMS = {"addbotadmin", "addadmin"}
 REMOVE_BOT_ADMIN_TERMS = {"removebotadmin", "removeadmin"}
 GET_LOGS_TERMS = {"getlog", "getlogs", "logs"}
 
-needPermissionCommands = ADD_PLAYER_TERMS | DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS
+needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS
 
 ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | LOUNGE_TABLE_SUBMISSION_TERMS | LOUNGE_PENDING_TABLE_SUBMISSION_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | LOUNGE_NAME_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS
 
@@ -414,12 +414,6 @@ async def on_message(message: discord.Message):
             elif this_bot.prev_command_sw:
                 await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix)
             
-            elif this_bot.prev_command_add_player_not_in_lounge:
-                await commands.TablingCommands.after_add_player_command(message, this_bot, args, server_prefix)
-                
-            elif args[0] in ADD_PLAYER_TERMS:
-                await commands.TablingCommands.add_player_command(message, this_bot, args, server_prefix, is_lounge_server, command)
-                
             elif args[0] in GARBAGE_COLLECT_TERMS:
                 commands.BadWolfCommands.garbage_collect_command(message)
                 
@@ -490,6 +484,9 @@ async def on_message(message: discord.Message):
             elif args[0] in REMOVE_RACE_TERMS:
                 await commands.TablingCommands.remove_race_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
+            elif args[0] in CURRENT_ROOM_TERMS:
+                await commands.TablingCommands.current_room_command(message, this_bot, server_prefix, is_lounge_server
+                                                    )
             elif args[0] in ADD_FLAG_EXCEPTION_TERMS:
                 await commands.BotAdminCommands.add_flag_exception_command(message, args, user_flag_exceptions)
                     

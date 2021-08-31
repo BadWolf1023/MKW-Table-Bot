@@ -69,8 +69,6 @@ class ChannelBot(object):
         self.set_dc_points(server_id)
         self.race_size = 4
         
-        self.prev_command_add_player_not_in_lounge = False
-        
     def set_race_size(self, new_race_size:int):
         self.race_size = new_race_size
     def get_race_size(self):
@@ -151,7 +149,7 @@ class ChannelBot(object):
         
         
     def getBotunlockedInStr(self):
-        if self.room is None or self.room.set_up_user is None or self.room.getRaces() is None or len(self.room.getRaces()) < 12:
+        if self.room is None or self.room.set_up_user is None or self.room.races is None or len(self.room.races) < 12:
             return None
         
         time_passed_since_lounge_finish = datetime.now() - self.loungeFinishTime
@@ -189,12 +187,10 @@ class ChannelBot(object):
             self.populating = True
             if self.getRoom() is not None:
                 self.remove_miis_with_missing_files()
-                war_num_races = self.getWar().get_num_races_for_war()
-                all_fcs_in_room = self.getRoom().getFCs(end_race=war_num_races)
-                
+                all_fcs_in_room = self.getRoom().getFCs()
                 if all_fcs_in_room != self.miis.keys():
                     with concurrent.futures.ThreadPoolExecutor(max_workers=12) as executor:
-                        future_to_fc = {executor.submit(MiiPuller.get_mii_blocking, fc, message_id): fc for fc in all_fcs_in_room if fc not in self.miis }
+                        future_to_fc = {executor.submit(MiiPuller.get_mii_blocking, fc, message_id): fc for fc in self.getRoom().getFCs() if fc not in self.miis }
                         for future in concurrent.futures.as_completed(future_to_fc):
                             fc = future_to_fc[future]
                             try:
@@ -217,14 +213,14 @@ class ChannelBot(object):
         
     def updateLoungeFinishTime(self):
         if self.loungeFinishTime is None and self.room is not None \
-            and self.room.is_initialized() and self.room.getRaces() is not None and len(self.room.getRaces()) >= 12:
+            and self.room.is_initialized() and self.room.races is not None and len(self.room.races) >= 12:
                 self.loungeFinishTime = datetime.now()
     
     
     async def update_room(self) -> bool:
         if self.room is None:
             return False
-        success = await self.room.update_room(max_races=self.getWar().get_num_races_for_war())
+        success = await self.room.update_room()
         self.updateLoungeFinishTime()
         return success
 
@@ -311,7 +307,7 @@ class ChannelBot(object):
         return True, player_data, room_str, rLID
     
     
-    async def load_room_smart(self, load_me, max_races=None):
+    async def load_room_smart(self, load_me):
         rLIDs = []
         soups = []
         success = False
@@ -324,7 +320,7 @@ class ChannelBot(object):
                 break
         else:
             roomSoup = WiimfiSiteFunctions.combineSoups(soups)
-            temp = Room.Room(rLIDs, roomSoup, max_races=max_races)
+            temp = Room.Room(rLIDs, roomSoup)
             
             
             if temp.is_initialized():

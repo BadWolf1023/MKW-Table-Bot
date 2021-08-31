@@ -43,8 +43,6 @@ alternate_Matrices = {
     [15, 13 ,12, 10, 8, 7, 6, 5, 3, 2, 1, 0]
     ]}
 
-MAX_RACERS = 12
-
 def print_scores(fc_score, fc_player):
     for fc, score in sorted(fc_score.items(), key=lambda x: x[1], reverse=True):
         print(fc_player[fc] + " (" + fc + "): " + str(score))
@@ -93,19 +91,13 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
                         
         if raceNum in curRoom.forcedRoomSize:
             mkwxNumRacers = curRoom.forcedRoomSize[raceNum]
-        
-        if mkwxNumRacers > MAX_RACERS:
-            mkwxNumRacers = MAX_RACERS #Handle when more than 13 players are in a race, possible due to new command ?addplacement
             
         for placement in race.getPlacements():
             placement_score = 0
-            placement_place = placement.place
-            if placement_place > MAX_RACERS:
-                placement_place = MAX_RACERS
             if server_id in alternate_Matrices:
-                placement_score = alternate_Matrices[server_id][mkwxNumRacers-1][placement_place-1]
+                placement_score = alternate_Matrices[server_id][mkwxNumRacers-1][placement.place-1]
             else:
-                placement_score = scoreMatrix[mkwxNumRacers-1][placement_place-1]
+                placement_score = scoreMatrix[mkwxNumRacers-1][placement.place-1]
             
             fc_score[placement.player.FC].append( placement_score )
     #Fille awkward sized arrays with 0
@@ -176,7 +168,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     for x in range(numGPs):
         GPs.append(calculateGPScoresDCS(x+1, room, missingRacePts, server_id))
         
-    fcs_players = room.getFCPlayerListStartEnd(1,war.get_num_races_for_war())
+    fcs_players = room.getFCPlayerListStartEnd(1, numGPs*4)
     
     
     FC_table_str = {}
@@ -257,7 +249,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
                 FC_table_str[fc][1] -= amount
 
     #build table string
-    numRaces = min( (len(room.getRaces()), war.getNumberOfGPS()*4) )
+    numRaces = min( (len(room.races), war.getNumberOfGPS()*4) )
     table_str = "#title " + war.getTableWarName(numRaces) + "\n"
     curTeam = None
     teamCounter = 0

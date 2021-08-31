@@ -1,4 +1,4 @@
-Updated: August 13th, 2021
+Updated: August 6th, 2021
 
 This document servers as an overview of MKW Table Bot's releases over time, along with milestones. Many minor updates addressing bugs and text issues were issued between releases, but these are considered the large releases.
 
@@ -138,25 +138,12 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - Documentation updated for table submission help.
 - Abuse tracking updated
 
-**Version 11.2.0 released on 08-12-2021:**
-- Japanese text fixed for ?vr
-- Minor text updates
-- Miis, table theme, table graphs, and headers added to Lounge table submissions if tabling with table bot
-
-**Version 11.3.0 released on 08-13-2021:**
-- Added lag to race results
-- Users get 2 warnings now before getting banned
-- Minor text updates
-- Bug fixes
-- Lounge update
-
 In progress:
 - Documentation overhaul, rather than a list of commands, help is now structured as sections with questions (?help with many subcommands added)
 
 **Version 12.0.0 released on TBD:**
 - If users do not have a flag set, flags are automatically added to the tables based on the user's mii location data
 - Mid-GP subs are supported for mogiupdate commands
-- Change mii footer to fit
 
 **Version 13.0.0 released on TBD:**
 - TableBot changes from HTML parsing to mkwx JSON, updating itself every 10 seconds, and forms a picture of rooms and times

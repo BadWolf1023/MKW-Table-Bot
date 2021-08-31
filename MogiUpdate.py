@@ -18,6 +18,10 @@ three_deep_flatten = lambda t: [item for L1 in t for L2 in L1 for item in L2]
 from typing import Tuple
 
 
+"""
+{"format":"6","tier":"Tier 1","teams":[{"players":[{"is_sub_out":true,"multiplier":1,"player_id":3,"races":12,"score":15},{"multiplier":1,"player_id":1041,"races":12,"score":13},{"is_sub_in":true,"multiplier":1,"player_id":281,"races":12,"score":319},{"multiplier":1,"player_id":232,"races":12,"score":17},{"multiplier":1,"player_id":820,"races":12,"score":23},{"multiplier":1,"player_id":857,"races":12,"score":27},{"multiplier":1,"player_id":115,"races":12,"score":19}]},{"players":[{"multiplier":1,"player_id":323,"races":12,"score":29},{"multiplier":1,"player_id":1995,"races":12,"score":50},{"multiplier":1,"player_id":1347,"races":12,"score":55},{"multiplier":1,"player_id":1533,"races":12,"score":23},{"is_gainloss_prevented":true,player_id":349,"races":12,"score":59},{"multiplier":1,"player_id":2231,"races":12,"score":80}]}]}
+{'format':'2','tier':'Tier 1','teams':[{'players':[{'player_id':1961,'races':12,'score':45},{'player_id':1913,'races':12,'score':25}]},{'players':[{'player_id':2409,'races':12,'score':40},{'player_id':824,'races':12,'score':24}]},{'players':[{'player_id':40,'races':12,'score':57},{'player_id':1739,'races':12,'score':45}]},{'players':[{'player_id':402,'races':12,'score':56},{'player_id':2195,'races':12,'score':46}]},{'players':[{'player_id':1567,'races':12,'score':50},{'player_id':2270,'races':12,'score':36}]},{'players':[{'player_id':375,'races':12,'score':30},{'player_id':1154,'races':12,'score':0}]}]}"""
+
 from typing import List
 rt_tier_mappings = {"1":"Tier 1", "2":"Tier 2", "3":"Tier 3", "4":"Tier 4","4-5":"Tier 4", "5":"Tier 5", "6":"Tier 6", "7":"Tier 7", "8":"Top 50"}
 ct_tier_mappings = {"1":"Tier 1", "2":"Tier 2", "3":"Tier 3", "4":"Tier 4", "5":"Tier 5", "6":"Tier 6", "7":"Tier 7"}
@@ -170,16 +174,22 @@ def getTierFromChannelID(summaryChannelID:int) -> str:
     return "Unknown Tier"
     
 
+def isJSONCorrupt(jsonData, mogiPlayerAmount=12):
+    pass
+
+def createJSON(players, mult=default_multiplier):
+    pass
+
 #- Global races played will always be the actual number of races played
 # - Individual player races played will be the actual number of races they played as well
-# - Multiplier for each person will be global races played / 12
+# - Multiplier for each person will be global races played � 12
 # - Updater Bot will leave all multipliers alone, even on subs/subbees. Updater Bot will not change any JSON except for the following: Updater Bot must change gain/loss prevention and full gain/loss on JSON appropriately for sub ins and sub outs.
-def create_player_json(player:Tuple[str, int, int, int], races_for_mogi=12, sub_in=False, sub_out=False, squadqueue=False):
+def create_player_json(player:Tuple[str, int, int, int], races_played=12, sub_in=False, sub_out=False, squadqueue=False):
     player_json = {}
     player_json["player_id"] = player[3]
     player_json["score"] = player[1]
     
-    if races_for_mogi != player[2]:
+    if races_played != player[2]:
         player_json["races"] = player[2] #since the races they played is not the global race count, change their individual race count appropriately
     
     if sub_in:
@@ -187,12 +197,12 @@ def create_player_json(player:Tuple[str, int, int, int], races_for_mogi=12, sub_
     if sub_out:
         player_json["subbed_out"] = True
     
-    if races_for_mogi != 12: #Default multiplier is 1.0, so if 12 races are played, 1.0 is the right multiplier and we don't need to include it
-        player_json["multiplier"] = round(races_for_mogi / 12, 3) #Multiplier for each person will be global races played � 12
+    if races_played != 12: #Default multiplier is 1.0, so if 12 races are played, 1.0 is the right multiplier and we don't need to include it
+        player_json["multiplier"] = round(races_played / 12, 3) #Multiplier for each person will be global races played � 12
         
     return player_json
     
-def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], races_for_mogi=12, squadqueue=False):
+def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], races_played=12, squadqueue=False):
     teams_JSON = []
     for team in team_map:
         team_json = []
@@ -210,7 +220,7 @@ def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], races_for_mogi=
                             sub_out = True
                     
 
-                team_json.append(create_player_json(player, races_for_mogi, sub_in=sub_in, sub_out=sub_out, squadqueue=squadqueue))
+                team_json.append(create_player_json(player, races_played, sub_in=sub_in, sub_out=sub_out, squadqueue=squadqueue))
         teams_JSON.append({"players":team_json})
     return teams_JSON
            
@@ -511,7 +521,9 @@ def map_to_teams(players_and_scores, id_mapping):
         for player_line in team:
             players_and_scores_new[-1].append([])
             for data in player_line:
-                num_races = data[2]
+                num_races = 12
+                if len(data) > 2:
+                    num_races = data[2]
                 lookup = getLookup(data[0])
                 if lookup not in id_mapping_new:
                     success = False
@@ -553,7 +565,7 @@ def determine_tier(id_mapping, is_rt=True):
     
             
 
-async def textInputUpdate(tableText:str, tier:str, races_for_mogi=12, warFormat=None, is_rt=True):
+async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=None, is_rt=True):
     squadqueue = False
     if tier == "squadqueue":
         squadqueue = True
@@ -570,7 +582,7 @@ async def textInputUpdate(tableText:str, tier:str, races_for_mogi=12, warFormat=
     else:
         numTeams = num_teams_mapping_reverse[warFormat]
     
-    EC, players_and_scores = getPlayersAndScores(table_lines, races_for_mogi)
+    EC, players_and_scores = getPlayersAndScores(table_lines, races_played)
     if EC != SUCCESS_EC:
         return EC, None, players_and_scores
     
@@ -598,7 +610,7 @@ async def textInputUpdate(tableText:str, tier:str, races_for_mogi=12, warFormat=
     
     json_data = {}
     json_data["format"] = str(warFormat)
-    json_data["races"] = races_for_mogi
+    json_data["races"] = races_played
     
     
 
@@ -626,7 +638,7 @@ async def textInputUpdate(tableText:str, tier:str, races_for_mogi=12, warFormat=
     if not success:
         return None, None, None
     
-    json_data["teams"] = create_teams_JSON(team_map, races_for_mogi, squadqueue)
+    json_data["teams"] = create_teams_JSON(team_map, races_played, squadqueue)
     json_dump = json.dumps(json_data, separators=(',', ':'))
     
     return SUCCESS_EC, newTableText, json_dump

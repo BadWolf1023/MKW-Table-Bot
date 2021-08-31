@@ -90,17 +90,7 @@ class Race:
     def hasFC(self, FC):
         return False if self.getPlacement(FC) is None else True
         
-    
-    def has_manual_placements(self):
-        return len(self.get_manual_placements()) != 0
-    
-    def get_manual_placements(self):
-        result = []
-        for placement in self.placements:
-            if placement.manual_placement:
-                result.append(placement)
-        return result
-    
+        
     def numRacers(self):
         if (self.placements is None):
             return 0
@@ -218,8 +208,7 @@ class Race:
             for placement_2 in self.placements:
                 if placement_1.player.FC != placement_2.player.FC and placement_1 == placement_2\
                 and not placement_1.is_bogus_time() and not placement_2.is_bogus_time()\
-                and not placement_1.is_disconnected() and not placement_1.is_disconnected()\
-                and not placement_1.is_manual_placement() and not placement_2.is_manual_placement():
+                and not placement_1.is_disconnected() and not placement_1.is_disconnected():
                     if placement_1.player.FC not in ties:
                         ties.append(placement_1.player.FC)
                     if placement_2.player.FC not in ties:
@@ -235,13 +224,6 @@ class Race:
         other_race_times_set = other_race.get_placement_times_as_set()
         return other_race_times_set.issubset(race_times_set)
     
-    def times_are_all_blank(self) -> bool:
-        race_times_set = self.get_placement_times_as_set()
-        race_times_set.discard(DISCONNECTION_TIME) #Discard disconnection 
-        #If there were no times left after removing blank times, then the entire room had blank times
-        return len(race_times_set) == 0
-
-    
     def times_are_subset_of_and_not_all_blank(self, other_race) -> bool:
         race_times_set = self.get_placement_times_as_set()
         race_times_set.discard(DISCONNECTION_TIME) #Discard disconnection 
@@ -255,7 +237,32 @@ class Race:
     
     def has_unusual_delta_time(self):
         return any(True for placement in self.placements if placement.is_delta_unlikely())
+        
     
+    def getPlayerObjects(self):
+        players = []
+        for placement in self.placements:
+            players.append(placement.player)
+        return players
+    
+    def getPlayersByPlaceInRoom(self):
+        players = self.getPlayerObjects()
+        try:
+            players.sort(key=lambda p: int(p.positionInRoom))
+        except ValueError:
+            print("This actually happened - position in room wasn't a number.")
+            players.sort(key=lambda p: p.positionInRoom)
+        return players
+    
+    def getPlayersByPlaceInRoomString(self):
+        sortedPlayers = self.getPlayersByPlaceInRoom()
+        to_build = ""
+        for player in sortedPlayers:
+            lounge_name = UtilityFunctions.process_name(UserDataProcessing.lounge_get(player.FC))
+            if lounge_name is None or len(lounge_name) == 0:
+                lounge_name = "No Lounge"
+            to_build += "**" + str(player.positionInRoom) + ". " + lounge_name + "** - " + UtilityFunctions.process_name(player.name) + "\n"
+        return to_build
     
     def FCInPlacements(self, FC):
         for placement in self.placements:

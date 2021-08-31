@@ -46,10 +46,11 @@ class War(object):
         self.ignoreLargeTimes = ignoreLargeTimes
         self.displayMiis = displayMiis
         self.teamPenalties = defaultdict(int)
+        self.forcedRoomSize = {}
         self.teams = None
-    
-    def get_num_races_for_war(self):
-        return self.numberOfGPs * 4
+        
+
+        
         
     def setWarFormat(self, formatting, numberOfTeams):
         if formatting not in self.__formatMapping:
@@ -178,10 +179,10 @@ class War(object):
         
             
         for raceNum, error_messages in sorted(errors.items(), key=lambda x:x[0]):
-            if raceNum > len(room.getRaces()):
+            if raceNum > len(room.races):
                 build_string += "   Race #" + str(raceNum) + ":\n"
             else:
-                build_string += "   Race #" + str(raceNum) + " (" + room.getRaces()[raceNum-1].getTrackNameWithoutAuthor() + "):\n"
+                build_string += "   Race #" + str(raceNum) + " (" + room.races[raceNum-1].getTrackNameWithoutAuthor() + "):\n"
             
             for error_message in error_messages:
                 build_string += "\t- " + error_message + "\n"
@@ -228,6 +229,7 @@ class War(object):
         save_state['manualEdits'] = self.manualEdits.copy()
         save_state['teamPenalties'] = self.teamPenalties.copy()
         
+        save_state['forcedRoomSize'] = self.forcedRoomSize.copy()
         save_state['teams'] = self.teams.copy()
         return save_state
     
