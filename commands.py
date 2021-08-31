@@ -43,6 +43,7 @@ import discord
 import os
 from datetime import datetime
 import URLShortener
+import Stats
 
 vr_is_on = False
 
@@ -670,6 +671,30 @@ class LoungeCommands:
         if channel.id not in valid_channel_ids:
             raise TableBotExceptions.WrongUpdaterChannel(failure_message)
         return True
+    
+    @staticmethod
+    async def who_is_command(client, message:discord.Message, args:List[str]):
+        if not common.author_is_lounge_staff(message.author):
+            raise TableBotExceptions.NotLoungeStaff("Not staff in MKW Lounge")
+        
+        to_lookup = None
+        if len(args) > 1 and UtilityFunctions.isint(args[1]):
+            to_lookup = int(args[1])
+        
+        if to_lookup is None:
+            await message.channel.send("To find a user, give their discord ID: `?whois DiscordID`")
+            return
+        
+        to_delete = await message.channel.send("Looking up user, this may take a minute. Please wait...")
+        all_commands = Stats.get_all_commands(to_lookup, common.WHO_IS_LIMIT)
+        await to_delete.delete()
+        if len(all_commands) > 0:
+            total_message = "".join(all_commands)
+            await UtilityFunctions.safe_send_file(message, total_message)
+        else:
+            await message.channel.send(f"The user ID {to_lookup} has never used MKW Table Bot.")
+        
+            
     
 
     

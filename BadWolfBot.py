@@ -109,11 +109,14 @@ LOUNGE_RT_MOGI_UPDATE_TERMS = {'rtmogiupdate', 'rttableupdate', 'rtupdatemogi', 
 LOUNGE_CT_MOGI_UPDATE_TERMS = {'ctmogiupdate', 'cttableupdate', 'ctupdatemogi', 'ctupdate'}
 LOUNGE_MOGI_UPDATE_TERMS = LOUNGE_RT_MOGI_UPDATE_TERMS | LOUNGE_CT_MOGI_UPDATE_TERMS
 
-#Lounge staff commands for table submissions
+#Lounge Reporter+ commands for table submissions
 LOUNGE_TABLE_SUBMISSION_APPROVAL_TERMS = {"report", "approve", "accept", "a"}
 LOUNGE_TABLE_SUBMISSION_DENY_TERMS =  {"deny", "reject", "d"}
 LOUNGE_TABLE_SUBMISSION_TERMS = LOUNGE_TABLE_SUBMISSION_APPROVAL_TERMS |  LOUNGE_TABLE_SUBMISSION_DENY_TERMS
 LOUNGE_PENDING_TABLE_SUBMISSION_TERMS = {"pending", "pendingsubmission", "pendingsubmissions", "p"}
+
+#Lounge Staff Commands:
+LOUNGE_WHO_IS_TERMS = {"whois"}
 
 #Server administrator commands only
 SET_PREFIX_TERMS = {"setprefix"}
@@ -540,7 +543,9 @@ async def on_message(message: discord.Message):
                     
             elif args[0] in SERVER_USAGE_TERMS:
                 await commands.BadWolfCommands.server_process_memory_command(message)
-            
+                
+            elif args[0] in LOUNGE_WHO_IS_TERMS:
+                await commands.LoungeCommands.who_is_command(client, message, args)
             elif args[0] in TABLE_BOT_MEMORY_USAGE_TERMS:
                 commands.BadWolfCommands.is_badwolf_check(message.author, "cannot display table bot internal memory usage")
                 size_str = ""
@@ -672,6 +677,8 @@ async def on_message(message: discord.Message):
         log_command_sent(message)
     except TableBotExceptions.NotBadWolf as not_bad_wolf_exception:
         await common.safe_send(message, f"You are not Bad Wolf: {not_bad_wolf_exception}")
+    except TableBotExceptions.NotLoungeStaff:
+        await common.safe_send(message, f"Not a valid command. For more help, do the command: {server_prefix}help")
     except TableBotExceptions.NotBotAdmin as not_bot_admin_exception:
         await common.safe_send(message, f"You are not a bot admin: {not_bot_admin_exception}")
     except TableBotExceptions.NotServerAdministrator as not_admin_failure:
@@ -933,7 +940,7 @@ def get_size(objct, seen=None):
     return total_size
 
 def log_command_sent(message:discord.Message):
-    common.log_text(f"Sever: {message.guild} - Channel: {message.channel} - User: {message.author} - Command: {message.content}")
+    common.log_text(f"Server: {message.guild} - Channel: {message.channel} - User: {message.author} - Command: {message.content}")
     common.full_command_log(message)
     
 #This function dumps everything we have pulled recently from the API

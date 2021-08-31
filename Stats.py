@@ -38,7 +38,36 @@ def backup_files(to_back_up=common.FILES_TO_BACKUP):
             shutil.copy2(file_name, todays_backup_path + temp_file_n)
         except Exception as e:
             print(e)
+            
+def get_commands_from_txt(discord_id, log_file, limit=None):
+    results = []
+    needle = f"User ID: {discord_id}"
+    with open(log_file, "r+", encoding='utf-8') as f:
+        for line in f:
+            if needle in line:
+                results.append(line)
+                if limit is not None and len(results) >= limit:
+                    return results
+    return results
+                
 
+def get_all_commands(discord_id, limit=None):
+    results = []
+    backups_path = Path(backup_folder)
+    current_logging_path = Path(common.LOGGING_PATH)
+    all_paths = list(backups_path.iterdir()) + [current_logging_path]
+
+    for dated_folder in all_paths:
+        if dated_folder.is_dir():
+            full_log_files = [p for p in dated_folder.glob(f'**/{common.FULL_LOGGING_FILE_NAME}*') if p.is_file()]
+            for log_file in full_log_files:
+                new_limit = None if limit is None else limit - len(results)
+                results.extend(get_commands_from_txt(discord_id, log_file, limit=new_limit))
+                if limit is not None and len(results) >= limit:
+                    return results
+    return results
+                    
+             
 
 def count_lines_of_code():
     lines_count = 0
@@ -98,7 +127,7 @@ def get_from_messages_logging_file(commands_logging=common.MESSAGE_LOGGING_FILE)
                 index_start = line_.index(" - User: ") + len(" - User: ")
                 end_index = line_.index(" - Command: ", index_start)
                 users.add(line_[index_start:end_index])
-                index_start = line_.index("Sever: ") + len("Sever: ")
+                index_start = line_.index("Server: ") + len("Server: ")
                 end_index = line_.index(" - Channel: ", index_start)
                 servers.add(line_[index_start:end_index].strip())
             except Exception:
@@ -180,4 +209,5 @@ def stats(num_bots:int, client=None, stats_file=common.STATS_FILE, commands_logg
     
         
 if __name__ == '__main__':
+    #print(get_all_commands(706020725882470460))
     print(count_lines_of_code())
