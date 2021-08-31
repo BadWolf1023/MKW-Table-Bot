@@ -115,10 +115,6 @@ LOUNGE_TABLE_SUBMISSION_DENY_TERMS =  {"deny", "reject", "d"}
 LOUNGE_TABLE_SUBMISSION_TERMS = LOUNGE_TABLE_SUBMISSION_APPROVAL_TERMS |  LOUNGE_TABLE_SUBMISSION_DENY_TERMS
 LOUNGE_PENDING_TABLE_SUBMISSION_TERMS = {"pending", "pendingsubmission", "pendingsubmissions", "p"}
 
-#Lounge only commands for table bot channels, used by staff and table bot support
-GET_LOCK_TERMS = {"getlock", "gl"}
-TRANSFER_LOCK_TERMS = {"transferlock", "tl"}
-
 #Server administrator commands only
 SET_PREFIX_TERMS = {"setprefix"}
 SERVER_DEFAULT_TABLE_THEME_TERMS = {'defaulttheme', 'defaultservertheme', 'serverstyle', 'servertheme', 'servertablestyle', 'servertabletheme'}
@@ -203,10 +199,8 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     if not isLoungeServer:
         return True
     
-    
-    for role in message_author.roles:
-        if role.id in common.mkw_lounge_staff_roles:
-            return True
+    if common.author_is_table_bot_support_plus(message_author):
+        return True
     
     
     if this_bot is not None and this_bot.getWar() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
@@ -427,7 +421,7 @@ async def on_message(message: discord.Message):
                 commands.BadWolfCommands.send_all_facts_command(message, bad_wolf_facts)
                     
             elif args[0] in START_WAR_TERMS:
-                await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_lounge_staff)
+                await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
             
             elif args[0] in TABLE_TEXT_TERMS:
                 await commands.TablingCommands.table_text_command(message, this_bot, server_prefix, is_lounge_server)
@@ -470,13 +464,6 @@ async def on_message(message: discord.Message):
             elif args[0] in INVITE_TERMS:
                 await message.channel.send(bot_invite_link)              
             
-            
-            #Informational commands
-            elif args[0] in GET_LOCK_TERMS and is_lounge_server:
-                await commands.LoungeCommands.get_lock_command(message, this_bot)
-            
-            elif args[0] in TRANSFER_LOCK_TERMS and is_lounge_server:
-                await commands.LoungeCommands.transfer_lock_command(message, args, this_bot)
                 
             elif args[0] in RACE_RESULTS_TERMS:
                 await commands.TablingCommands.race_results_command(message, this_bot, args, server_prefix, is_lounge_server)
