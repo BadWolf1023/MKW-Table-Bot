@@ -22,8 +22,10 @@ MAX_PREFIX_LENGTH = 3
 current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = True
+in_testing_server = False
 running_beta = False
+
+DISABLE_MKWX_COMMANDS = True
 
 #TableBot variables, for ChannelBots
 inactivity_time_period = timedelta(hours=2, minutes=30)
@@ -142,12 +144,10 @@ BAD_WOLF_ID = 706120725882470460
 
 
 #Lounge stuff
-MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?ladder_id=1&event_data="
-MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?ladder_id=2&event_data="
+MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=1&event_data="
+MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=2&event_data="
 MKW_LOUNGE_RT_UPDATER_LINK = MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK
 MKW_LOUNGE_CT_UPDATER_LINK = MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK
-DEPRECATED_MKW_LOUNGE_RT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/rt/?import="
-DEPRECATED_MKW_LOUNGE_CT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/ct/?import="
 MKW_LOUNGE_RT_UPDATER_CHANNEL = 758161201682841610
 MKW_LOUNGE_CT_UPDATER_CHANNEL = 758161224202059847
 MKW_LOUNGE_SERVER_ID = 387347467332485122
@@ -273,6 +273,7 @@ def check_create(file_name):
         f = open(file_name, "w")
         f.close()
 
+    
 def full_command_log(message):
     to_log = f"Server Name: {message.guild} ({len(message.guild.members)} members)- Server ID: {message.guild.id} - Channel: {message.channel} - Channel ID: {message.channel.id} - User: {message.author} - User ID: {message.author.id} - User Name: {message.author.display_name} - Command: {message.content}"
     log_text(to_log, FULL_MESSAGE_LOGGING_TYPE)

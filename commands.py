@@ -427,6 +427,8 @@ class OtherCommands:
       
     @staticmethod
     async def mii_command(message:discord.Message, args:List[str], old_command:str):
+        if common.DISABLE_MKWX_COMMANDS and not common.is_bad_wolf(message.author):
+            raise TableBotExceptions.CommandDisabled("Mii command disabled.")
         if common.MIIS_DISABLED:
             await message.channel.send("This command is temporarily disabled.")
             return
@@ -476,6 +478,8 @@ class OtherCommands:
                     
     @staticmethod
     async def wws_command(client, this_bot:TableBot.ChannelBot, message:discord.Message, ww_type=Race.RT_WW_ROOM_TYPE):
+        if common.DISABLE_MKWX_COMMANDS and not common.is_bad_wolf(message.author):
+            raise TableBotExceptions.CommandDisabled("WWs command disabled.")
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
             delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
@@ -574,6 +578,8 @@ class OtherCommands:
 
     @staticmethod           
     async def vr_command(this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], old_command:str, temp_bot):
+        if common.DISABLE_MKWX_COMMANDS and not common.is_bad_wolf(message.author):
+            raise TableBotExceptions.CommandDisabled("VR command disabled.")
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
             delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
@@ -678,21 +684,45 @@ class LoungeCommands:
             raise TableBotExceptions.NotLoungeStaff("Not staff in MKW Lounge")
         
         to_lookup = None
+        lookup_limit = common.WHO_IS_LIMIT
         if len(args) > 1 and UtilityFunctions.isint(args[1]):
             to_lookup = int(args[1])
+        
+        if len(args) > 2 and common.is_bad_wolf(message.author) and args[2].lower() == "all":
+            lookup_limit = None
         
         if to_lookup is None:
             await message.channel.send("To find a user, give their discord ID: `?whois DiscordID`")
             return
         
         to_delete = await message.channel.send("Looking up user, this may take a minute. Please wait...")
-        all_commands = Stats.get_all_commands(to_lookup, common.WHO_IS_LIMIT)
+        all_commands = Stats.get_all_commands(to_lookup, lookup_limit)
         await to_delete.delete()
         if len(all_commands) > 0:
             total_message = "".join(all_commands)
             await UtilityFunctions.safe_send_file(message, total_message)
         else:
             await message.channel.send(f"The user ID {to_lookup} has never used MKW Table Bot.")
+            
+    
+    @staticmethod
+    async def lookup_command(client, message:discord.Message, args:List[str]):
+        if not common.is_bad_wolf(message.author):
+            raise TableBotExceptions.NotLoungeStaff("Not staff in MKW Lounge")
+        
+        if len(args) <= 1:
+            await message.channel.send("Give something.")
+            return
+        full_lookup = message.content.strip("? ")[len(args[0]):].strip()
+        
+        to_delete = await message.channel.send("Looking up, please wait...")
+        all_commands = Stats.hard_check(full_lookup, None)
+        await to_delete.delete()
+        if len(all_commands) > 0:
+            total_message = "".join(all_commands)
+            await UtilityFunctions.safe_send_file(message, total_message)
+        else:
+            await message.channel.send(f"The lookup {full_lookup} has nothing in MKW Table Bot.")
         
             
     
@@ -1443,6 +1473,8 @@ class TablingCommands:
     #Refactor this method to make it more readable
     @staticmethod
     async def start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str, permission_check:Callable):
+        if common.DISABLE_MKWX_COMMANDS and not common.is_bad_wolf(message.author):
+            raise TableBotExceptions.CommandDisabled("Start war command disabled.")
         server_id = message.guild.id
         author_id = message.author.id
         if not is_lounge_server or permission_check(message.author) or (len(args) - command.count(" gps=") - command.count(" sui=") - command.count(" psb=")) <= 3:
@@ -2164,6 +2196,8 @@ class TablingCommands:
     
     @staticmethod
     async def current_room_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
+        if common.DISABLE_MKWX_COMMANDS and not common.is_bad_wolf(message.author):
+            raise TableBotExceptions.CommandDisabled("Current room command disabled.")
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server) 
         elif len(this_bot.getRoom().races) >= 1:

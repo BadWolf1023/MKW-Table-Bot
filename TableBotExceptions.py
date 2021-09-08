@@ -61,3 +61,7 @@ class InvalidNumberOfPlayersException(WarSetupFailure):
 
 class WarSetupStillRunning(WarSetupFailure):
     pass
+
+
+class CommandDisabled(Exception):
+    pass

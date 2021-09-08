@@ -8,7 +8,7 @@ from typing import List, Dict, Tuple
 import aiohttp
 import UtilityFunctions
 
-lounge_mmr_api_url = 'https://mariokartboards.com/lounge/api/ladderplayer.php'
+lounge_mmr_api_url = 'https://www.mkwlounge.gg/api/ladderplayer.php'
 
 
 async def getJSONData(full_url):

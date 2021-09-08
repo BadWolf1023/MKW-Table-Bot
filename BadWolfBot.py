@@ -145,6 +145,7 @@ REMOVE_BAD_WOLF_FACT_TERMS = {"removebadwolffact", "rbwf"}
 BAD_WOLF_FACT_TERMS = {"badwolffacts", "bwfs"}
 TOTAL_CLEAR_TERMS = {'totalclear'}
 DUMP_DATA_TERMS = {"dtt", "dothething"}
+LOOKUP_TERMS = {"lookup"}
 ADD_BOT_ADMIN_TERMS = {"addbotadmin", "addadmin"}
 REMOVE_BOT_ADMIN_TERMS = {"removebotadmin", "removeadmin"}
 GET_LOGS_TERMS = {"getlog", "getlogs", "logs"}
@@ -546,6 +547,8 @@ async def on_message(message: discord.Message):
                 
             elif args[0] in LOUNGE_WHO_IS_TERMS:
                 await commands.LoungeCommands.who_is_command(client, message, args)
+            elif args[0] in LOOKUP_TERMS:
+                await commands.LoungeCommands.lookup_command(client, message, args)
             elif args[0] in TABLE_BOT_MEMORY_USAGE_TERMS:
                 commands.BadWolfCommands.is_badwolf_check(message.author, "cannot display table bot internal memory usage")
                 size_str = ""
@@ -694,7 +697,9 @@ async def on_message(message: discord.Message):
     except discord.errors.DiscordServerError:
         await common.safe_send(message, "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
     except aiohttp.client_exceptions.ClientOSError:
-        await common.safe_send(message, "Discord's servers had an error. This is usually temporary, so do your command again.")       
+        await common.safe_send(message, "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")         
+    except TableBotExceptions.CommandDisabled:
+        await common.safe_send(message, "This command is disabled until Table Bot can access mkwx again. mkwx is currently being worked on, so just be patient.")   
     except:
         with open(common.ERROR_LOGS_FILE, "a+") as f:
             f.write(f"\n{str(datetime.now())}: \n")
