@@ -65,10 +65,11 @@ def _reverseEngineerResults(lounge_names_mapping: List[Tuple[str, str, int]], js
         if player_id_json_name not in player_data or player_name_json_name not in player_data or current_mmr_json_name not in player_data:
             return None, []
         #Corrupt data check
-        if isinstance(player_data[player_id_json_name], str) and player_data[player_id_json_name].isnumeric():
+        
+        if UtilityFunctions.isint(player_data[player_id_json_name]):
             player_data[player_id_json_name] = int(player_data[player_id_json_name])
             
-        if isinstance(player_data[current_mmr_json_name], str) and UtilityFunctions.isint(player_data[current_mmr_json_name]):
+        if UtilityFunctions.isint(player_data[current_mmr_json_name]):
             player_data[current_mmr_json_name] = int(player_data[current_mmr_json_name])
 
         
