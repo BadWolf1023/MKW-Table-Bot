@@ -143,7 +143,7 @@ def isint(value):
     try:
         int(value)
         return True
-    except ValueError:
+    except:
         return False
 
 #Takes a list of strings and concatenates them until a new concatenation would push it over the limit given
