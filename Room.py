@@ -410,11 +410,11 @@ class Room(object):
             rLIDs = []
             for rLID in self.rLIDs:
                 
-                _, rLID_temp, tempSoup = await WiimfiSiteFunctions.getRoomData(rLID)
+                _, rLID_temp, tempSoup = await WiimmfiSiteFunctions.getRoomData(rLID)
                 soups.append(tempSoup)
                 rLIDs.append(rLID_temp)
                 
-            tempSoup = WiimfiSiteFunctions.combineSoups(soups)
+            tempSoup = WiimmfiSiteFunctions.combineSoups(soups)
             
             to_return = False
             if tempSoup is not None:
