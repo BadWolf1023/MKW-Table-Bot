@@ -6,7 +6,7 @@ Created on Jul 12, 2020
 import Race
 import Placement
 import Player
-import WiimfiSiteFunctions
+import WiimmfiSiteFunctions
 import UserDataProcessing
 
 from _collections import defaultdict
