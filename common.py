@@ -19,7 +19,6 @@ MIIS_DISABLED = True
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
 
-current_notification = "Command cooldowns have increased, and miis have been disabled to ensure Table Bot doesn't access the website too much. Thanks for understanding."
 
 #Main loop constants
 in_testing_server = True
@@ -27,8 +26,12 @@ running_beta = False
 
 DISABLE_MKWX_COMMANDS = True
 
-LIMITED_CHANNEL_IDS = None
+#RT T5, RT T4, RT T3, RT T2, RT T1, CT T4, CT T2, CT T1
+LIMITED_CHANNEL_IDS = {747290182096650332, 747290167391551509, 747290151016857622, 747290132675166330, 747289647003992078, 747290436275535913, 747290383297282156, 747290363433320539}
 LIMITED_SERVER_IDS = None
+
+current_notification = f"Command cooldowns have increased, and miis have been disabled to ensure Table Bot doesn't access the website too much. **Accessing mkwx is experimental at this time.** Additionally, Table Bot only works in {len(LIMITED_CHANNEL_IDS)} selected channels, which are all in Lounge. Thanks for understanding."
+
 
 #TableBot variables, for ChannelBots
 inactivity_time_period = timedelta(hours=2, minutes=30)
