@@ -44,6 +44,7 @@ import os
 from datetime import datetime
 import URLShortener
 import Stats
+from common import LIMITED_SERVER_IDS, LIMITED_CHANNEL_IDS
 
 vr_is_on = False
 
@@ -65,7 +66,12 @@ async def send_missing_permissions(channel:discord.TextChannel, content=None, de
         pass
     
         
-            
+async def mkwx_check(message, error_message):
+    if common.DISABLE_MKWX_COMMANDS:
+        if LIMITED_SERVER_IDS is None or message.guild.id not in LIMITED_SERVER_IDS:
+            raise TableBotExceptions.CommandDisabled(error_message)
+        if LIMITED_CHANNEL_IDS is None or message.channel.id not in LIMITED_CHANNEL_IDS:
+            raise TableBotExceptions.CommandDisabled(error_message)
         
 """============== Bad Wolf only commands ================"""
 #TODO: Refactor these - target the waterfall-like if-statements
@@ -427,11 +433,11 @@ class OtherCommands:
       
     @staticmethod
     async def mii_command(message:discord.Message, args:List[str], old_command:str):
-        if common.DISABLE_MKWX_COMMANDS and not common.is_bad_wolf(message.author):
-            raise TableBotExceptions.CommandDisabled("Mii command disabled.")
         if common.MIIS_DISABLED:
-            await message.channel.send("This command is temporarily disabled.")
+            await message.channel.send("To ensure Table Bot remains stable and can access the website, miis have been disabled at this time.")
             return
+        await mkwx_check(message, "Mii command disabled.")
+
         
         discordIDToLoad = None
         if len(args) == 1:
@@ -478,8 +484,8 @@ class OtherCommands:
                     
     @staticmethod
     async def wws_command(client, this_bot:TableBot.ChannelBot, message:discord.Message, ww_type=Race.RT_WW_ROOM_TYPE):
-        if common.DISABLE_MKWX_COMMANDS and not common.is_bad_wolf(message.author):
-            raise TableBotExceptions.CommandDisabled("WWs command disabled.")
+        await mkwx_check(message, "WWs command disabled.")
+
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
             delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
@@ -578,8 +584,8 @@ class OtherCommands:
 
     @staticmethod           
     async def vr_command(this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], old_command:str, temp_bot):
-        if common.DISABLE_MKWX_COMMANDS and not common.is_bad_wolf(message.author):
-            raise TableBotExceptions.CommandDisabled("VR command disabled.")
+        await mkwx_check(message, "VR command disabled.")
+
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
             delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
@@ -1473,8 +1479,7 @@ class TablingCommands:
     #Refactor this method to make it more readable
     @staticmethod
     async def start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str, permission_check:Callable):
-        if common.DISABLE_MKWX_COMMANDS and not common.is_bad_wolf(message.author):
-            raise TableBotExceptions.CommandDisabled("Start war command disabled.")
+        await mkwx_check(message, "Start war command disabled.")
         server_id = message.guild.id
         author_id = message.author.id
         if not is_lounge_server or permission_check(message.author) or (len(args) - command.count(" gps=") - command.count(" sui=") - command.count(" psb=")) <= 3:
@@ -2196,8 +2201,7 @@ class TablingCommands:
     
     @staticmethod
     async def current_room_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
-        if common.DISABLE_MKWX_COMMANDS and not common.is_bad_wolf(message.author):
-            raise TableBotExceptions.CommandDisabled("Current room command disabled.")
+        await mkwx_check(message, "Current room command disabled.")
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server) 
         elif len(this_bot.getRoom().races) >= 1:

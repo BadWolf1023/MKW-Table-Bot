@@ -14,25 +14,28 @@ from pathlib import Path
 
 version = "11.3.0"
 
-MIIS_DISABLED = False
+MIIS_DISABLED = True
 
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
 
-current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
+current_notification = "Command cooldowns have increased, and miis have been disabled to ensure Table Bot doesn't access the website too much. Thanks for understanding."
 
 #Main loop constants
-in_testing_server = False
+in_testing_server = True
 running_beta = False
 
 DISABLE_MKWX_COMMANDS = True
+
+LIMITED_CHANNEL_IDS = None
+LIMITED_SERVER_IDS = None
 
 #TableBot variables, for ChannelBots
 inactivity_time_period = timedelta(hours=2, minutes=30)
 lounge_inactivity_time_period = timedelta(minutes=8)
 inactivity_unlock = timedelta(minutes=30)
-wp_cooldown_seconds = 15
-rl_cooldown_seconds = 10
+wp_cooldown_seconds = 60
+rl_cooldown_seconds = 60
 
 #Mii folder location information
 MII_TABLE_PICTURE_PREFIX = "table_"
