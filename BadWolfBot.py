@@ -174,9 +174,9 @@ if common.in_testing_server:
     lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.BAD_WOLF_SERVER_ID, common.main_lounge_can_report_table)
     lounge_submissions.channels_mapping = common.TESTING_SERVER_LOUNGE_UPDATES
     common.BOT_ABUSE_REPORT_CHANNEL_ID = 776031312048947230
-    TEMPORARY_VR_CATEGORIES.append(740574341187633232)
+    #TEMPORARY_VR_CATEGORIES.append(740574341187633232)
 
-elif common.running_beta:
+elif common.running_beta and not common.beta_is_real:
     common.MKW_LOUNGE_SERVER_ID = common.BAD_WOLF_SERVER_ID
     MogiUpdate.rt_summary_channels.clear()
     MogiUpdate.rt_summary_channels.update({"1":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID})
@@ -689,8 +689,8 @@ async def on_message(message: discord.Message):
         await common.safe_send(message, f"You are not a server administrator: {not_admin_failure}")
     except TableBotExceptions.NotStaff as not_staff_exception:
         await common.safe_send(message, f"You are not staff in this server: {not_staff_exception}")
-    except TableBotExceptions.WrongServer:
-        await common.safe_send(message, f"Not a valid command. For more help, do the command: {server_prefix}help")
+    except TableBotExceptions.WrongServer as wrong_server_exception:
+        await common.safe_send(message, f"{wrong_server_exception}: use MKW Table Bot in #bots to submit your table.")
     except TableBotExceptions.WrongUpdaterChannel as wrong_updater_channel_exception:
         await common.safe_send(message, f"Use this command in the appropriate updater channel: {wrong_updater_channel_exception}")
     except TableBotExceptions.WarSetupStillRunning:
@@ -704,9 +704,10 @@ async def on_message(message: discord.Message):
         await common.safe_send(message, f"Your room was requested recently, perhaps by another person, but their request failed. To avoid hitting the website, I've denied your command. Try again after {common.wp_cooldown_seconds} seconds.")         
         await send_to_503_channel(logging_info)
     except TableBotExceptions.MKWXCloudflareBlock:
-        logging_info = log_command_sent(message, extra_text="Error info: Cloudflare blocked this command.")
-        await common.safe_send(message, "Cloudflare blocked me, so I am currently trying to solve their captcha. If this is the first time you've seen this message in a while, DO try again in a few seconds, as I may have solved their captcha.\n\nIf you get this error 5 times in a row without success, it means I cannot solve their captcha and you should not keep running this command. **FURTHERMORE, IF YOU GET THIS ERROR 5 TIMES IN A ROW AND CONTINUE TO RUN THIS COMMAND, YOU WILL BE __PERMANENTLY__ BLOCKED FROM USING TABLE BOT.**")         
+        logging_info = log_command_sent(message, extra_text="**Error info:** Cloudflare blocked this command.")
+        await common.safe_send(message, "Cloudflare blocked me, so I am currently trying to solve their captcha. If this is the first time you've seen this message in a while, DO try again in a few seconds, as I may have solved their captcha by then.\n\n**However**, if you get this error 5 times in a row without success, it means I cannot solve their captcha and you SHOULD NOT KEEP RUNNING THIS COMMAND. If you get this error 5 times in a row and continue to run commands, you risk being permanently banned from Table Bot.")         
         await send_to_503_channel(logging_info)
+        await AbuseTracking.BOT_ABUSE_REPORT_CHANNEL.send(logging_info + "\n\nIf this person repeatedly does this over the course 20 minutes or less, blacklist them.")
     except TableBotExceptions.URLLocked:
         logging_info = log_command_sent(message, extra_text="Error info: Minor race condition for this command, URL Locked.")
         await common.safe_send(message, f"This room is locked at this time. This isn't your fault. Cloudflare on mkwx has complicated things. Please wait {WiimmfiSiteFunctions.lockout_timelimit.total_seconds()} seconds before trying again.")         

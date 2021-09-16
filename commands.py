@@ -674,7 +674,7 @@ class LoungeCommands:
     
     @staticmethod
     def correct_server_check(guild, failure_message, server_id=common.MKW_LOUNGE_SERVER_ID):
-        if guild.id != server_id:
+        if guild.id != server_id or (common.running_beta and common.beta_is_real):
             raise TableBotExceptions.WrongServer(failure_message)
         return True
     
@@ -1019,7 +1019,7 @@ class ServerDefaultCommands:
     
     @staticmethod
     async def large_time_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        if not common.running_beta:
+        if not common.running_beta or common.beta_is_real:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change server default for hiding large times on tables")
         
         server_id = message.guild.id
@@ -1042,7 +1042,7 @@ class ServerDefaultCommands:
 
     @staticmethod              
     async def mii_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        if not common.running_beta:
+        if not common.running_beta or common.beta_is_real:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change miis default for this server")
 
         server_id = message.guild.id
@@ -1066,7 +1066,7 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def graph_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        if not common.running_beta:
+        if not common.running_beta or common.beta_is_real:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change default graph for this server")
 
         server_id = message.guild.id
@@ -1088,7 +1088,7 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def theme_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        if not common.running_beta:
+        if not common.running_beta or common.beta_is_real:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change default table theme for this server")
         
         server_id = message.guild.id
