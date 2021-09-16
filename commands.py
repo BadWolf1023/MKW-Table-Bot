@@ -5,8 +5,8 @@ Created on Jun 26, 2021
 '''
 
 #Bot internal imports - stuff I coded
-import WiimfiSiteFunctions
-from WiimfiSiteFunctions import _is_rLID, _is_fc
+import WiimmfiSiteFunctions
+from WiimmfiSiteFunctions import _is_rLID, _is_fc
 import ServerFunctions
 import ImageCombine
 import War
@@ -1725,7 +1725,7 @@ class TablingCommands:
             await message.channel.send("The rLID you gave is already merged for this room. You can't merge a room with itself.") 
             return
     
-        roomLink, rLID, rLIDSoup = await WiimfiSiteFunctions.getRoomDataSmart(args[1])
+        roomLink, rLID, rLIDSoup = await WiimmfiSiteFunctions.getRoomDataSmart(args[1])
         rLIDSoupWasNone = rLIDSoup is None
         if not rLIDSoupWasNone:
             rLIDSoup.decompose()
