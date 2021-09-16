@@ -29,6 +29,19 @@ f"{submkwxURL}r0000004":("Table Bot Remove Race Test w/ quickedit, 2nd room to m
 async def fetch(session, url):
     async with session.get(url) as response:
         return await response.text()
+        if to_return is None: #At this point, we know the page isn't in the cache, or it is super outdated
+            url_response_cache[url] = (True, current_time, recent_pulls_for_url) #set the flag to currently pulling, and update the pulling time to now
+            print(f"{current_time.time()}: fetch({url}) is making an HTTPS request.")
+            if not USING_EXPERIMENTAL_REQUEST:
+                async with session.get(url) as response:
+                    to_return = await response.text()
+                    recent_pulls_for_url.append(to_return, current_time)
+            else:
+                with driver:
+                    to_return = driver.get(url).page_source
+                    recent_pulls_for_url.append(to_return, current_time)
+    finally:
+        _, started_pulling_at, pull_data = url_response_cache[url]
 
 
 async def getRoomHTML(roomLink):

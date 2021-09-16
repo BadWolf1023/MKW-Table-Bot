@@ -488,10 +488,10 @@ async def on_message(message: discord.Message):
                 await commands.BotAdminCommands.change_ctgp_region_command(message, args)
             
             elif args[0] in VR_ON_TERMS:
-                await commands.BotAdminCommands.global_vr_command(message, args, on=True)
+                await commands.BotAdminCommands.global_vr_command(message, on=True)
                     
             elif args[0] in VR_OFF_TERMS:
-                await commands.BotAdminCommands.global_vr_command(message, args, on=False)
+                await commands.BotAdminCommands.global_vr_command(message, on=False)
                     
             elif args[0] in QUICK_START_TERMS:
                 await help_documentation.send_quickstart(message)
