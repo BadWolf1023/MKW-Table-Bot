@@ -700,18 +700,25 @@ async def on_message(message: discord.Message):
     except aiohttp.client_exceptions.ClientOSError:
         await common.safe_send(message, "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")         
     except TableBotExceptions.RequestedRecently:
+        logging_info = log_command_sent(message, extra_text="Error info: Room requested recently, but the original request failed.")
         await common.safe_send(message, f"Your room was requested recently, perhaps by another person, but their request failed. To avoid hitting the website, I've denied your command. Try again after {common.wp_cooldown_seconds} seconds.")         
+        await send_to_503_channel(logging_info)
     except TableBotExceptions.MKWXCloudflareBlock:
+        logging_info = log_command_sent(message, extra_text="Error info: Cloudflare blocked this command.")
         await common.safe_send(message, "Cloudflare blocked me, so I am currently trying to solve their captcha. If this is the first time you've seen this message in a while, DO try again in a few seconds, as I may have solved their captcha.\n\nIf you get this error 5 times in a row without success, it means I cannot solve their captcha and you should not keep running this command. **FURTHERMORE, IF YOU GET THIS ERROR 5 TIMES IN A ROW AND CONTINUE TO RUN THIS COMMAND, YOU WILL BE __PERMANENTLY__ BLOCKED FROM USING TABLE BOT.**")         
-        log_command_sent(message, extra_text="Error info: Cloudflare blocked this command.")
+        await send_to_503_channel(logging_info)
     except TableBotExceptions.URLLocked:
-        log_command_sent(message, extra_text="Error info: Minor race condition for this command, URL Locked.")
+        logging_info = log_command_sent(message, extra_text="Error info: Minor race condition for this command, URL Locked.")
         await common.safe_send(message, f"This room is locked at this time. This isn't your fault. Cloudflare on mkwx has complicated things. Please wait {WiimmfiSiteFunctions.lockout_timelimit.total_seconds()} seconds before trying again.")         
+        await send_to_503_channel(logging_info)
     except TableBotExceptions.CacheRaceCondition:
         log_command_sent(message, extra_text="Error info: Race condition for this command.")
         await common.safe_send(message, f"Something weird happened. This isn't your fault. Cloudflare on mkwx has complicated things. Go ahead and run your command again after {common.wp_cooldown_seconds} seconds.")         
+        await send_to_503_channel(logging_info)
     except TableBotExceptions.WiimmfiSiteFailure:
-        await common.safe_send(message, "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")         
+        logging_info = log_command_sent(message, extra_text="Error info: MKWX inaccessible, other error.")
+        await common.safe_send(message, "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")    
+        await send_to_503_channel(logging_info)
     except TableBotExceptions.CommandDisabled:
         await common.safe_send(message, "At this time, **accessing mkwx is experimental**. Therefore, MKW Table Bot only works certain channels in the Lounge server and in Bad Wolf's server, purely as an experiment.")
 
@@ -797,10 +804,12 @@ async def removeInactiveTableBots():
 #I found that sending a message every 5 minutes to a dedicated channel in my server
 #helps prevent some timing out/disconnect problems
 #This implies there might be a problem with discord.py's heartbeat functionality, but I'm not certain
+async def send_to_503_channel(text):
+    await client.get_channel(776031312048947230).send(text)
 @tasks.loop(minutes=5)
 async def stay_alive_503():
     try:
-        await client.get_channel(776031312048947230).send("Stay alive to prevent 503")
+        await send_to_503_channel("Stay alive to prevent 503")
     except:
         pass
 
@@ -961,7 +970,7 @@ def get_size(objct, seen=None):
 
 def log_command_sent(message:discord.Message, extra_text=""):
     common.log_text(f"Server: {message.guild} - Channel: {message.channel} - User: {message.author} - Command: {message.content} {extra_text}")
-    common.full_command_log(message, extra_text)
+    return common.full_command_log(message, extra_text)
     
 #This function dumps everything we have pulled recently from the API
 #in our two dictionaries to local storage and the main dictionaries      
