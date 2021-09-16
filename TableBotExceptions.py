@@ -65,3 +65,9 @@ class WarSetupStillRunning(WarSetupFailure):
 
 class CommandDisabled(Exception):
     pass
+
+class WiimmfiSiteFailure(Exception):
+    pass
+
+class MKWXCloudflareBlock(WiimmfiSiteFailure):
+    pass
