@@ -21,24 +21,25 @@ MAX_PREFIX_LENGTH = 3
 
 
 #Main loop constants
-in_testing_server = True
-running_beta = False
+in_testing_server = False
+running_beta = True
+beta_is_real = True
 
 DISABLE_MKWX_COMMANDS = True
 
-#RT T5, RT T4, RT T3, RT T2, RT T1, CT T4, CT T2, CT T1, 503 server, BW's server TB1, BW's server TB2, testing channel, Beta Testing 1, Beta testing 2, Beta Testing 3
-LIMITED_CHANNEL_IDS = {747290182096650332, 747290167391551509, 747290151016857622, 747290132675166330, 747289647003992078, 747290436275535913, 747290383297282156, 747290363433320539, 776031312048947230, 739851885665845272, 739734249329918083, 826962131592544306, 860645585143857213, 860645644804292608, 863242314461085716}
+#RT T5, RT T4, RT T3, RT T2, RT T1, CT T4, CT T2, CT T1, 503 server, BW's server TB1, BW's server TB2, testing channel, Beta Testing 1, Beta testing 2, Beta Testing 3, 503-dup
+LIMITED_CHANNEL_IDS = {747290182096650332, 747290167391551509, 747290151016857622, 747290132675166330, 747289647003992078, 747290436275535913, 747290383297282156, 747290363433320539, 776031312048947230, 739851885665845272, 739734249329918083, 826962131592544306, 888089086307475456}
 LIMITED_SERVER_IDS = None
 
-current_notification = f"Command cooldowns have increased, and miis have been disabled to ensure Table Bot doesn't access the website too much. **Accessing mkwx is experimental at this time.** Additionally, Table Bot only works in {len(LIMITED_CHANNEL_IDS) - 5} selected channels, 8 of which are in Lounge, and 2 in Bad Wolf's server. Thanks for understanding."
+current_notification = f"Because the developers of <https://wiimmfi.de> have not taken any of my proposed solutions for letting critical tools access the website, MKW Table Bot now uses a different method for accessing mkwx.\n\nUnfortunately, command cooldowns have also increased, and miis have been disabled to ensure Table Bot doesn't access the website too much. MKW Table Bot will run much slower as well. Please note: **Accessing mkwx is experimental at this time.**\n\nAdditionally, Table Bot only works in {len(LIMITED_CHANNEL_IDS) - 6} selected channels, 8 of which are in Lounge, and 3 in Bad Wolf's server.\n\nIf you want to tell the developers that you enjoy our community's tools and think they are important/critical infrastructure, create an account on <https://forum.wii-homebrew.com>, go to 'User introductions', introduce yourself, and tell them that legitimate, corteous content creators and developers shouldn't have to pay the price for a criminal's activity. Thanks for understanding and your support. Happy auto tabling."
 
 
 #TableBot variables, for ChannelBots
 inactivity_time_period = timedelta(hours=2, minutes=30)
 lounge_inactivity_time_period = timedelta(minutes=8)
 inactivity_unlock = timedelta(minutes=30)
-wp_cooldown_seconds = 60
-rl_cooldown_seconds = 60
+wp_cooldown_seconds = 30
+rl_cooldown_seconds = 30
 
 #Mii folder location information
 MII_TABLE_PICTURE_PREFIX = "table_"
@@ -281,7 +282,7 @@ def check_create(file_name):
 
     
 def full_command_log(message, extra_text=""):
-    to_log = f"Server Name: {message.guild} ({len(message.guild.members)} members)- Server ID: {message.guild.id} - Channel: {message.channel} - Channel ID: {message.channel.id} - User: {message.author} - User ID: {message.author.id} - User Name: {message.author.display_name} - Command: {message.content} {extra_text}"
+    to_log = f"Server Name: {message.guild} - Server ID: {message.guild.id} - Channel: {message.channel} - Channel ID: {message.channel.id} - User: {message.author} - User ID: {message.author.id} - User Name: {message.author.display_name} - Command: {message.content} {extra_text}"
     return log_text(to_log, FULL_MESSAGE_LOGGING_TYPE)
     
 def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
