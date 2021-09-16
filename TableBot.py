@@ -3,13 +3,13 @@ Created on Jul 30, 2020
 
 @author: willg
 '''
-import WiimfiSiteFunctions
+import WiimmfiSiteFunctions
 import Room
 import War
 from datetime import datetime
 import humanize
 from bs4 import NavigableString, Tag
-from WiimfiSiteFunctions import _is_fc
+from WiimmfiSiteFunctions import _is_fc
 import MiiPuller
 import concurrent.futures
 import common
@@ -228,7 +228,7 @@ class ChannelBot(object):
     async def verify_room(self, load_me):
         to_find = load_me[0]
 
-        beautiful_soup_room_top = await WiimfiSiteFunctions.getRoomHTMLDataSmart(to_find)
+        beautiful_soup_room_top = await WiimmfiSiteFunctions.getRoomHTMLDataSmart(to_find)
         if beautiful_soup_room_top is None:
             del beautiful_soup_room_top
             return False, None, None, None
@@ -312,14 +312,14 @@ class ChannelBot(object):
         soups = []
         success = False
         for item in load_me:
-            _, rLID, roomSoup = await WiimfiSiteFunctions.getRoomDataSmart(item)
+            _, rLID, roomSoup = await WiimmfiSiteFunctions.getRoomDataSmart(item)
             rLIDs.append(rLID)
             soups.append(roomSoup)
             
             if roomSoup is None: #wrong roomID or no races played
                 break
         else:
-            roomSoup = WiimfiSiteFunctions.combineSoups(soups)
+            roomSoup = WiimmfiSiteFunctions.combineSoups(soups)
             temp = Room.Room(rLIDs, roomSoup)
             
             
