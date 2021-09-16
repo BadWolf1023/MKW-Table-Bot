@@ -699,7 +699,7 @@ async def on_message(message: discord.Message):
     except aiohttp.client_exceptions.ClientOSError:
         await common.safe_send(message, "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")         
     except TableBotExceptions.CommandDisabled:
-        await common.safe_send(message, "This command is disabled until Table Bot can access mkwx again. mkwx is currently being worked on, so just be patient.")   
+        await common.safe_send(message, "At this time, **accessing mkwx is experimental**. Therefore, MKW Table Bot only works certain channels in the Lounge server, purely as an experiment.")
     except:
         with open(common.ERROR_LOGS_FILE, "a+") as f:
             f.write(f"\n{str(datetime.now())}: \n")
