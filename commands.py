@@ -44,7 +44,6 @@ import os
 from datetime import datetime
 import URLShortener
 import Stats
-from common import LIMITED_SERVER_IDS, LIMITED_CHANNEL_IDS
 
 vr_is_on = False
 
@@ -68,11 +67,12 @@ async def send_missing_permissions(channel:discord.TextChannel, content=None, de
         
 async def mkwx_check(message, error_message):
     if common.DISABLE_MKWX_COMMANDS:
-        if LIMITED_SERVER_IDS is None or message.guild.id not in LIMITED_SERVER_IDS:
-            raise TableBotExceptions.CommandDisabled(error_message)
-        if LIMITED_CHANNEL_IDS is None or message.channel.id not in LIMITED_CHANNEL_IDS:
-            raise TableBotExceptions.CommandDisabled(error_message)
-        
+        if common.LIMITED_SERVER_IDS is not None and message.guild.id in common.LIMITED_SERVER_IDS:
+            return True
+        if common.LIMITED_CHANNEL_IDS is not None and message.channel.id in common.LIMITED_CHANNEL_IDS:
+            return True
+
+        raise TableBotExceptions.CommandDisabled(error_message)
 """============== Bad Wolf only commands ================"""
 #TODO: Refactor these - target the waterfall-like if-statements
 class BadWolfCommands:
