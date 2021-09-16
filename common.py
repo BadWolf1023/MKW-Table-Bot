@@ -26,11 +26,11 @@ running_beta = False
 
 DISABLE_MKWX_COMMANDS = True
 
-#RT T5, RT T4, RT T3, RT T2, RT T1, CT T4, CT T2, CT T1
-LIMITED_CHANNEL_IDS = {747290182096650332, 747290167391551509, 747290151016857622, 747290132675166330, 747289647003992078, 747290436275535913, 747290383297282156, 747290363433320539}
+#RT T5, RT T4, RT T3, RT T2, RT T1, CT T4, CT T2, CT T1, 503 server, BW's server TB1, BW's server TB2, testing channel
+LIMITED_CHANNEL_IDS = {747290182096650332, 747290167391551509, 747290151016857622, 747290132675166330, 747289647003992078, 747290436275535913, 747290383297282156, 747290363433320539, 776031312048947230, 739851885665845272, 739734249329918083, 826962131592544306}
 LIMITED_SERVER_IDS = None
 
-current_notification = f"Command cooldowns have increased, and miis have been disabled to ensure Table Bot doesn't access the website too much. **Accessing mkwx is experimental at this time.** Additionally, Table Bot only works in {len(LIMITED_CHANNEL_IDS)} selected channels, which are all in Lounge. Thanks for understanding."
+current_notification = f"Command cooldowns have increased, and miis have been disabled to ensure Table Bot doesn't access the website too much. **Accessing mkwx is experimental at this time.** Additionally, Table Bot only works in {len(LIMITED_CHANNEL_IDS) - 1} selected channels, 8 of which are in Lounge, and 2 in Bad Wolf's server. Thanks for understanding."
 
 
 #TableBot variables, for ChannelBots
@@ -280,8 +280,8 @@ def check_create(file_name):
         f.close()
 
     
-def full_command_log(message):
-    to_log = f"Server Name: {message.guild} ({len(message.guild.members)} members)- Server ID: {message.guild.id} - Channel: {message.channel} - Channel ID: {message.channel.id} - User: {message.author} - User ID: {message.author.id} - User Name: {message.author.display_name} - Command: {message.content}"
+def full_command_log(message, extra_text=""):
+    to_log = f"Server Name: {message.guild} ({len(message.guild.members)} members)- Server ID: {message.guild.id} - Channel: {message.channel} - Channel ID: {message.channel.id} - User: {message.author} - User ID: {message.author.id} - User Name: {message.author.display_name} - Command: {message.content} {extra_text}"
     log_text(to_log, FULL_MESSAGE_LOGGING_TYPE)
     
 def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
