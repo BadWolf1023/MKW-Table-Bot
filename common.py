@@ -19,6 +19,7 @@ MIIS_DISABLED = True
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
 
+#current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
 in_testing_server = False
@@ -27,11 +28,20 @@ beta_is_real = True
 
 DISABLE_MKWX_COMMANDS = True
 
-#RT T5, RT T4, RT T3, RT T2, RT T1, CT T4, CT T2, CT T1, 503 server, BW's server TB1, BW's server TB2, testing channel, Beta Testing 1, Beta testing 2, Beta Testing 3, 503-dup
-LIMITED_CHANNEL_IDS = {747290182096650332, 747290167391551509, 747290151016857622, 747290132675166330, 747289647003992078, 747290436275535913, 747290383297282156, 747290363433320539, 776031312048947230, 739851885665845272, 739734249329918083, 826962131592544306, 888089086307475456}
+#RT T5, RT T4, RT T3, RT T2, RT T1, CT T4, CT T2, CT T1, 503 server, BW's server TB1, BW's server TB2, testing channel, 503-dup
+LIMITED_DONT_INCLUDE_IN_COUNT = {776031312048947230, 826962131592544306, 888089086307475456}
+BAD_WOLFS_CHANNELS = {747290383297282156, 747290363433320539}
+LIMITED_CHANNEL_IDS = {747290182096650332,
+                       747290167391551509,
+                       747290151016857622,
+                       747290132675166330,
+                       747289647003992078,
+                       747290436275535913,
+                       739851885665845272,
+                       739734249329918083} | BAD_WOLFS_CHANNELS | LIMITED_DONT_INCLUDE_IN_COUNT
 LIMITED_SERVER_IDS = None
 
-current_notification = f"Because the developers of <https://wiimmfi.de> have not taken any of my proposed solutions for letting critical tools access the website, MKW Table Bot now uses a different method for accessing mkwx.\n\nUnfortunately, command cooldowns have also increased, and miis have been disabled to ensure Table Bot doesn't access the website too much. MKW Table Bot will run much slower as well. Please note: **Accessing mkwx is experimental at this time.**\n\nAdditionally, Table Bot only works in {len(LIMITED_CHANNEL_IDS) - 6} selected channels, 8 of which are in Lounge, and 3 in Bad Wolf's server.\n\nIf you want to tell the developers that you enjoy our community's tools and think they are important/critical infrastructure, create an account on <https://forum.wii-homebrew.com>, go to 'User introductions', introduce yourself, and tell them that legitimate, corteous content creators and developers shouldn't have to pay the price for a criminal's activity. Thanks for understanding and your support. Happy auto tabling."
+current_notification = f"Because the developers of <https://wiimmfi.de> have not taken any of my proposed solutions for letting critical tools access the website, MKW Table Bot now uses a different method for accessing mkwx.\n\nUnfortunately, command cooldowns have also increased, and miis have been disabled to ensure Table Bot doesn't access the website too much. MKW Table Bot will run much slower as well. Please note: **Accessing mkwx is experimental at this time.**\n\nAdditionally, Table Bot only works in {len(LIMITED_CHANNEL_IDS) - len(LIMITED_DONT_INCLUDE_IN_COUNT)} selected channels, 8 of which are in Lounge, and 3 in Bad Wolf's server.\n\nIf you want to tell the developers that you enjoy our community's tools and think they are important/critical infrastructure, create an account or log in on <https://forum.wii-homebrew.com>, go to 'User introductions', introduce yourself, and tell them that legitimate, corteous content creators and developers shouldn't have to pay the price for a criminal's activity. Thanks for understanding and your support. Happy auto tabling."
 
 
 #TableBot variables, for ChannelBots
