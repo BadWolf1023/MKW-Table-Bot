@@ -14,23 +14,32 @@ from pathlib import Path
 
 version = "11.3.0"
 
-MIIS_DISABLED = False
+MIIS_DISABLED = True
 
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
 
-current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = True
-running_beta = False
+in_testing_server = False
+running_beta = True
+beta_is_real = True
+
+DISABLE_MKWX_COMMANDS = True
+
+#RT T5, RT T4, RT T3, RT T2, RT T1, CT T4, CT T2, CT T1, 503 server, BW's server TB1, BW's server TB2, testing channel, Beta Testing 1, Beta testing 2, Beta Testing 3, 503-dup
+LIMITED_CHANNEL_IDS = {747290182096650332, 747290167391551509, 747290151016857622, 747290132675166330, 747289647003992078, 747290436275535913, 747290383297282156, 747290363433320539, 776031312048947230, 739851885665845272, 739734249329918083, 826962131592544306, 888089086307475456}
+LIMITED_SERVER_IDS = None
+
+current_notification = f"Because the developers of <https://wiimmfi.de> have not taken any of my proposed solutions for letting critical tools access the website, MKW Table Bot now uses a different method for accessing mkwx.\n\nUnfortunately, command cooldowns have also increased, and miis have been disabled to ensure Table Bot doesn't access the website too much. MKW Table Bot will run much slower as well. Please note: **Accessing mkwx is experimental at this time.**\n\nAdditionally, Table Bot only works in {len(LIMITED_CHANNEL_IDS) - 6} selected channels, 8 of which are in Lounge, and 3 in Bad Wolf's server.\n\nIf you want to tell the developers that you enjoy our community's tools and think they are important/critical infrastructure, create an account on <https://forum.wii-homebrew.com>, go to 'User introductions', introduce yourself, and tell them that legitimate, corteous content creators and developers shouldn't have to pay the price for a criminal's activity. Thanks for understanding and your support. Happy auto tabling."
+
 
 #TableBot variables, for ChannelBots
 inactivity_time_period = timedelta(hours=2, minutes=30)
 lounge_inactivity_time_period = timedelta(minutes=8)
 inactivity_unlock = timedelta(minutes=30)
-wp_cooldown_seconds = 15
-rl_cooldown_seconds = 10
+wp_cooldown_seconds = 30
+rl_cooldown_seconds = 30
 
 #Mii folder location information
 MII_TABLE_PICTURE_PREFIX = "table_"
@@ -86,7 +95,10 @@ FEEDBACK_LOGS_FILE = f"{LOGGING_PATH}feedback_logs.txt"
 #It only logs commands that are sent to it
 MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}messages_logging.txt"
 
-FULL_MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}/full_logging.txt"
+FULL_LOGGING_FILE_NAME = "full_logging"
+FULL_MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}/{FULL_LOGGING_FILE_NAME}.txt"
+
+WHO_IS_LIMIT = 100
 
 
 DEFAULT_LARGE_TIME_FILE = f"{SERVER_SETTINGS_PATH}server_large_time_defaults.txt"
@@ -139,18 +151,12 @@ BAD_WOLF_ID = 706120725882470460
 
 
 #Lounge stuff
-MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?ladder_id=1&event_data="
-MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://mariokartboards.com/lounge/ladder/tabler.php?ladder_id=2&event_data="
+MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=1&event_data="
+MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=2&event_data="
 MKW_LOUNGE_RT_UPDATER_LINK = MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK
 MKW_LOUNGE_CT_UPDATER_LINK = MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK
-DEPRECATED_MKW_LOUNGE_RT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/rt/?import="
-DEPRECATED_MKW_LOUNGE_CT_UPDATER_LINK = "https://www.mariokartboards.com/lounge/admin/ct/?import="
 MKW_LOUNGE_RT_UPDATER_CHANNEL = 758161201682841610
 MKW_LOUNGE_CT_UPDATER_CHANNEL = 758161224202059847
-MKW_LOUNGE_RT_REPORTER_ID = 389252697284542465
-MKW_LOUNGE_RT_UPDATER_ID = 393600567781621761
-MKW_LOUNGE_CT_REPORTER_ID = 520808674411937792
-MKW_LOUNGE_CT_UPDATER_ID = 520808645252874240
 MKW_LOUNGE_SERVER_ID = 387347467332485122
 
 BAD_WOLF_SERVER_ID = 739733336871665696
@@ -166,8 +172,23 @@ BAD_WOLF_SERVER_NORMAL_TESTING_TWO_CHANNEL_ID = 863234379718721546
 BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID = 863238405269749760
 
 #Rather than using the builtin set declaration {}, I did an iterable because BadWolfBot.py kept giving an error in Eclipse, even though everything ran fine - this seems to have suppressed the error which was giving me major OCD
-#in order: Boss, Higher Tier Arb, Lower Tier Arb, Higher Tier CT Arb, Lower Tier CT Arb, RT Updater, CT Updater, RT Reporter, CT Reporter, Developer
-mkw_lounge_staff_roles = set([387347888935534593, 399382503825211393, 399384750923579392, 521149807994208295, 792891432301625364, 393600567781621761, 520808645252874240, 389252697284542465, 520808674411937792, 521154917675827221, 748367398905708634, 748367393264238663])
+mkw_lounge_staff_roles = set([387347888935534593, #Boss
+                              792805904047276032, #CT Admin
+                              399382503825211393, #HT RT Arb
+                              399384750923579392, #LT RT Arb
+                              521149807994208295, #HT CT Arb
+                              792891432301625364, #LT CT Arb
+                              521154917675827221, #Developer Access
+                              740659173695553667]) #Admin in test server
+
+reporter_plus_roles = set([393600567781621761, #RT Updater
+                              520808645252874240, #CT Updater
+                              389252697284542465, #RT Reporter
+                              520808674411937792 #CT Reporter
+                              ]) | mkw_lounge_staff_roles
+
+table_bot_support_plus_roles = reporter_plus_roles | set([748367398905708634])
+                              
 
 
 
@@ -188,15 +209,23 @@ COMMAND_TRIGGER_CHARS = set(c for c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN
 
 
 
-
-def author_is_lounge_staff(message_author):
+def author_has_id_in(message_author, role_ids):
     for role in message_author.roles:
-        if role.id in mkw_lounge_staff_roles:
+        if role.id in role_ids:
             return True
     return False
 
+def author_is_lounge_staff(message_author):
+    return author_has_id_in(message_author, mkw_lounge_staff_roles)
+
+def author_is_reporter_plus(message_author):
+    return author_has_id_in(message_author, reporter_plus_roles)
+
+def author_is_table_bot_support_plus(message_author):
+    return author_has_id_in(message_author, table_bot_support_plus_roles)
+
 def main_lounge_can_report_table(message_author):
-    return author_is_lounge_staff(message_author) or message_author.id == BAD_WOLF_ID
+    return author_is_reporter_plus(message_author) or message_author.id == BAD_WOLF_ID
 
 
 LoungeUpdateChannels = namedtuple('LoungeUpdateChannels', ['updater_channel_id_primary', 'updater_link_primary', 'preview_link_primary', 'type_text_primary',
@@ -251,9 +280,10 @@ def check_create(file_name):
         f = open(file_name, "w")
         f.close()
 
-def full_command_log(message):
-    to_log = f"Server Name: {message.guild} - Server ID: {message.guild.id} - Channel: {message.channel} - Channel ID: {message.channel.id} - User: {message.author} - User ID: {message.author.id} - User Name: {message.author.display_name} - Command: {message.content}"
-    log_text(to_log, FULL_MESSAGE_LOGGING_TYPE)
+    
+def full_command_log(message, extra_text=""):
+    to_log = f"Server Name: {message.guild} - Server ID: {message.guild.id} - Channel: {message.channel} - Channel ID: {message.channel.id} - User: {message.author} - User ID: {message.author.id} - User Name: {message.author.display_name} - Command: {message.content} {extra_text}"
+    return log_text(to_log, FULL_MESSAGE_LOGGING_TYPE)
     
 def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
     logging_file = MESSAGE_LOGGING_FILE
@@ -273,6 +303,7 @@ def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
             f.write(text)
         except:
             pass
+    return text
         
 async def download_image(image_url, image_path):
     try:

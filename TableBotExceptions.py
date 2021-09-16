@@ -52,7 +52,6 @@ class WarnedUser(NotAuthorized):
 
 class WarSetupFailure(Exception):
     pass
-
 #Exceptions that might be thrown when war is started
 class InvalidWarFormatException(WarSetupFailure):
     pass
@@ -63,12 +62,27 @@ class InvalidNumberOfPlayersException(WarSetupFailure):
 class WarSetupStillRunning(WarSetupFailure):
     pass
 
-#Exceptions regarding Adding Players
-class AddPlayerFailure(Exception):
+
+class CommandDisabled(Exception):
     pass
 
-class NoMoreFCGeneration(AddPlayerFailure):
+class WiimmfiSiteFailure(Exception):
     pass
 
-class NoMorePlayerNameGeneration(AddPlayerFailure):
+class MKWXCloudflareBlock(WiimmfiSiteFailure):
     pass
+
+class RequestedRecently(WiimmfiSiteFailure):
+    pass
+
+class WiimmfiRaceConditionFailure(WiimmfiSiteFailure):
+    pass
+
+class CacheRaceCondition(WiimmfiRaceConditionFailure):
+    pass
+
+class URLLocked(WiimmfiRaceConditionFailure):
+    pass
+
+
+

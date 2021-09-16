@@ -1,6 +1,6 @@
 from typing import List, Dict
 code = None
-loungeAPIURL = "https://mariokartboards.com/lounge/api/wiimmfi.php"
+loungeAPIURL = "https://www.mkwlounge.gg/api/wiimmfi.php"
 
 import aiohttp
 from datetime import datetime

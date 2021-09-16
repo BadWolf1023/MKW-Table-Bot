@@ -14,6 +14,7 @@ import common
 import MogiUpdate
 import URLShortener
 import AbuseTracking
+import WiimmfiSiteFunctions
 
 #External library imports for this file
 import discord
@@ -61,11 +62,10 @@ PLAYER_PENALTY_TERMS = {"pen", "penalty"}
 TEAM_PENALTY_TERMS = {"teampen", "teampenalty"}
 EDIT_PLAYER_SCORE_TERMS = {"edit"}
 PLAYER_DISCONNECT_TERMS = {"dc", "dcs"}
-ADD_PLAYER_TERMS = {"addplayer"}
 MERGE_ROOM_TERMS = {"mr", "mergeroom"}
 SET_WAR_NAME_TERMS = {"setwarname"}
-CHANGE_PLAYER_NAME_TERMS = {'changename'}
-CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag', 'setteam', 'settag'}
+CHANGE_PLAYER_NAME_TERMS = {'changename', 'cn'}
+CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag', 'setteam', 'settag', 'ct'}
 CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize"}
 EARLY_DC_TERMS = {'earlydc'}
 QUICK_EDIT_TERMS = {'quickedit', 'qe'}
@@ -83,6 +83,7 @@ RACES_TERMS = {"races"}
 RXX_TERMS = {"rxx", "rlid"}
 ALL_PLAYERS_TERMS = {"allplayers", "ap"}
 FCS_TERMS = {"fcs"}
+CURRENT_ROOM_TERMS = {"currentroom"}
 
 
 #General commands that do not require a war to be started (stateless commands)
@@ -109,15 +110,14 @@ LOUNGE_RT_MOGI_UPDATE_TERMS = {'rtmogiupdate', 'rttableupdate', 'rtupdatemogi', 
 LOUNGE_CT_MOGI_UPDATE_TERMS = {'ctmogiupdate', 'cttableupdate', 'ctupdatemogi', 'ctupdate'}
 LOUNGE_MOGI_UPDATE_TERMS = LOUNGE_RT_MOGI_UPDATE_TERMS | LOUNGE_CT_MOGI_UPDATE_TERMS
 
-#Lounge staff commands for table submissions
+#Lounge Reporter+ commands for table submissions
 LOUNGE_TABLE_SUBMISSION_APPROVAL_TERMS = {"report", "approve", "accept", "a"}
 LOUNGE_TABLE_SUBMISSION_DENY_TERMS =  {"deny", "reject", "d"}
 LOUNGE_TABLE_SUBMISSION_TERMS = LOUNGE_TABLE_SUBMISSION_APPROVAL_TERMS |  LOUNGE_TABLE_SUBMISSION_DENY_TERMS
 LOUNGE_PENDING_TABLE_SUBMISSION_TERMS = {"pending", "pendingsubmission", "pendingsubmissions", "p"}
 
-#Lounge only commands for table bot channels, used by staff and table bot support
-GET_LOCK_TERMS = {"getlock", "gl"}
-TRANSFER_LOCK_TERMS = {"transferlock", "tl"}
+#Lounge Staff Commands:
+LOUNGE_WHO_IS_TERMS = {"whois"}
 
 #Server administrator commands only
 SET_PREFIX_TERMS = {"setprefix"}
@@ -146,11 +146,12 @@ REMOVE_BAD_WOLF_FACT_TERMS = {"removebadwolffact", "rbwf"}
 BAD_WOLF_FACT_TERMS = {"badwolffacts", "bwfs"}
 TOTAL_CLEAR_TERMS = {'totalclear'}
 DUMP_DATA_TERMS = {"dtt", "dothething"}
+LOOKUP_TERMS = {"lookup"}
 ADD_BOT_ADMIN_TERMS = {"addbotadmin", "addadmin"}
 REMOVE_BOT_ADMIN_TERMS = {"removebotadmin", "removeadmin"}
 GET_LOGS_TERMS = {"getlog", "getlogs", "logs"}
 
-needPermissionCommands = ADD_PLAYER_TERMS | DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS
+needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS
 
 ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | LOUNGE_TABLE_SUBMISSION_TERMS | LOUNGE_PENDING_TABLE_SUBMISSION_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | LOUNGE_NAME_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS
 
@@ -173,9 +174,9 @@ if common.in_testing_server:
     lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.BAD_WOLF_SERVER_ID, common.main_lounge_can_report_table)
     lounge_submissions.channels_mapping = common.TESTING_SERVER_LOUNGE_UPDATES
     common.BOT_ABUSE_REPORT_CHANNEL_ID = 776031312048947230
-    TEMPORARY_VR_CATEGORIES.append(740574341187633232)
+    #TEMPORARY_VR_CATEGORIES.append(740574341187633232)
 
-elif common.running_beta:
+elif common.running_beta and not common.beta_is_real:
     common.MKW_LOUNGE_SERVER_ID = common.BAD_WOLF_SERVER_ID
     MogiUpdate.rt_summary_channels.clear()
     MogiUpdate.rt_summary_channels.update({"1":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID})
@@ -203,14 +204,12 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     if not isLoungeServer:
         return True
     
-    
-    for role in message_author.roles:
-        if role.id in common.mkw_lounge_staff_roles:
-            return True
+    if common.author_is_table_bot_support_plus(message_author):
+        return True
     
     
     if this_bot is not None and this_bot.getWar() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
-        return this_bot.getRoom().getSetupUser() is None or this_bot.getRoom().getSetupUser() == message_author.id
+        return this_bot.getRoom().canModifyTable(message_author.id) #Fixed! Check ALL people who can modify table, not just the person who started it!
     
     if command not in needPermissionCommands:
         return True
@@ -414,12 +413,6 @@ async def on_message(message: discord.Message):
             elif this_bot.prev_command_sw:
                 await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix)
             
-            elif this_bot.prev_command_add_player_not_in_lounge:
-                await commands.TablingCommands.after_add_player_command(message, this_bot, args, server_prefix)
-                
-            elif args[0] in ADD_PLAYER_TERMS:
-                await commands.TablingCommands.add_player_command(message, this_bot, args, server_prefix, is_lounge_server, command)
-                
             elif args[0] in GARBAGE_COLLECT_TERMS:
                 commands.BadWolfCommands.garbage_collect_command(message)
                 
@@ -433,7 +426,7 @@ async def on_message(message: discord.Message):
                 commands.BadWolfCommands.send_all_facts_command(message, bad_wolf_facts)
                     
             elif args[0] in START_WAR_TERMS:
-                await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_lounge_staff)
+                await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
             
             elif args[0] in TABLE_TEXT_TERMS:
                 await commands.TablingCommands.table_text_command(message, this_bot, server_prefix, is_lounge_server)
@@ -476,13 +469,6 @@ async def on_message(message: discord.Message):
             elif args[0] in INVITE_TERMS:
                 await message.channel.send(bot_invite_link)              
             
-            
-            #Informational commands
-            elif args[0] in GET_LOCK_TERMS and is_lounge_server:
-                await commands.LoungeCommands.get_lock_command(message, this_bot)
-            
-            elif args[0] in TRANSFER_LOCK_TERMS and is_lounge_server:
-                await commands.LoungeCommands.transfer_lock_command(message, args, this_bot)
                 
             elif args[0] in RACE_RESULTS_TERMS:
                 await commands.TablingCommands.race_results_command(message, this_bot, args, server_prefix, is_lounge_server)
@@ -490,6 +476,9 @@ async def on_message(message: discord.Message):
             elif args[0] in REMOVE_RACE_TERMS:
                 await commands.TablingCommands.remove_race_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
+            elif args[0] in CURRENT_ROOM_TERMS:
+                await commands.TablingCommands.current_room_command(message, this_bot, server_prefix, is_lounge_server
+                                                    )
             elif args[0] in ADD_FLAG_EXCEPTION_TERMS:
                 await commands.BotAdminCommands.add_flag_exception_command(message, args, user_flag_exceptions)
                     
@@ -500,10 +489,10 @@ async def on_message(message: discord.Message):
                 await commands.BotAdminCommands.change_ctgp_region_command(message, args)
             
             elif args[0] in VR_ON_TERMS:
-                await commands.BotAdminCommands.global_vr_command(message, args, on=True)
+                await commands.BotAdminCommands.global_vr_command(message, on=True)
                     
             elif args[0] in VR_OFF_TERMS:
-                await commands.BotAdminCommands.global_vr_command(message, args, on=False)
+                await commands.BotAdminCommands.global_vr_command(message, on=False)
                     
             elif args[0] in QUICK_START_TERMS:
                 await help_documentation.send_quickstart(message)
@@ -556,7 +545,11 @@ async def on_message(message: discord.Message):
                     
             elif args[0] in SERVER_USAGE_TERMS:
                 await commands.BadWolfCommands.server_process_memory_command(message)
-            
+                
+            elif args[0] in LOUNGE_WHO_IS_TERMS:
+                await commands.LoungeCommands.who_is_command(client, message, args)
+            elif args[0] in LOOKUP_TERMS:
+                await commands.LoungeCommands.lookup_command(client, message, args)
             elif args[0] in TABLE_BOT_MEMORY_USAGE_TERMS:
                 commands.BadWolfCommands.is_badwolf_check(message.author, "cannot display table bot internal memory usage")
                 size_str = ""
@@ -688,14 +681,16 @@ async def on_message(message: discord.Message):
         log_command_sent(message)
     except TableBotExceptions.NotBadWolf as not_bad_wolf_exception:
         await common.safe_send(message, f"You are not Bad Wolf: {not_bad_wolf_exception}")
+    except TableBotExceptions.NotLoungeStaff:
+        await common.safe_send(message, f"Not a valid command. For more help, do the command: {server_prefix}help")
     except TableBotExceptions.NotBotAdmin as not_bot_admin_exception:
         await common.safe_send(message, f"You are not a bot admin: {not_bot_admin_exception}")
     except TableBotExceptions.NotServerAdministrator as not_admin_failure:
         await common.safe_send(message, f"You are not a server administrator: {not_admin_failure}")
     except TableBotExceptions.NotStaff as not_staff_exception:
         await common.safe_send(message, f"You are not staff in this server: {not_staff_exception}")
-    except TableBotExceptions.WrongServer:
-        await common.safe_send(message, f"Not a valid command. For more help, do the command: {server_prefix}help")
+    except TableBotExceptions.WrongServer as wrong_server_exception:
+        await common.safe_send(message, f"{wrong_server_exception}: use MKW Table Bot in #bots to submit your table.")
     except TableBotExceptions.WrongUpdaterChannel as wrong_updater_channel_exception:
         await common.safe_send(message, f"Use this command in the appropriate updater channel: {wrong_updater_channel_exception}")
     except TableBotExceptions.WarSetupStillRunning:
@@ -703,7 +698,31 @@ async def on_message(message: discord.Message):
     except discord.errors.DiscordServerError:
         await common.safe_send(message, "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
     except aiohttp.client_exceptions.ClientOSError:
-        await common.safe_send(message, "Discord's servers had an error. This is usually temporary, so do your command again.")       
+        await common.safe_send(message, "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")         
+    except TableBotExceptions.RequestedRecently:
+        logging_info = log_command_sent(message, extra_text="Error info: Room requested recently, but the original request failed.")
+        await common.safe_send(message, f"Your room was requested recently, perhaps by another person, but their request failed. To avoid hitting the website, I've denied your command. Try again after {common.wp_cooldown_seconds} seconds.")         
+        await send_to_503_channel(logging_info)
+    except TableBotExceptions.MKWXCloudflareBlock:
+        logging_info = log_command_sent(message, extra_text="**Error info:** Cloudflare blocked this command.")
+        await common.safe_send(message, "Cloudflare blocked me, so I am currently trying to solve their captcha. If this is the first time you've seen this message in a while, DO try again in a few seconds, as I may have solved their captcha by then.\n\n**However**, if you get this error 5 times in a row without success, it means I cannot solve their captcha and you SHOULD NOT KEEP RUNNING THIS COMMAND. If you get this error 5 times in a row and continue to run commands, you risk being permanently banned from Table Bot.")         
+        await send_to_503_channel(logging_info)
+        await AbuseTracking.BOT_ABUSE_REPORT_CHANNEL.send(logging_info + "\n\nIf this person repeatedly does this over the course 20 minutes or less, blacklist them.")
+    except TableBotExceptions.URLLocked:
+        logging_info = log_command_sent(message, extra_text="Error info: Minor race condition for this command, URL Locked.")
+        await common.safe_send(message, f"This room is locked at this time. This isn't your fault. Cloudflare on mkwx has complicated things. Please wait {WiimmfiSiteFunctions.lockout_timelimit.total_seconds()} seconds before trying again.")         
+        await send_to_503_channel(logging_info)
+    except TableBotExceptions.CacheRaceCondition:
+        log_command_sent(message, extra_text="Error info: Race condition for this command.")
+        await common.safe_send(message, f"Something weird happened. This isn't your fault. Cloudflare on mkwx has complicated things. Go ahead and run your command again after {common.wp_cooldown_seconds} seconds.")         
+        await send_to_503_channel(logging_info)
+    except TableBotExceptions.WiimmfiSiteFailure:
+        logging_info = log_command_sent(message, extra_text="Error info: MKWX inaccessible, other error.")
+        await common.safe_send(message, "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")    
+        await send_to_503_channel(logging_info)
+    except TableBotExceptions.CommandDisabled:
+        await common.safe_send(message, "At this time, **accessing mkwx is experimental**. Therefore, MKW Table Bot only works certain channels in the Lounge server and in Bad Wolf's server, purely as an experiment.")
+
     except:
         with open(common.ERROR_LOGS_FILE, "a+") as f:
             f.write(f"\n{str(datetime.now())}: \n")
@@ -786,10 +805,12 @@ async def removeInactiveTableBots():
 #I found that sending a message every 5 minutes to a dedicated channel in my server
 #helps prevent some timing out/disconnect problems
 #This implies there might be a problem with discord.py's heartbeat functionality, but I'm not certain
+async def send_to_503_channel(text):
+    await client.get_channel(776031312048947230).send(text)
 @tasks.loop(minutes=5)
 async def stay_alive_503():
     try:
-        await client.get_channel(776031312048947230).send("Stay alive to prevent 503")
+        await send_to_503_channel("Stay alive to prevent 503")
     except:
         pass
 
@@ -948,9 +969,9 @@ def get_size(objct, seen=None):
                 all_objects.append(i)
     return total_size
 
-def log_command_sent(message:discord.Message):
-    common.log_text(f"Sever: {message.guild} - Channel: {message.channel} - User: {message.author} - Command: {message.content}")
-    common.full_command_log(message)
+def log_command_sent(message:discord.Message, extra_text=""):
+    common.log_text(f"Server: {message.guild} - Channel: {message.channel} - User: {message.author} - Command: {message.content} {extra_text}")
+    return common.full_command_log(message, extra_text)
     
 #This function dumps everything we have pulled recently from the API
 #in our two dictionaries to local storage and the main dictionaries      

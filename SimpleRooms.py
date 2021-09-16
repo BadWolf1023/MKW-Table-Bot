@@ -4,7 +4,7 @@ Created on May 6, 2021
 @author: willg
 '''
     
-import WiimfiSiteFunctions
+import WiimmfiSiteFunctions
 import Player
 import Placement
 import Race
@@ -259,7 +259,7 @@ class SimpleRooms(object):
         
     #getRoomLinkByFC old name
     async def populate_rooms_information(self):
-        soup = await WiimfiSiteFunctions.getMKWXSoup()
+        soup = await WiimmfiSiteFunctions.getMKWXSoup()
         all_ids = soup.find_all(id=True)[1:]
         for id_element in all_ids:
             self.add_room_data(id_element)
