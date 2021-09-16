@@ -71,3 +71,18 @@ class WiimmfiSiteFailure(Exception):
 
 class MKWXCloudflareBlock(WiimmfiSiteFailure):
     pass
+
+class RequestedRecently(WiimmfiSiteFailure):
+    pass
+
+class WiimmfiRaceConditionFailure(WiimmfiSiteFailure):
+    pass
+
+class CacheRaceCondition(WiimmfiRaceConditionFailure):
+    pass
+
+class URLLocked(WiimmfiRaceConditionFailure):
+    pass
+
+
+
