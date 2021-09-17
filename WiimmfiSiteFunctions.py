@@ -39,7 +39,7 @@ f"{submkwxURL}r0000004":("Table Bot Remove Race Test w/ quickedit, 2nd room to m
 
 import undetected_chromedriver.v2 as uc
 number_of_browsers = 3
-driver_infos = [[uc.Chrome(), 0, 0] for _ in range(number_of_browsers)]
+driver_infos = [[uc.Chrome(), 0, 0, False] for _ in range(number_of_browsers)]
 failures_allowed = 3
 process_pool_executor = ThreadPoolExecutor(max_workers=number_of_browsers)
 
@@ -55,17 +55,14 @@ def scraper(url):
     driver.get(url)
 """
 def select_free_driver():
-    if False:
-        return min(driver_infos, key=lambda x: x[2])
-    else:
-        index_of_min_driver = 0
-        cur_min = 0
-        for ind in range(len(driver_infos)):
-            driver_info = driver_infos[ind]
-            if driver_info[2] < cur_min:
-                index_of_min_driver = ind
-                cur_min = driver_info[2]
-        return index_of_min_driver, driver_infos[index_of_min_driver]
+    index_of_min_driver = 0
+    cur_min = 0
+    for ind in range(len(driver_infos)):
+        driver_info = driver_infos[ind]
+        if driver_info[2] < cur_min and not driver_info[3]: #If the load for the driver is the lowest AND it is not reconnecting...
+            index_of_min_driver = ind
+            cur_min = driver_info[2]
+    return index_of_min_driver, driver_infos[index_of_min_driver]
     
     
 async def cloudflare_block_handle(driver):
@@ -170,10 +167,15 @@ def clear_old_caches():
 async def cloudflare_failure_check():
     for index, driver_info in enumerate(driver_infos):
         if driver_info[1] >= failures_allowed:
-            print(f"Driver at {index} had {driver_info[1]} failures and {driver_info[2]} ongoing requests. Reconnecting...")
+            print(f"Driver at {index} had {driver_info[1]} failures and {driver_info[2]} ongoing requests. Restarting browser...")
+            driver_info[3] = True
             driver_info[1] = 0
-            driver_info[0].reconnect()
+            driver_info[0].quit()
+            await asyncio.sleep(3)
+            driver_info[0] = uc.Chrome()
+            await asyncio.sleep(3)
             driver_info[2] = 0
+            driver_info[3] = False
 
 async def delay_until_url_matches(driver, url, timeout=timedelta(seconds=10)):
     pass
