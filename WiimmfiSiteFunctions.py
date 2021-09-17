@@ -16,7 +16,8 @@ from concurrent.futures.process import ProcessPoolExecutor
 from concurrent.futures.thread import ThreadPoolExecutor
 
 url_response_cache = {}
-cache_time = timedelta(seconds=25)
+cache_time = timedelta(seconds=30)
+long_cache_time = timedelta(seconds=45)
 cache_size = 5
 cache_deletion_time_limit = timedelta(hours=2)
 lockout_timelimit = timedelta(minutes=5)
@@ -177,17 +178,18 @@ async def cloudflare_failure_check():
 async def delay_until_url_matches(driver, url, timeout=timedelta(seconds=10)):
     pass
 
-async def threaded_fetch(session, url):
-    result = await asyncio.get_event_loop().run_in_executor(process_pool_executor, fetch, session, url)
+async def threaded_fetch(session, url, use_long_cache_time=False):
+    result = await asyncio.get_event_loop().run_in_executor(process_pool_executor, fetch, session, url, use_long_cache_time)
     return result
           
-def fetch(session, url):
-    return asyncio.run(__fetch__(session, url))
+def fetch(session, url, use_long_cache_time=False):
+    return asyncio.run(__fetch__(session, url, use_long_cache_time))
 
-async def __fetch__(session, url):
+async def __fetch__(session, url, use_long_cache_time=False):
     #print_url_cache()
     free_locked_pages()
     clear_old_caches()
+    caching_time = long_cache_time if use_long_cache_time else cache_time
     #Wait until the url is finished pulling... poll 5 times...
     current_time = datetime.now()
     for _ in range(5):
@@ -219,7 +221,7 @@ async def __fetch__(session, url):
                 raise TableBotExceptions.CacheRaceCondition("Failure in cache, race condition happened.")
     
         #else: which means that page cache was empty
-        if not cache_time_expired(last_access_time, current_time):
+        if not cache_time_expired(last_access_time, current_time, caching_time):
             raise TableBotExceptions.RequestedRecently("URL Requested recently, but didn't have a cache. (This means that the original request was unsuccessful, but we don't want to hit the website again.)")
 
         raise TableBotExceptions.URLLocked("URL is locked")
@@ -236,7 +238,7 @@ async def __fetch__(session, url):
         recent_pulls_for_url = url_cache_info[2]
         if len(recent_pulls_for_url) > 0:
             last_updated = recent_pulls_for_url[-1][0]
-            if not cache_time_expired(last_updated, current_time): #If we haven't waited long enough... hit the cache
+            if not cache_time_expired(last_updated, current_time, caching_time): #If we haven't waited long enough... hit the cache
                 print(f"{current_time.time()}: fetch({url}) hit the cache because page was downloaded {(current_time - last_updated).total_seconds()} seconds ago.")
                 to_return = recent_pulls_for_url[-1][1]
         
@@ -298,13 +300,13 @@ async def getRoomHTML(roomLink):
         return html_data   
         
     async with aiohttp.ClientSession() as session:
-        temp = await threaded_fetch(session, roomLink)
+        temp = await threaded_fetch(session, roomLink, use_long_cache_time=True)
         return temp
 
 
 async def __getMKWXSoupCall__():
     async with aiohttp.ClientSession() as session:
-        mkwxHTML = await threaded_fetch(session, mkwxURL)
+        mkwxHTML = await threaded_fetch(session, mkwxURL, use_long_cache_time=False)
         return BeautifulSoup(mkwxHTML, "html.parser")
 
 
