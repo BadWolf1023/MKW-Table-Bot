@@ -55,7 +55,7 @@ def scraper(url):
     driver.get(url)
 """
 def select_free_driver():
-    if True:
+    if False:
         return min(driver_infos, key=lambda x: x[2])
     else:
         index_of_min_driver = 0
@@ -247,7 +247,6 @@ async def __fetch__(session, url, use_long_cache_time=False):
             #set the flag to currently pulling, and update the pulling time to now
             url_response_cache[url][0] = True
             url_response_cache[url][1] = current_time
-            print(f"{current_time.time()}: fetch({url}) is making an HTTPS request.")
             if not USING_EXPERIMENTAL_REQUEST:
                 print(f"{current_time.time()}: fetch({url}) is making an HTTPS request.")
                 async with session.get(url) as response:
