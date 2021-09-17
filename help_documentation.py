@@ -100,7 +100,7 @@ async def send_help(message, is_lounge_server, args:List[str], prefix=common.def
     """
     for help_text_file in help_files:
         if os.path.isfile(help_text_file):
-            with open(help_text_file, "r") as f:
+            with open(help_text_file, "r", encoding="utf-8") as f:
                 help_text = f.read()
                 if len(help_text) > 1:
                     help_text = help_text.replace("{SERVER_PREFIX}", prefix)
@@ -110,7 +110,7 @@ async def send_help(message, is_lounge_server, args:List[str], prefix=common.def
                     
 async def send_quickstart(discord_message_obj):
     quick_start = "No quickstart."
-    with open(QUICKSTART_FILE, "r") as f:
+    with open(QUICKSTART_FILE, "r", encoding="utf-8") as f:
         quick_start = f.read()
     await discord_message_obj.channel.send(quick_start)
                     

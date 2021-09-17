@@ -335,7 +335,7 @@ def private_data_init():
     def read_next_token(file_handle, seperation_key = ":") -> str:
         return file_handle.readline().strip("\n").split(seperation_key)[1].strip()
     
-    with open(common.PRIVATE_INFO_FILE, "r") as f:
+    with open(common.PRIVATE_INFO_FILE, "r", encoding="utf-8") as f:
         real_bot_key = read_next_token(f)
         beta_bot_key = read_next_token(f)
         testing_bot_key = read_next_token(f)
@@ -724,7 +724,7 @@ async def on_message(message: discord.Message):
         await common.safe_send(message, "At this time, **accessing mkwx is experimental**. Therefore, MKW Table Bot only works certain channels in the Lounge server and in Bad Wolf's server, purely as an experiment.")
 
     except:
-        with open(common.ERROR_LOGS_FILE, "a+") as f:
+        with open(common.ERROR_LOGS_FILE, "a+", encoding="utf-8") as f:
             f.write(f"\n{str(datetime.now())}: \n")
             traceback.print_exc(file=f)
 
@@ -889,7 +889,7 @@ def do_lounge_name_matching():
     dict_data = {}
     txt_file = "mapping.txt"
     print("Started building map.")
-    with open(lounge_name_list_path) as f:
+    with open(lounge_name_list_path, encoding="utf-8") as f:
         for name in f:
             name = name.strip().strip("\n")
             discord_id = UserDataProcessing.get_DiscordID_By_LoungeName(name).strip("\n")
@@ -908,7 +908,7 @@ def do_lounge_name_matching():
             
             
     try:
-        with open(txt_file,'w') as g:
+        with open(txt_file,'w', encoding="utf-8") as g:
             for name, discord_id in dict_data.items():
                 g.write(f"{discord_id}\n")
             

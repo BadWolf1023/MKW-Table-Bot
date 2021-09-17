@@ -63,7 +63,7 @@ def remove_server_setting(server_id, file_name, corresponding_dict):
         
     removed = False
     common.check_create(file_name)
-    with open(temp_file_name, "w") as temp_out, open(file_name, "r") as original:
+    with open(temp_file_name, "w", encoding="utf-8") as temp_out, open(file_name, "r", encoding="utf-8") as original:
         for line in original:
             cur_server_id = line.strip("\n").split()[0].strip()
             if cur_server_id != server_id:
@@ -92,7 +92,7 @@ def change_server_setting(server_id, new_setting, file_name, corresponding_dict)
             remove_server_setting(server_id, file_name, corresponding_dict)
         corresponding_dict[server_id] = new_setting
         common.check_create(file_name)
-        with open(file_name, "a") as f:
+        with open(file_name, "a", encoding="utf-8") as f:
             f.write(server_id + " " + new_setting + "\n")
         return True
     except:
@@ -117,7 +117,7 @@ def change_default_large_time_setting(server_id, new_large_time_setting):
 
 def load_file(file_name, corresponding_dict):
     common.check_create(file_name)
-    with open(file_name, "r") as f:
+    with open(file_name, "r", encoding="utf-8") as f:
         for line in f:
             stuffs = line.split()
             server_id = stuffs[0]

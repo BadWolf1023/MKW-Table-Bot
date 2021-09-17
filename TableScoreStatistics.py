@@ -88,7 +88,7 @@ def lorenzi_pull():
     
     
     resp = requests.post(url, headers=headers, data=data)
-    with open("yo", 'wb') as f:
+    with open("yo", 'wb', encoding="utf-8") as f:
         resp.raw.decode_content = True
         shutil.copyfileobj(resp.raw, f)   
     print(resp.content)
