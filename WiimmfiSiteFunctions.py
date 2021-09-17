@@ -40,7 +40,7 @@ f"{submkwxURL}r0000004":("Table Bot Remove Race Test w/ quickedit, 2nd room to m
 import undetected_chromedriver.v2 as uc
 number_of_browsers = 3
 driver_infos = [[uc.Chrome(), 0, 0] for _ in range(number_of_browsers)]
-failures_allowed = 5
+failures_allowed = 3
 process_pool_executor = ThreadPoolExecutor(max_workers=number_of_browsers)
 
 """
@@ -65,8 +65,7 @@ def select_free_driver():
             if driver_info[2] < cur_min:
                 index_of_min_driver = ind
                 cur_min = driver_info[2]
-        print(f"Returning driver_info's index #{index_of_min_driver} that has {cur_min} ongoing requests.")
-        return driver_infos[index_of_min_driver]
+        return index_of_min_driver, driver_infos[index_of_min_driver]
     
     
 async def cloudflare_block_handle(driver):
@@ -169,8 +168,9 @@ def clear_old_caches():
         print(f"Race condition happened in clear_old_caches")
 
 async def cloudflare_failure_check():
-    for driver_info in driver_infos:
-        if driver_info[1] > failures_allowed:
+    for index, driver_info in enumerate(driver_infos):
+        if driver_info[1] >= failures_allowed:
+            print(f"Driver at {index} had {driver_info[1]} failures and {driver_info[2]} ongoing requests. Reconnecting...")
             driver_info[1] = 0
             driver_info[0].reconnect()
             driver_info[2] = 0
@@ -249,21 +249,23 @@ async def __fetch__(session, url, use_long_cache_time=False):
             url_response_cache[url][1] = current_time
             print(f"{current_time.time()}: fetch({url}) is making an HTTPS request.")
             if not USING_EXPERIMENTAL_REQUEST:
+                print(f"{current_time.time()}: fetch({url}) is making an HTTPS request.")
                 async with session.get(url) as response:
                     to_return = await response.text()
                     recent_pulls_for_url.append([current_time, to_return])
             else:
                 await cloudflare_failure_check()
-                driver_info = select_free_driver()
+                driver_index, driver_info = select_free_driver()
                 driver_info[2] += 1
+                print(f"{current_time.time()}: fetch({url}) is making an HTTPS request: Driver #{driver_index}, {driver_info[2]} ongoing requests (including this one).")
                 try:
                     driver_info[0].get(url)
                     bypassed_cloudflare = await cloudflare_block_handle(driver_info[0])
                         
                     if not bypassed_cloudflare:
-                        print("Full block by Cloudflare")
                         cloudflare_failure = True
                         driver_info[1] += 1
+                        print(f"Full block by Cloudflare: Driver at index {driver_index} now has {driver_info[1]} total blocked requests, and processing {driver_info[2]} outgoing requests (including this one).")
                         raise TableBotExceptions.MKWXCloudflareBlock("Cloudflare blocked page.")
                     #print(driver_info[0].current_url)
                     #await delay_until_url_matches(driver_info[0], url)
