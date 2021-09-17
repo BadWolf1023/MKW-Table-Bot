@@ -707,7 +707,7 @@ async def on_message(message: discord.Message):
         logging_info = log_command_sent(message, extra_text="**Error info:** Cloudflare blocked this command.")
         await common.safe_send(message, "Cloudflare blocked me, so I am currently trying to solve their captcha. If this is the first time you've seen this message in a while, DO try again in a few seconds, as I may have solved their captcha by then.\n\n**However**, if you get this error 5 times in a row without success, it means I cannot solve their captcha and you SHOULD NOT KEEP RUNNING THIS COMMAND. If you get this error 5 times in a row and continue to run commands, you risk being permanently banned from Table Bot.")         
         await send_to_503_channel(logging_info)
-        await AbuseTracking.BOT_ABUSE_REPORT_CHANNEL.send(logging_info + "\n\nIf this person repeatedly does this over the course 20 minutes or less, blacklist them.")
+        await AbuseTracking.CLOUDFLARE_REPORT_CHANNEL.send(logging_info + "\n\nIf this person repeatedly does this over the course 20 minutes or less, blacklist them.")
     except TableBotExceptions.URLLocked:
         logging_info = log_command_sent(message, extra_text="Error info: Minor race condition for this command, URL Locked.")
         await common.safe_send(message, f"This room is locked at this time. This isn't your fault. Cloudflare on mkwx has complicated things. Please wait {WiimmfiSiteFunctions.lockout_timelimit.total_seconds()} seconds before trying again.")         
