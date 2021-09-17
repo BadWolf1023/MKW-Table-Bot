@@ -41,15 +41,15 @@ LIMITED_CHANNEL_IDS = {747290182096650332,#RT T5, RT T4, RT T3, RT T2, RT T1, CT
                        739734249329918083} | BAD_WOLFS_CHANNELS | LIMITED_DONT_INCLUDE_IN_COUNT
 LIMITED_SERVER_IDS = None
 
-current_notification = f"Because the developers of <https://wiimmfi.de> have not taken any of my proposed solutions for letting critical tools access the website, MKW Table Bot now uses a different method for accessing mkwx.\n\nUnfortunately, command cooldowns have also increased, and miis have been disabled to ensure Table Bot doesn't access the website too much. MKW Table Bot will run much slower as well. Please note: **Accessing mkwx is experimental at this time.**\n\nAdditionally, Table Bot only works in {len(LIMITED_CHANNEL_IDS) - len(LIMITED_DONT_INCLUDE_IN_COUNT)} selected channels, 8 of which are in Lounge, and 3 in Bad Wolf's server.\n\nIf you want to tell the developers that you enjoy our community's tools and think they are important/critical infrastructure, create an account or log in on <https://forum.wii-homebrew.com>, go to 'User introductions', introduce yourself, and tell them that legitimate, corteous content creators and developers shouldn't have to pay the price for a criminal's activity. Thanks for understanding and your support. Happy auto tabling."
+current_notification = f"Because the developers of <https://wiimmfi.de> have not taken any of my proposed solutions for letting certain critical tools access the website, MKW Table Bot uses an experimental method for accessing the website.\n\nTo make sure MKW Table Bot doesn't access the website too frequently, miis have been disabled. Please note: **Accessing mkwx is experimental at this time.**\n\nAdditionally, Table Bot only works in {len(LIMITED_CHANNEL_IDS) - len(LIMITED_DONT_INCLUDE_IN_COUNT)} specific channels, 8 of which are in Lounge, and 3 in Bad Wolf's server.\n\nIf you appreciate MKW Table Bot, create an account or log in on <https://forum.wii-homebrew.com>, go to 'User introductions', introduce yourself, and tell them that honest developers shouldn't have to pay the price for a criminal's actions. Thanks for understanding and your support. Happy auto tabling."
 
 
 #TableBot variables, for ChannelBots
 inactivity_time_period = timedelta(hours=2, minutes=30)
 lounge_inactivity_time_period = timedelta(minutes=8)
 inactivity_unlock = timedelta(minutes=30)
-wp_cooldown_seconds = 30
-rl_cooldown_seconds = 30
+wp_cooldown_seconds = 15
+rl_cooldown_seconds = 15
 
 #Mii folder location information
 MII_TABLE_PICTURE_PREFIX = "table_"
@@ -287,7 +287,7 @@ def throw_if_not_lounge(guild):
 
 def check_create(file_name):
     if not os.path.isfile(file_name):
-        f = open(file_name, "w")
+        f = open(file_name, "w", encoding="utf-8")
         f.close()
 
     
@@ -307,7 +307,7 @@ def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
         logging_file = FULL_MESSAGE_LOGGING_FILE
         
     check_create(logging_file)
-    with open(logging_file, "a+") as f:
+    with open(logging_file, "a+", encoding="utf-8") as f:
         f.write(f"\n{str(datetime.now())}: ")
         try:
             f.write(text)
@@ -342,7 +342,7 @@ async def safe_send_file(message:discord.Message, content):
     file_name = str(message.id) + ".txt"
     Path('./attachments').mkdir(parents=True, exist_ok=True)
     file_path = "./attachments/" + file_name
-    with open(file_path, "w") as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)
         
     txt_file = discord.File(file_path, filename=file_name)
