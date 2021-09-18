@@ -38,7 +38,20 @@ LIMITED_CHANNEL_IDS = {747290182096650332,#RT T5, RT T4, RT T3, RT T2, RT T1, CT
                        747289647003992078,
                        747290436275535913,
                        739851885665845272,
-                       739734249329918083} | BAD_WOLFS_CHANNELS | LIMITED_DONT_INCLUDE_IN_COUNT
+                       739734249329918083,
+                       725870650211827755, #jackie channel #1
+                       729305443616161804, #jackie channel #2
+                       739264992607731722, #arvin channel #1
+                       435836808358789121, #emilP channel #1
+                       824713048220368896, #osf channel #1
+                       814967280022585374, #Process channel #1
+                       583799288317083678, #Process channel #2
+                       776487774093443114, #remi channel #1
+                       856422278002245646, #chaos channel #1
+                       856564700174090310, #chaos channel #2
+                       788937681710743562, #lorone channel #1
+                       871920891716579348 #lorone channel #2
+                       } | BAD_WOLFS_CHANNELS | LIMITED_DONT_INCLUDE_IN_COUNT
 LIMITED_SERVER_IDS = None
 
 current_notification = f"Because the developers of <https://wiimmfi.de> have not taken any of my proposed solutions for letting certain critical tools access the website, MKW Table Bot uses an experimental method for accessing the website.\n\nTo make sure MKW Table Bot doesn't access the website too frequently, miis have been disabled. Please note: **Accessing mkwx is experimental at this time.**\n\nAdditionally, Table Bot only works in {len(LIMITED_CHANNEL_IDS) - len(LIMITED_DONT_INCLUDE_IN_COUNT)} specific channels, 8 of which are in Lounge, and 3 in Bad Wolf's server.\n\nIf you appreciate MKW Table Bot, create an account or log in on <https://forum.wii-homebrew.com>, go to 'User introductions', introduce yourself, and tell them that honest developers shouldn't have to pay the price for a criminal's actions. Thanks for understanding and your support. Happy auto tabling."
