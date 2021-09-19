@@ -703,11 +703,15 @@ async def on_message(message: discord.Message):
         logging_info = log_command_sent(message, extra_text="Error info: Room requested recently, but the original request failed.")
         await common.safe_send(message, f"Your room was requested recently, perhaps by another person, but their request failed. To avoid hitting the website, I've denied your command. Try again after {common.wp_cooldown_seconds} seconds.")         
         await send_to_503_channel(logging_info)
+    except TableBotExceptions.NoAvailableBrowsers:
+        logging_info = log_command_sent(message, extra_text="**Error info:** No available browsers.")
+        await common.safe_send(message, "I don't have the resources to process your command. Table Bot usage might be high at this time. Try again in a minute.")
+        await send_to_503_channel(logging_info)
     except TableBotExceptions.MKWXCloudflareBlock:
         logging_info = log_command_sent(message, extra_text="**Error info:** Cloudflare blocked this command.")
         await common.safe_send(message, "Cloudflare blocked me, so I am currently trying to solve their captcha. If this is the first time you've seen this message in a while, DO try again in a few seconds, as I may have solved their captcha by then.\n\n**However**, if you get this error 5 times in a row without success, it means I cannot solve their captcha and you SHOULD NOT KEEP RUNNING THIS COMMAND. If you get this error 5 times in a row and continue to run commands, you risk being permanently banned from Table Bot.")         
         await send_to_503_channel(logging_info)
-        await AbuseTracking.CLOUDFLARE_REPORT_CHANNEL.send(logging_info + "\n\nIf this person repeatedly does this over the course 20 minutes or less, blacklist them.")
+        await AbuseTracking.CLOUDFLARE_REPORT_CHANNEL.send(f"Cloudflare blocked this command: Server Name: {message.guild} - User: **{message.author}** - User ID: {message.author.id} - Nickname: {message.author.display_name} - Command: {message.content}\nIf this person repeatedly does this over the course 20 minutes or less, blacklist them.")
     except TableBotExceptions.URLLocked:
         logging_info = log_command_sent(message, extra_text="Error info: Minor race condition for this command, URL Locked.")
         await common.safe_send(message, f"This room is locked at this time. This isn't your fault. Cloudflare on mkwx has complicated things. Please wait {WiimmfiSiteFunctions.lockout_timelimit.total_seconds()} seconds before trying again.")         
