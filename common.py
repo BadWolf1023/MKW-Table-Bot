@@ -50,7 +50,13 @@ LIMITED_CHANNEL_IDS = {747290182096650332,#RT T5, RT T4, RT T3, RT T2, RT T1, CT
                        856422278002245646, #chaos channel #1
                        856564700174090310, #chaos channel #2
                        788937681710743562, #lorone channel #1
-                       871920891716579348 #lorone channel #2
+                       871920891716579348, #lorone channel #2
+                       796076771941941279, #Sprixy #1
+                       745436799299747881, #Sprixy #2
+                       804418977685045298, #Rompe #1
+                       769597112731435018, #Rompe #2
+                       886901990850977832, #Asuna #1
+                       743022435678552064 #Asuna #2
                        } | BAD_WOLFS_CHANNELS | LIMITED_DONT_INCLUDE_IN_COUNT
 LIMITED_SERVER_IDS = None
 
