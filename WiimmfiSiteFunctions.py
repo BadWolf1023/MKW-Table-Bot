@@ -39,8 +39,8 @@ f"{submkwxURL}r0000004":("Table Bot Remove Race Test w/ quickedit, 2nd room to m
 
 import undetected_chromedriver.v2 as uc
 number_of_browsers = 3
-driver_infos = [[uc.Chrome(), 0, 0, False] for _ in range(number_of_browsers)]
-failures_allowed = 3
+driver_infos = [[uc.Chrome(), 0, 0, 0, False] for _ in range(number_of_browsers)] #browser, number of cloudflare failures, number of ongoing requests, total requests, browser in use
+failures_allowed = 2
 process_pool_executor = ThreadPoolExecutor(max_workers=number_of_browsers)
 
 """
@@ -56,24 +56,24 @@ def scraper(url):
 """
 def select_free_driver():
     index_of_min_driver = 0
-    cur_min = 0
-    for ind in range(len(driver_infos)):
-        driver_info = driver_infos[ind]
-        if driver_info[2] < cur_min and not driver_info[3]: #If the load for the driver is the lowest AND it is not reconnecting...
+    cur_min = (driver_infos[0][2], driver_infos[0][3])
+    for ind, driver_info in enumerate(driver_infos):
+        if (driver_info[2], driver_info[3]) < cur_min and not driver_info[4]: #If the load for the driver is the lowest AND it is not in use...
             index_of_min_driver = ind
-            cur_min = driver_info[2]
+            cur_min = (driver_info[2], driver_info[3])
     return index_of_min_driver, driver_infos[index_of_min_driver]
     
     
-async def cloudflare_block_handle(driver):
-    if "Ray ID: " in driver.page_source:
+async def cloudflare_block_handle(driver, original_source):
+    originally_had_cloudflare = False
+    if "Ray ID: " in original_source:
+        originally_had_cloudflare = True
         print("Blocked by Cloudflare, attempting bypass")
         driver.service.stop()
         await asyncio.sleep(driver._delay)
         driver.service.start()
         driver.start_session()
-    page_source = driver.page_source
-    return "Ray ID: " not in page_source
+    return originally_had_cloudflare, "Ray ID: " not in driver.page_source
 
 """
 
@@ -166,16 +166,16 @@ def clear_old_caches():
 
 async def cloudflare_failure_check():
     for index, driver_info in enumerate(driver_infos):
-        if driver_info[1] >= failures_allowed:
+        if driver_info[1] >= failures_allowed and not driver_info[4]:
+            driver_info[4] = True
             print(f"Driver at {index} had {driver_info[1]} failures and {driver_info[2]} ongoing requests. Restarting browser...")
-            driver_info[3] = True
             driver_info[1] = 0
             driver_info[0].quit()
             await asyncio.sleep(3)
             driver_info[0] = uc.Chrome()
             await asyncio.sleep(3)
             driver_info[2] = 0
-            driver_info[3] = False
+            driver_info[4] = False
 
 async def delay_until_url_matches(driver, url, timeout=timedelta(seconds=10)):
     pass
@@ -230,6 +230,7 @@ async def __fetch__(session, url, use_long_cache_time=False):
                 
     to_return = None
     cloudflare_failure = False
+    all_browsers_busy = False
     try: #Very important, if we throw an exception without setting our flag to False, the URL will become permanently inaccessible
         if url not in url_response_cache:
             #print(f"{url} wasn't in url_response_cache: {len(url_response_cache)}")
@@ -257,11 +258,24 @@ async def __fetch__(session, url, use_long_cache_time=False):
             else:
                 await cloudflare_failure_check()
                 driver_index, driver_info = select_free_driver()
-                driver_info[2] += 1
+                for _ in range(10):
+                    if driver_info[4]: #if driver is busy...
+                        await asyncio.sleep(1) #wait a second, then find a new one
+                        driver_index, driver_info = select_free_driver() #Try to pick a new driver
+                    else:
+                        break
+                else:
+                    all_browsers_busy = True
+                    raise TableBotExceptions.NoAvailableBrowsers("All browsers are busy.")
+                
+                driver_info[4] = True #set flag for currently pulling
+                driver_info[2] += 1 #add one to number of current ongoing requests
+                driver_info[3] += 1 #add one to total requests sent
                 print(f"{current_time.time()}: fetch({url}) is making an HTTPS request: Driver #{driver_index}, {driver_info[2]} ongoing requests (including this one).")
                 try:
                     driver_info[0].get(url)
-                    bypassed_cloudflare = await cloudflare_block_handle(driver_info[0])
+                    page_source = driver_info[0].page_source
+                    originally_had_cloudflare, bypassed_cloudflare = await cloudflare_block_handle(driver_info[0], page_source)
                         
                     if not bypassed_cloudflare:
                         cloudflare_failure = True
@@ -270,12 +284,14 @@ async def __fetch__(session, url, use_long_cache_time=False):
                         raise TableBotExceptions.MKWXCloudflareBlock("Cloudflare blocked page.")
                     #print(driver_info[0].current_url)
                     #await delay_until_url_matches(driver_info[0], url)
-                    to_return = driver_info[0].page_source
+                    to_return = driver_info[0].page_source if originally_had_cloudflare else page_source
                     recent_pulls_for_url.append([current_time, to_return])
                 except:
-                    driver_info[2] -= 1
+                    driver_info[2] -= 1 #reduce number of current ongoing requests by one
+                    driver_info[4] = False
                     raise
-                driver_info[2] -= 1
+                driver_info[2] -= 1 #reduce number of current ongoing requests by one
+                driver_info[4] = False
         else: #Putting here for clarification on control flow, see comment below
             pass #no need for an else statement, if we hit our cache, we'll execute the finally statement and return it
     except Exception as e:
@@ -287,6 +303,8 @@ async def __fetch__(session, url, use_long_cache_time=False):
         url_response_cache[url][0] = False #set the flag to no longer pulling so we don't get locked out
         if cloudflare_failure:
             raise TableBotExceptions.MKWXCloudflareBlock("Cloudflare blocked page.")
+        if all_browsers_busy:
+            raise TableBotExceptions.NoAvailableBrowsers("All browsers are busy.")
         if to_return is None:
             raise TableBotExceptions.WiimmfiSiteFailure("Could not pull information from mkwx.")
         return to_return
