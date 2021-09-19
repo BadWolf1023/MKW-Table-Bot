@@ -84,5 +84,6 @@ class CacheRaceCondition(WiimmfiRaceConditionFailure):
 class URLLocked(WiimmfiRaceConditionFailure):
     pass
 
-
+class NoAvailableBrowsers(WiimmfiSiteFailure):
+    pass
 
