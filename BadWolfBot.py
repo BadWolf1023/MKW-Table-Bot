@@ -31,6 +31,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import aiohttp
 import os
+import asyncio
 
 
 finished_on_ready = False
@@ -335,7 +336,7 @@ def private_data_init():
     def read_next_token(file_handle, seperation_key = ":") -> str:
         return file_handle.readline().strip("\n").split(seperation_key)[1].strip()
     
-    with open(common.PRIVATE_INFO_FILE, "r") as f:
+    with open(common.PRIVATE_INFO_FILE, "r", encoding="utf-8") as f:
         real_bot_key = read_next_token(f)
         beta_bot_key = read_next_token(f)
         testing_bot_key = read_next_token(f)
@@ -690,7 +691,7 @@ async def on_message(message: discord.Message):
     except TableBotExceptions.NotStaff as not_staff_exception:
         await common.safe_send(message, f"You are not staff in this server: {not_staff_exception}")
     except TableBotExceptions.WrongServer as wrong_server_exception:
-        await common.safe_send(message, f"{wrong_server_exception}: use MKW Table Bot in #bots to submit your table.")
+        await common.safe_send(message, f"{wrong_server_exception}: **I am not <@735782213118853180>. Use <@735782213118853180> in <#389521626645004302> to submit your table.**")
     except TableBotExceptions.WrongUpdaterChannel as wrong_updater_channel_exception:
         await common.safe_send(message, f"Use this command in the appropriate updater channel: {wrong_updater_channel_exception}")
     except TableBotExceptions.WarSetupStillRunning:
@@ -703,11 +704,15 @@ async def on_message(message: discord.Message):
         logging_info = log_command_sent(message, extra_text="Error info: Room requested recently, but the original request failed.")
         await common.safe_send(message, f"Your room was requested recently, perhaps by another person, but their request failed. To avoid hitting the website, I've denied your command. Try again after {common.wp_cooldown_seconds} seconds.")         
         await send_to_503_channel(logging_info)
+    except TableBotExceptions.NoAvailableBrowsers:
+        logging_info = log_command_sent(message, extra_text="**Error info:** No available browsers.")
+        await common.safe_send(message, "I don't have the resources to process your command. Table Bot usage might be high at this time. Try again in a minute.")
+        await send_to_503_channel(logging_info)
     except TableBotExceptions.MKWXCloudflareBlock:
         logging_info = log_command_sent(message, extra_text="**Error info:** Cloudflare blocked this command.")
         await common.safe_send(message, "Cloudflare blocked me, so I am currently trying to solve their captcha. If this is the first time you've seen this message in a while, DO try again in a few seconds, as I may have solved their captcha by then.\n\n**However**, if you get this error 5 times in a row without success, it means I cannot solve their captcha and you SHOULD NOT KEEP RUNNING THIS COMMAND. If you get this error 5 times in a row and continue to run commands, you risk being permanently banned from Table Bot.")         
         await send_to_503_channel(logging_info)
-        await AbuseTracking.BOT_ABUSE_REPORT_CHANNEL.send(logging_info + "\n\nIf this person repeatedly does this over the course 20 minutes or less, blacklist them.")
+        await AbuseTracking.CLOUDFLARE_REPORT_CHANNEL.send(f"Cloudflare blocked this command: Server Name: {message.guild} - User: **{message.author}** - User ID: {message.author.id} - Nickname: {message.author.display_name} - Command: {message.content}\nIf this person repeatedly does this over the course 20 minutes or less, blacklist them.")
     except TableBotExceptions.URLLocked:
         logging_info = log_command_sent(message, extra_text="Error info: Minor race condition for this command, URL Locked.")
         await common.safe_send(message, f"This room is locked at this time. This isn't your fault. Cloudflare on mkwx has complicated things. Please wait {WiimmfiSiteFunctions.lockout_timelimit.total_seconds()} seconds before trying again.")         
@@ -724,7 +729,7 @@ async def on_message(message: discord.Message):
         await common.safe_send(message, "At this time, **accessing mkwx is experimental**. Therefore, MKW Table Bot only works certain channels in the Lounge server and in Bad Wolf's server, purely as an experiment.")
 
     except:
-        with open(common.ERROR_LOGS_FILE, "a+") as f:
+        with open(common.ERROR_LOGS_FILE, "a+", encoding="utf-8") as f:
             f.write(f"\n{str(datetime.now())}: \n")
             traceback.print_exc(file=f)
 
@@ -758,6 +763,8 @@ async def on_ready():
     
     dumpDataAndBackup.start()
     checkBotAbuse.start()
+    
+    driver_reset_cycle.start()
     finished_on_ready = True
     
     
@@ -807,12 +814,27 @@ async def removeInactiveTableBots():
 #This implies there might be a problem with discord.py's heartbeat functionality, but I'm not certain
 async def send_to_503_channel(text):
     await client.get_channel(776031312048947230).send(text)
+    
 @tasks.loop(minutes=5)
 async def stay_alive_503():
     try:
         await send_to_503_channel("Stay alive to prevent 503")
     except:
         pass
+
+import itertools
+driver_cycle = itertools.cycle([i for i in range(WiimmfiSiteFunctions.number_of_browsers)])
+driver_reset_cycle_loop_time = int(WiimmfiSiteFunctions.captcha_time_estimation / WiimmfiSiteFunctions.number_of_browsers)
+@tasks.loop(minutes=driver_reset_cycle_loop_time)
+async def driver_reset_cycle():
+    await asyncio.sleep(10) #Make sure we're done booting
+    current_driver_index = next(driver_cycle)
+    try:
+        success = await WiimmfiSiteFunctions.safe_restart_driver(current_driver_index, logging_message=f"Resetting driver at index {current_driver_index} because a captcha may be hit soon.")
+        if not success:
+            print(f"Failed to reset driver at index {current_driver_index} because it was busy for {WiimmfiSiteFunctions.SAFE_DRIVER_RESTART_TIMEOUT} seconds.")
+    except Exception as e:
+        print(f"Failed to reset driver at index {current_driver_index} because of the following exception: {e}")
 
    
 #This function will run every 1 minutes. It will remove any table bots that are
@@ -889,7 +911,7 @@ def do_lounge_name_matching():
     dict_data = {}
     txt_file = "mapping.txt"
     print("Started building map.")
-    with open(lounge_name_list_path) as f:
+    with open(lounge_name_list_path, encoding="utf-8") as f:
         for name in f:
             name = name.strip().strip("\n")
             discord_id = UserDataProcessing.get_DiscordID_By_LoungeName(name).strip("\n")
@@ -908,7 +930,7 @@ def do_lounge_name_matching():
             
             
     try:
-        with open(txt_file,'w') as g:
+        with open(txt_file,'w', encoding="utf-8") as g:
             for name, discord_id in dict_data.items():
                 g.write(f"{discord_id}\n")
             

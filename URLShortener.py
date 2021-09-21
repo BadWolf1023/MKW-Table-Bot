@@ -65,7 +65,7 @@ def __private_load__():
         return file_handle.readline().strip("\n").split(seperation_key)[1].strip()
     
     global BITLY_API_TOKEN
-    with open(common.PRIVATE_INFO_FILE, "r") as f:
+    with open(common.PRIVATE_INFO_FILE, "r", encoding="utf-8") as f:
         read_next_token(f)
         read_next_token(f)
         read_next_token(f)

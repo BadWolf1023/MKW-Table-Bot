@@ -9,11 +9,24 @@ from datetime import datetime, timedelta
 import UserDataProcessing
 import aiohttp
 import codecs
+import asyncio
+import TableBotExceptions
+import common
+#from concurrent.futures.process import ProcessPoolExecutor
+from concurrent.futures.thread import ThreadPoolExecutor
 
-current_mkwx_soups = None
-mkwx_soup_last_updated = None
-mkwx_cache_time = timedelta(seconds=10)
+url_response_cache = {}
+cache_time = timedelta(seconds=30)
+long_cache_time = timedelta(seconds=45)
+cache_size = 5
+cache_deletion_time_limit = timedelta(hours=2)
+lockout_timelimit = timedelta(minutes=5)
 
+#Number of minutes between captchas
+captcha_time_estimation = 117
+
+
+USING_EXPERIMENTAL_REQUEST = True
 
 
 wiimmfi_url = 'https://wiimmfi.de'
@@ -26,61 +39,322 @@ f"{submkwxURL}r0000003":("Table Bot Remove Race Test w/ quickedit", "testing_roo
 f"{submkwxURL}r0000004":("Table Bot Remove Race Test w/ quickedit, 2nd room to merge", "testing_rooms/removerace_two.html")}
 
 
-async def fetch(session, url):
-    async with session.get(url) as response:
-        return await response.text()
+
+import undetected_chromedriver.v2 as uc
+number_of_browsers = 3
+driver_infos = [[uc.Chrome(), 0, 0, 0, False] for _ in range(number_of_browsers)] #browser, number of cloudflare failures, number of ongoing requests, total requests, browser in use
+failures_allowed = 2
+process_pool_executor = ThreadPoolExecutor(max_workers=number_of_browsers)
+
+"""
+executor = ThreadPoolExecutor(5)
+
+def scrape(url, *, loop):
+    loop.run_in_executor(executor, scraper, url)
+
+
+def scraper(url):
+    driver = webdriver.Chrome("./chromedriver")
+    driver.get(url)
+"""
+def select_free_driver():
+    index_of_min_driver = 0
+    cur_min = (driver_infos[0][2], driver_infos[0][3])
+    for ind, driver_info in enumerate(driver_infos):
+        if (driver_info[2], driver_info[3]) < cur_min and not driver_info[4]: #If the load for the driver is the lowest AND it is not in use...
+            index_of_min_driver = ind
+            cur_min = (driver_info[2], driver_info[3])
+    return index_of_min_driver, driver_infos[index_of_min_driver]
+
+SAFE_DRIVER_RESTART_TIMEOUT = 45
+async def safe_restart_driver(index, logging_message):
+    for _ in range(SAFE_DRIVER_RESTART_TIMEOUT):
+        if driver_infos[index][4]:
+            await asyncio.sleep(1)
+        if not driver_infos[index][4]:
+            await restart_driver(index, logging_message)
+            return True
+    return False
+
+#Note: We don't reset the total number of requests. The total number of requests accumulates regardless of if the browser is restarted
+#This is to ensure that, assuming the load is equal (eg the number of requests in the queue for a browser) across all 3 browsers, the browser selection continues to rotate
+async def restart_driver(index, logging_message):
+    driver_info = driver_infos[index]
+    driver_info[4] = True
+    print(logging_message)
+    driver_info[1] = 0
+    driver_info[0].quit()
+    await asyncio.sleep(3)
+    driver_info[0] = uc.Chrome()
+    await asyncio.sleep(3)
+    driver_info[2] = 0
+    driver_info[4] = False
+
+async def cloudflare_block_handle(driver_index, original_source):
+    originally_had_cloudflare = False
+    if "Ray ID: " in original_source:
+        originally_had_cloudflare = True
+        print("Blocked by Cloudflare, attempting bypass")
+        driver_infos[driver_index][0].service.stop()
+        await asyncio.sleep(driver_infos[driver_index][0]._delay)
+        driver_infos[driver_index][0].service.start()
+        driver_infos[driver_index][0].start_session()
+    return originally_had_cloudflare, "Ray ID: " not in driver_infos[driver_index][0].page_source
+
+"""
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=12) as executor:
+                        future_to_fc = {executor.submit(MiiPuller.get_mii_blocking, fc, message_id): fc for fc in self.getRoom().getFCs() if fc not in self.miis }
+                        for future in concurrent.futures.as_completed(future_to_fc):
+                            fc = future_to_fc[future]
+                            try:
+                                mii_pull_result = future.result()
+                            except Exception as exc:
+                                common.log_text(f'{fc} generated an exception: {exc}', common.ERROR_LOGGING_TYPE)
+                            else:
+                                if not isinstance(mii_pull_result, str):
+                                    self.miis[fc] = mii_pull_result
+                                    mii_pull_result.output_table_mii_to_disc()
+                                    mii_pull_result.__remove_main_mii_picture__()
+                                else:
+                                    pass
+loop.run_until_complete(asyncio.gather(*asyncio.all_tasks(loop)))"""
+"""
+class FetchExecutor():
+    def __init__(self):
+        self.pool = ThreadPoolExecutor(max_workers=6)
+        self.tasks = {}
+        
+    def submit_fetch(self, callback, *args):
+        future = self.pool.submit(fetch, args)
+        self.tasks[future] = datetime.now()
+        future.add_done_callback(callback)
+
+    
+    def __del__(self):
+        self.pool.shutdown(wait=False)
+        
+fetch_executor = FetchExecutor()
+"""
+
+
+
+
+def print_url_cache():
+    for url, url_cache_info in url_response_cache.items():
+        print(f"{url}: {url_cache_info[0]} - {url_cache_info[1]}:")
+        for page_cache in url_cache_info[2]:
+            print(f"{page_cache[0]}: {page_cache[1][:20]}")
+            
+def cache_time_expired(last_access_time, current_time, cache_time=cache_time):
+    return (current_time - last_access_time) > cache_time
+
+#Redundancy check
+def free_locked_pages():
+    current_time = datetime.now()
+    try: #Need to try because clear_old_cache can cause a race condition
+        for cache_info in url_response_cache.values():
+            if cache_info[0]: #currently "pulling" - either locked, or actually true
+                
+                #If it's been unreasonably long, it's safe to assume we someone got locked
+                #This isn't actually guaranteed, BUT....
+                #...we're not implementing a fully safe multi-thread caching mechanism, because the entire point of this is to minimize mkwx requests
+                #If the absurd scenario a request did somehow did take 60 seconds and we get caught in a microsecond timeperiod race and we send two requests to the URL,
+                #OH WELL. THAT'S LIFE.
+                if cache_time_expired(cache_info[1], current_time, lockout_timelimit): 
+                    cache_info[0] = False #Set flag to not pulling anymore, so it's unlocked and can be pulled again
+    except:
+        #Off the top of my head, an iteration change exception could occur. More might, but they generally all mean that we failed. We'll just try again later.
+        print(f"Race condition happened in free_locked_pages")
+        pass
+        
+def clear_old_caches():
+    current_time = datetime.now()
+    urls_to_delete = set()
+    try: #Need to try because clear_old_cache itself can cause a race condition
+        for url, (currently_pulling, last_pull_entry_time, page_caches) in url_response_cache.items():
+            if cache_time_expired(last_pull_entry_time, current_time, cache_deletion_time_limit):
+                urls_to_delete.add(url)
+            
+            while len(page_caches) >= 5:
+                try: #Race condition avoidance: just because we were told there were enough pages in the previous line doesn't mean that there will be on the next line
+                    del page_caches[0]
+                except:
+                    print(f"Race condition happened, pages weren't removed from this url's cache: {url}")
+                    break
+                
+                
+        for url in urls_to_delete:
+            try: #trying because race condition might exist - just because url was in the url_response_cache a few lines ago doesn't mean it still is, or that it's delete-able
+                del url_response_cache[url]
+            except:
+                print(f"Race condition happened, url wasn't deleted from cache: {url}")
+    except:
+        #Off the top of my head, an iteration change exception could occur. More might, but they generally all mean that we failed. We'll just try again later.
+        print(f"Race condition happened in clear_old_caches")
+
+async def cloudflare_failure_check():
+    for index, driver_info in enumerate(driver_infos):
+        if driver_info[1] >= failures_allowed and not driver_info[4]:
+            await restart_driver(index, logging_message=f"Driver at {index} had {driver_info[1]} failures and {driver_info[2]} ongoing requests. Restarting browser...")
+
+
+#async def delay_until_url_matches(driver, url, timeout=timedelta(seconds=10)):
+#    pass
+
+async def threaded_fetch(session, url, use_long_cache_time=False):
+    result = await asyncio.get_event_loop().run_in_executor(process_pool_executor, fetch, session, url, use_long_cache_time)
+    return result
+          
+def fetch(session, url, use_long_cache_time=False):
+    return asyncio.run(__fetch__(session, url, use_long_cache_time))
+
+async def __fetch__(session, url, use_long_cache_time=False):
+    #print_url_cache()
+    free_locked_pages()
+    clear_old_caches()
+    caching_time = long_cache_time if use_long_cache_time else cache_time
+    #Wait until the url is finished pulling... poll 5 times...
+    current_time = datetime.now()
+    for _ in range(5):
+        try: #Race condition avoidance: in the following line, it's possible that the url is in the cache for the first part of statement, but not the second part of the statement
+            if url in url_response_cache and url_response_cache[url][0]:
+                await asyncio.sleep(2)
+                if not (url in url_response_cache and url_response_cache[url][0]): #To catch the final try and avoid a huge time window which would certainly result in race conditions
+                    break  
+            else: #URL is either not in cache, or not trying to pull
+                break
+        except (AttributeError, IndexError):
+            pass
+            
+    else: #We polled 5 times without breaking, which means a request took a long time. Shouldn't normally happen, but we'll return the most
+        #recent soup if we have one, otherwise none
+        _, last_access_time, page_caches = None, datetime.min, []
+        try:
+            _, last_access_time, page_caches = url_response_cache[url]
+        except:
+            raise TableBotExceptions.CacheRaceCondition("Failure in cache, race condition happened.")
+        
+        #At this point, we're promised that the url cache information (last_access_time, page_caches) is from the cache dict
+        if len(page_caches) > 0:
+            try:
+                most_recent_update, page_cache = page_caches[-1]
+                print(f"{current_time.time()}: fetch({url}) hit the cache because page was being pulled, but didn't finish in 5 seconds. (Page was downloaded {(current_time - most_recent_update).total_seconds()} seconds ago, and fetching the page was locked at {last_access_time.time()}, which was {(current_time - last_access_time).total_seconds()} seconds ago.)")
+                return page_cache
+            except:
+                raise TableBotExceptions.CacheRaceCondition("Failure in cache, race condition happened.")
+    
+        #else: which means that page cache was empty
+        if not cache_time_expired(last_access_time, current_time, caching_time):
+            raise TableBotExceptions.RequestedRecently("URL Requested recently, but didn't have a cache. (This means that the original request was unsuccessful, but we don't want to hit the website again.)")
+
+        raise TableBotExceptions.URLLocked("URL is locked")
+                
+    to_return = None
+    cloudflare_failure = False
+    all_browsers_busy = False
+    try: #Very important, if we throw an exception without setting our flag to False, the URL will become permanently inaccessible
+        if url not in url_response_cache:
+            #print(f"{url} wasn't in url_response_cache: {len(url_response_cache)}")
+            url_response_cache[url] = [True, current_time, []]
+            
+        url_cache_info = url_response_cache[url]
+            
+        recent_pulls_for_url = url_cache_info[2]
+        if len(recent_pulls_for_url) > 0:
+            last_updated = recent_pulls_for_url[-1][0]
+            if not cache_time_expired(last_updated, current_time, caching_time): #If we haven't waited long enough... hit the cache
+                print(f"{current_time.time()}: fetch({url}) hit the cache because page was downloaded {(current_time - last_updated).total_seconds()} seconds ago.")
+                to_return = recent_pulls_for_url[-1][1]
+        
+        
         if to_return is None: #At this point, we know the page isn't in the cache, or it is super outdated
-            url_response_cache[url] = (True, current_time, recent_pulls_for_url) #set the flag to currently pulling, and update the pulling time to now
-            print(f"{current_time.time()}: fetch({url}) is making an HTTPS request.")
+            #set the flag to currently pulling, and update the pulling time to now
+            url_response_cache[url][0] = True
+            url_response_cache[url][1] = current_time
             if not USING_EXPERIMENTAL_REQUEST:
+                print(f"{current_time.time()}: fetch({url}) is making an HTTPS request.")
                 async with session.get(url) as response:
                     to_return = await response.text()
-                    recent_pulls_for_url.append(to_return, current_time)
+                    recent_pulls_for_url.append([current_time, to_return])
             else:
-                with driver:
-                    to_return = driver.get(url).page_source
-                    recent_pulls_for_url.append(to_return, current_time)
+                await cloudflare_failure_check()
+                driver_index, driver_info = select_free_driver()
+                for _ in range(10):
+                    if driver_info[4]: #if driver is busy...
+                        await asyncio.sleep(1) #wait a second, then find a new one
+                        driver_index, driver_info = select_free_driver() #Try to pick a new driver
+                    else:
+                        break
+                else:
+                    all_browsers_busy = True
+                    raise TableBotExceptions.NoAvailableBrowsers("All browsers are busy.")
+                
+                driver_info[4] = True #set flag for currently pulling/busy (block adding requests)
+                driver_info[2] += 1 #add one to number of current ongoing requests
+                driver_info[3] += 1 #add one to total requests sent
+                print(f"{current_time.time()}: fetch({url}) is making an HTTPS request: Driver #{driver_index}, {driver_info[2]} ongoing requests (including this one).")
+                try:
+                    driver_info[0].get(url)
+                    page_source = driver_info[0].page_source
+                    originally_had_cloudflare, bypassed_cloudflare = await cloudflare_block_handle(driver_index, page_source)
+                        
+                    if not bypassed_cloudflare:
+                        cloudflare_failure = True
+                        driver_info[1] += 1
+                        print(f"Full block by Cloudflare: Driver at index {driver_index} now has {driver_info[1]} total blocked requests, and processing {driver_info[2]} outgoing requests (including this one).")
+                        raise TableBotExceptions.MKWXCloudflareBlock("Cloudflare blocked page.")
+                    #print(driver_info[0].current_url)
+                    #await delay_until_url_matches(driver_info[0], url)
+                    to_return = driver_info[0].page_source if originally_had_cloudflare else page_source
+                    recent_pulls_for_url.append([current_time, to_return])
+                except:
+                    driver_info[2] -= 1 #reduce number of current ongoing requests by one
+                    driver_info[4] = False
+                    raise
+                driver_info[2] -= 1 #reduce number of current ongoing requests by one
+                driver_info[4] = False
+        else: #Putting here for clarification on control flow, see comment below
+            pass #no need for an else statement, if we hit our cache, we'll execute the finally statement and return it
+    except Exception as e:
+        if not isinstance(e, TableBotExceptions.MKWXCloudflareBlock):
+            print(f"Got exception: {e}")
+            common.log_text(str(e), common.ERROR_LOGGING_TYPE)
+        to_return = None
     finally:
-        _, started_pulling_at, pull_data = url_response_cache[url]
+        url_response_cache[url][0] = False #set the flag to no longer pulling so we don't get locked out
+        if cloudflare_failure:
+            raise TableBotExceptions.MKWXCloudflareBlock("Cloudflare blocked page.")
+        if all_browsers_busy:
+            raise TableBotExceptions.NoAvailableBrowsers("All browsers are busy.")
+        if to_return is None:
+            raise TableBotExceptions.WiimmfiSiteFailure("Could not pull information from mkwx.")
+        return to_return
+        
 
 
 async def getRoomHTML(roomLink):
-    print(str(datetime.now().time()) + ": getRoomHTML(" + roomLink + ") is making an HTTPS request.")
     
     if roomLink in special_test_cases:
         description, local_file_path = special_test_cases[roomLink]
         fp = codecs.open(local_file_path, "r", "utf-8")
         html_data = fp.read()
         fp.close()
-        return html_data
+        return html_data   
         
     async with aiohttp.ClientSession() as session:
-        return await fetch(session, roomLink)
+        temp = await threaded_fetch(session, roomLink, use_long_cache_time=True)
+        return temp
 
 
 async def __getMKWXSoupCall__():
-    print(str(datetime.now().time()) + ": getMKWXSoup() is making an HTTPS request.")
     async with aiohttp.ClientSession() as session:
-        mkwxHTML = await fetch(session, mkwxURL)
+        mkwxHTML = await threaded_fetch(session, mkwxURL, use_long_cache_time=False)
         return BeautifulSoup(mkwxHTML, "html.parser")
 
 
 async def getMKWXSoup():
-    global current_mkwx_soups
-    global mkwx_soup_last_updated
-    if current_mkwx_soups is None or \
-    mkwx_soup_last_updated is None or \
-    (datetime.now() - mkwx_cache_time) > mkwx_soup_last_updated:
-        if current_mkwx_soups is None:
-            current_mkwx_soups = []
-        current_mkwx_soups.append( await __getMKWXSoupCall__() )
-        mkwx_soup_last_updated = datetime.now()
-        
-    if current_mkwx_soups is not None:
-        while len(current_mkwx_soups) >= 5:
-            current_mkwx_soups[0].decompose()
-            del current_mkwx_soups[0]
-    return current_mkwx_soups[-1]
+    return await __getMKWXSoupCall__()
 
 
 
@@ -113,7 +387,7 @@ async def getRoomData(rid_or_rlid):
     roomIDSpot = mkwxSoup.find(text=rid_or_rlid)
     if roomIDSpot is None:
         return None, None, None
-    link = str(roomIDSpot.find_previous('a')['data-href'])
+    link = str(roomIDSpot.find_previous('a')['href'])
     rLID = link.split("/")[-1]
     rLIDSoup = await getrLIDSoup(rLID)
     return wiimmfi_url + link, rLID, rLIDSoup #link example: /stats/mkwx/list/r1279851
@@ -186,7 +460,7 @@ async def getRoomDataByFC(fcs):
             continue
         if 'id' in correctLevel.attrs:
             break
-    link = correctLevel.find('a')['data-href']
+    link = correctLevel.find('a')['href']
     rLID = link.split("/")[-1]
     rLIDSoup = await getrLIDSoup(rLID)
     return wiimmfi_url + link, rLID, rLIDSoup #link example: /stats/mkwx/list/r1279851
@@ -238,4 +512,4 @@ def combineSoups(soups):
         del soups[0]
     
     return last_soup
-    
+

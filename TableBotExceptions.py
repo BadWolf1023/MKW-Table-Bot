@@ -75,14 +75,18 @@ class MKWXCloudflareBlock(WiimmfiSiteFailure):
 class RequestedRecently(WiimmfiSiteFailure):
     pass
 
-class WiimmfiRaceConditionFailure(WiimmfiSiteFailure):
+class WiimmfiSiteRaceCondition(WiimmfiSiteFailure):
     pass
 
-class CacheRaceCondition(WiimmfiRaceConditionFailure):
+class WiimmfiRaceConditionFailure(WiimmfiSiteRaceCondition):
     pass
 
-class URLLocked(WiimmfiRaceConditionFailure):
+class CacheRaceCondition(WiimmfiSiteRaceCondition):
     pass
 
+class URLLocked(WiimmfiSiteRaceCondition):
+    pass
 
+class NoAvailableBrowsers(WiimmfiSiteFailure):
+    pass
 
