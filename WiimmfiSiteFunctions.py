@@ -12,7 +12,7 @@ import codecs
 import asyncio
 import TableBotExceptions
 import common
-from concurrent.futures.process import ProcessPoolExecutor
+#from concurrent.futures.process import ProcessPoolExecutor
 from concurrent.futures.thread import ThreadPoolExecutor
 
 url_response_cache = {}
@@ -21,6 +21,9 @@ long_cache_time = timedelta(seconds=45)
 cache_size = 5
 cache_deletion_time_limit = timedelta(hours=2)
 lockout_timelimit = timedelta(minutes=5)
+
+#Number of minutes between captchas
+captcha_time_estimation = 117
 
 
 USING_EXPERIMENTAL_REQUEST = True
@@ -62,18 +65,39 @@ def select_free_driver():
             index_of_min_driver = ind
             cur_min = (driver_info[2], driver_info[3])
     return index_of_min_driver, driver_infos[index_of_min_driver]
-    
-    
-async def cloudflare_block_handle(driver, original_source):
+
+SAFE_DRIVER_RESTART_TIMEOUT = 45
+async def safe_restart_driver(index, logging_message):
+    for _ in range(SAFE_DRIVER_RESTART_TIMEOUT):
+        if driver_infos[index][4]:
+            await asyncio.sleep(1)
+        if not driver_infos[index][4]:
+            await restart_driver(index, logging_message)
+            return True
+    return False
+
+async def restart_driver(index, logging_message):
+    driver_info = driver_infos[index]
+    driver_info[4] = True
+    print(logging_message)
+    driver_info[1] = 0
+    driver_info[0].quit()
+    await asyncio.sleep(3)
+    driver_info[0] = uc.Chrome()
+    await asyncio.sleep(3)
+    driver_info[2] = 0
+    driver_info[4] = False
+
+async def cloudflare_block_handle(driver_index, original_source):
     originally_had_cloudflare = False
     if "Ray ID: " in original_source:
         originally_had_cloudflare = True
         print("Blocked by Cloudflare, attempting bypass")
-        driver.service.stop()
-        await asyncio.sleep(driver._delay)
-        driver.service.start()
-        driver.start_session()
-    return originally_had_cloudflare, "Ray ID: " not in driver.page_source
+        driver_infos[driver_index][0].service.stop()
+        await asyncio.sleep(driver_infos[driver_index][0]._delay)
+        driver_infos[driver_index][0].service.start()
+        driver_infos[driver_index][0].start_session()
+    return originally_had_cloudflare, "Ray ID: " not in driver_infos[driver_index][0].page_source
 
 """
 
@@ -110,6 +134,9 @@ class FetchExecutor():
         
 fetch_executor = FetchExecutor()
 """
+
+
+
 
 def print_url_cache():
     for url, url_cache_info in url_response_cache.items():
@@ -167,18 +194,11 @@ def clear_old_caches():
 async def cloudflare_failure_check():
     for index, driver_info in enumerate(driver_infos):
         if driver_info[1] >= failures_allowed and not driver_info[4]:
-            driver_info[4] = True
-            print(f"Driver at {index} had {driver_info[1]} failures and {driver_info[2]} ongoing requests. Restarting browser...")
-            driver_info[1] = 0
-            driver_info[0].quit()
-            await asyncio.sleep(3)
-            driver_info[0] = uc.Chrome()
-            await asyncio.sleep(3)
-            driver_info[2] = 0
-            driver_info[4] = False
+            await restart_driver(index, logging_message=f"Driver at {index} had {driver_info[1]} failures and {driver_info[2]} ongoing requests. Restarting browser...")
 
-async def delay_until_url_matches(driver, url, timeout=timedelta(seconds=10)):
-    pass
+
+#async def delay_until_url_matches(driver, url, timeout=timedelta(seconds=10)):
+#    pass
 
 async def threaded_fetch(session, url, use_long_cache_time=False):
     result = await asyncio.get_event_loop().run_in_executor(process_pool_executor, fetch, session, url, use_long_cache_time)
@@ -268,14 +288,14 @@ async def __fetch__(session, url, use_long_cache_time=False):
                     all_browsers_busy = True
                     raise TableBotExceptions.NoAvailableBrowsers("All browsers are busy.")
                 
-                driver_info[4] = True #set flag for currently pulling
+                driver_info[4] = True #set flag for currently pulling/busy (block adding requests)
                 driver_info[2] += 1 #add one to number of current ongoing requests
                 driver_info[3] += 1 #add one to total requests sent
                 print(f"{current_time.time()}: fetch({url}) is making an HTTPS request: Driver #{driver_index}, {driver_info[2]} ongoing requests (including this one).")
                 try:
                     driver_info[0].get(url)
                     page_source = driver_info[0].page_source
-                    originally_had_cloudflare, bypassed_cloudflare = await cloudflare_block_handle(driver_info[0], page_source)
+                    originally_had_cloudflare, bypassed_cloudflare = await cloudflare_block_handle(driver_index, page_source)
                         
                     if not bypassed_cloudflare:
                         cloudflare_failure = True
