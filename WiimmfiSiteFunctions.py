@@ -76,6 +76,8 @@ async def safe_restart_driver(index, logging_message):
             return True
     return False
 
+#Note: We don't reset the total number of requests. The total number of requests accumulates regardless of if the browser is restarted
+#This is to ensure that, assuming the load is equal (eg the number of requests in the queue for a browser) across all 3 browsers, the browser selection continues to rotate
 async def restart_driver(index, logging_message):
     driver_info = driver_infos[index]
     driver_info[4] = True
