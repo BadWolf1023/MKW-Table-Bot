@@ -51,8 +51,8 @@ class Lounge:
     def get_counter(self):
         return self.table_id_counter
     
-    def add_report(self, report_id, sent_message, summary_channel_id):
-        self.table_reports[report_id] = [sent_message.id, sent_message.channel.id, summary_channel_id, "PENDING"]
+    def add_report(self, report_id, sent_message, summary_channel_id, json_data=None):
+        self.table_reports[report_id] = [sent_message.id, sent_message.channel.id, summary_channel_id, "PENDING", json_data]
     
     def clear_user_cooldown(self, author):
         self.update_cooldowns.pop(author.id, None)
@@ -64,7 +64,23 @@ class Lounge:
         return submissionID in self.table_reports
     
     def get_submission_id(self, submissionID):
+        if len(self.table_reports[submissionID]) == 4: #To support legacy submissions
+            return [*self.table_reports[submissionID], None]
         return self.table_reports[submissionID]
+    
+    def get_submission_id_json_data(self, submissionID):
+        if len(self.table_reports[submissionID]) == 4:
+            return None
+        return self.table_reports[submissionID][4]
+    
+    def submission_id_of_last_matching_json(self, submissionID):
+        json_data = self.get_submission_id_json_data(submissionID)
+        if json_data is None:
+            return None
+        for sub_id in reversed(self.table_reports):
+            if sub_id < submissionID and json_data == self.get_submission_id_json_data(sub_id):
+                return sub_id
+        return None #redundant, but putting this here for novice Python devs
     
     def remove_submission_id(self, submissionID):
         self.table_reports.pop(submissionID, None)
@@ -74,6 +90,16 @@ class Lounge:
         
     def deny_submission_id(self, submissionID):
         self.table_reports[submissionID][3] = "DENIED"
+        
+    def submission_id_is_pending(self, submissionID):
+        return self.has_submission_id(submissionID) and self.table_reports[submissionID][3] == "PENDING"
+    
+    def submission_id_is_denied(self, submissionID):
+        return self.has_submission_id(submissionID) and self.table_reports[submissionID][3] == "DENIED"
+        
+    def submission_id_is_approved(self, submissionID):
+        return self.has_submission_id(submissionID) and self.table_reports[submissionID][3] == "APPROVED"
+        
         
     def get_updater_channel_ids(self) -> Set[int]:
         return {self.channels_mapping.updater_channel_id_primary, self.channels_mapping.updater_channel_id_secondary}
