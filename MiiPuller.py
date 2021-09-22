@@ -12,6 +12,7 @@ import Mii
 import miirender
 import requests
 import common
+from datetime import timedelta, datetime
 
 
 
@@ -48,7 +49,21 @@ SAKE_HEADERS = {"Host":"mariokartwii.sake.gs.wiimmfi.de",
                 "Content-Type": "text/xml",
                 "SOAPAction":"http://gamespy.net/sake/SearchForRecords"}
 
+MII_CACHE = {}
+MII_CACHE_TIME = timedelta(minutes=5)
 
+def cache_time_expired(last_access_time, cache_time=MII_CACHE_TIME):
+    return (datetime.now() - last_access_time) > cache_time
+
+def mii_cache_update(fc, mii_bytes, mii_hex_str):
+    if mii_bytes is not None and mii_hex_str is not None:
+        MII_CACHE[fc] = [(mii_bytes, mii_hex_str), datetime.now()]
+
+def get_mii_data_if_cached(fc):
+    if fc in MII_CACHE:
+        if not cache_time_expired(MII_CACHE[fc][1]):
+            return MII_CACHE[fc][0]
+    return None, None
 
 def get_sake_post_data(player_id):
     return SAKE_POST_DATA.format(player_id)
@@ -89,10 +104,15 @@ async def get_mii_data(fc:str):
     return await get_mii_data_from_pid(pid)
 
 async def get_mii(fc:str, message_id:str, picture_width=512):
-    mii_bytes, mii_hex_str = await get_mii_data(fc)
+    mii_bytes, mii_hex_str = get_mii_data_if_cached(fc)
+    if mii_bytes is None or mii_hex_str is None:
+        mii_bytes, mii_hex_str = await get_mii_data(fc)
+    mii_cache_update(fc, mii_bytes, mii_hex_str)
+        
     if mii_bytes is None:
         return NO_MII_ERROR_MESSAGE
     else:
+        
         file_name = message_id + "_" + fc + '.png'
         folder_path = common.MIIS_PATH
         full_download_path = folder_path + file_name
@@ -119,7 +139,11 @@ def get_mii_data_blocking(fc:str):
     return get_mii_data_from_pid_blocking(pid)
 
 def get_mii_blocking(fc:str, message_id:str, picture_width=512):
-    mii_bytes, mii_hex_str = get_mii_data_blocking(fc)
+    mii_bytes, mii_hex_str = get_mii_data_if_cached(fc)
+    if mii_bytes is None or mii_hex_str is None:
+        mii_bytes, mii_hex_str = get_mii_data_blocking(fc)
+    mii_cache_update(fc, mii_bytes, mii_hex_str)
+        
     if mii_bytes is None:
         return NO_MII_ERROR_MESSAGE
     else:
