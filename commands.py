@@ -67,12 +67,14 @@ async def send_missing_permissions(channel:discord.TextChannel, content=None, de
         
 async def mkwx_check(message, error_message):
     if common.DISABLE_MKWX_COMMANDS:
+        raise TableBotExceptions.CommandDisabled(error_message)
+    if common.LIMIT_MKWX_COMMANDS:
         if common.LIMITED_SERVER_IDS is not None and message.guild.id in common.LIMITED_SERVER_IDS:
             return True
         if common.LIMITED_CHANNEL_IDS is not None and message.channel.id in common.LIMITED_CHANNEL_IDS:
             return True
-
         raise TableBotExceptions.CommandDisabled(error_message)
+        
 """============== Bad Wolf only commands ================"""
 #TODO: Refactor these - target the waterfall-like if-statements
 class BadWolfCommands:
@@ -861,7 +863,11 @@ class LoungeCommands:
                     embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")                        
                     
                     sent_message = await updater_channel.send(file=file, embed=embed)
-                    lounge_server_updates.add_report(id_to_submit, sent_message, summary_channel_id)
+                    lounge_server_updates.add_report(id_to_submit, sent_message, summary_channel_id, json_data)
+                    
+                    other_matching_submission_id = lounge_server_updates.submission_id_of_last_matching_json(id_to_submit)
+                    if other_matching_submission_id is not None:
+                        await updater_channel.send(f"**Warning:** This submission ({id_to_submit}) matches a previous submission, which has the id {other_matching_submission_id}. It is extremely unlikely this is by chance. Investigate before approving/denying.")
                 
                     
                     file = discord.File(table_image_path)
@@ -919,7 +925,7 @@ class LoungeCommands:
         if submissionID.isnumeric():
             submissionID = int(submissionID)
             if lounge_server_updates.has_submission_id(submissionID):
-                submissionMessageID, submissionChannelID, summaryChannelID, submissionStatus = lounge_server_updates.get_submission_id(submissionID)
+                submissionMessageID, submissionChannelID, summaryChannelID, submissionStatus, submission_json = lounge_server_updates.get_submission_id(submissionID)
                 submissionMessage = None
                 
                 try:
@@ -944,19 +950,33 @@ class LoungeCommands:
                     if summaryChannelID is None:
                         summaryChannelRetrieved = False
                     summaryChannelObj = client.get_channel(summaryChannelID)
+                    approval_message_warning = None
+                    
+                    is_pending = lounge_server_updates.submission_id_is_pending(submissionID)
+                    if not is_pending:
+                        is_approved = lounge_server_updates.submission_id_is_approved(submissionID)
+                        submission_status = "approved" if is_approved else "denied"
+                        extra_message_text = f"**I went ahead and sent it to the summaries anyway**, but you should make sure you didn't just double approve {submissionID}." if is_approved else f"**I went ahead and sent it to the summaries anyway**, but you should make sure you didn't approve the submission {submissionID} that should have remained denied."
+                        approval_message_warning = f"**Warning:** The submission ({submissionID}) was already **{submission_status}**. You might have made a typo for your submission ID. {extra_message_text}"
+                        
+                    
+                    
                     if summaryChannelObj is None:
                         summaryChannelRetrieved = False
                     if not summaryChannelRetrieved:
                         await message.channel.send("I cannot see the summary channels. Contact a boss.")
                         return
+                    
                     try:
                         await summaryChannelObj.send(embed=submissionEmbed)
+                        lounge_server_updates.approve_submission_id(submissionID)
                     except discord.errors.Forbidden:
                         await message.channel.send("I'm not allowed to send messages in summary channels. Contact a boss.")
                         return
-                    
-                    
-                    lounge_server_updates.approve_submission_id(submissionID)
+
+                    if approval_message_warning is not None:
+                        await summaryChannelObj.send(approval_message_warning)
+                        await submissionMessage.channel.send(approval_message_warning)
                     
                     await submissionMessage.clear_reaction("\u274C")
                     await submissionMessage.add_reaction("\u2705")
@@ -964,6 +984,12 @@ class LoungeCommands:
                 else:
                     await submissionMessage.clear_reaction("\u2705")
                     await submissionMessage.add_reaction("\u274C")
+                    is_pending = lounge_server_updates.submission_id_is_pending(submissionID)
+                    if not is_pending:
+                        is_denied = lounge_server_updates.submission_id_is_denied(submissionID)
+                        submission_status = "denied" if is_denied else "approved"
+                        extra_message_text = f"Double denying a submission doesn't do anything, so you don't need to worry. You simply might have made a typo for your submission ID, and you should deny the correct one." if is_denied else f"I've given it the X reaction anyway. Don't bother 'approving' it again if it was previously approved and sent to the correct summaries (as this will resend it to the summary channels). Simply check your `?deny` command for typos so you deny the right submission."
+                        await submissionMessage.channel.send(f"**Warning:** The submission ({submissionID}) was already **{submission_status}**. {extra_message_text}")
                     lounge_server_updates.deny_submission_id(submissionID)
                     await message.add_reaction(u"\U0001F197")
             else:
@@ -995,9 +1021,13 @@ class LoungeCommands:
        
         to_send = ""
         for submissionID in lounge_server_updates.table_reports:
-            _, submissionChannelID, summaryChannelID, submissionStatus = lounge_server_updates.get_submission_id(submissionID)
+            _, submissionChannelID, summaryChannelID, submissionStatus, submission_json = lounge_server_updates.get_submission_id(submissionID)
             if submissionStatus == "PENDING":
-                to_send += MogiUpdate.getTierFromChannelID(summaryChannelID) + " - Submission ID: " + str(submissionID) + "\n"
+                matching_other_id = lounge_server_updates.submission_id_of_last_matching_json(submissionID)
+                matching_warning_str = ""
+                if matching_other_id is not None:
+                    matching_warning_str = f" - **Warning:** This submission matches a previous submission, which has the id {matching_other_id}"
+                to_send += MogiUpdate.getTierFromChannelID(summaryChannelID) + f" - Submission ID: {submissionID}{matching_warning_str}\n"
         if to_send == "":
             to_send = "No pending submissions."
         await message.channel.send(to_send)

@@ -201,7 +201,14 @@ def create_player_json(player:Tuple[str, int, int, int], races_played=12, sub_in
         player_json["multiplier"] = round(races_played / 12, 3) #Multiplier for each person will be global races played � 12
         
     return player_json
-    
+
+def sort_teams_json(teams_JSON):
+    team_players_sort_key = lambda player: (player["score"], player["player_id"])
+    teams_sort_key = lambda team: (sum(player["score"] for player in team["players"]), max(player["player_id"] for player in team["players"]))
+    for team in teams_JSON:
+        team["players"].sort(key=team_players_sort_key, reverse=True)
+    teams_JSON.sort(key=teams_sort_key, reverse=True)
+
 def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], races_played=12, squadqueue=False):
     teams_JSON = []
     for team in team_map:
@@ -222,6 +229,12 @@ def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], races_played=12
 
                 team_json.append(create_player_json(player, races_played, sub_in=sub_in, sub_out=sub_out, squadqueue=squadqueue))
         teams_JSON.append({"players":team_json})
+    #import pprint
+    #print("Before sort:")
+    #pprint.pprint({"teams":teams_JSON})
+    sort_teams_json(teams_JSON)
+    #print("After sort:")
+    #pprint.pprint({"teams":teams_JSON})
     return teams_JSON
            
  

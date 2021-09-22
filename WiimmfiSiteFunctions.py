@@ -46,17 +46,6 @@ driver_infos = [[uc.Chrome(), 0, 0, 0, False] for _ in range(number_of_browsers)
 failures_allowed = 2
 process_pool_executor = ThreadPoolExecutor(max_workers=number_of_browsers)
 
-"""
-executor = ThreadPoolExecutor(5)
-
-def scrape(url, *, loop):
-    loop.run_in_executor(executor, scraper, url)
-
-
-def scraper(url):
-    driver = webdriver.Chrome("./chromedriver")
-    driver.get(url)
-"""
 def select_free_driver():
     index_of_min_driver = 0
     cur_min = (driver_infos[0][2], driver_infos[0][3])
@@ -100,43 +89,6 @@ async def cloudflare_block_handle(driver_index, original_source):
         driver_infos[driver_index][0].service.start()
         driver_infos[driver_index][0].start_session()
     return originally_had_cloudflare, "Ray ID: " not in driver_infos[driver_index][0].page_source
-
-"""
-
-with concurrent.futures.ThreadPoolExecutor(max_workers=12) as executor:
-                        future_to_fc = {executor.submit(MiiPuller.get_mii_blocking, fc, message_id): fc for fc in self.getRoom().getFCs() if fc not in self.miis }
-                        for future in concurrent.futures.as_completed(future_to_fc):
-                            fc = future_to_fc[future]
-                            try:
-                                mii_pull_result = future.result()
-                            except Exception as exc:
-                                common.log_text(f'{fc} generated an exception: {exc}', common.ERROR_LOGGING_TYPE)
-                            else:
-                                if not isinstance(mii_pull_result, str):
-                                    self.miis[fc] = mii_pull_result
-                                    mii_pull_result.output_table_mii_to_disc()
-                                    mii_pull_result.__remove_main_mii_picture__()
-                                else:
-                                    pass
-loop.run_until_complete(asyncio.gather(*asyncio.all_tasks(loop)))"""
-"""
-class FetchExecutor():
-    def __init__(self):
-        self.pool = ThreadPoolExecutor(max_workers=6)
-        self.tasks = {}
-        
-    def submit_fetch(self, callback, *args):
-        future = self.pool.submit(fetch, args)
-        self.tasks[future] = datetime.now()
-        future.add_done_callback(callback)
-
-    
-    def __del__(self):
-        self.pool.shutdown(wait=False)
-        
-fetch_executor = FetchExecutor()
-"""
-
 
 
 
