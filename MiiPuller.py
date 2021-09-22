@@ -41,6 +41,15 @@ SAKE_POST_DATA ="""<?xml version="1.0" encoding="UTF-8"?>
   </SOAP-ENV:Body>
 </SOAP-ENV:Envelope>"""
 
+#Add Content-Length: if requests doesn't already add this or if SAKE server gives issues
+SAKE_HEADERS = {"Host":"mariokartwii.sake.gs.wiimmfi.de",
+                "User-Agent":"GameSpyHTTP/1.0",
+                "Connection":"close",
+                "Content-Type": "text/xml",
+                "SOAPAction":"http://gamespy.net/sake/SearchForRecords"}
+
+
+
 def get_sake_post_data(player_id):
     return SAKE_POST_DATA.format(player_id)
 
@@ -68,7 +77,7 @@ def mii_data_is_corrupt(mii_data:str):
 
 async def get_mii_data_from_pid(pid:int) -> str:
     async with aiohttp.ClientSession() as session:
-        async with session.post(wiimmfi_sake, data=get_sake_post_data(pid)) as data:
+        async with session.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(pid)) as data:
             miidatab64 = str(await data.content.read())
             miidatahex = base64.b64decode(miidatab64[399:527])
             encode = binascii.hexlify(miidatahex)
@@ -97,7 +106,7 @@ async def get_mii(fc:str, message_id:str, picture_width=512):
 #======================== The functions below are the same as above, except they are BLOCKING ========================
 def get_mii_data_from_pid_blocking(playerid:int) -> str:
     try:
-        mii_data = requests.post(wiimmfi_sake, data=get_sake_post_data(playerid))
+        mii_data = requests.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(playerid))
         miidatab64 = str(mii_data.content)
         miidatahex = base64.b64decode(miidatab64[399:527])
         encode = binascii.hexlify(miidatahex)

@@ -14,7 +14,7 @@ from pathlib import Path
 
 version = "11.3.0"
 
-MIIS_DISABLED = True
+MIIS_DISABLED = False
 
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
