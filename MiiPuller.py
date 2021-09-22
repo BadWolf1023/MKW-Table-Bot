@@ -19,6 +19,31 @@ wiimmfi_sake = 'http://mariokartwii.sake.gs.wiimmfi.de/SakeStorageServer/Storage
 NO_MII_ERROR_MESSAGE = "No user could be found."
 MII_DOWNLOAD_FAILURE_ERROR_MESSAGE = "An unknown error occurred. The rendering server might be down."
 
+SAKE_POST_DATA ="""<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns1="http://gamespy.net/sake">
+  <SOAP-ENV:Body>
+    <ns1:SearchForRecords>
+      <ns1:gameid>1687</ns1:gameid>
+      <ns1:secretKey>9Rmy</ns1:secretKey>
+      <ns1:loginTicket>23c715d620f986c22Pwwii</ns1:loginTicket>
+      <ns1:tableid>FriendInfo</ns1:tableid>
+      <ns1:filter>ownerid={}</ns1:filter>
+      <ns1:sort>recordid</ns1:sort>
+      <ns1:offset>0</ns1:offset>
+      <ns1:max>1</ns1:max>
+      <ns1:surrounding>0</ns1:surrounding>
+      <ns1:ownerids></ns1:ownerids>
+      <ns1:cacheFlag>0</ns1:cacheFlag>
+      <ns1:fields>
+        <ns1:string>info</ns1:string>
+      </ns1:fields>
+    </ns1:SearchForRecords>
+  </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>"""
+
+def get_sake_post_data(player_id):
+    return SAKE_POST_DATA.format(player_id)
+
 def fix_fc_text(fc:str) -> int:
     #Takes an FC in the format xxxx-xxxx-xxxx and converts it into a usable int for wiifc
     return int(fc.replace("-",""))
@@ -43,7 +68,7 @@ def mii_data_is_corrupt(mii_data:str):
 
 async def get_mii_data_from_pid(pid:int) -> str:
     async with aiohttp.ClientSession() as session:
-        async with session.post(wiimmfi_sake, data=f'<?xml version="1.0" encoding="UTF-8"?><SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns1="http://gamespy.net/sake"><SOAP-ENV:Body><ns1:SearchForRecords><ns1:gameid>1687</ns1:gameid><ns1:secretKey>9Rmy</ns1:secretKey><ns1:loginTicket>23c715d620f986c22Pwwii</ns1:loginTicket><ns1:tableid>FriendInfo</ns1:tableid><ns1:filter>ownerid&#x20;=&#x20;{pid}</ns1:filter><ns1:sort>recordid</ns1:sort><ns1:offset>0</ns1:offset><ns1:max>1</ns1:max><ns1:surrounding>0</ns1:surrounding><ns1:ownerids></ns1:ownerids><ns1:cacheFlag>0</ns1:cacheFlag><ns1:fields><ns1:string>info</ns1:string></ns1:fields></ns1:SearchForRecords></SOAP-ENV:Body></SOAP-ENV:Envelope>') as data:
+        async with session.post(wiimmfi_sake, data=get_sake_post_data(pid)) as data:
             miidatab64 = str(await data.content.read())
             miidatahex = base64.b64decode(miidatab64[399:527])
             encode = binascii.hexlify(miidatahex)
@@ -72,7 +97,7 @@ async def get_mii(fc:str, message_id:str, picture_width=512):
 #======================== The functions below are the same as above, except they are BLOCKING ========================
 def get_mii_data_from_pid_blocking(playerid:int) -> str:
     try:
-        mii_data = requests.post(wiimmfi_sake, data=f'<?xml version="1.0" encoding="UTF-8"?><SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns1="http://gamespy.net/sake"><SOAP-ENV:Body><ns1:SearchForRecords><ns1:gameid>1687</ns1:gameid><ns1:secretKey>test</ns1:secretKey><ns1:loginTicket>23c715d620f986c22Pwwii</ns1:loginTicket><ns1:tableid>FriendInfo</ns1:tableid><ns1:filter>ownerid&#x20;=&#x20;{playerid}</ns1:filter><ns1:sort>recordid</ns1:sort><ns1:offset>0</ns1:offset><ns1:max>1</ns1:max><ns1:surrounding>0</ns1:surrounding><ns1:ownerids></ns1:ownerids><ns1:cacheFlag>0</ns1:cacheFlag><ns1:fields><ns1:string>info</ns1:string></ns1:fields></ns1:SearchForRecords></SOAP-ENV:Body></SOAP-ENV:Envelope>')
+        mii_data = requests.post(wiimmfi_sake, data=get_sake_post_data(playerid))
         miidatab64 = str(mii_data.content)
         miidatahex = base64.b64decode(miidatab64[399:527])
         encode = binascii.hexlify(miidatahex)
