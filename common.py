@@ -14,7 +14,7 @@ from pathlib import Path
 
 version = "11.3.0"
 
-MIIS_DISABLED = True
+MIIS_DISABLED = False
 
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
@@ -22,9 +22,9 @@ MAX_PREFIX_LENGTH = 3
 #current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = True
-running_beta = False
-beta_is_real = False
+in_testing_server = False
+running_beta = True
+beta_is_real = True
 
 
 DISABLE_MKWX_COMMANDS = False
