@@ -23,12 +23,12 @@ MAX_PREFIX_LENGTH = 3
 
 #Main loop constants
 in_testing_server = False
-running_beta = True
-beta_is_real = True
+running_beta = False
+beta_is_real = False
 
 
 DISABLE_MKWX_COMMANDS = False
-LIMIT_MKWX_COMMANDS = True
+LIMIT_MKWX_COMMANDS = False
 
 
 LIMITED_DONT_INCLUDE_IN_COUNT = {776031312048947230, 826962131592544306, 888089086307475456}#503 server,  testing channel, 503-dup
@@ -62,7 +62,7 @@ LIMITED_CHANNEL_IDS = {747290182096650332,#RT T5, RT T4, RT T3, RT T2, RT T1, CT
                        } | BAD_WOLFS_CHANNELS | LIMITED_DONT_INCLUDE_IN_COUNT
 LIMITED_SERVER_IDS = None
 
-current_notification = f"Because the developers of <https://wiimmfi.de> have not taken any of my proposed solutions for letting certain critical tools access the website, MKW Table Bot uses an experimental method for accessing the website.\n\nTo make sure MKW Table Bot doesn't access the website too frequently, miis have been disabled. Please note: **Accessing mkwx is experimental at this time.**\n\nAdditionally, Table Bot only works in {len(LIMITED_CHANNEL_IDS) - len(LIMITED_DONT_INCLUDE_IN_COUNT)} specific channels, 8 of which are in Lounge, and 3 in Bad Wolf's server.\n\nIf you appreciate MKW Table Bot, create an account or log in on <https://forum.wii-homebrew.com>, go to 'User introductions', introduce yourself, and tell them that honest developers shouldn't have to pay the price for a criminal's actions. Thanks for understanding and your support. Happy auto tabling."
+current_notification = f"MKW Table Bot is back! Would you do me a favor though? You can help make sure MKW Table Bot permanently works by creating an account or logging in on <https://forum.wii-homebrew.com>, going to 'User introductions', introducing yourself, and letting them know that MKW Table Bot and Friendbot are important to you. Thanks, and happy auto tabling."
 
 
 #TableBot variables, for ChannelBots

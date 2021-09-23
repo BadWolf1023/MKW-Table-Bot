@@ -46,7 +46,7 @@ def backup_files(to_back_up=common.FILES_TO_BACKUP):
 def get_commands_from_txt(to_find, needle_function, log_file, limit=None):
     results = []
     needle = needle_function(to_find)
-    with open(log_file, "r+", encoding='utf-8') as f:
+    with open(log_file, "r", encoding='utf-8') as f:
         for line in f:
             if "?lookup " in line.lower():
                 continue
@@ -232,4 +232,4 @@ def stats(num_bots:int, client=None, stats_file=common.STATS_FILE, commands_logg
         
 if __name__ == '__main__':
     print(hard_check("Dash8r#2342"))
-    #print(count_lines_of_code())
+    print(count_lines_of_code())
