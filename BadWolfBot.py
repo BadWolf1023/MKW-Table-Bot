@@ -702,7 +702,8 @@ async def on_message(message: discord.Message):
     except discord.errors.DiscordServerError:
         await common.safe_send(message, "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
     except aiohttp.client_exceptions.ClientOSError:
-        await common.safe_send(message, "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")         
+        await common.safe_send(message, "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
+        raise
     except TableBotExceptions.RequestedRecently:
         logging_info = log_command_sent(message, extra_text="Error info: Room requested recently, but the original request failed.")
         await common.safe_send(message, f"Your room was requested recently, perhaps by another person, but their request failed. To avoid hitting the website, I've denied your command. Try again after {common.wp_cooldown_seconds} seconds.")         
@@ -729,7 +730,7 @@ async def on_message(message: discord.Message):
         await common.safe_send(message, "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")    
         await send_to_503_channel(logging_info)
     except TableBotExceptions.CommandDisabled:
-        await common.safe_send(message, "At this time, **accessing mkwx is experimental**. Therefore, MKW Table Bot only works certain channels in the Lounge server and in Bad Wolf's server, purely as an experiment.")
+        await common.safe_send(message, "MKW Table Bot cannot access the website. Wiimm has neglected this situation. There is no path forward unless Wiimm whitelists Table Bot. I suggest you go to <https://forum.wii-homebrew.com>, go to 'User Introductions', and create a post about it.")
 
     except:
         with open(common.ERROR_LOGS_FILE, "a+", encoding="utf-8") as f:
@@ -767,7 +768,9 @@ async def on_ready():
     dumpDataAndBackup.start()
     checkBotAbuse.start()
     
-    driver_reset_cycle.start()
+    if WiimmfiSiteFunctions.USING_EXPERIMENTAL_REQUEST:
+        driver_reset_cycle.start()
+        
     finished_on_ready = True
     
     
@@ -824,20 +827,21 @@ async def stay_alive_503():
         await send_to_503_channel("Stay alive to prevent 503")
     except:
         pass
-
-import itertools
-driver_cycle = itertools.cycle([i for i in range(WiimmfiSiteFunctions.number_of_browsers)])
-driver_reset_cycle_loop_time = int(WiimmfiSiteFunctions.captcha_time_estimation / WiimmfiSiteFunctions.number_of_browsers)
-@tasks.loop(minutes=driver_reset_cycle_loop_time)
-async def driver_reset_cycle():
-    await asyncio.sleep(10) #Make sure we're done booting
-    current_driver_index = next(driver_cycle)
-    try:
-        success = await WiimmfiSiteFunctions.safe_restart_driver(current_driver_index, logging_message=f"Resetting driver at index {current_driver_index} because a captcha may be hit soon.")
-        if not success:
-            print(f"Failed to reset driver at index {current_driver_index} because it was busy for {WiimmfiSiteFunctions.SAFE_DRIVER_RESTART_TIMEOUT} seconds.")
-    except Exception as e:
-        print(f"Failed to reset driver at index {current_driver_index} because of the following exception: {e}")
+    
+if WiimmfiSiteFunctions.USING_EXPERIMENTAL_REQUEST:
+    import itertools
+    driver_cycle = itertools.cycle([i for i in range(WiimmfiSiteFunctions.number_of_browsers)])
+    driver_reset_cycle_loop_time = int(WiimmfiSiteFunctions.captcha_time_estimation / WiimmfiSiteFunctions.number_of_browsers)
+    @tasks.loop(minutes=driver_reset_cycle_loop_time)
+    async def driver_reset_cycle():
+        await asyncio.sleep(10) #Make sure we're done booting
+        current_driver_index = next(driver_cycle)
+        try:
+            success = await WiimmfiSiteFunctions.safe_restart_driver(current_driver_index, logging_message=f"Resetting driver at index {current_driver_index} because a captcha may be hit soon.")
+            if not success:
+                print(f"Failed to reset driver at index {current_driver_index} because it was busy for {WiimmfiSiteFunctions.SAFE_DRIVER_RESTART_TIMEOUT} seconds.")
+        except Exception as e:
+            print(f"Failed to reset driver at index {current_driver_index} because of the following exception: {e}")
 
    
 #This function will run every 1 minutes. It will remove any table bots that are
