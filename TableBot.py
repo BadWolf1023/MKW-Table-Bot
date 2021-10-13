@@ -179,7 +179,7 @@ class ChannelBot(object):
                 pass
             
     async def populate_miis(self, message_id:str):
-        if common.MIIS_DISABLED:
+        if common.MIIS_ON_TABLE_DISABLED:
             return
         if self.getWar() is not None and self.getWar().displayMiis:
             if self.populating:
@@ -241,7 +241,7 @@ class ChannelBot(object):
         
         
         created_when = str(temp_test.contents[2].string).strip()
-        rLID = str(temp_test.contents[1]['href']).split("/")[4]
+        rLID = str(temp_test.contents[1]['data-href']).split("/")[4]
         created_when = created_when[:created_when.index("ago)")+len("ago)")].strip()
         room_str = "Room " + str(temp_test.contents[1].text) + ": " + created_when + " - "
         last_match = str(temp_test.contents[6].string).strip("\n\t ")
@@ -383,7 +383,7 @@ class ChannelBot(object):
             return -1
         curTime = datetime.now()
         time_passed = curTime - self.roomLoadTime
-        return common.rl_cooldown_seconds - int(time_passed.total_seconds())
+        return common.mkwx_page_cooldown_seconds - int(time_passed.total_seconds())
         
         
     def isFinishedLounge(self) -> bool:

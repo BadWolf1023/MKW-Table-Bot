@@ -11,10 +11,16 @@ import TableBotExceptions
 from collections import namedtuple
 import discord
 from pathlib import Path
+import ssl
+import certifi
+
+sslcontext = ssl.create_default_context(cafile=certifi.where())
+print(certifi.where())
 
 version = "11.3.0"
 
-MIIS_DISABLED = False
+MII_COMMAND_DISABLED = False
+MIIS_ON_TABLE_DISABLED = True
 
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
@@ -33,7 +39,7 @@ LIMIT_MKWX_COMMANDS = False
 
 LIMITED_DONT_INCLUDE_IN_COUNT = {776031312048947230, 826962131592544306, 888089086307475456}#503 server,  testing channel, 503-dup
 BAD_WOLFS_CHANNELS = {747290383297282156, 747290363433320539, 739734266199408651}#BW's server TB1, BW's server TB2,BW's server TB3
-LIMITED_CHANNEL_IDS = {747290182096650332,#RT T5, RT T4, RT T3, RT T2, RT T1, CT T4, CT T2, CT T1, 
+OTHER_SERVER_CHANNEL_IDS = {747290182096650332,#RT T5, RT T4, RT T3, RT T2, RT T1, CT T4, CT T2, CT T1, 
                        747290167391551509,
                        747290151016857622,
                        747290132675166330,
@@ -59,10 +65,11 @@ LIMITED_CHANNEL_IDS = {747290182096650332,#RT T5, RT T4, RT T3, RT T2, RT T1, CT
                        769597112731435018, #Rompe #2
                        886901990850977832, #Asuna #1
                        743022435678552064 #Asuna #2
-                       } | BAD_WOLFS_CHANNELS | LIMITED_DONT_INCLUDE_IN_COUNT
+                       } 
+LIMITED_CHANNEL_IDS = LIMITED_DONT_INCLUDE_IN_COUNT
 LIMITED_SERVER_IDS = None
 
-current_notification = f"MKW Table Bot is back! Would you do me a favor though? You can help make sure MKW Table Bot permanently works by creating an account or logging in on <https://forum.wii-homebrew.com>, going to 'User introductions', introducing yourself, and letting them know that MKW Table Bot and Friendbot are important to you. Thanks, and happy auto tabling."
+current_notification = f"MKW Table Bot is **officially** back and won't be blocked by Cloudflare anymore!"
 
 
 #TableBot variables, for ChannelBots
@@ -70,7 +77,7 @@ inactivity_time_period = timedelta(hours=2, minutes=30)
 lounge_inactivity_time_period = timedelta(minutes=8)
 inactivity_unlock = timedelta(minutes=30)
 wp_cooldown_seconds = 15
-rl_cooldown_seconds = 15
+mkwx_page_cooldown_seconds = 5
 
 #Mii folder location information
 MII_TABLE_PICTURE_PREFIX = "table_"
@@ -340,7 +347,7 @@ def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
 async def download_image(image_url, image_path):
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(image_url) as resp:
+            async with session.get(image_url, ssl=sslcontext) as resp:
                 if resp.status == 200:
                     with open(image_path, mode='wb+') as f:
                         f.write(await resp.read())

@@ -12,9 +12,22 @@ import codecs
 import asyncio
 import TableBotExceptions
 import common
-#from concurrent.futures.process import ProcessPoolExecutor
-from concurrent.futures.thread import ThreadPoolExecutor
-
+USING_EXPERIMENTAL_REQUEST = False
+if USING_EXPERIMENTAL_REQUEST:
+    #from concurrent.futures.process import ProcessPoolExecutor
+    from concurrent.futures.thread import ThreadPoolExecutor
+    #Number of minutes between captchas
+    captcha_time_estimation = 117
+    import undetected_chromedriver.v2 as uc
+    #from selenium import webdriver as uc
+    options = uc.ChromeOptions()
+    options.add_extension('./anticaptcha-plugin_v0.59.crx')
+    #options.add_extension('./plugin.zip')
+    number_of_browsers = 1
+    driver_infos = [[uc.Chrome("./chrome-cli/chromedriver.exe", options=options), 0, 0, 0, False] for _ in range(number_of_browsers)] #browser, number of cloudflare failures, number of ongoing requests, total requests, browser in use
+    failures_allowed = 20
+    process_pool_executor = ThreadPoolExecutor(max_workers=number_of_browsers)
+    
 url_response_cache = {}
 cache_time = timedelta(seconds=30)
 long_cache_time = timedelta(seconds=45)
@@ -22,11 +35,10 @@ cache_size = 5
 cache_deletion_time_limit = timedelta(hours=2)
 lockout_timelimit = timedelta(minutes=5)
 
-#Number of minutes between captchas
-captcha_time_estimation = 117
 
 
-USING_EXPERIMENTAL_REQUEST = True
+
+
 
 
 wiimmfi_url = 'https://wiimmfi.de'
@@ -40,11 +52,7 @@ f"{submkwxURL}r0000004":("Table Bot Remove Race Test w/ quickedit, 2nd room to m
 
 
 
-import undetected_chromedriver.v2 as uc
-number_of_browsers = 3
-driver_infos = [[uc.Chrome(), 0, 0, 0, False] for _ in range(number_of_browsers)] #browser, number of cloudflare failures, number of ongoing requests, total requests, browser in use
-failures_allowed = 2
-process_pool_executor = ThreadPoolExecutor(max_workers=number_of_browsers)
+
 
 def select_free_driver():
     index_of_min_driver = 0
@@ -74,7 +82,7 @@ async def restart_driver(index, logging_message):
     driver_info[1] = 0
     driver_info[0].quit()
     await asyncio.sleep(3)
-    driver_info[0] = uc.Chrome()
+    driver_info[0] = uc.Chrome("./chrome-cli/chromedriver.exe", options=options)
     await asyncio.sleep(3)
     driver_info[2] = 0
     driver_info[4] = False
@@ -82,12 +90,17 @@ async def restart_driver(index, logging_message):
 async def cloudflare_block_handle(driver_index, original_source):
     originally_had_cloudflare = False
     if "Ray ID: " in original_source:
+        print("Blocked by Cloudflare, attempting first bypass")
         originally_had_cloudflare = True
-        print("Blocked by Cloudflare, attempting bypass")
-        driver_infos[driver_index][0].service.stop()
-        await asyncio.sleep(driver_infos[driver_index][0]._delay)
-        driver_infos[driver_index][0].service.start()
-        driver_infos[driver_index][0].start_session()
+        await asyncio.sleep(5)
+        
+        if "Ray ID: " in driver_infos[driver_index][0].page_source:
+            print("Blocked by Cloudflare, attempting second bypass through restart...")
+            driver_infos[driver_index][0].service.stop()
+            await asyncio.sleep(6)
+            driver_infos[driver_index][0].service.start()
+            driver_infos[driver_index][0].start_session()
+            await asyncio.sleep(2)
     return originally_had_cloudflare, "Ray ID: " not in driver_infos[driver_index][0].page_source
 
 
@@ -155,8 +168,12 @@ async def cloudflare_failure_check():
 #    pass
 
 async def threaded_fetch(session, url, use_long_cache_time=False):
-    result = await asyncio.get_event_loop().run_in_executor(process_pool_executor, fetch, session, url, use_long_cache_time)
-    return result
+    if USING_EXPERIMENTAL_REQUEST:
+        result = await asyncio.get_event_loop().run_in_executor(process_pool_executor, fetch, session, url, use_long_cache_time)
+        return result
+    else:
+        return await __fetch__(session, url, use_long_cache_time)
+        
           
 def fetch(session, url, use_long_cache_time=False):
     return asyncio.run(__fetch__(session, url, use_long_cache_time))
@@ -170,7 +187,7 @@ async def __fetch__(session, url, use_long_cache_time=False):
     current_time = datetime.now()
     for _ in range(5):
         try: #Race condition avoidance: in the following line, it's possible that the url is in the cache for the first part of statement, but not the second part of the statement
-            if url in url_response_cache and url_response_cache[url][0]:
+            if url in url_response_cache and url_response_cache[url][0]: #check if url is being pulled
                 await asyncio.sleep(2)
                 if not (url in url_response_cache and url_response_cache[url][0]): #To catch the final try and avoid a huge time window which would certainly result in race conditions
                     break  
@@ -226,7 +243,7 @@ async def __fetch__(session, url, use_long_cache_time=False):
             url_response_cache[url][1] = current_time
             if not USING_EXPERIMENTAL_REQUEST:
                 print(f"{current_time.time()}: fetch({url}) is making an HTTPS request.")
-                async with session.get(url) as response:
+                async with session.get(url, ssl=common.sslcontext) as response:
                     to_return = await response.text()
                     recent_pulls_for_url.append([current_time, to_return])
             else:
@@ -339,7 +356,7 @@ async def getRoomData(rid_or_rlid):
     roomIDSpot = mkwxSoup.find(text=rid_or_rlid)
     if roomIDSpot is None:
         return None, None, None
-    link = str(roomIDSpot.find_previous('a')['href'])
+    link = str(roomIDSpot.find_previous('a')['data-href'])
     rLID = link.split("/")[-1]
     rLIDSoup = await getrLIDSoup(rLID)
     return wiimmfi_url + link, rLID, rLIDSoup #link example: /stats/mkwx/list/r1279851
@@ -412,7 +429,7 @@ async def getRoomDataByFC(fcs):
             continue
         if 'id' in correctLevel.attrs:
             break
-    link = correctLevel.find('a')['href']
+    link = correctLevel.find('a')['data-href']
     rLID = link.split("/")[-1]
     rLIDSoup = await getrLIDSoup(rLID)
     return wiimmfi_url + link, rLID, rLIDSoup #link example: /stats/mkwx/list/r1279851

@@ -33,7 +33,7 @@ async def get_shortened_url_from_response(response):
 async def bitly_shorten_url(url:str):
     async with aiohttp.ClientSession(headers=BITLY_URL_SHORTEN_API_HEADERS) as session:
         post_data = build_url_bitly_shortening_data(url)
-        async with session.post(BITLY_URL_SHORTEN_API_URL, data=str(post_data)) as response:
+        async with session.post(BITLY_URL_SHORTEN_API_URL, data=str(post_data), ssl=common.sslcontext) as response:
             if response.status != 200:
                 raise URLShortenFailure(str(await response.json()))
             return await get_shortened_url_from_response(response)
@@ -41,7 +41,7 @@ async def bitly_shorten_url(url:str):
 async def tinyurl_shorten_url(url:str):
     async with aiohttp.ClientSession() as session:
         full_url = TINYURL_URL_SHORTEN_API_URL + url
-        async with session.get(full_url) as response:
+        async with session.get(full_url, ssl=common.sslcontext) as response:
             if response.status != 200:
                 raise URLShortenFailure(f"Tiny URL failed. Status code: {response.status}")
             return await response.text()

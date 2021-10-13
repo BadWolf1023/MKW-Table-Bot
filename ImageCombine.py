@@ -127,7 +127,7 @@ def add_autotable_footer(footer, table_image_path=TESTING_IMAGE, out_image_path=
 #A list of tuples. Tuples have 2 pieces of data. The first is a str which is the team tag. The 2nd is a list of tuples (a tuple contains information about that player on the team).
 #The first index of that tuple is the players FC, the 2nd index of that tuple is a tuple if 2 length. The first index of that tuple is the table str for Lorenzi's website, the 2nd index is their total score, including penalties.
 def add_miis_to_table(channel_bot:ChannelBot, team_scores:List[Tuple[str, List[Tuple[str, Tuple[str, int]]]]], table_image_path=TESTING_IMAGE, out_image_path="combined_test.png"):
-    if common.MIIS_DISABLED:
+    if common.MIIS_ON_TABLE_DISABLED:
         return True
     extension_reflect, mii_footer = get_footer_with_miis(channel_bot, team_scores)
     return add_autotable_footer(mii_footer, table_image_path=table_image_path, out_image_path=out_image_path, extension_should_reflect=extension_reflect)

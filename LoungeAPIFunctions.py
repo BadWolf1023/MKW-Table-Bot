@@ -4,10 +4,11 @@ loungeAPIURL = "https://www.mkwlounge.gg/api/wiimmfi.php"
 
 import aiohttp
 from datetime import datetime
+import common
 
 async def getOnlineData(full_url):
     async with aiohttp.ClientSession() as session:
-        async with session.get(full_url) as r:
+        async with session.get(full_url, ssl=common.sslcontext) as r:
             if r.status == 200:
                 js = await r.json()
                 return js
@@ -55,7 +56,8 @@ async def getByDiscordIDs(discordIDs:List[str], loungeVerifiedOnly=True):
     data = None
     try:
         data = await getOnlineData(fullURL)
-    except:
+    except Exception as e:
+        print(e)
         pass
     return parseData(data, loungeVerifiedOnly)
     
@@ -65,8 +67,8 @@ async def getByLoungeNames(loungeNames:List[str], loungeVerifiedOnly=True):
     data = None
     try:
         data = await getOnlineData(fullURL)
-    except:
-        pass
+    except Exception as e:
+        print(e)
     return parseData(data, loungeVerifiedOnly)
 
 async def getByFCs(FCs:List[str], loungeVerifiedOnly=True):
@@ -75,6 +77,6 @@ async def getByFCs(FCs:List[str], loungeVerifiedOnly=True):
     data = None
     try:
         data = await getOnlineData(fullURL)
-    except:
-        pass
+    except Exception as e:
+        print(e)
     return parseData(data, loungeVerifiedOnly)

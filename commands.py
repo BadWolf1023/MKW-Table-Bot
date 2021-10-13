@@ -66,6 +66,9 @@ async def send_missing_permissions(channel:discord.TextChannel, content=None, de
     
         
 async def mkwx_check(message, error_message):
+    if common.is_bad_wolf(message.author):
+        return True
+    
     if common.DISABLE_MKWX_COMMANDS:
         raise TableBotExceptions.CommandDisabled(error_message)
     if common.LIMIT_MKWX_COMMANDS:
@@ -435,7 +438,7 @@ class OtherCommands:
       
     @staticmethod
     async def mii_command(message:discord.Message, args:List[str], old_command:str):
-        if common.MIIS_DISABLED:
+        if common.MII_COMMAND_DISABLED and not common.is_bad_wolf(message.author):
             await message.channel.send("To ensure Table Bot remains stable and can access the website, miis have been disabled at this time.")
             return
         await mkwx_check(message, "Mii command disabled.")
@@ -553,6 +556,8 @@ class OtherCommands:
                         sent_missing_perms_message = True
                 except asyncio.TimeoutError:
                     break
+                except asyncio.CancelledError:
+                    break
             
             try:
                 await msg.clear_reaction(common.LEFT_ARROW_EMOTE)
@@ -566,6 +571,8 @@ class OtherCommands:
                 if message.guild is not None and not sent_missing_perms_message:
                     await send_missing_permissions(message.channel)
             except discord.errors.NotFound:
+                pass
+            except RuntimeError: #Loop got closed, suppress exception
                 pass
     
     
@@ -1983,7 +1990,6 @@ class TablingCommands:
                     display_url_table_text = urllib.parse.quote(table_text)
                     true_url_table_text = urllib.parse.quote(table_text_with_style_and_graph)
                     image_url = common.base_url_lorenzi + true_url_table_text
-                    
                     table_image_path = str(message.id) + ".png"
                     image_download_success = await common.download_image(image_url, table_image_path)
                     try:
