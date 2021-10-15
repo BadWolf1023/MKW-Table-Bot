@@ -20,7 +20,7 @@ print(certifi.where())
 version = "11.4.0"
 
 MII_COMMAND_DISABLED = False
-MIIS_ON_TABLE_DISABLED = True
+MIIS_ON_TABLE_DISABLED = False
 
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
