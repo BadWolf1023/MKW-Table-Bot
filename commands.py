@@ -1408,7 +1408,7 @@ class TablingCommands:
         #Command information for user if command is run with no args
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"\n**Example:** If the 1st player on this list subbed out, and the 2nd player on this list subbed in on race 9, you would do: `{server_prefix}{args[0]} 1 2 9`"
+            to_send += f"\n**Example:** If the 2nd player on the list subbed in on race 9 for the 1st player on the list, you would do: `{server_prefix}{args[0]} 2 1 9`"
             await message.channel.send(to_send)
             return
         
@@ -1417,8 +1417,8 @@ class TablingCommands:
             await message.channel.send(example_error_message)
             return
         
-        subOutNum, subOutErrorMessage = getPlayerIndexInRoom(args[1], this_bot.getRoom(), server_prefix, "sub")
-        subInNum, subInErrorMessage = getPlayerIndexInRoom(args[2], this_bot.getRoom(), server_prefix, "sub")
+        subInNum, subInErrorMessage = getPlayerIndexInRoom(args[1], this_bot.getRoom(), server_prefix, "sub")
+        subOutNum, subOutErrorMessage = getPlayerIndexInRoom(args[2], this_bot.getRoom(), server_prefix, "sub")
         
         #If race number isn't a valid number, send error message
         raceNum = args[3]
@@ -1453,17 +1453,21 @@ class TablingCommands:
         if this_bot.getRoom().fc_subbed_out(subOutFC):
             await message.channel.send(f"The person you are trying to sub out has already subbed out on the table.")
             return
+        if this_bot.getRoom().fc_subbed_in(subOutFC):
+            await message.channel.send(f"Currently, MKW Table Bot does not support double subs. Maybe in the future!")
+            return
         
-        await message.channel.send(f"All error logic cleared! Sub out number: {subOutNum} | Sub in number: {subInNum} | Race Number: {raceNum}")
         subOutStartRace = 1
         subOutEndRace = raceNum - 1
         subOutScores = SK.get_race_scores_for_fc(subOutFC, this_bot)[subOutStartRace-1:subOutEndRace]
-        subOutName = f"{UtilityFunctions.process_name(subOutMiiName + UserDataProcessing.lounge_add(subOutFC))}"
+        subOutName = UserDataProcessing.lounge_get(subOutFC)
+        if subOutName == "":
+            subOutName = subOutMiiName
         subInStartRace = raceNum
         subInEndRace = this_bot.getWar().getNumberOfRaces()
         this_bot.add_save_state(message.content)
         this_bot.getRoom().add_sub(subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores)
-        await message.channel.send(f"{this_bot.getRoom().sub_ins}")
+        await message.channel.send(f"Got it. **{UtilityFunctions.process_name(subInMiiName + lounge_add(subInFC))}** subbed in for **{UtilityFunctions.process_name(subOutMiiName + lounge_add(subOutFC))} on race #{subInStartRace}**")
     
 
     @staticmethod
