@@ -48,7 +48,8 @@ special_test_cases = {f"{submkwxURL}r0000000":("Special room: Room has times wit
 f"{submkwxURL}r0000001":("Table Bot Challenge Room One", "testing_rooms/TableBotTestOne.html"),
 f"{submkwxURL}r0000002":("Table Bot Challenge Room Two", "testing_rooms/TableBotTestTwo.html"),
 f"{submkwxURL}r0000003":("Table Bot Remove Race Test w/ quickedit", "testing_rooms/removerace_one.html"),
-f"{submkwxURL}r0000004":("Table Bot Remove Race Test w/ quickedit, 2nd room to merge", "testing_rooms/removerace_two.html")}
+f"{submkwxURL}r0000004":("Table Bot Remove Race Test w/ quickedit, 2nd room to merge", "testing_rooms/removerace_two.html"),
+f"{submkwxURL}r0000005":("Clean room with no errors.", "testing_rooms/clean_room.html")}
 
 
 
