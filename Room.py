@@ -101,8 +101,15 @@ class Room(object):
         self.placement_history[race_num].append(position_change)        
         self.races[race_num-1].applyPlacementChanges([position_change])
 
+    def fc_subbed_out(self, fc):
+        for sub_data in self.sub_ins.values():
+            if fc == sub_data[2]:
+                return True
+        return False
     
-
+    def add_sub(self, subInFC, subInStartRace, subInEndRace, subOutFC, subOutNewName, subOutStartRace, subOutEndRace, subOutScores):
+        #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
+        self.sub_ins[subInFC] = [subInStartRace, subInEndRace, subOutFC, subOutNewName, subOutStartRace, subOutEndRace, subOutScores]
     
     #Outside caller should use this, it will add the removed race to the class' history
     #Okay, final step: when we remove a race, whatever room size changes and quickedits and dc_on_or_before for races after the removed race need to all shift down by one
