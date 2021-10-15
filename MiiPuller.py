@@ -50,20 +50,40 @@ SAKE_HEADERS = {"Host":"mariokartwii.sake.gs.wiimmfi.de",
                 "SOAPAction":"http://gamespy.net/sake/SearchForRecords"}
 
 MII_CACHE = {}
-MII_CACHE_TIME = timedelta(minutes=1)
+MII_DEFAULT_CACHE_TIME = timedelta(minutes=7)
+MIN_FAILURES_BEFORE_BACKOFF = 3
+BACK_OFF_SECONDS_AMOUNT = 20
+DYNAMIC_CACHER_COOLDOWN = timedelta(hours=2)
+MAXIMUM_FAILURES = 30
+MII_DYNAMIC_CACHER = [datetime.now(), 0, MII_DEFAULT_CACHE_TIME] #date of last reset
 
-def cache_time_expired(last_access_time, cache_time=MII_CACHE_TIME):
-    return (datetime.now() - last_access_time) > cache_time
+def update_pulling_mii_failed():
+    MII_DYNAMIC_CACHER[1] += 1
+    update_dynamic_cacher()
+    
+def update_dynamic_cacher():
+    if MII_DYNAMIC_CACHER[1] > MIN_FAILURES_BEFORE_BACKOFF:
+        MII_DYNAMIC_CACHER[2] = timedelta(seconds=(BACK_OFF_SECONDS_AMOUNT*(MII_DYNAMIC_CACHER[1]-MIN_FAILURES_BEFORE_BACKOFF))) + MII_DEFAULT_CACHE_TIME
+        
+def reset_dynamic_cacher_if_needed():
+    if (datetime.now() - DYNAMIC_CACHER_COOLDOWN) > MII_DYNAMIC_CACHER[0]:
+        MII_DYNAMIC_CACHER[0] = datetime.now()
+        MII_DYNAMIC_CACHER[1] = 0
+        MII_DYNAMIC_CACHER[2] = MII_DEFAULT_CACHE_TIME
+
+def cache_time_expired(last_access_time):
+    return (datetime.now() - last_access_time) > MII_DYNAMIC_CACHER[2]
 
 def mii_cache_update(fc, mii_bytes, mii_hex_str):
-    if mii_bytes is not None and mii_hex_str is not None:
-        MII_CACHE[fc] = [(mii_bytes, mii_hex_str), datetime.now()]
+    MII_CACHE[fc] = [(mii_bytes, mii_hex_str), datetime.now()]
 
 def get_mii_data_if_cached(fc):
+    if MII_DYNAMIC_CACHER[1] > MAXIMUM_FAILURES:
+        return None, None, True
     if fc in MII_CACHE:
         if not cache_time_expired(MII_CACHE[fc][1]):
-            return MII_CACHE[fc][0]
-    return None, None
+            return *MII_CACHE[fc][0], True
+    return None, None, False
 
 def get_sake_post_data(player_id):
     return SAKE_POST_DATA.format(player_id)
@@ -91,23 +111,30 @@ def mii_data_is_corrupt(mii_data:str):
     return mii_data == b''
 
 async def get_mii_data_from_pid(pid:int) -> str:
-    async with aiohttp.ClientSession() as session:
-        async with session.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(pid), ssl=common.sslcontext) as data:
-            miidatab64 = str(await data.content.read())
-            miidatahex = base64.b64decode(miidatab64[399:527])
-            encode = binascii.hexlify(miidatahex)
-            return (miidatahex, str(encode)[2:-1]) if not mii_data_is_corrupt(encode) else (None, None)
-    return None, None
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(pid), ssl=common.sslcontext, timeout=2) as data:
+                miidatab64 = str(await data.content.read())
+                miidatahex = base64.b64decode(miidatab64[399:527])
+                encode = binascii.hexlify(miidatahex)
+                if mii_data_is_corrupt(encode):
+                    update_pulling_mii_failed()
+                    return None, None
+                return (miidatahex, str(encode)[2:-1])
+    except:
+        update_pulling_mii_failed()
+        return None, None
 
 async def get_mii_data(fc:str):
     pid, _ = wiifc(fix_fc_text(fc), b'RMCJ')
     return await get_mii_data_from_pid(pid)
 
 async def get_mii(fc:str, message_id:str, picture_width=512):
-    mii_bytes, mii_hex_str = get_mii_data_if_cached(fc)
-    if mii_bytes is None or mii_hex_str is None:
+    reset_dynamic_cacher_if_needed()
+    mii_bytes, mii_hex_str, should_use_cache = get_mii_data_if_cached(fc)
+    if not should_use_cache:
         mii_bytes, mii_hex_str = await get_mii_data(fc)
-    mii_cache_update(fc, mii_bytes, mii_hex_str)
+        mii_cache_update(fc, mii_bytes, mii_hex_str)
         
     if mii_bytes is None:
         return NO_MII_ERROR_MESSAGE
@@ -126,12 +153,13 @@ async def get_mii(fc:str, message_id:str, picture_width=512):
 #======================== The functions below are the same as above, except they are BLOCKING ========================
 def get_mii_data_from_pid_blocking(playerid:int) -> str:
     try:
-        mii_data = requests.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(playerid), verify=common.certifi.where())
+        mii_data = requests.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(playerid), verify=common.certifi.where(), timeout=2)
         miidatab64 = str(mii_data.content)
         miidatahex = base64.b64decode(miidatab64[399:527])
         encode = binascii.hexlify(miidatahex)
         return (miidatahex, str(encode)[2:-1]) if not mii_data_is_corrupt(encode) else (None, None)
     except:
+        update_pulling_mii_failed()
         return None, None
 
 def get_mii_data_blocking(fc:str):
@@ -139,10 +167,11 @@ def get_mii_data_blocking(fc:str):
     return get_mii_data_from_pid_blocking(pid)
 
 def get_mii_blocking(fc:str, message_id:str, picture_width=512):
-    mii_bytes, mii_hex_str = get_mii_data_if_cached(fc)
-    if mii_bytes is None or mii_hex_str is None:
+    reset_dynamic_cacher_if_needed()
+    mii_bytes, mii_hex_str, should_use_cache = get_mii_data_if_cached(fc)
+    if not should_use_cache:
         mii_bytes, mii_hex_str = get_mii_data_blocking(fc)
-    mii_cache_update(fc, mii_bytes, mii_hex_str)
+        mii_cache_update(fc, mii_bytes, mii_hex_str)
         
     if mii_bytes is None:
         return NO_MII_ERROR_MESSAGE
