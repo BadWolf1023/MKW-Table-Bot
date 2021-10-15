@@ -479,7 +479,7 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.remove_race_command(message, this_bot, args, server_prefix, is_lounge_server)
             
             elif args[0] in SUBSTITUTE_TERMS:
-                await message.channel.send("This feature is not completed yet.")
+                await commands.TablingCommands.substitue_player_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
             elif args[0] in CURRENT_ROOM_TERMS:
                 await commands.TablingCommands.current_room_command(message, this_bot, server_prefix, is_lounge_server

@@ -1363,7 +1363,11 @@ class TablingCommands:
             this_bot.add_save_state(message.content)
             this_bot.getRoom().addPlayerPenalty(players[playerNum-1][0], amount)
             await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty."))
-
+    
+    @staticmethod    
+    async def substitue_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
+        await message.channel.send("This feature is not completed yet.")
+        return
 
     @staticmethod
     async def change_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
