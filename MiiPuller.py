@@ -56,8 +56,7 @@ def cache_time_expired(last_access_time, cache_time=MII_CACHE_TIME):
     return (datetime.now() - last_access_time) > cache_time
 
 def mii_cache_update(fc, mii_bytes, mii_hex_str):
-    if mii_bytes is not None and mii_hex_str is not None:
-        MII_CACHE[fc] = [(mii_bytes, mii_hex_str), datetime.now()]
+    MII_CACHE[fc] = [(mii_bytes, mii_hex_str), datetime.now()]
 
 def get_mii_data_if_cached(fc):
     if fc in MII_CACHE:
