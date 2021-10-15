@@ -107,9 +107,26 @@ class Room(object):
                 return True
         return False
     
-    def add_sub(self, subInFC, subInStartRace, subInEndRace, subOutFC, subOutNewName, subOutStartRace, subOutEndRace, subOutScores):
+    def sub_score_for_fc(self, fc, race_num):
+        if fc not in self.sub_ins:
+            return None
+        suboutStartRace = self.sub_ins[fc][4]
+        suboutEndRace = self.sub_ins[fc][5]
+        if race_num >= suboutStartRace and race_num <= suboutEndRace:
+            return self.sub_ins[fc][6][race_num-suboutStartRace]
+        return None
+    
+    def fc_subbed_in(self, fc):
+        return fc in self.sub_ins
+    
+    def get_subin_error_string(self, race_num):
+        pass
+    
+    def add_sub(self, subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores):
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
-        self.sub_ins[subInFC] = [subInStartRace, subInEndRace, subOutFC, subOutNewName, subOutStartRace, subOutEndRace, subOutScores]
+        self.sub_ins[subInFC] = [subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores]
+        self.setNameForFC(subOutFC, f"#subbed out: {subOutName}")
+        
     
     #Outside caller should use this, it will add the removed race to the class' history
     #Okay, final step: when we remove a race, whatever room size changes and quickedits and dc_on_or_before for races after the removed race need to all shift down by one
