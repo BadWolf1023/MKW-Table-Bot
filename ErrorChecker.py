@@ -91,7 +91,7 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
             errors.append("This race had players with impossible deltas (lag). Table could be incorrect for this GP.")
             
             
-        
+        errors.extend(room.get_subin_error_string_list(race.raceNumber))
             
         if race.raceNumber in room.forcedRoomSize:
             errors.append("Room size changed to " + str(room.forcedRoomSize[race.raceNumber]) + " players for this race.")

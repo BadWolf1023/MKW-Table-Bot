@@ -63,7 +63,39 @@ async def send_missing_permissions(channel:discord.TextChannel, content=None, de
         return await channel.send("I'm missing permissions. Contact your admins. The bot needs these additional permissions:\n- Send Messages\n- Add Reactions (for pages)\n- Manage Messages (to remove reactions)", delete_after=delete_after)
     except discord.errors.Forbidden: #We can't send messages
         pass
+#Method looks up the given name to see if any known FCs are on the table and returns the index of the player if it is found
+#If the given name was a number, checks to see if the number is actually on the player list and returns the integer version of that index if it is found
+#If no FCs of the given player were found on the table, or if the integer given is out of range, an error message is returned
+#Returns playerNumber, errorMessage - errorMessage will be None is a playerNumber is found. playerNumber will be None if no playerNumber could be found.
+def getPlayerIndexInRoom(name:str, room:TableBot.Room.Room, server_prefix:str, command_name:str):
+    players = room.get_sorted_player_list()
+    playerNum = None
     
+    #If they gave us an integer, check if it's on the list
+    if UtilityFunctions.isint(name):
+        playerNum = int(name)
+        if playerNum < 1 or playerNum > len(players):
+            return None, f"The player number must be between 1 and {len(players)}. Do `{server_prefix}{command_name}` for an example on how to use this command."
+        else:
+            return playerNum, None    
+    
+    else:
+        lounge_name = str(copy.copy(name))
+        loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
+        for _playerNum, (fc, _) in enumerate(players, 1):
+            if fc in loungeNameFCs:
+                playerNum = _playerNum
+                break
+        else:
+            playerNum = None
+            
+        if playerNum is None:
+            return None, f"Could not find Lounge name \"{UtilityFunctions.process_name(str(lounge_name))}\" in this room."
+        return playerNum, None
+    
+    #Sanity check, should not ever run:
+    return None, f"Error in `getPlayerIndexInRoom`. Unreachable code hit. Use `{server_prefix}log` to tell me this happened."
+
         
 async def mkwx_check(message, error_message):
     if common.is_bad_wolf(message.author):
@@ -824,7 +856,7 @@ class LoungeCommands:
                     
                     if using_table_bot_table:
                         war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0
-                        tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0
+                        tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs()
                         header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
                         footer_combine_success = True
             
@@ -1363,7 +1395,82 @@ class TablingCommands:
             this_bot.add_save_state(message.content)
             this_bot.getRoom().addPlayerPenalty(players[playerNum-1][0], amount)
             await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty."))
-
+    
+    @staticmethod    
+    async def substitue_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        example_error_message = f"Do `{server_prefix}sub` for an example of how to use this command."
+        
+        #If room is not loaded, send an error message
+        if not this_bot.table_is_set():
+            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            return
+        
+        #Command information for user if command is run with no args
+        if len(args) == 1:
+            to_send = this_bot.getRoom().get_sorted_player_list_string()
+            to_send += f"\n**Example:** If the 2nd player on the list subbed in on race 9 for the 1st player on the list, you would do: `{server_prefix}{args[0]} 2 1 9`"
+            await message.channel.send(to_send)
+            return
+        
+        #If they don't give the right number of arguments, send an error.
+        if len(args) != 4:
+            await message.channel.send(example_error_message)
+            return
+        
+        subInNum, subInErrorMessage = getPlayerIndexInRoom(args[1], this_bot.getRoom(), server_prefix, "sub")
+        subOutNum, subOutErrorMessage = getPlayerIndexInRoom(args[2], this_bot.getRoom(), server_prefix, "sub")
+        
+        #If race number isn't a valid number, send error message
+        raceNum = args[3]
+        if not UtilityFunctions.isint(raceNum):
+            await message.channel.send(f"The race number must be a number. {example_error_message}")
+            return
+        raceNum = int(raceNum)
+        
+        if raceNum < 2:
+            await message.channel.send(f"The race number that the sub began to play must be race 2 or later. {example_error_message}")
+            return
+        if raceNum > this_bot.getWar().getNumberOfRaces():
+            await message.channel.send(f"Because your table was started as a {this_bot.getWar().getNumberOfGPS()} GP table, the last possible race someone can sub in is race #{this_bot.getWar().getNumberOfRaces()}")
+            return
+        
+        if subInNum is None:
+            await message.channel.send(subInErrorMessage)
+            return
+        if subOutNum is None:
+            await message.channel.send(subOutErrorMessage)
+            return
+        
+        if subInNum == subOutNum:
+            await message.channel.send("Someone cannot sub in for themselves.")
+            return
+        
+        subOutFC, subOutMiiName = this_bot.getRoom().getPlayerAtIndex(subOutNum-1)
+        subInFC, subInMiiName = this_bot.getRoom().getPlayerAtIndex(subInNum-1)
+        if this_bot.getRoom().fc_subbed_in(subInFC):
+            await message.channel.send(f"The person you are trying to sub in has subbed in for someone else already on the table.")
+            return
+        if this_bot.getRoom().fc_subbed_out(subOutFC):
+            await message.channel.send(f"The person you are trying to sub out has already subbed out on the table.")
+            return
+        if this_bot.getRoom().fc_subbed_in(subOutFC):
+            await message.channel.send(f"Currently, MKW Table Bot does not support double subs. Maybe in the future!")
+            return
+        
+        subOutStartRace = 1
+        subOutEndRace = raceNum - 1
+        subOutScores = SK.get_race_scores_for_fc(subOutFC, this_bot)[subOutStartRace-1:subOutEndRace]
+        subOutName = UserDataProcessing.lounge_get(subOutFC)
+        subOutTag = this_bot.getWar().getTeamForFC(subOutFC)
+        if subOutName == "":
+            subOutName = subOutMiiName
+        subInStartRace = raceNum
+        subInEndRace = this_bot.getWar().getNumberOfRaces()
+        this_bot.add_save_state(message.content)
+        this_bot.getRoom().add_sub(subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores)
+        this_bot.getWar().setTeamForFC(subInFC, subOutTag)
+        await message.channel.send(f"Got it. **{UtilityFunctions.process_name(subInMiiName + lounge_add(subInFC))}** subbed in for **{UtilityFunctions.process_name(subOutMiiName + lounge_add(subOutFC))}** on race #{subInStartRace}")
+    
 
     @staticmethod
     async def change_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
@@ -1984,7 +2091,7 @@ class TablingCommands:
                             return
                         #did the room have *any* errors? Regardless of ignoring any type of error
                         war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0
-                        tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0
+                        tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs()
                         header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
                         footer_combine_success = True
             

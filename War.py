@@ -140,7 +140,7 @@ class War(object):
         return self.teamPenalties
         
     def addTeamPenalty(self, team_tag, amount):
-        self.teamPenalties[team_tag] += amount   
+        self.teamPenalties[team_tag] += amount
     
     def __str__(self):
         war_string = "-- WAR --"
@@ -225,6 +225,9 @@ class War(object):
     
     def getNumberOfGPS(self):
         return self.numberOfGPs
+    
+    def getNumberOfRaces(self):
+        return self.numberOfGPs*4
     
     def get_recoverable_save_state(self):
         save_state = {}

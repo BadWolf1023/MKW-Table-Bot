@@ -47,6 +47,8 @@ class Room(object):
         self.dc_on_or_before = defaultdict(dict)
         self.set_up_user = None
         self.set_up_user_display_name = ""
+        #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
+        self.sub_ins = {}
         
         self.miis = {}
         
@@ -100,7 +102,61 @@ class Room(object):
         self.races[race_num-1].applyPlacementChanges([position_change])
 
     
-
+    def had_subs(self):
+        return len(self.sub_ins) != 0
+    
+    def fc_subbed_out(self, fc):
+        return self.get_sub_in_fc_for_subout_fc(fc) is not None
+    
+    def get_sub_in_fc_for_subout_fc(self, suboutfc):
+        for fc, sub_data in self.sub_ins.items():
+            if suboutfc == sub_data[2]:
+                return fc
+        return None
+    
+    def get_sub_out_for_subbed_in_fc(self, subInFC, race_num):
+        if subInFC not in self.sub_ins:
+            return None, None
+        suboutStartRace = self.sub_ins[subInFC][4]
+        suboutEndRace = self.sub_ins[subInFC][5]
+        if race_num >= suboutStartRace and race_num <= suboutEndRace:
+            return subInFC, self.sub_ins[subInFC][6][race_num-suboutStartRace]
+        return subInFC, None
+    
+    def get_sub_string(self, subin_name, subin_fc):
+        if not self.fc_subbed_in(subin_fc):
+            return subin_name
+        
+        subinStartRace = self.sub_ins[subin_fc][0]
+        subinEndRace = self.sub_ins[subin_fc][1]
+        #suboutFC = self.sub_ins[subin_fc][2]
+        suboutName = self.sub_ins[subin_fc][3]
+        suboutStartRace = self.sub_ins[subin_fc][4]
+        suboutEndRace = self.sub_ins[subin_fc][5]
+        return f"{suboutName}({suboutEndRace-suboutStartRace+1})/{subin_name}({subinEndRace-subinStartRace+1})"
+    
+    def fc_subbed_in(self, fc):
+        return fc in self.sub_ins
+        
+    def get_subin_error_string_list(self, race_num):
+        sub_str_list = []
+        for sub_in_fc, sub_data in self.sub_ins.items():
+            subInStartRace = sub_data[0]
+            if race_num != subInStartRace:
+                continue
+            
+            subInName = self.getMiiNameByFC(sub_in_fc) + UserDataProcessing.lounge_add(sub_in_fc)
+            if sub_in_fc in self.getNameChanges():
+                subInName = self.getNameChanges()[sub_in_fc]
+            suboutName = sub_data[3]
+            sub_str_list.append(f"Tabler subbed in {UtilityFunctions.process_name(subInName)} for {UtilityFunctions.process_name(suboutName)} this race")
+        return sub_str_list
+    
+    def add_sub(self, subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores):
+        #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
+        self.sub_ins[subInFC] = [subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores]
+        self.setNameForFC(subOutFC, f"#subbed out: {subOutName}")
+        
     
     #Outside caller should use this, it will add the removed race to the class' history
     #Okay, final step: when we remove a race, whatever room size changes and quickedits and dc_on_or_before for races after the removed race need to all shift down by one
@@ -111,10 +167,18 @@ class Room(object):
             remove_success = self.__remove_race__(raceIndex)
             if remove_success:
                 self.removed_races.append((raceIndex, raceName))
-                #Update dcs, quickedits, and room size changes
+                #Update dcs, quickedits, and room size changes, and subin scores
                 self.forcedRoomSize = generic_dictionary_shifter(self.forcedRoomSize, race_num)
                 self.dc_on_or_before = generic_dictionary_shifter(self.dc_on_or_before, race_num)
                 self.placement_history = generic_dictionary_shifter(self.placement_history, race_num)
+                for sub_data in self.sub_ins.values():
+                    subout_start_race = sub_data[4]
+                    subout_end_race = sub_data[5]
+                    if race_num >= subout_start_race and subout_start_race <= subout_end_race: #2, 3, 4
+                        sub_data[6].pop(subout_start_race - race_num)
+                        sub_data[5] -= 1
+                        sub_data[0] -= 1
+                        
             return remove_success, (raceIndex, raceName)
         return False, None
     
@@ -166,9 +230,19 @@ class Room(object):
                     fcNameDict[FC] = name
         return fcNameDict
     
+    def getMiiNameByFC(self, FC):
+        player_list = self.getFCPlayerList(endrace=None)
+        if FC in player_list:
+            return player_list[FC]
+        return "no name"
+            
+    
+    def fcIsInRoom(self, FC):
+        return FC in self.getFCs()       
+    
     def getNameChanges(self):
         return self.name_changes
-    
+
     def setNameForFC(self, FC, name):
         self.name_changes[FC] = name
     
@@ -261,6 +335,13 @@ class Room(object):
                     counter+=1
             return True, build_string
     
+    def getPlayerAtIndex(self, index):
+        player_list = self.get_sorted_player_list()
+        try:
+            return player_list[index]
+        except IndexError:
+            raise
+    
     #method that returns the players in a consistent, sorted order - first by getTagSmart, then by FC (for tie breaker)
     #What is returned is a list of tuples (fc, player_name)
     def get_sorted_player_list(self, startrace=1, endrace=12):
@@ -291,7 +372,6 @@ class Room(object):
     @staticmethod
     def getPlacementInfo(line):
         allRows = line.find_all("td")
-    
         FC = str(allRows[0].find("span").string)
     
         roomPosition = -1
@@ -526,6 +606,7 @@ class Room(object):
         save_state['rLIDs'] = self.rLIDs.copy()
         save_state['races'] = deepcopy(self.races)
         save_state['placement_history'] = copy(self.placement_history)
+        save_state['sub_ins'] = deepcopy(self.sub_ins)
         
         return save_state
     

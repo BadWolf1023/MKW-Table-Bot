@@ -17,7 +17,7 @@ import certifi
 sslcontext = ssl.create_default_context(cafile=certifi.where())
 print(certifi.where())
 
-version = "11.3.0"
+version = "11.4.0"
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = True

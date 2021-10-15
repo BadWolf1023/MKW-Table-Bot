@@ -59,6 +59,7 @@ UNDO_TERMS = {"undo", "undocommand", "reverse"}
 
 #These commands also modify the table, but can be undone using the ?undo command
 REMOVE_RACE_TERMS = {"removerace"}
+SUBSTITUTE_TERMS = {"sub", "substitute"}
 PLAYER_PENALTY_TERMS = {"pen", "penalty"}
 TEAM_PENALTY_TERMS = {"teampen", "teampenalty"}
 EDIT_PLAYER_SCORE_TERMS = {"edit"}
@@ -69,7 +70,9 @@ CHANGE_PLAYER_NAME_TERMS = {'changename', 'cn'}
 CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag', 'setteam', 'settag', 'ct'}
 CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize"}
 EARLY_DC_TERMS = {'earlydc'}
-QUICK_EDIT_TERMS = {'quickedit', 'qe'}
+DEPRECATED_QUICK_EDIT_TERMS = {'quickedit', 'qe'}
+QUICK_EDIT_TERMS = DEPRECATED_QUICK_EDIT_TERMS | {"changeplace", "changeposition"}
+
 TABLE_THEME_TERMS = {'style', 'theme', 'tablestyle', 'tabletheme'}
 GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
 DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
@@ -152,9 +155,9 @@ ADD_BOT_ADMIN_TERMS = {"addbotadmin", "addadmin"}
 REMOVE_BOT_ADMIN_TERMS = {"removebotadmin", "removeadmin"}
 GET_LOGS_TERMS = {"getlog", "getlogs", "logs"}
 
-needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS
+needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS
 
-ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | LOUNGE_TABLE_SUBMISSION_TERMS | LOUNGE_PENDING_TABLE_SUBMISSION_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | LOUNGE_NAME_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS
+ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS
 
 
 switch_status = True
@@ -476,6 +479,9 @@ async def on_message(message: discord.Message):
                             
             elif args[0] in REMOVE_RACE_TERMS:
                 await commands.TablingCommands.remove_race_command(message, this_bot, args, server_prefix, is_lounge_server)
+            
+            elif args[0] in SUBSTITUTE_TERMS:
+                await commands.TablingCommands.substitue_player_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
             elif args[0] in CURRENT_ROOM_TERMS:
                 await commands.TablingCommands.current_room_command(message, this_bot, server_prefix, is_lounge_server
@@ -512,6 +518,8 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.change_room_size_command(message, this_bot, args, server_prefix, is_lounge_server)
             
             elif args[0] in QUICK_EDIT_TERMS:
+                if args[0] in DEPRECATED_QUICK_EDIT_TERMS:
+                    await message.channel.send(f"**NOTE: The command `{server_prefix}{args[0]}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")                      
                 await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge_server, command)
             
             elif args[0] in CHANGE_PLAYER_TAG_TERMS:
