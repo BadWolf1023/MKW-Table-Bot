@@ -68,6 +68,13 @@ class ChannelBot(object):
         self.set_style_and_graph(server_id)
         self.set_dc_points(server_id)
         self.race_size = 4
+    
+    def get_room_started_message(self):
+        started_war_str = "FFA started" if self.getWar().isFFA() else "War started"
+        if self.getWar().ignoreLargeTimes:
+            started_war_str += " (ignoring errors for large finish times)"
+        started_war_str += f". {self.getRoom().getRXXText()}"
+        return started_war_str
         
     def set_race_size(self, new_race_size:int):
         self.race_size = new_race_size
