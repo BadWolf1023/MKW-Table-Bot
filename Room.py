@@ -50,8 +50,6 @@ class Room(object):
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         self.sub_ins = {}
         
-        self.miis = {}
-        
         self.initialize(rLIDs, roomSoup)
         
 
