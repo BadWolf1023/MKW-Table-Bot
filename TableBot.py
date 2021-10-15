@@ -196,7 +196,7 @@ class ChannelBot(object):
                 self.remove_miis_with_missing_files()
                 all_fcs_in_room = self.getRoom().getFCs()
                 if all_fcs_in_room != self.miis.keys():
-                    with concurrent.futures.ThreadPoolExecutor(max_workers=12) as executor:
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
                         future_to_fc = {executor.submit(MiiPuller.get_mii_blocking, fc, message_id): fc for fc in self.getRoom().getFCs() if fc not in self.miis }
                         for future in concurrent.futures.as_completed(future_to_fc):
                             fc = future_to_fc[future]
