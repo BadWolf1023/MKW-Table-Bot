@@ -1461,12 +1461,14 @@ class TablingCommands:
         subOutEndRace = raceNum - 1
         subOutScores = SK.get_race_scores_for_fc(subOutFC, this_bot)[subOutStartRace-1:subOutEndRace]
         subOutName = UserDataProcessing.lounge_get(subOutFC)
+        subOutTag = this_bot.getWar().getTeamForFC(subOutFC)
         if subOutName == "":
             subOutName = subOutMiiName
         subInStartRace = raceNum
         subInEndRace = this_bot.getWar().getNumberOfRaces()
         this_bot.add_save_state(message.content)
         this_bot.getRoom().add_sub(subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores)
+        this_bot.getWar().setTeamForFC(subInFC, subOutTag)
         await message.channel.send(f"Got it. **{UtilityFunctions.process_name(subInMiiName + lounge_add(subInFC))}** subbed in for **{UtilityFunctions.process_name(subOutMiiName + lounge_add(subOutFC))}** on race #{subInStartRace}")
     
 
