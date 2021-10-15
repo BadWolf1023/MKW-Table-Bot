@@ -1368,12 +1368,52 @@ class TablingCommands:
     async def substitue_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
         await message.channel.send("This feature is not completed yet.")
         return
-    
+        example_error_message = f"Do `{server_prefix}sub` for an example of how to use this command."
+        
+        #If room is not loaded, send an error message
+        if not this_bot.table_is_set():
+            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            return
+        
+        #Command information for user if command is run with no args
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
             to_send += f"\n**To sub in the 1st player for the on the list for the 2nd player on this list for race 9:** *{server_prefix}sub 1 2 9*"
             await message.channel.send(to_send)
             return
+        
+        #If they don't give the right number of arguments, send an error.
+        if len(args) != 4:
+            await message.channel.send(example_error_message)
+            return
+        
+        #Cast everything to numbers, if possible
+        subInNum = args[1]
+        subOutNum = args[2]
+        raceNum = args[3]
+        if UtilityFunctions.isint(subInNum):
+            subInNum = int(subInNum)
+        if UtilityFunctions.isint(subOutNum):
+            subOutNum = int(subOutNum)
+        if UtilityFunctions.isint(raceNum):
+            raceNum = int(raceNum)
+        
+        #If race number isn't a valid number, send error message
+        if type(raceNum) != int:
+            await message.channel.send(f"The race number must be a number. {example_error_message}")
+            return
+        if raceNum < 2:
+            await message.channel.send(f"The number of the race that the sub in began to play must be race 2 or later. {example_error_message}")
+        if raceNum > this_bot.getWar().getNumberOfRaces():
+            await message.channel.send(f"The number of the race that the sub in began to play must be before the end of the last race. Since your table was started as a {this_bot.getWar().getNumberOfGPS()} GP table, the last possible race someone can sub in is on race #{this_bot.getWar().getNumberOfRaces()}")
+            return
+            
+            
+        if type(subInNum) != int:
+            print("Need to lookup name")
+        else:
+            print("It is on the player list.")
+            
     
 
     @staticmethod
