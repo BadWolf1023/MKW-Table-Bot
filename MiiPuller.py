@@ -50,7 +50,7 @@ SAKE_HEADERS = {"Host":"mariokartwii.sake.gs.wiimmfi.de",
                 "SOAPAction":"http://gamespy.net/sake/SearchForRecords"}
 
 MII_CACHE = {}
-MII_CACHE_TIME = timedelta(minutes=1)
+MII_CACHE_TIME = timedelta(minutes=7)
 
 def cache_time_expired(last_access_time, cache_time=MII_CACHE_TIME):
     return (datetime.now() - last_access_time) > cache_time
