@@ -205,6 +205,9 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
         if fc in room.getNameChanges():
             name = room.getNameChanges()[fc]
         
+        if room.fc_subbed_in(fc):
+            name = room.get_sub_string(name, fc)
+        
         if discord_escape:
             name = escape_mentions(escape_markdown(name))
 
@@ -223,10 +226,14 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             editAmount = war.getEditAmount(fc, GPnum)
             if editAmount is not None:
                 gp_amount = [editAmount, 0, 0, 0]
-            elif fc in GP_scores.keys():
-                gp_amount = GP_scores[fc]
             else:
-                gp_amount = [0, 0, 0, 0]
+                if fc in GP_scores.keys():
+                    gp_amount = GP_scores[fc]
+                for gp_race_num in range(1, 5):
+                    _, subout_old_score = room.get_sub_out_for_subbed_in_fc(fc, ((GPnum-1)*4)+gp_race_num)
+                    if subout_old_score is not None:
+                        gp_amount[gp_race_num-1] = subout_old_score
+
             GP_scores[fc] = gp_amount
             
     resizedGPs = GPs if step == 4 else resizeGPsInto(GPs, step)

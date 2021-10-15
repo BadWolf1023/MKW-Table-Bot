@@ -101,26 +101,56 @@ class Room(object):
         self.placement_history[race_num].append(position_change)        
         self.races[race_num-1].applyPlacementChanges([position_change])
 
-    def fc_subbed_out(self, fc):
-        for sub_data in self.sub_ins.values():
-            if fc == sub_data[2]:
-                return True
-        return False
     
-    def sub_score_for_fc(self, fc, race_num):
-        if fc not in self.sub_ins:
-            return None
-        suboutStartRace = self.sub_ins[fc][4]
-        suboutEndRace = self.sub_ins[fc][5]
-        if race_num >= suboutStartRace and race_num <= suboutEndRace:
-            return self.sub_ins[fc][6][race_num-suboutStartRace]
+    def had_subs(self):
+        return len(self.sub_ins) != 0
+    
+    def fc_subbed_out(self, fc):
+        return self.get_sub_in_fc_for_subout_fc(fc) is not None
+    
+    def get_sub_in_fc_for_subout_fc(self, suboutfc):
+        for fc, sub_data in self.sub_ins.items():
+            if suboutfc == sub_data[2]:
+                return fc
         return None
+    
+    def get_sub_out_for_subbed_in_fc(self, subInFC, race_num):
+        if subInFC not in self.sub_ins:
+            return None, None
+        suboutStartRace = self.sub_ins[subInFC][4]
+        suboutEndRace = self.sub_ins[subInFC][5]
+        if race_num >= suboutStartRace and race_num <= suboutEndRace:
+            return subInFC, self.sub_ins[subInFC][6][race_num-suboutStartRace]
+        return subInFC, None
+    
+    def get_sub_string(self, subin_name, subin_fc):
+        if not self.fc_subbed_in(subin_fc):
+            return subin_name
+        
+        subinStartRace = self.sub_ins[subin_fc][0]
+        subinEndRace = self.sub_ins[subin_fc][1]
+        #suboutFC = self.sub_ins[subin_fc][2]
+        suboutName = self.sub_ins[subin_fc][3]
+        suboutStartRace = self.sub_ins[subin_fc][4]
+        suboutEndRace = self.sub_ins[subin_fc][5]
+        return f"{suboutName}({suboutEndRace-suboutStartRace+1})/{subin_name}({subinEndRace-subinStartRace+1})"
     
     def fc_subbed_in(self, fc):
         return fc in self.sub_ins
-    
-    def get_subin_error_string(self, race_num):
-        pass
+        
+    def get_subin_error_string_list(self, race_num):
+        sub_str_list = []
+        for sub_in_fc, sub_data in self.sub_ins.items():
+            subInStartRace = sub_data[0]
+            if race_num != subInStartRace:
+                continue
+            
+            subInName = self.getMiiNameByFC(sub_in_fc) + UserDataProcessing.lounge_add(sub_in_fc)
+            if sub_in_fc in self.getNameChanges():
+                subInName = self.getNameChanges()[sub_in_fc]
+            suboutName = sub_data[3]
+            sub_str_list.append(f"Tabler subbed in {UtilityFunctions.process_name(subInName)} for {UtilityFunctions.process_name(suboutName)} this race")
+        return sub_str_list
     
     def add_sub(self, subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores):
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
@@ -141,7 +171,7 @@ class Room(object):
                 self.forcedRoomSize = generic_dictionary_shifter(self.forcedRoomSize, race_num)
                 self.dc_on_or_before = generic_dictionary_shifter(self.dc_on_or_before, race_num)
                 self.placement_history = generic_dictionary_shifter(self.placement_history, race_num)
-                for _, sub_data in self.sub_ins:
+                for sub_data in self.sub_ins.values():
                     subout_start_race = sub_data[4]
                     subout_end_race = sub_data[5]
                     if race_num >= subout_start_race and subout_start_race <= subout_end_race: #2, 3, 4
@@ -200,9 +230,19 @@ class Room(object):
                     fcNameDict[FC] = name
         return fcNameDict
     
+    def getMiiNameByFC(self, FC):
+        player_list = self.getFCPlayerList(endrace=None)
+        if FC in player_list:
+            return player_list[FC]
+        return "no name"
+            
+    
+    def fcIsInRoom(self, FC):
+        return FC in self.getFCs()       
+    
     def getNameChanges(self):
         return self.name_changes
-    
+
     def setNameForFC(self, FC, name):
         self.name_changes[FC] = name
     
@@ -332,7 +372,6 @@ class Room(object):
     @staticmethod
     def getPlacementInfo(line):
         allRows = line.find_all("td")
-    
         FC = str(allRows[0].find("span").string)
     
         roomPosition = -1
