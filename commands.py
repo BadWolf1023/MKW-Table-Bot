@@ -1660,13 +1660,7 @@ class TablingCommands:
                                     for teamNumber in range(0, min(this_bot.getWar().numberOfTeams, len(players))):
                                         dummy_teams[players[teamNumber][0]] = str(teamNumber)
                                     this_bot.getWar().setTeams(dummy_teams)
-                                    ffa_loaded_str = "FFA started. rxx: "
-                                    if len(this_bot.getRoom().rLIDs) == 1:
-                                        ffa_loaded_str += str(this_bot.getRoom().rLIDs[0])
-                                    else:
-                                        ffa_loaded_str += str(this_bot.getRoom().rLIDs)
-                                        
-                                    await message.channel.send(ffa_loaded_str)
+                                    await message.channel.send(this_bot.get_room_started_message())
                                 
                                 this_bot.setShouldSendNotification(True)
                     else:
@@ -1738,15 +1732,7 @@ class TablingCommands:
             fc_tags[fc] = teamTag
             
         this_bot.getWar().setTeams(fc_tags)
-        started_war_str = "Started war."
-        if this_bot.getWar().ignoreLargeTimes:
-            started_war_str += " (Ignoring errors for large finish times)"
-        started_war_str += " rxx: "
-        if len(this_bot.getRoom().rLIDs) == 1:
-            started_war_str += str(this_bot.getRoom().rLIDs[0])
-        else:
-            started_war_str += str(this_bot.getRoom().rLIDs)
-        await message.channel.send(started_war_str)
+        await message.channel.send(this_bot.get_room_started_message())
 
     @staticmethod                  
     async def merge_room_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2116,16 +2102,7 @@ class TablingCommands:
                 
         else:
             this_bot.getWar().setTeams(fc_tag)
-            started_war_str = "Started war."
-            if this_bot.getWar().ignoreLargeTimes:
-                started_war_str += " (Ignoring errors for large finish times)"
-                
-            started_war_str += " rxx: "
-            if len(this_bot.getRoom().rLIDs) == 1:
-                started_war_str += str(this_bot.getRoom().rLIDs[0])
-            else:
-                started_war_str += str(this_bot.getRoom().rLIDs)
-            await message.channel.send(started_war_str)
+            await message.channel.send(this_bot.get_room_started_message())
     
     @staticmethod
     async def remove_race_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
