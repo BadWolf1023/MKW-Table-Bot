@@ -47,6 +47,8 @@ class Room(object):
         self.dc_on_or_before = defaultdict(dict)
         self.set_up_user = None
         self.set_up_user_display_name = ""
+        #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
+        self.sub_ins = {}
         
         self.miis = {}
         
@@ -111,10 +113,18 @@ class Room(object):
             remove_success = self.__remove_race__(raceIndex)
             if remove_success:
                 self.removed_races.append((raceIndex, raceName))
-                #Update dcs, quickedits, and room size changes
+                #Update dcs, quickedits, and room size changes, and subin scores
                 self.forcedRoomSize = generic_dictionary_shifter(self.forcedRoomSize, race_num)
                 self.dc_on_or_before = generic_dictionary_shifter(self.dc_on_or_before, race_num)
                 self.placement_history = generic_dictionary_shifter(self.placement_history, race_num)
+                for _, sub_data in self.sub_ins:
+                    subout_start_race = sub_data[4]
+                    subout_end_race = sub_data[5]
+                    if race_num >= subout_start_race and subout_start_race <= subout_end_race: #2, 3, 4
+                        sub_data[6].pop(subout_start_race - race_num)
+                        sub_data[5] -= 1
+                        sub_data[0] -= 1
+                        
             return remove_success, (raceIndex, raceName)
         return False, None
     
@@ -260,6 +270,13 @@ class Room(object):
                     build_string += UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, replace_lounge)) + "** disconnected on or before race #" + str(raceNum) + " (" + str(self.races[raceNum-1].getTrackNameWithoutAuthor()) + ")\n"
                     counter+=1
             return True, build_string
+    
+    def getPlayerAtIndex(self, index):
+        player_list = self.get_sorted_player_list()
+        try:
+            return player_list[index]
+        except IndexError:
+            raise
     
     #method that returns the players in a consistent, sorted order - first by getTagSmart, then by FC (for tie breaker)
     #What is returned is a list of tuples (fc, player_name)
@@ -526,6 +543,7 @@ class Room(object):
         save_state['rLIDs'] = self.rLIDs.copy()
         save_state['races'] = deepcopy(self.races)
         save_state['placement_history'] = copy(self.placement_history)
+        save_state['sub_ins'] = deepcopy(self.sub_ins)
         
         return save_state
     
