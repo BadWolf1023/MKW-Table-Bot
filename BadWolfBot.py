@@ -70,7 +70,9 @@ CHANGE_PLAYER_NAME_TERMS = {'changename', 'cn'}
 CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag', 'setteam', 'settag', 'ct'}
 CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize"}
 EARLY_DC_TERMS = {'earlydc'}
-QUICK_EDIT_TERMS = {'quickedit', 'qe'}
+DEPRECATED_QUICK_EDIT_TERMS = {'quickedit', 'qe'}
+QUICK_EDIT_TERMS = DEPRECATED_QUICK_EDIT_TERMS | {"changeplace", "changeposition"}
+
 TABLE_THEME_TERMS = {'style', 'theme', 'tablestyle', 'tabletheme'}
 GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
 DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
@@ -516,6 +518,8 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.change_room_size_command(message, this_bot, args, server_prefix, is_lounge_server)
             
             elif args[0] in QUICK_EDIT_TERMS:
+                if args[0] in DEPRECATED_QUICK_EDIT_TERMS:
+                    await message.channel.send(f"**NOTE: The command `{server_prefix}{args[0]}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")                      
                 await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge_server, command)
             
             elif args[0] in CHANGE_PLAYER_TAG_TERMS:
