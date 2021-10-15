@@ -91,7 +91,7 @@ def mii_data_is_corrupt(mii_data:str):
 
 async def get_mii_data_from_pid(pid:int) -> str:
     async with aiohttp.ClientSession() as session:
-        async with session.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(pid), ssl=common.sslcontext) as data:
+        async with session.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(pid), ssl=common.sslcontext, timeout=2) as data:
             miidatab64 = str(await data.content.read())
             miidatahex = base64.b64decode(miidatab64[399:527])
             encode = binascii.hexlify(miidatahex)
@@ -125,7 +125,7 @@ async def get_mii(fc:str, message_id:str, picture_width=512):
 #======================== The functions below are the same as above, except they are BLOCKING ========================
 def get_mii_data_from_pid_blocking(playerid:int) -> str:
     try:
-        mii_data = requests.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(playerid), verify=common.certifi.where())
+        mii_data = requests.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(playerid), verify=common.certifi.where(), timeout=2)
         miidatab64 = str(mii_data.content)
         miidatahex = base64.b64decode(miidatab64[399:527])
         encode = binascii.hexlify(miidatahex)
