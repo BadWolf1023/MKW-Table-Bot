@@ -1740,13 +1740,12 @@ class TablingCommands:
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return                  
     
-        await message.channel.send("Feature under development. Please use with extreme caution.")
         if len(args) < 2:
             await message.channel.send("Nothing given to mergeroom. No merges nor changes made.") 
             return
-        if _is_rLID(args[1]) and args[0] in this_bot.getRoom().rLIDs:
-            await message.channel.send("The rLID you gave is already merged for this room. You can't merge a room with itself.") 
-            return
+        rxx_given = _is_rLID(args[1])
+        if rxx_given and args[1] in this_bot.getRoom().rLIDs:
+            await message.channel.send("The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `?undo`.") 
     
         roomLink, rLID, rLIDSoup = await WiimmfiSiteFunctions.getRoomDataSmart(args[1])
         rLIDSoupWasNone = rLIDSoup is None
@@ -1758,7 +1757,7 @@ class TablingCommands:
             await message.channel.send("Either the FC given to mergeroom isn't in a room, or the rLID given to mergeroom doesn't exist. No merges nor changes made. **Make sure the new room has finished the first race before using this command.**") 
             return
         
-        if rLID in this_bot.getRoom().rLIDs:
+        if not rxx_given and rLID in this_bot.getRoom().rLIDs:
             await message.channel.send("The room you are currently in has already been merge in this war. No changes made.")  
             return
     
@@ -1766,7 +1765,7 @@ class TablingCommands:
         this_bot.getRoom().rLIDs.insert(0, rLID)
         updated = await this_bot.update_room()
         if updated:
-            await message.channel.send("Rooms successfully merge. Number of races played: " + str(len(this_bot.getRoom().races)))
+            await message.channel.send(f"Successfully merged with this room: {this_bot.getRoom().getLastRXXString()} | Total number of races played: " + str(len(this_bot.getRoom().races)))
         else:
             this_bot.setWar(None)
             this_bot.setRoom(None)
