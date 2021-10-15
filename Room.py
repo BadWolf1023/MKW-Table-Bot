@@ -195,7 +195,12 @@ class Room(object):
             for i, rxx in enumerate(self.rLIDs[::-1], 1):
                 resultText += f"**- Room #{i} URL:** https://wiimmfi.de/stats/mkwx/list/{rxx}  |  **rxx number:** {rxx}\n"
         return resultText
-            
+    
+    def getLastRXXString(self):
+        if len(self.rLIDs) > 0:
+            last_rxx = self.rLIDs[0]
+            return f"**Room URL:** https://wiimmfi.de/stats/mkwx/list/{last_rxx}  |  **rxx number:** {last_rxx}"
+        return ""
     
     def getMissingPlayersPerRace(self):
         numGPS = int(len(self.races)/4 + 1)
