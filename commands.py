@@ -63,7 +63,39 @@ async def send_missing_permissions(channel:discord.TextChannel, content=None, de
         return await channel.send("I'm missing permissions. Contact your admins. The bot needs these additional permissions:\n- Send Messages\n- Add Reactions (for pages)\n- Manage Messages (to remove reactions)", delete_after=delete_after)
     except discord.errors.Forbidden: #We can't send messages
         pass
+#Method looks up the given name to see if any known FCs are on the table and returns the index of the player if it is found
+#If the given name was a number, checks to see if the number is actually on the player list and returns the integer version of that index if it is found
+#If no FCs of the given player were found on the table, or if the integer given is out of range, an error message is returned
+#Returns playerNumber, errorMessage - errorMessage will be None is a playerNumber is found. playerNumber will be None if no playerNumber could be found.
+def getPlayerIndexInRoom(name:str, room:TableBot.Room.Room, server_prefix:str, command_name:str):
+    players = room.get_sorted_player_list()
+    playerNum = None
     
+    #If they gave us an integer, check if it's on the list
+    if UtilityFunctions.isint(name):
+        playerNum = int(name)
+        if playerNum < 1 or playerNum > len(players):
+            return None, f"The player number must be between 1 and {len(players)}. Do {server_prefix}{command_name} for an example on how to use this command."
+        else:
+            return playerNum, None    
+    
+    else:
+        lounge_name = str(copy.copy(name))
+        loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
+        for _playerNum, (fc, _) in enumerate(players, 1):
+            if fc in loungeNameFCs:
+                playerNum = _playerNum
+                break
+        else:
+            playerNum = None
+            
+        if playerNum is None:
+            return None, f"Could not find Lounge name {UtilityFunctions.process_name(str(lounge_name))} in this room."
+        return playerNum, None
+    
+    #Sanity check, should not ever run:
+    return None, f"Error in `getPlayerIndexInRoom`. Unreachable code hit. Use `{server_prefix}log` to tell me this happened."
+
         
 async def mkwx_check(message, error_message):
     if common.is_bad_wolf(message.author):
@@ -1387,32 +1419,30 @@ class TablingCommands:
             await message.channel.send(example_error_message)
             return
         
-        #Cast everything to numbers, if possible
-        subInNum = args[1]
-        subOutNum = args[2]
-        raceNum = args[3]
-        if UtilityFunctions.isint(subInNum):
-            subInNum = int(subInNum)
-        if UtilityFunctions.isint(subOutNum):
-            subOutNum = int(subOutNum)
-        if UtilityFunctions.isint(raceNum):
-            raceNum = int(raceNum)
+        subInNum, subInErrorMessage = getPlayerIndexInRoom(args[1], this_bot.getRoom(), server_prefix, "sub")
+        subOutNum, subOutErrorMessage = getPlayerIndexInRoom(args[2], this_bot.getRoom(), server_prefix, "sub")
         
         #If race number isn't a valid number, send error message
-        if type(raceNum) != int:
+        raceNum = args[3]
+        if not UtilityFunctions.isint(raceNum):
             await message.channel.send(f"The race number must be a number. {example_error_message}")
             return
+        raceNum = int(raceNum)
+        
         if raceNum < 2:
             await message.channel.send(f"The number of the race that the sub in began to play must be race 2 or later. {example_error_message}")
         if raceNum > this_bot.getWar().getNumberOfRaces():
             await message.channel.send(f"The number of the race that the sub in began to play must be before the end of the last race. Since your table was started as a {this_bot.getWar().getNumberOfGPS()} GP table, the last possible race someone can sub in is on race #{this_bot.getWar().getNumberOfRaces()}")
             return
-            
-            
-        if type(subInNum) != int:
-            print("Need to lookup name")
-        else:
-            print("It is on the player list.")
+        
+        if subInNum is None:
+            await message.channel.send(subInErrorMessage)
+            return
+        if subOutNum is None:
+            await message.channel.send(subOutErrorMessage)
+            return
+        
+        await message.channel.send(f"All error logic cleared! Sub in number: {subInNum} | Sub out number: {subOutNum} | Race Number: {raceNum}")
             
     
 
