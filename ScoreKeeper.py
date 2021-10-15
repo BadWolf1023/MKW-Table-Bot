@@ -208,7 +208,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
         if discord_escape:
             name = escape_mentions(escape_markdown(name))
 
-        FC_table_str[fc] = [name + " ", 0]
+        FC_table_str[fc] = [name + " ", 0, []]
         
         #add flag, if the FC has a flag set
         if fc in UserDataProcessing.FC_DiscordID:
@@ -218,7 +218,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     
     
     for GPnum, GP_scores in enumerate(GPs, 1):
-        for fc, player in FC_table_str.items():
+        for fc in FC_table_str:
             gp_amount = [0, 0, 0, 0]
             editAmount = war.getEditAmount(fc, GPnum)
             if editAmount is not None:
@@ -235,6 +235,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             section_amount = sum(GP_scores[fc])
             FC_table_str[fc][0] += f"{section_amount}|"
             FC_table_str[fc][1] += section_amount
+            FC_table_str[fc][2].extend(GP_scores[fc])
                 
     for fc in FC_table_str.keys():
         FC_table_str[fc][0] = FC_table_str[fc][0].strip("|")
@@ -320,4 +321,10 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             table_str += "Penalty -" + str(war.getTeamPenalities()[war.getTeamForFC(fc)]) + "\n"""
     return table_str, scores_by_team
 
-
+def get_race_scores_for_fc(friend_code:str, channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False):
+    _, race_score_data = get_war_table_DCS(channel_bot, use_lounge_otherwise_mii, use_miis, lounge_replace, server_id, missingRacePts, discord_escape, step=1)
+    for _, team_players in race_score_data:
+        for fc, player_data in team_players:
+            if fc == friend_code:
+                return player_data[2]
+    return None
