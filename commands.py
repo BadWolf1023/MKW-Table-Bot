@@ -1368,6 +1368,13 @@ class TablingCommands:
     async def substitue_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
         await message.channel.send("This feature is not completed yet.")
         return
+    
+        if len(args) == 1:
+            to_send = this_bot.getRoom().get_sorted_player_list_string()
+            to_send += f"\n**To sub in the 1st player for the on the list for the 2nd player on this list for race 9:** *{server_prefix}sub 1 2 9*"
+            await message.channel.send(to_send)
+            return
+    
 
     @staticmethod
     async def change_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
