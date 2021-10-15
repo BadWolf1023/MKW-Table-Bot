@@ -1446,17 +1446,24 @@ class TablingCommands:
             return
         
         subOutFC, subOutMiiName = this_bot.getRoom().getPlayerAtIndex(subOutNum-1)
-        subInFC, subOutMiiName = this_bot.getRoom().getPlayerAtIndex(subInNum-1)
+        subInFC, subInMiiName = this_bot.getRoom().getPlayerAtIndex(subInNum-1)
+        if this_bot.getRoom().fc_subbed_in(subInFC):
+            await message.channel.send(f"The person you are trying to sub in has subbed in for someone else already on the table.")
+            return
+        if this_bot.getRoom().fc_subbed_out(subOutFC):
+            await message.channel.send(f"The person you are trying to sub out has already subbed out on the table.")
+            return
+        
         await message.channel.send(f"All error logic cleared! Sub out number: {subOutNum} | Sub in number: {subInNum} | Race Number: {raceNum}")
         subOutStartRace = 1
         subOutEndRace = raceNum - 1
         subOutScores = SK.get_race_scores_for_fc(subOutFC, this_bot)[subOutStartRace-1:subOutEndRace]
-        subOutNewName = f"#subout: {UtilityFunctions.process_name(subOutMiiName + UserDataProcessing.lounge_add(subOutFC))}"
+        subOutName = f"{UtilityFunctions.process_name(subOutMiiName + UserDataProcessing.lounge_add(subOutFC))}"
         subInStartRace = raceNum
         subInEndRace = this_bot.getWar().getNumberOfRaces()
         this_bot.add_save_state(message.content)
-        this_bot.getRoom().add_sub(subInFC, subInStartRace, subInEndRace, subOutFC, subOutNewName, subOutStartRace, subOutEndRace, subOutScores)
-            
+        this_bot.getRoom().add_sub(subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores)
+        await message.channel.send(f"{this_bot.getRoom().sub_ins}")
     
 
     @staticmethod
