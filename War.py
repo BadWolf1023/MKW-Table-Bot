@@ -69,6 +69,9 @@ class War(object):
         self.playersPerTeam = self.__formatMapping[self.formatting]
         if self.numberOfTeams == 2:
             self.teamColors = random.choice(tableColorPairs)
+    
+    def isFFA(self):
+        return self.playersPerTeam == 1
         
     def setTeams(self, teams):
         #teams is a dictionary of FCs, each FC having a tag
