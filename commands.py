@@ -75,7 +75,7 @@ def getPlayerIndexInRoom(name:str, room:TableBot.Room.Room, server_prefix:str, c
     if UtilityFunctions.isint(name):
         playerNum = int(name)
         if playerNum < 1 or playerNum > len(players):
-            return None, f"The player number must be between 1 and {len(players)}. Do {server_prefix}{command_name} for an example on how to use this command."
+            return None, f"The player number must be between 1 and {len(players)}. Do `{server_prefix}{command_name}` for an example on how to use this command."
         else:
             return playerNum, None    
     
@@ -90,7 +90,7 @@ def getPlayerIndexInRoom(name:str, room:TableBot.Room.Room, server_prefix:str, c
             playerNum = None
             
         if playerNum is None:
-            return None, f"Could not find Lounge name {UtilityFunctions.process_name(str(lounge_name))} in this room."
+            return None, f"Could not find Lounge name \"{UtilityFunctions.process_name(str(lounge_name))}\" in this room."
         return playerNum, None
     
     #Sanity check, should not ever run:
@@ -1397,9 +1397,7 @@ class TablingCommands:
             await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty."))
     
     @staticmethod    
-    async def substitue_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
-        await message.channel.send("This feature is not completed yet.")
-        return
+    async def substitue_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         example_error_message = f"Do `{server_prefix}sub` for an example of how to use this command."
         
         #If room is not loaded, send an error message
@@ -1410,7 +1408,7 @@ class TablingCommands:
         #Command information for user if command is run with no args
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"\n**To sub in the 1st player for the on the list for the 2nd player on this list for race 9:** *{server_prefix}sub 1 2 9*"
+            to_send += f"\n**Example:** If the 1st player on this list subbed in on race 9 for the 2nd player on this list, you would do: `{server_prefix}{args[0]} 1 2 9`"
             await message.channel.send(to_send)
             return
         
@@ -1430,9 +1428,10 @@ class TablingCommands:
         raceNum = int(raceNum)
         
         if raceNum < 2:
-            await message.channel.send(f"The number of the race that the sub in began to play must be race 2 or later. {example_error_message}")
+            await message.channel.send(f"The race number that the sub began to play must be race 2 or later. {example_error_message}")
+            return
         if raceNum > this_bot.getWar().getNumberOfRaces():
-            await message.channel.send(f"The number of the race that the sub in began to play must be before the end of the last race. Since your table was started as a {this_bot.getWar().getNumberOfGPS()} GP table, the last possible race someone can sub in is on race #{this_bot.getWar().getNumberOfRaces()}")
+            await message.channel.send(f"Because your table was started as a {this_bot.getWar().getNumberOfGPS()} GP table, the last possible race someone can sub in is race #{this_bot.getWar().getNumberOfRaces()}")
             return
         
         if subInNum is None:
@@ -1440,6 +1439,10 @@ class TablingCommands:
             return
         if subOutNum is None:
             await message.channel.send(subOutErrorMessage)
+            return
+        
+        if subInNum == subOutNum:
+            await message.channel.send("Someone cannot sub in for themselves.")
             return
         
         await message.channel.send(f"All error logic cleared! Sub in number: {subInNum} | Sub out number: {subOutNum} | Race Number: {raceNum}")
