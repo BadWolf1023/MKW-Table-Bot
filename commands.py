@@ -10,7 +10,7 @@ from WiimmfiSiteFunctions import _is_rLID, _is_fc
 import ServerFunctions
 import ImageCombine
 import War
-from TagAI import getTagsSmart, getTagSmart
+from TagAI_BadWolf import getTagsSmart, getTagSmart
 import LoungeAPIFunctions
 import ScoreKeeper as SK
 import UserDataProcessing

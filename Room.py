@@ -11,7 +11,7 @@ import UserDataProcessing
 
 from _collections import defaultdict
 import UtilityFunctions
-from TagAI import getTagSmart
+from TagAI_BadWolf import getTagSmart
 from copy import copy, deepcopy
 
 #Function takes a default dictionary, the key being a number, and makes any keys that are greater than the threshold one less, then removes that threshold, if it exists

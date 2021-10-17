@@ -15,6 +15,7 @@ import MogiUpdate
 import URLShortener
 import AbuseTracking
 import WiimmfiSiteFunctions
+import TagAI_Andrew
 
 #External library imports for this file
 import discord
@@ -354,6 +355,7 @@ def initialize():
     UserDataProcessing.initialize()
     ServerFunctions.initialize()
     UtilityFunctions.initialize()
+    TagAI_Andrew.initialize()
 
 
 @client.event
