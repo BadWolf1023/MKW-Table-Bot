@@ -131,18 +131,31 @@ def initialize():
     TagAI_Andrew.initialize()
     load_pkl_list(AI_Results, AI_Results_file_name)
     
+def rerun_AIs_for_all():
+    #WARNING: Calling this will replace whatever old results you may have had in "AI_Results" with brand new results
+    fc_players_data = [all_data for all_data in AI_Results]
+    AI_Results.clear()
+    for fc_player, alpha_AI_data, beta_AI_data in fc_players_data:
+        if alpha_AI_data[2] is None:
+            print("Warning, no known players per team was found, so using Beta's guess for Alpha's determination")
+            determineTags(fc_player, beta_AI_data[2])
+        else:
+            determineTags(fc_player, alpha_AI_data[2])
+    
+    
 def view_AI_results():
-    initialize()
     should_print_fc_players = False
     for stored_fc_players, alpha_AI_results, beta_AI_results in AI_Results:
         alpha_teams, alpha_time_taken, alpha_players_per_team = alpha_AI_results
         beta_teams, beta_time_taken, beta_players_per_team = beta_AI_results
         results_differed = alpha_teams != beta_teams and alpha_teams is not None and beta_teams is not None
-        alpha_string = f"Alpha AI did not run for these teams yet." if alpha_teams is None else f"Alpha AI: Time taken: {round(alpha_time_taken, 5)}s | Players per team: {alpha_players_per_team}"
+        alpha_string = f"If you are running Alpha AI, then Alpha AI gave up and gave users an alphabetical list. Otherwise, Alpha AI simply hasn't run for these teams yet." if alpha_teams is None else f"Alpha AI: Time taken: {round(alpha_time_taken, 5)}s | Players per team: {alpha_players_per_team}"
         beta_string = f"Beta AI did not run for these teams yet." if beta_teams is None else    f"Beta  AI: Time taken: {round(beta_time_taken, 5)}s | Players per team: {beta_players_per_team} (Beta AI's guess)"
         print(f"AI Results Differed: {'Yes' if results_differed else 'No'}\n\t{alpha_string}\n\t{beta_string}")
         if should_print_fc_players:
             print(stored_fc_players)
             
 if __name__ == '__main__':
+    initialize()
+    rerun_AIs_for_all()
     view_AI_results()
