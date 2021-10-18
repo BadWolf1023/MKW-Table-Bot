@@ -15,13 +15,13 @@ import os
 import dill
 
 
-USE_BETA_AI = False
+USE_BETA_AI = True
 COMPARE_AIS = True
 LOG_AI_RESULTS = True
 
 
 if USE_BETA_AI:
-    getTag = TagAI_Andrew._get_tag_value
+    getTag = lambda tag: TagAI_Andrew._get_tag_value(tag, True, True)
 else:
     getTag = TagAI_BadWolf.getTagSmart
 
