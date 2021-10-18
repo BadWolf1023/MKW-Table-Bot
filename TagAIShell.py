@@ -157,5 +157,5 @@ def view_AI_results():
             
 if __name__ == '__main__':
     initialize()
-    rerun_AIs_for_all()
+    #rerun_AIs_for_all()
     view_AI_results()
