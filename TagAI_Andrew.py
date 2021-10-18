@@ -47,12 +47,6 @@ def encode_to_row(teams):
     return row
 
 
-
-
-
-# In[8]:
-
-
 def _get_tag_value(tag, map=False, both = False):
     while len(tag) > 0:
         if tag[0] in REMOVE_IF_START_WITH:
@@ -68,9 +62,6 @@ def _get_tag_value(tag, map=False, both = False):
     if both:
         return temp.upper(), temp
     return temp.upper()
-
-
-# In[9]:
 
 
 def get_tags(name):
@@ -235,7 +226,7 @@ def get_teams_smart(players, formats=None, target_size=None):
 
         adjusted_score = score/target_score + bonus[team_size]
 
-        print(f'Team Size={team_size}; Score={adjusted_score}')
+        #print(f'Team Size={team_size}; Score={adjusted_score}')
         
         if target_size:
             return best_size, teams
@@ -249,7 +240,7 @@ def get_teams_smart(players, formats=None, target_size=None):
             best_teams = teams
             best_size = team_size
 
-    print(best_teams)
+    #print(best_teams)
     return best_size, best_teams
 
 def print_teams(teams, players):
@@ -259,10 +250,6 @@ def print_teams(teams, players):
         for tag in teams:
             print(tag, [players[i] for i in teams[tag] if i < len(players)])
 
-
-
-#get_ipython().run_cell_magic('time', '', 'players = parse(\n"""\nTag: B \n    1. Bad Wolf - (Bad Wolf)\nTag: C \n    3. CANADA S - (sparkster)\n    4. ~Lex78 - (Jesse)\nTag: L \n    5. Lex77 - (ELP)\n    6. Mad Wolf - (Fear)\nTag: N \n    7. Nany\ue017SoonK - (Nany)\n    8. Nz Black - (Stubbz)\nTag: N_1 \n    9. Nz White - (Philip)\n    10. YMOWIT\ue017Nany - (Soon)\nTag: Y \n    11. YMOWIT K - (bompykit)\n    12. YMOWI X - (James05)\n""")\n\n#players = ["λp"]*4+["ap"] + ["wz"]*5\nprint(players)\nteam = get_teams_smart(players, formats, target_size=2)\nprint()\nprint(team)\nprint()\nprint_teams(team, players)\n\nprint()')
-get_teams_smart(players)
 
 
 def initialize():
