@@ -48,6 +48,7 @@ class War(object):
         self.teamPenalties = defaultdict(int)
         self.forcedRoomSize = {}
         self.teams = None
+        self.temporary_tag_data = (None, None)
         
 
         
@@ -98,7 +99,12 @@ class War(object):
         if self.teams is None:
             raise TableBotExceptions.WarSetupStillRunning()
         return [fc for fc, tag in self.teams.items() if tag == tagToGet]
+    
+    def set_temp_team_tags(self, player_fcs_tags, hasANoneTag):
+        self.temporary_tag_data = (player_fcs_tags, hasANoneTag)
         
+    def get_temp_team_tags(self):
+        return self.temporary_tag_data
         
     def print_teams(self):
         if self.teams is None:

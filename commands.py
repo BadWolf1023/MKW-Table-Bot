@@ -10,7 +10,7 @@ from WiimmfiSiteFunctions import _is_rLID, _is_fc
 import ServerFunctions
 import ImageCombine
 import War
-from TagAI_BadWolf import getTagsSmart, getTagSmart
+import TagAIShell
 import LoungeAPIFunctions
 import ScoreKeeper as SK
 import UserDataProcessing
@@ -1715,11 +1715,12 @@ class TablingCommands:
                             if this_bot.getWar() is not None:
                                 populate_mii_task = asyncio.get_event_loop().create_task(this_bot.populate_miis(str(message.id)))
                                 players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numgps*4).items())
-                                player_fcs_tags, hasANoneTag = getTagsSmart(players, this_bot.getWar().playersPerTeam)
+                                player_fcs_tags, hasANoneTag = TagAIShell.determineTags(players, this_bot.getWar().playersPerTeam)
+                                this_bot.getWar().set_temp_team_tags(player_fcs_tags, hasANoneTag)
                                 if hasANoneTag:
                                     player_fcs_tags = {}
                                     for fc_player in players:
-                                        player_fcs_tags[fc_player] = getTagSmart(fc_player[1])
+                                        player_fcs_tags[fc_player] = TagAIShell.getTag(fc_player[1])
                                 
                                 #sort the fcs_tags by their tag
                                 player_fcs_tags = sorted(player_fcs_tags.items(), key=lambda x: x[1])
@@ -1810,11 +1811,11 @@ class TablingCommands:
         fc_tags = {}
         numGPS = this_bot.getWar().numberOfGPs
         players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
-        player_fcs_tags, hasANoneTag = getTagsSmart(players, this_bot.getWar().playersPerTeam)
+        player_fcs_tags, hasANoneTag = this_bot.getWar().get_temp_team_tags()
         if hasANoneTag:
             player_fcs_tags = {}
             for fc_player in players:
-                player_fcs_tags[fc_player] = getTagSmart(fc_player[1])
+                player_fcs_tags[fc_player] = TagAIShell.getTag(fc_player[1])
         player_fcs_tags = sorted(player_fcs_tags.items(), key=lambda x: x[1])
                 
         if len(players) != this_bot.getWar().get_num_players():
@@ -2155,11 +2156,11 @@ class TablingCommands:
         numGPS = this_bot.getWar().numberOfGPs
         
         players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
-        player_fcs_tags, hasANoneTag = getTagsSmart(players, this_bot.getWar().playersPerTeam)
+        player_fcs_tags, hasANoneTag = this_bot.getWar().get_temp_team_tags()
         if hasANoneTag:
             player_fcs_tags = {}
             for fc_player in players:
-                player_fcs_tags[fc_player] = getTagSmart(fc_player[1])
+                player_fcs_tags[fc_player] = TagAIShell.getTag(fc_player[1])
     
         #sort the fcs_tags by their tag
         player_fcs_tags = sorted(player_fcs_tags.items(), key=lambda x: x[1])
