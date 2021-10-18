@@ -11,7 +11,7 @@ import UserDataProcessing
 
 from _collections import defaultdict
 import UtilityFunctions
-from TagAI_BadWolf import getTagSmart
+import TagAIShell
 from copy import copy, deepcopy
 
 #Function takes a default dictionary, the key being a number, and makes any keys that are greater than the threshold one less, then removes that threshold, if it exists
@@ -344,7 +344,7 @@ class Room(object):
     #What is returned is a list of tuples (fc, player_name)
     def get_sorted_player_list(self, startrace=1, endrace=12):
         players = list(self.getFCPlayerListStartEnd(startrace, endrace).items())
-        return sorted(players, key=lambda x: (getTagSmart(x[1]), x[0]))
+        return sorted(players, key=lambda x: (TagAIShell.getTag(x[1]), x[0]))
        
        
     def get_sorted_player_list_string(self, startrace=1, endrace=12, lounge_replace=True):
