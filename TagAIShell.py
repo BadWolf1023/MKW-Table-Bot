@@ -149,8 +149,8 @@ def view_AI_results():
         alpha_teams, alpha_time_taken, alpha_players_per_team = alpha_AI_results
         beta_teams, beta_time_taken, beta_players_per_team = beta_AI_results
         results_differed = alpha_teams != beta_teams and alpha_teams is not None and beta_teams is not None
-        alpha_string = f"If you are running Alpha AI, then Alpha AI gave up and gave users an alphabetical list. Otherwise, Alpha AI simply hasn't run for these teams yet." if alpha_teams is None else f"Alpha AI: Time taken: {round(alpha_time_taken, 5)}s | Players per team: {alpha_players_per_team}"
-        beta_string = f"Beta AI did not run for these teams yet." if beta_teams is None else    f"Beta  AI: Time taken: {round(beta_time_taken, 5)}s | Players per team: {beta_players_per_team} (Beta AI's guess)"
+        alpha_string = f"Alpha AI: if alpha AI is running, it quit for these players and gave tabler an alphabetical list. Otherwise, Alpha AI simply hasn't run for these teams yet." if alpha_teams is None else f"Alpha AI: Time taken: {round(alpha_time_taken, 5)}s | Players per team: {alpha_players_per_team}"
+        beta_string = f"Beta  AI: did not run for these teams yet." if beta_teams is None else    f"Beta  AI: Time taken: {round(beta_time_taken, 5)}s | Players per team: {beta_players_per_team} (Beta AI's guess)"
         print(f"AI Results Differed: {'Yes' if results_differed else 'No'}\n\t{alpha_string}\n\t{beta_string}")
         if should_print_fc_players:
             print(stored_fc_players)
