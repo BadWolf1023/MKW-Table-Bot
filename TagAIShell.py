@@ -13,10 +13,11 @@ import TagAI_BadWolf
 import time
 import os
 import dill
+import common
 
-
-USE_BETA_AI = True
-COMPARE_AIS = True
+USE_BETA_AI = False
+RUN_ALPHA_AI = True
+RUN_BETA_AI = True
 LOG_AI_RESULTS = True
 
 
@@ -54,12 +55,12 @@ def log_AI_results(fc_players, tag_AI_results, time_taken, war_format, is_alpha_
     AI_result_index = 1 if is_alpha_AI else 2
     for result_data in AI_Results:
         stored_fc_players, alpha_AI_results, beta_AI_results = result_data
-        if stored_fc_players == fc_players:
+        if len(stored_fc_players) == len(fc_players) and set(stored_fc_players) == set(fc_players):
             if is_alpha_AI and alpha_AI_results != EMPTY_AI_DATA:
-                print(f"Was already in alpha results, so not adding")
+                #print(f"Was already in alpha results, so not adding")
                 return
             elif not is_alpha_AI and beta_AI_results != EMPTY_AI_DATA:
-                print(f"Was already in beta results, so not adding")
+                #print(f"Was already in beta results, so not adding")
                 return
             else:
                 result_data[AI_result_index] = [tag_AI_results, time_taken, war_format]
@@ -91,22 +92,40 @@ def get_beta_AI_results(players, playersPerTeam=None):
     
     
 def determineTags(players, playersPerTeam=None):
+    alpha_team_results = None
+    alpha_has_none_tag = None
+    beta_team_results = None
+    beta_players_per_team_guess = None
+    if RUN_ALPHA_AI or not USE_BETA_AI:
+        try:
+            #Run Alpha AI:
+            t0_alpha = time.perf_counter()
+            alpha_team_results, alpha_has_none_tag = get_alpha_AI_results(players, playersPerTeam)
+            t1_alpha = time.perf_counter()
+            time_taken_alpha = t1_alpha - t0_alpha
+            if LOG_AI_RESULTS:
+                log_AI_results(players, alpha_team_results, time_taken_alpha, playersPerTeam, is_alpha_AI=True)
+        except Exception as e:
+            common.log_text(f"Alpha AI threw an exception: {e}", common.ERROR_LOGGING_TYPE)
+
+    if RUN_BETA_AI or USE_BETA_AI:
+        #Run Beta AI:
+        try:
+            t0_beta = time.perf_counter()
+            beta_players_per_team_guess, beta_team_results = get_beta_AI_results(players)
+            t1_beta = time.perf_counter()
+            time_taken_beta = t1_beta - t0_beta
+            if LOG_AI_RESULTS:
+                log_AI_results(players, beta_team_results, time_taken_beta, beta_players_per_team_guess, is_alpha_AI=False)
+        except Exception as e:
+            common.log_text(f"Beta AI threw an exception: {e}", common.ERROR_LOGGING_TYPE)
+
+            
     if USE_BETA_AI:
-        t0 = time.perf_counter()
-        players_per_team_guess, team_results = get_beta_AI_results(players)
-        t1 = time.perf_counter()
-        time_taken = t1 - t0
-        if LOG_AI_RESULTS:
-            log_AI_results(players, team_results, time_taken, players_per_team_guess, is_alpha_AI=False)
-        return team_results, False
+        return beta_team_results, False
     else:
-        t0 = time.perf_counter()
-        team_results, has_none_tag = get_alpha_AI_results(players, playersPerTeam)
-        t1 = time.perf_counter()
-        time_taken = t1 - t0
-        if LOG_AI_RESULTS:
-            log_AI_results(players, team_results, time_taken, playersPerTeam, is_alpha_AI=True)
-        return team_results, has_none_tag
+        return alpha_team_results, alpha_has_none_tag
+        
     
 def initialize():
     TagAI_Andrew.initialize()
@@ -114,6 +133,7 @@ def initialize():
     
 def view_AI_results():
     initialize()
+    should_print_fc_players = False
     for stored_fc_players, alpha_AI_results, beta_AI_results in AI_Results:
         alpha_teams, alpha_time_taken, alpha_players_per_team = alpha_AI_results
         beta_teams, beta_time_taken, beta_players_per_team = beta_AI_results
@@ -121,6 +141,8 @@ def view_AI_results():
         alpha_string = f"Alpha AI did not run for these teams yet." if alpha_teams is None else f"Alpha AI: Time taken: {round(alpha_time_taken, 5)}s | Players per team: {alpha_players_per_team}"
         beta_string = f"Beta AI did not run for these teams yet." if beta_teams is None else    f"Beta  AI: Time taken: {round(beta_time_taken, 5)}s | Players per team: {beta_players_per_team} (Beta AI's guess)"
         print(f"AI Results Differed: {'Yes' if results_differed else 'No'}\n\t{alpha_string}\n\t{beta_string}")
-        
+        if should_print_fc_players:
+            print(stored_fc_players)
+            
 if __name__ == '__main__':
     view_AI_results()
