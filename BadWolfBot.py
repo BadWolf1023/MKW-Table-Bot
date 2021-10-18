@@ -15,6 +15,7 @@ import MogiUpdate
 import URLShortener
 import AbuseTracking
 import WiimmfiSiteFunctions
+import TagAIShell
 
 #External library imports for this file
 import discord
@@ -32,6 +33,7 @@ from pathlib import Path
 import aiohttp
 import os
 import asyncio
+
 
 
 finished_on_ready = False
@@ -354,6 +356,7 @@ def initialize():
     UserDataProcessing.initialize()
     ServerFunctions.initialize()
     UtilityFunctions.initialize()
+    TagAIShell.initialize()
 
 
 @client.event
@@ -609,6 +612,10 @@ async def on_message(message: discord.Message):
             
             elif args[0] in GET_LOGS_TERMS:
                 await commands.BadWolfCommands.get_logs_command(message)
+                
+            elif args[0] in {"aidata"} and (common.is_bad_wolf(message.author) or message.author.id == 267395889423712258):
+                if os.path.exists(TagAIShell.AI_Results_file_name):
+                    await message.channel.send(content="Put in Table Bot directory, and use `TagAIShell.view_AI_results()`", file=discord.File(TagAIShell.AI_Results_file_name))
 
 
             elif args[0] in RACES_TERMS:
@@ -920,6 +927,7 @@ def pickle_CTGP_region():
             return
         except:
             print("Could not dump pickle for CTGP region for ?ctww. Exception occurred.")
+            
 def do_lounge_name_matching():
     lounge_name_list_path = "C:/Users/willg/Desktop/all_lounge.txt"
     import csv
