@@ -88,6 +88,7 @@ def get_beta_AI_results(players, playersPerTeam=None):
             plain_tag = team_tag
             special_tag = team_tag
             table_bot_formatted_results[(friend_code, player_name)] = (plain_tag, special_tag)
+    
     return players_per_team_guess, table_bot_formatted_results
     
     
@@ -142,21 +143,42 @@ def rerun_AIs_for_all():
         else:
             determineTags(fc_player, alpha_AI_data[2])
 
+def format_into_comparable(teams):
+    if teams is None:
+        return None
+    comparable_results = {}
+    for fc_player_data, tag_data in teams.items():
+        tag_value, actual_tag = ("No Tag", "No Tag") if tag_data is None else tag_data
+        cur_tag = TagAI_Andrew._get_tag_value(tag_value)
+        if cur_tag not in comparable_results:
+            comparable_results[cur_tag] = set()
+        comparable_results[cur_tag].add(fc_player_data)
+    return comparable_results
+
 def match_names_with_tags():
     pass
+
 def view_AI_results():
-    should_print_fc_players = False
+    SHOULD_PRINT_VERBOSE = False
+    
     for stored_fc_players, alpha_AI_results, beta_AI_results in AI_Results:
         alpha_teams, alpha_time_taken, alpha_players_per_team = alpha_AI_results
         beta_teams, beta_time_taken, beta_players_per_team = beta_AI_results
-        results_differed = alpha_teams != beta_teams and alpha_teams is not None and beta_teams is not None
+        comparable_alpha_teams = format_into_comparable(alpha_teams)
+        comparable_beta_teams = format_into_comparable(beta_teams)
+
+        results_differed = comparable_alpha_teams != comparable_beta_teams and alpha_teams is not None and beta_teams is not None
         alpha_string = f"Alpha AI: if alpha AI is running, it could not determine a solution, so it gave tabler an alphabetical list. Otherwise, Alpha AI simply hasn't run for these teams yet." if alpha_teams is None else f"Alpha AI: Time taken: {round(alpha_time_taken, 5)}s | Players per team: {alpha_players_per_team}"
         beta_string = f"Beta  AI: did not run for these teams yet." if beta_teams is None else    f"Beta  AI: Time taken: {round(beta_time_taken, 5)}s | Players per team: {beta_players_per_team} (Beta AI's guess)"
         print(f"AI Results Differed: {'Yes' if results_differed else 'No'}\n\t{alpha_string}\n\t{beta_string}")
-        print(alpha_teams)
-        print(beta_teams)
-        if should_print_fc_players:
-            print(stored_fc_players)
+
+        if SHOULD_PRINT_VERBOSE:
+            print("\tAlpha AI's teams (in comparable format):")
+            print(f"\t\t{comparable_alpha_teams}")
+            print("\tBeta  AI's teams (in comparable format):")
+            print(f"\t\t{comparable_beta_teams}")
+            print("\tDetailed player data:")
+            print(f"\t\t{stored_fc_players}")
             
 if __name__ == '__main__':
     initialize()
