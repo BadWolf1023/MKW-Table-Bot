@@ -13,7 +13,6 @@ import TagAI_BadWolf
 import time
 import os
 import dill
-from collections import defaultdict
 
 
 USE_BETA_AI = False
@@ -112,3 +111,16 @@ def determineTags(players, playersPerTeam=None):
 def initialize():
     TagAI_Andrew.initialize()
     load_pkl_list(AI_Results, AI_Results_file_name)
+    
+def view_AI_results():
+    initialize()
+    for stored_fc_players, alpha_AI_results, beta_AI_results in AI_Results:
+        alpha_teams, alpha_time_taken, alpha_players_per_team = alpha_AI_results
+        beta_teams, beta_time_taken, beta_players_per_team = beta_AI_results
+        results_differed = alpha_teams != beta_teams and alpha_teams is not None and beta_teams is not None
+        alpha_string = f"Alpha AI did not run for these teams yet." if alpha_teams is None else f"Alpha AI: Time taken: {round(alpha_time_taken, 5)}s | Players per team: {alpha_players_per_team}"
+        beta_string = f"Beta AI did not run for these teams yet." if beta_teams is None else    f"Beta  AI: Time taken: {round(beta_time_taken, 5)}s | Players per team: {beta_players_per_team} (Beta AI's guess)"
+        print(f"AI Results Differed: {'Yes' if results_differed else 'No'}\n\t{alpha_string}\n\t{beta_string}")
+        
+if __name__ == '__main__':
+    view_AI_results()
