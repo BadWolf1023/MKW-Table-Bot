@@ -15,7 +15,7 @@ import MogiUpdate
 import URLShortener
 import AbuseTracking
 import WiimmfiSiteFunctions
-import TagAI_Andrew
+import TagAIShell
 
 #External library imports for this file
 import discord
@@ -33,6 +33,7 @@ from pathlib import Path
 import aiohttp
 import os
 import asyncio
+
 
 
 finished_on_ready = False
@@ -355,7 +356,7 @@ def initialize():
     UserDataProcessing.initialize()
     ServerFunctions.initialize()
     UtilityFunctions.initialize()
-    TagAI_Andrew.initialize()
+    TagAIShell.initialize()
 
 
 @client.event
@@ -922,6 +923,7 @@ def pickle_CTGP_region():
             return
         except:
             print("Could not dump pickle for CTGP region for ?ctww. Exception occurred.")
+            
 def do_lounge_name_matching():
     lounge_name_list_path = "C:/Users/willg/Desktop/all_lounge.txt"
     import csv
