@@ -179,7 +179,7 @@ def view_AI_results():
         comparable_beta_teams = format_into_comparable(beta_teams)
         if alpha_players_per_team is not None and alpha_players_per_team != beta_players_per_team:
             beta_AI_inaccurate_format_amount += 1
-        results_differed = comparable_alpha_teams != comparable_beta_teams and alpha_teams is not None and beta_teams is not None
+        results_differed = (comparable_alpha_teams != comparable_beta_teams and alpha_teams is not None and beta_teams is not None) and (alpha_players_per_team == 1 and beta_players_per_team != 1) #second part of this statement is to make sure that when the AIs both conclude it is an FFA, the results should not "differ" - the results do match
         alpha_string = f"Alpha AI: if alpha AI is running, it could not determine a solution, so it gave tabler an alphabetical list. Otherwise, Alpha AI simply hasn't run for these teams yet." if alpha_teams is None else f"Alpha AI: Time taken: {round(alpha_time_taken, 5)}s | Players per team: {alpha_players_per_team}"
         beta_string = f"Beta  AI: did not run for these teams yet." if beta_teams is None else    f"Beta  AI: Time taken: {round(beta_time_taken, 5)}s | Players per team: {beta_players_per_team} (Beta AI's guess)"
         print(f"AI Results Differed: {'Yes' if results_differed else 'No'}\n\t{alpha_string}\n\t{beta_string}")
