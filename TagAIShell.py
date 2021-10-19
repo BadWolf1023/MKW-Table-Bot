@@ -162,9 +162,19 @@ def view_AI_results():
     SHOULD_PRINT_VERBOSE = False
     beta_AI_inaccurate_format_amount = 0
     total_results_differed = 0
+    total_alpha_ai_results = 0
+    total_beta_ai_results = 0
+    total_alpha_ai_time_taken = 0.0
+    total_beta_ai_time_taken = 0.0
     for stored_fc_players, alpha_AI_results, beta_AI_results in AI_Results:
         alpha_teams, alpha_time_taken, alpha_players_per_team = alpha_AI_results
+        if alpha_time_taken is not None:
+            total_alpha_ai_time_taken += alpha_time_taken
+            total_alpha_ai_results += 1
         beta_teams, beta_time_taken, beta_players_per_team = beta_AI_results
+        if beta_time_taken is not None:
+            total_beta_ai_time_taken += beta_time_taken
+            total_beta_ai_results += 1
         comparable_alpha_teams = format_into_comparable(alpha_teams)
         comparable_beta_teams = format_into_comparable(beta_teams)
         if alpha_players_per_team is not None and alpha_players_per_team != beta_players_per_team:
@@ -175,6 +185,7 @@ def view_AI_results():
         print(f"AI Results Differed: {'Yes' if results_differed else 'No'}\n\t{alpha_string}\n\t{beta_string}")
         if results_differed or alpha_teams is None:
             total_results_differed += 1
+        
         
         if SHOULD_PRINT_VERBOSE:
             print("\tAlpha AI's teams (in comparable format):")
@@ -187,6 +198,8 @@ def view_AI_results():
     print(f"\nSUMMARY:\nBeta AI inaccurate players per team: {beta_AI_inaccurate_format_amount} times out of {len(AI_Results)}")
     print(f"Alpha AI gave alphabetical list {sum(1 for x in AI_Results if x[1][0] is None)} times out of {len(AI_Results)}")
     print(f"AIs had same tags {len(AI_Results) - total_results_differed} times out of {len(AI_Results)}")
+    print(f"Alpha AIs average time for solving (not including alphabetical lists): {round((total_alpha_ai_time_taken/total_alpha_ai_results),10)}s")
+    print(f"Beta  AIs average time for solving: {round((total_beta_ai_time_taken/total_beta_ai_results),10)}s")
             
 if __name__ == '__main__':
     initialize()
