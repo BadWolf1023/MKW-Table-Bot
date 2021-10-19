@@ -160,18 +160,22 @@ def match_names_with_tags():
 
 def view_AI_results():
     SHOULD_PRINT_VERBOSE = False
-    
+    beta_AI_inaccurate_format_amount = 0
+    total_results_differed = 0
     for stored_fc_players, alpha_AI_results, beta_AI_results in AI_Results:
         alpha_teams, alpha_time_taken, alpha_players_per_team = alpha_AI_results
         beta_teams, beta_time_taken, beta_players_per_team = beta_AI_results
         comparable_alpha_teams = format_into_comparable(alpha_teams)
         comparable_beta_teams = format_into_comparable(beta_teams)
-
+        if alpha_players_per_team is not None and alpha_players_per_team != beta_players_per_team:
+            beta_AI_inaccurate_format_amount += 1
         results_differed = comparable_alpha_teams != comparable_beta_teams and alpha_teams is not None and beta_teams is not None
         alpha_string = f"Alpha AI: if alpha AI is running, it could not determine a solution, so it gave tabler an alphabetical list. Otherwise, Alpha AI simply hasn't run for these teams yet." if alpha_teams is None else f"Alpha AI: Time taken: {round(alpha_time_taken, 5)}s | Players per team: {alpha_players_per_team}"
         beta_string = f"Beta  AI: did not run for these teams yet." if beta_teams is None else    f"Beta  AI: Time taken: {round(beta_time_taken, 5)}s | Players per team: {beta_players_per_team} (Beta AI's guess)"
         print(f"AI Results Differed: {'Yes' if results_differed else 'No'}\n\t{alpha_string}\n\t{beta_string}")
-
+        if results_differed or alpha_teams is None:
+            total_results_differed += 1
+        
         if SHOULD_PRINT_VERBOSE:
             print("\tAlpha AI's teams (in comparable format):")
             print(f"\t\t{comparable_alpha_teams}")
@@ -179,6 +183,10 @@ def view_AI_results():
             print(f"\t\t{comparable_beta_teams}")
             print("\tDetailed player data:")
             print(f"\t\t{stored_fc_players}")
+    
+    print(f"\nSUMMARY:\nBeta AI inaccurate players per team: {beta_AI_inaccurate_format_amount} times out of {len(AI_Results)}")
+    print(f"Alpha AI gave alphabetical list {sum(1 for x in AI_Results if x[1][0] is None)} times out of {len(AI_Results)}")
+    print(f"AIs had same tags {len(AI_Results) - total_results_differed} times out of {len(AI_Results)}")
             
 if __name__ == '__main__':
     initialize()
