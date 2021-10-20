@@ -1210,6 +1210,8 @@ class TablingCommands:
     async def reset_command(message:discord.Message, table_bots):
         server_id = message.guild.id
         channel_id = message.channel.id
+        if server_id in table_bots and channel_id in table_bots[server_id]:
+            table_bots[server_id][channel_id].destroy()
         del(table_bots[server_id][channel_id])
         await message.channel.send("Reset successful.")
     
@@ -1654,7 +1656,6 @@ class TablingCommands:
                     
                     message2 = await message.channel.send("Loading room...")
                     #This is the background task for getting miis, it will be awaited once everything in ?sw finishes
-                    populate_mii_task = None
                     #Case 1: No mention, get FCs for the user - this happens when len(args) = 3
                     #Case 2: Mention, get FCs for the mentioned user, this happens when len(args) > 3 and len(mentions) > 1
                     #Case 3: FC: No mention, len(args) > 3, and is FC
@@ -1715,7 +1716,7 @@ class TablingCommands:
                         else:  
                         
                             if this_bot.getWar() is not None:
-                                populate_mii_task = asyncio.get_event_loop().create_task(this_bot.populate_miis(str(message.id)))
+                                asyncio.create_task(this_bot.populate_miis(str(message.id)))
                                 players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numgps*4).items())
                                 await updateData(* await LoungeAPIFunctions.getByFCs([fc for fc, _ in players]))
                                 tags_player_fcs = TagAIShell.determineTags(players, this_bot.getWar().playersPerTeam)
@@ -1740,8 +1741,6 @@ class TablingCommands:
                         this_bot.setRoom(None)
                     
                     await common.safe_delete(message2)
-                    if populate_mii_task is not None:
-                        await populate_mii_task
         else:
             await message.channel.send(f"You can only load a room for yourself in Lounge. Do this instead: `{server_prefix}{args[0]} {args[1]} {args[2]}`")
      
@@ -1974,8 +1973,7 @@ class TablingCommands:
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)                   
         else:
-            populate_mii_task = asyncio.get_event_loop().create_task(this_bot.populate_miis(str(message.id)))
-        
+            asyncio.create_task(this_bot.populate_miis(str(message.id)))
             should_send_notification = this_bot.shouldSendNoticiation()
             wpCooldown = this_bot.getWPCooldownSeconds()
             if wpCooldown > 0:
@@ -2028,7 +2026,6 @@ class TablingCommands:
                     try:
                         if not image_download_success:
                             await message.channel.send("Could not download table picture.")
-                            await populate_mii_task
                             return
                         #did the room have *any* errors? Regardless of ignoring any type of error
                         war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0
@@ -2067,7 +2064,6 @@ class TablingCommands:
                     finally:
                         if os.path.exists(table_image_path):
                             os.remove(table_image_path)
-            await populate_mii_task
     
     @staticmethod
     async def table_text_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):

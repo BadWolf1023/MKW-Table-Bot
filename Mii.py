@@ -6,7 +6,7 @@ Created on Apr 3, 2021
 from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
 from discord import Embed, File
 import UtilityFunctions
-import os
+import os as operatingsystem
 import cv2
 import UserDataProcessing
 import numpy as np
@@ -143,16 +143,16 @@ class Mii(KaitaiStruct):
         return self.folder_path + common.MII_TABLE_PICTURE_PREFIX + self.file_name
     
     def main_mii_picture_exists(self):
-        return os.path.exists(self.get_mii_picture_link())
+        return operatingsystem.path.exists(self.get_mii_picture_link())
     def table_mii_picture_exists(self):
-        return os.path.exists(self.get_mii_picture_path_for_table())  
+        return operatingsystem.path.exists(self.get_mii_picture_path_for_table())  
     
     def __remove_main_mii_picture__(self):
         if self.main_mii_picture_exists():
-            os.remove(self.get_mii_picture_link())
+            operatingsystem.remove(self.get_mii_picture_link())
     def __remove_table_mii_picture__(self):
         if self.table_mii_picture_exists():
-            os.remove(self.get_mii_picture_path_for_table())
+            operatingsystem.remove(self.get_mii_picture_path_for_table())
     def has_table_picture_file(self):
         return self.table_mii_picture_exists()
     

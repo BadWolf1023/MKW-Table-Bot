@@ -15,7 +15,7 @@ import common
 USING_EXPERIMENTAL_REQUEST = False
 if USING_EXPERIMENTAL_REQUEST:
     #from concurrent.futures.process import ProcessPoolExecutor
-    from concurrent.futures.thread import ThreadPoolExecutor
+    #from concurrent.futures.thread import ThreadPoolExecutor
     #Number of minutes between captchas
     captcha_time_estimation = 117
     import undetected_chromedriver.v2 as uc
@@ -26,7 +26,7 @@ if USING_EXPERIMENTAL_REQUEST:
     number_of_browsers = 1
     driver_infos = [[uc.Chrome("./chrome-cli/chromedriver.exe", options=options), 0, 0, 0, False] for _ in range(number_of_browsers)] #browser, number of cloudflare failures, number of ongoing requests, total requests, browser in use
     failures_allowed = 20
-    process_pool_executor = ThreadPoolExecutor(max_workers=number_of_browsers)
+    #process_pool_executor = ThreadPoolExecutor(max_workers=number_of_browsers)
     
 url_response_cache = {}
 cache_time = timedelta(seconds=30)
@@ -171,7 +171,8 @@ async def cloudflare_failure_check():
 
 async def threaded_fetch(session, url, use_long_cache_time=False):
     if USING_EXPERIMENTAL_REQUEST:
-        result = await asyncio.get_event_loop().run_in_executor(process_pool_executor, fetch, session, url, use_long_cache_time)
+        #result = await asyncio.get_event_loop().run_in_executor(process_pool_executor, fetch, session, url, use_long_cache_time)
+        result = None
         return result
     else:
         return await __fetch__(session, url, use_long_cache_time)

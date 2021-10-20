@@ -11,11 +11,13 @@ import humanize
 from bs4 import NavigableString, Tag
 from WiimmfiSiteFunctions import _is_fc
 import MiiPuller
-import concurrent.futures
+#import concurrent.futures
 import common
 from typing import Dict, Tuple
 import Mii
 import ServerFunctions
+import asyncio
+
 
 lorenzi_style_key = "#style"
 #The key and first item of the tuple are sent when the list of options is requested, the second value is the code Lorenzi's site uses
@@ -192,12 +194,26 @@ class ChannelBot(object):
             if self.populating:
                 return
             self.populating = True
+            #print("Start:", datetime.now())
             if self.getRoom() is not None:
                 self.remove_miis_with_missing_files()
                 all_fcs_in_room = self.getRoom().getFCs()
                 if all_fcs_in_room != self.miis.keys():
+                    max_concurrent = 5
+                    all_missing_fcs = [fc for fc in self.getRoom().getFCs() if fc not in self.miis]
+                    missing_fc_chunks = [all_missing_fcs[i:i+max_concurrent] for i in range(len(all_missing_fcs))[::max_concurrent]]
+                    for missing_fc_chunk in missing_fc_chunks:
+                        future_to_fc = {MiiPuller.get_mii(fc, message_id):fc for fc in missing_fc_chunk}
+                        results = await asyncio.gather(*future_to_fc)
+                        for fc, mii_pull_result in zip(missing_fc_chunk, results):
+                            if not isinstance(mii_pull_result, str):
+                                self.miis[fc] = mii_pull_result
+                                mii_pull_result.output_table_mii_to_disc()
+                                mii_pull_result.__remove_main_mii_picture__()
+                            
+                    """
                     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                        future_to_fc = {executor.submit(MiiPuller.get_mii_blocking, fc, message_id): fc for fc in self.getRoom().getFCs() if fc not in self.miis }
+                        future_to_fc = {executor.submit(MiiPuller.get_mii_blocking, fc, message_id): fc for fc in missing_fcs }
                         for future in concurrent.futures.as_completed(future_to_fc):
                             fc = future_to_fc[future]
                             try:
@@ -211,10 +227,11 @@ class ChannelBot(object):
                                     mii_pull_result.__remove_main_mii_picture__()
                                 else:
                                     pass
-                
+                    """
                 for mii in self.miis.values():
                     if mii.lounge_name == "":
                         mii.update_lounge_name()
+            #print("End:", datetime.now())
             self.populating = False
             
         
@@ -492,8 +509,6 @@ class ChannelBot(object):
     def destroy(self):
         self.populating = True
         self.clean_up()
-        
-    def __del__(self):
-        self.destroy()
+        self.populating = False
         
             

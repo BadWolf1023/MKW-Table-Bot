@@ -535,6 +535,8 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge_server, command)
             
             elif args[0] in PLAYER_PENALTY_TERMS:
+                if False:
+                    await message.channel.send(f"Use the `{server_prefix}addpoints` command instead.")
                 await commands.TablingCommands.player_penalty_command(message, this_bot, args, server_prefix, is_lounge_server)
             
             elif args[0] in TEAM_PENALTY_TERMS:
@@ -827,6 +829,7 @@ async def removeInactiveTableBots():
                 to_remove.append((server_id, channel_id))
                 
     for (serv_id, chan_id)in to_remove:
+        table_bots[serv_id][chan_id].destroy()
         del(table_bots[serv_id][chan_id])
         
 
@@ -865,7 +868,7 @@ if WiimmfiSiteFunctions.USING_EXPERIMENTAL_REQUEST:
 async def freeFinishedTableBotsLounge():
     if common.MKW_LOUNGE_SERVER_ID in table_bots:
         for lounge_bot_channel_id in table_bots[common.MKW_LOUNGE_SERVER_ID]:
-            if table_bots[common.MKW_LOUNGE_SERVER_ID][lounge_bot_channel_id].isFinishedLounge(): #if the table bot is inactive, delete it
+            if table_bots[common.MKW_LOUNGE_SERVER_ID][lounge_bot_channel_id].isFinishedLounge(): 
                 table_bots[common.MKW_LOUNGE_SERVER_ID][lounge_bot_channel_id].freeLock()
         
 
@@ -963,7 +966,11 @@ def do_lounge_name_matching():
 
         
     print("Finished exporting as CSV.")
-        
+
+def destroy_all_tablebots():
+    for server_id in table_bots:
+        for channel_id in table_bots[server_id]:
+            table_bots[server_id][channel_id].destroy()
     
 def save_data():
     print(f"{str(datetime.now())}: Saving data")
@@ -977,8 +984,9 @@ def save_data():
     pkl_bad_wolf_facts()
     Stats.backup_files()
     Stats.dump_to_stats_file()
-    
+    destroy_all_tablebots()
     #do_lounge_name_matching()
+    
     print(f"{str(datetime.now())}: Finished saving data")
     
 
