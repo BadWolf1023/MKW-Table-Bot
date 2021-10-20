@@ -14,6 +14,7 @@ import time
 import os
 import dill
 import common
+from copy import copy
 
 USE_BETA_AI = False
 RUN_ALPHA_AI = True
@@ -85,28 +86,28 @@ def get_beta_AI_results(players, playersPerTeam=None):
         for player_index in team_player_indexes:
             friend_code = players[player_index][0]
             player_name = players[player_index][1]
-            plain_tag = team_tag
-            special_tag = team_tag
-            table_bot_formatted_results[(friend_code, player_name)] = (plain_tag, special_tag)
+            if team_tag not in table_bot_formatted_results:
+                table_bot_formatted_results[team_tag] = []
+            table_bot_formatted_results[team_tag].append((friend_code, player_name))
     
     return players_per_team_guess, table_bot_formatted_results
     
     
 def determineTags(players, playersPerTeam=None):
     alpha_team_results = None
-    alpha_has_none_tag = None
     beta_team_results = None
     beta_players_per_team_guess = None
     if RUN_ALPHA_AI or not USE_BETA_AI:
         try:
             #Run Alpha AI:
             t0_alpha = time.perf_counter()
-            alpha_team_results, alpha_has_none_tag = get_alpha_AI_results(players, playersPerTeam)
+            alpha_team_results = get_alpha_AI_results(players, playersPerTeam)
             t1_alpha = time.perf_counter()
             time_taken_alpha = t1_alpha - t0_alpha
             if LOG_AI_RESULTS:
                 log_AI_results(players, alpha_team_results, time_taken_alpha, playersPerTeam, is_alpha_AI=True)
         except Exception as e:
+            raise e
             common.log_text(f"Alpha AI threw an exception: {e}", common.ERROR_LOGGING_TYPE)
 
     if RUN_BETA_AI or USE_BETA_AI:
@@ -119,13 +120,14 @@ def determineTags(players, playersPerTeam=None):
             if LOG_AI_RESULTS:
                 log_AI_results(players, beta_team_results, time_taken_beta, beta_players_per_team_guess, is_alpha_AI=False)
         except Exception as e:
+            raise e
             common.log_text(f"Beta AI threw an exception: {e}", common.ERROR_LOGGING_TYPE)
 
             
     if USE_BETA_AI:
-        return beta_team_results, False
+        return beta_team_results
     else:
-        return alpha_team_results, alpha_has_none_tag
+        return alpha_team_results
         
     
 def initialize():
@@ -143,20 +145,29 @@ def rerun_AIs_for_all():
         else:
             determineTags(fc_player, alpha_AI_data[2])
 
+
 def format_into_comparable(teams):
     if teams is None:
         return None
     comparable_results = {}
-    for fc_player_data, tag_data in teams.items():
-        tag_value, actual_tag = ("No Tag", "No Tag") if tag_data is None else tag_data
-        cur_tag = TagAI_Andrew._get_tag_value(tag_value)
-        if cur_tag not in comparable_results:
-            comparable_results[cur_tag] = set()
-        comparable_results[cur_tag].add(fc_player_data)
-    return comparable_results
+    for tag, fc_players in teams.items():
+        comparable_tag = TagAI_Andrew._get_tag_value(tag, map=True)
+        if comparable_tag not in comparable_results:
+            comparable_results[comparable_tag] = set()
+        comparable_results[comparable_tag].update({fcp for fcp in fc_players})
+    
+    all_tags = sorted(comparable_results.keys())
+    return {tag:comparable_results[tag] for tag in all_tags}
 
-def match_names_with_tags():
-    pass
+def nice_print_teams(teams, num_tabs=0):
+    result = ""
+    playerNum = 0
+    for teamTag, fc_players in teams.items():
+        result += '\t'*num_tabs + f"Tag: {teamTag}\n"
+        for fc, playerName in fc_players:
+            playerNum += 1
+            result += '\t'*num_tabs + f"\t{playerNum}. {playerName}\n"
+    return result
 
 def view_AI_results():
     SHOULD_PRINT_VERBOSE = True
@@ -169,18 +180,18 @@ def view_AI_results():
     total_beta_ai_time_taken = 0.0
     for stored_fc_players, alpha_AI_results, beta_AI_results in AI_Results:
         alpha_teams, alpha_time_taken, alpha_players_per_team = alpha_AI_results
+        alpha_teams = format_into_comparable(alpha_teams)
         if alpha_time_taken is not None:
             total_alpha_ai_time_taken += alpha_time_taken
             total_alpha_ai_results += 1
         beta_teams, beta_time_taken, beta_players_per_team = beta_AI_results
+        beta_teams = format_into_comparable(beta_teams)
         if beta_time_taken is not None:
             total_beta_ai_time_taken += beta_time_taken
             total_beta_ai_results += 1
-        comparable_alpha_teams = format_into_comparable(alpha_teams)
-        comparable_beta_teams = format_into_comparable(beta_teams)
         if alpha_players_per_team is not None and alpha_players_per_team != beta_players_per_team:
             beta_AI_inaccurate_format_amount += 1
-        results_differed = (comparable_alpha_teams != comparable_beta_teams and alpha_teams is not None and beta_teams is not None) and (alpha_players_per_team == 1 and beta_players_per_team != 1) #second part of this statement is to make sure that when the AIs both conclude it is an FFA, the results should not "differ" - the results do match
+        results_differed = (alpha_teams != beta_teams and alpha_teams is not None and beta_teams is not None)
         alpha_string = f"Alpha AI: if alpha AI is running, it could not determine a solution, so it gave tabler an alphabetical list. Otherwise, Alpha AI simply hasn't run for these teams yet." if alpha_teams is None else f"Alpha AI: Time taken: {round(alpha_time_taken, 5)}s | Players per team: {alpha_players_per_team}"
         beta_string = f"Beta  AI: did not run for these teams yet." if beta_teams is None else    f"Beta  AI: Time taken: {round(beta_time_taken, 5)}s | Players per team: {beta_players_per_team} (Beta AI's guess)"
         print(f"AI Results Differed: {'Yes' if results_differed else 'No'}\n\t{alpha_string}\n\t{beta_string}")
@@ -191,19 +202,18 @@ def view_AI_results():
         if SHOULD_PRINT_VERBOSE:
             if not ONLY_PRINT_DIFFERENT_IN_VERBOSE or results_differed:
                 print("\tAlpha AI's teams (in comparable format):")
-                print(f"\t\t{comparable_alpha_teams}")
+                print(f"{nice_print_teams(alpha_teams, 2)}")
                 print("\tBeta  AI's teams (in comparable format):")
-                print(f"\t\t{comparable_beta_teams}")
+                print(f"{nice_print_teams(beta_teams, 2)}")
                 print("\tDetailed player data:")
                 print(f"\t\t{stored_fc_players}")
     
     print(f"\nSUMMARY:\nBeta AI inaccurate players per team: {beta_AI_inaccurate_format_amount} times out of {len(AI_Results)}")
-    print(f"Alpha AI gave alphabetical list {sum(1 for x in AI_Results if x[1][0] is None)} times out of {len(AI_Results)}")
     print(f"AIs had same tags {len(AI_Results) - total_results_differed} times out of {len(AI_Results)}")
-    print(f"Alpha AIs average time for solving (not including alphabetical lists): {round((total_alpha_ai_time_taken/total_alpha_ai_results),10)}s")
+    print(f"Alpha AIs average time for solving: {round((total_alpha_ai_time_taken/total_alpha_ai_results),10)}s")
     print(f"Beta  AIs average time for solving: {round((total_beta_ai_time_taken/total_beta_ai_results),10)}s")
             
 if __name__ == '__main__':
     initialize()
-    #rerun_AIs_for_all()
+    rerun_AIs_for_all()
     view_AI_results()

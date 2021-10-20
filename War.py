@@ -8,6 +8,8 @@ import ErrorChecker
 from _collections import defaultdict
 import random
 import TableBotExceptions
+import UtilityFunctions
+import UserDataProcessing
 
 tableColorPairs = [("#244f96", "#cce7e8"),
                    ("#D11425","#E8EE28"),
@@ -48,7 +50,7 @@ class War(object):
         self.teamPenalties = defaultdict(int)
         self.forcedRoomSize = {}
         self.teams = None
-        self.temporary_tag_data = (None, None)
+        self.temporary_tag_data = None
         
 
         
@@ -100,11 +102,32 @@ class War(object):
             raise TableBotExceptions.WarSetupStillRunning()
         return [fc for fc, tag in self.teams.items() if tag == tagToGet]
     
-    def set_temp_team_tags(self, player_fcs_tags, hasANoneTag):
-        self.temporary_tag_data = (player_fcs_tags, hasANoneTag)
+    def set_temp_team_tags(self, tags_player_fcs):
+        self.temporary_tag_data = tags_player_fcs
         
     def get_temp_team_tags(self):
         return self.temporary_tag_data
+    
+    def getConvertedTempTeams(self):
+        fc_tags = {}
+        for teamTag, team_players in self.get_temp_team_tags().items():
+            for fc, _ in team_players:
+                fc_tags[fc] = teamTag
+        return fc_tags
+    
+    def get_tags_str(self):
+        if self.temporary_tag_data is None:
+            return "None"
+        
+        result = ""
+        playerNum = 0
+        for teamTag, fc_players in self.temporary_tag_data.items():
+            result += f"**Tag: {UtilityFunctions.process_name(teamTag)}** \n"
+            for fc, playerName in fc_players:
+                playerNum += 1
+                result += f"\t{playerNum}. {UtilityFunctions.process_name(playerName)}{UserDataProcessing.lounge_add(fc)}\n"
+            
+        return result
         
     def print_teams(self):
         if self.teams is None:

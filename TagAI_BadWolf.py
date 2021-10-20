@@ -13,6 +13,7 @@ VALID_CHARS = "/\\*^+abcdefghijklmnopqrstuvwxyz\u03A9\u038F" + "abcdefghijklmnop
 UNICODE_MAPPINGS_TO_ALPHA = {"@":"A", "\u00A7":"S", "$":"S", "\u00A2":"c", "\u00A5":"Y", "\u20AC":"E", "\u00A3":"E", "\u00E0":"a", "\u00E1":"a", "\u00E2":"a", "\u00E4":"a", "\u00E5":"a", "\u00E6":"ae", "\u00E3":"a", "\u00E7":"c", "\u00E8":"e", "\u00E9":"e", "\u00EA":"e", "\u00EB":"e", "\u00EC":"i", "\u00ED":"i", "\u00EE":"i", "\u00EF":"i", "\u00F1":"n", "\u00F2":"o", "\u00F3":"o", "\u00F4":"o", "\u00F6":"o", "\u0153":"oe", "\u00F8":"o", "\u00F5":"o", "\u00DF":"B", "\u00F9":"u", "\u00FA":"u", "\u00FB":"u", "\u00FC":"u", "\u00FD":"y", "\u00FF":"y", "\u00C0":"A", "\u00C1":"A", "\u00C2":"A", "\u00C4":"A", "\u00C5":"A", "\u00C6":"AE", "\u00C3":"A", "\u00C7":"C", "\u00C8":"E", "\u00C9":"E", "\u00CA":"E", "\u00CB":"E", "\u00CC":"I", "\u00CD":"I", "\u00CE":"I", "\u00CF":"I", "\u00D1":"N", "\u00D2":"O", "\u00D3":"O", "\u00D4":"O", "\u00D6":"O", "\u0152":"OE", "\u00D8":"O", "\u00D5":"O", "\u00D9":"U", "\u00DA":"U", "\u00DB":"U", "\u00DC":"U", "\u00DD":"Y", "\u0178":"Y", "\u03B1":"a", "\u03B2":"B", "\u03B3":"y", "\u03B4":"o", "\u03B5":"e", "\u03B6":"Z", "\u03B7":"n", "\u03B8":"O", "\u03B9":"i", "\u03BA":"k", "\u03BB":"A", "\u03BC":"u", "\u03BD":"v", "\u03BE":"E", "\u03BF":"o", "\u03C0":"r", "\u03C1":"p", "\u03C3":"o", "\u03C4":"t", "\u03C5":"u", "\u03C6":"O", "\u03C7":"X", "\u03C8":"w", "\u03C9":"W", "\u0391":"A", "\u0392":"B", "\u0393":"r", "\u0394":"A", "\u0395":"E", "\u0396":"Z", "\u0397":"H", "\u0398":"O", "\u0399":"I", "\u039A":"K", "\u039B":"A", "\u039C":"M", "\u039D":"N", "\u039E":"E", "\u039F":"O", "\u03A0":"N", "\u03A1":"P", "\u03A3":"E", "\u03A4":"T", "\u03A5":"Y", "\u03A6":"O", "\u03A7":"X", "\u03A8":"w", "\u0386":"A", "\u0388":"E", "\u0389":"H", "\u038A":"I", "\u038C":"O", "\u038E":"Y", "\u0390":"i", "\u03AA":"I", "\u03AB":"Y", "\u03AC":"a", "\u03AD":"E", "\u03AE":"n", "\u03AF":"i", "\u03B0":"u", "\u03C2":"c", "\u03CA":"i", "\u03CB":"u", "\u03CC":"o", "\u03CD":"u", "\u03CE":"w", "\u2122":"TM", "\u1D49":"e", "\u00A9":"C", "\u00AE":"R", "\u00BA":"o", "\u00AA":"a", "\u266D":"b"}
 #other_players_context is simple a list of other players names
 REMOVE_IF_START_WITH = "/\\*^+"
+import BaseTagAI
 
 #Returns 2 values. The first is the ranking value used by sorting methods, the 2nd is the tag itself
 #This is useful so that we can return lambda as a tag, but make it have the same ranking value as A
@@ -35,6 +36,8 @@ def _get_tag_value(tag):
             temp += UNICODE_MAPPINGS_TO_ALPHA[c]
         elif c in VALID_CHARS:
             temp += c
+    if temp.lower() == BaseTagAI.PLAYER_TAG.lower():
+        return BaseTagAI.PLAYER_TAG
     return temp.upper()
 
 def stripBadChars(tag):
@@ -89,7 +92,7 @@ def __get_player_tags(name:str):
     all_possible = []
     #If their name is blank, they will be given the Player tag
     if len(name) == 0:
-        return [("Player", "Player")]
+        return [(BaseTagAI.BAD_NAME_TAG, BaseTagAI.BAD_NAME_TAG)]
     if name.lower() in ['player', 'no name']:
         return [("Player", "Player"), ("P", "P")]
     
@@ -394,15 +397,15 @@ def __choose_and_cleanup(counts: Dict[Tuple[str, str], List[Tuple[str, str, int]
         else:
             temp = sorted(tags_counts)
             if temp[0][0] == "NO NAME" and temp[0][1] == "no name":
-                fc_player_tags[fc_player] = ("PLAYER", "Player")
+                fc_player_tags[fc_player] = (BaseTagAI.PLAYER_TAG, BaseTagAI.PLAYER_TAG)
             else:
                 fc_player_tags[fc_player] = (temp[0][0], temp[0][1])
         
     return fc_player_tags, has_None_Tags
 
-def __correctTags(counts: Dict[Tuple[str, str], List[Tuple[str, str, int]]], has_None_Tags, playersPerTeam:int) -> Dict[Tuple[str, str], Tuple[str, str]]:
+def __majorityTagCorrection(counts: Dict[Tuple[str, str], List[Tuple[str, str]]], has_None_Tags, playersPerTeam:int) -> Dict[Tuple[str, str], Tuple[str, str]]:
     #Now we want to correct anyone with the wrong tag
-    if not has_None_Tags and playersPerTeam >= 3: #Only do this for 3v3s, majority tag correction
+    if not has_None_Tags and playersPerTeam >= 2: #Majority tag correction
         value_tags_counts = defaultdict(list)
         for tag in counts.values():
             tag_val, actual_tag = tag[0], tag[1]
@@ -415,18 +418,13 @@ def __correctTags(counts: Dict[Tuple[str, str], List[Tuple[str, str, int]]], has
         
         for fc_player, tag in counts.items():
             counts[fc_player] = (tag[0], replacement_tags[tag[0]])
-         
-
     return counts
 
 def getTagsSmart(fc_players:List[Tuple[str, str]], playersPerTeam:int) -> Dict[Tuple[str, str], Tuple[str, str]]:
     #import time
     #startTime = time.perf_counter_ns() 
-    if playersPerTeam < 2:
-        none_team_dict = {}
-        for fc_player in fc_players:
-            none_team_dict[fc_player] = None
-        return none_team_dict, True
+    if playersPerTeam <= 1:
+        return BaseTagAI.get_ffa_teams(fc_players)
             
     
     all_possible = {}
@@ -440,17 +438,65 @@ def getTagsSmart(fc_players:List[Tuple[str, str]], playersPerTeam:int) -> Dict[T
     
 
     if temp is None or len(temp) == 0:
-        return None, True
+        return reverse_dict_order_and_finalize(get_alphabetical_tags(fc_players, playersPerTeam))
     
     if len(tag_counts) == len(temp):
         tag_counts = temp
 
 
     tag_counts, hasNoneTags = __choose_and_cleanup(tag_counts)
-    tag_counts = __correctTags(tag_counts, hasNoneTags, playersPerTeam)
+    tag_counts = __majorityTagCorrection(tag_counts, hasNoneTags, playersPerTeam)
     #print("Time this took:", time.perf_counter_ns() - startTime)
-    return tag_counts, hasNoneTags
+    if hasNoneTags:
+        return reverse_dict_order_and_finalize(get_alphabetical_tags(fc_players, playersPerTeam))
     
+    return reverse_dict_order_and_finalize(fix_duplicate_tags(tag_counts, playersPerTeam))
+
+#Takes a player_fc dict (player, fc):(tag_value, actual_tag) and converts it to a sorted dict (tag_value, actual_tag):(player, fc)
+def reverse_dict_order_and_finalize(player_fcs_tags):
+    player_fcs_tags = sorted(player_fcs_tags.items(), key=lambda x: x[1])
+    new_dict = {}
+    for player_fc, tag_data in player_fcs_tags:
+        if tag_data[1] not in new_dict:
+            new_dict[tag_data[1]] = []
+        new_dict[tag_data[1]].append(player_fc)
+    return new_dict
+    
+def fix_duplicate_tags(player_fcs_tags, players_per_team):
+    FIX_DUPLICATES = False
+    #Convert into tags dictionary:
+    tag_dict = defaultdict(list)
+    for (fc_player, (tag_value, actual_tag)) in player_fcs_tags.items():
+        tag_dict[tag_value].append([fc_player, (tag_value, actual_tag)])
+    
+    tag_value_count_dict = defaultdict(lambda:-1)
+    
+    for tag_value, players in tag_dict.items():
+        players.sort(key=lambda p: _get_tag_value(p[0][1])) #sort players on team by their name value (removing bad characters and mapping special characters to normal latin alphabet)
+        for playerNum, player_data in enumerate(players):
+            if (playerNum) % players_per_team == 0:
+                tag_value_count_dict[tag_value] += 1
+            
+            tag_append = "" if tag_value_count_dict[tag_value] < 1 else (f"_{tag_value_count_dict[tag_value]}" if FIX_DUPLICATES else "")
+            new_tag_value = player_data[1][0] + tag_append
+            new_tag_actual = player_data[1][1] + tag_append
+            player_data[1] = (new_tag_value, new_tag_actual)
+    
+    new_player_fcs_tags = {}
+    for players in tag_dict.values():
+        for player_data in players:
+            new_player_fcs_tags[player_data[0]] = player_data[1]
+    
+    return __majorityTagCorrection(new_player_fcs_tags, False, players_per_team)
+            
+
+
+def get_alphabetical_tags(fc_players, players_per_team):
+    player_fcs_tags = {}
+    for fc_player in fc_players:
+        player_fcs_tags[fc_player] = getTagSmart(fc_player[1])
+    return fix_duplicate_tags(player_fcs_tags, players_per_team)
+
 
 def getTagSmart(name:str):
     bracket_tag = __get_bracket_tag(name)
@@ -461,8 +507,8 @@ def getTagSmart(name:str):
     
     name = stripBadChars(name)
     
-    if name == "no name" or name == "Player":
-        return ("P", "P")
+    if name == "no name" or name.lower() == "player":
+        return (BaseTagAI.PLAYER_TAG, BaseTagAI.PLAYER_TAG)
 
     if len(name) == 0:
         return ("","")

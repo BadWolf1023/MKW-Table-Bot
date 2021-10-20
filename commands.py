@@ -1699,6 +1699,8 @@ class TablingCommands:
                             if not successful:
                                 processed_lookup_name = UtilityFunctions.process_name(their_name)
                                 await message.channel.send(f"Could not find {processed_lookup_name} in a room. **Did they finish the first race?**")                      
+                    
+                    #Room loaded successfully
                     if successful:
                         this_bot.freeLock()
                         this_bot.getRoom().setSetupUser(author_id,  message.author.display_name)
@@ -1715,51 +1717,13 @@ class TablingCommands:
                             if this_bot.getWar() is not None:
                                 populate_mii_task = asyncio.get_event_loop().create_task(this_bot.populate_miis(str(message.id)))
                                 players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numgps*4).items())
-                                player_fcs_tags, hasANoneTag = TagAIShell.determineTags(players, this_bot.getWar().playersPerTeam)
-                                this_bot.getWar().set_temp_team_tags(player_fcs_tags, hasANoneTag)
-                                if hasANoneTag:
-                                    player_fcs_tags = {}
-                                    for fc_player in players:
-                                        player_fcs_tags[fc_player] = TagAIShell.getTag(fc_player[1])
-                                
-                                #sort the fcs_tags by their tag
-                                player_fcs_tags = sorted(player_fcs_tags.items(), key=lambda x: x[1])
-                                if this_bot.getWar().formatting.lower() != "1v1" and this_bot.getWar().formatting.lower() != "ffa":
-                                    teamTag = None
-                                    to_print = ""
-                                    previous_tags = []
-                                    tag_counter = 0
-                                    FC_List = [fc for fc, _ in players]
-                                    await updateData(* await LoungeAPIFunctions.getByFCs(FC_List))
-                                    for playerNum, ((fc, playerName), (_, playerTag)) in enumerate(player_fcs_tags):
-                                        if len(playerTag.strip()) < 1:
-                                            playerTag = str(playerNum+1)
-                                        
-                                        if (playerNum) % this_bot.getWar().playersPerTeam == 0:
-                                            #Start a new team
-                                            teamTag = playerTag
-                                            if teamTag in previous_tags:
-                                                tag_counter += 1
-                                                teamTag = f"{teamTag}_{tag_counter}"
-                                            else:
-                                                tag_counter = 0
-                                            previous_tags.append(teamTag)
-                                            if playerTag is None:
-                                                teamTag = f"**Team #{playerNum+1}\n**"
-                                            cur_processed_team_tag = UtilityFunctions.process_name(teamTag)
-                                            to_print += f"**Tag: {cur_processed_team_tag}** \n"
-                                        temp_name = f"\t{playerNum+1}. {playerName}"
-                                        if fc in UserDataProcessing.FC_DiscordID:
-                                            DID = UserDataProcessing.FC_DiscordID[fc][0]
-                                            if DID in UserDataProcessing.discordID_Lounges:
-                                                lounge_name = UserDataProcessing.discordID_Lounges[DID]
-                                                temp_name += f" - ({lounge_name})"
-                                        
-                                        to_print += UtilityFunctions.process_name(temp_name) + "\n"
-                                        
-                                    to_print += "\n***Is this correct?** (" + server_prefix + "yes or " + server_prefix + "no)*"
-                                    
-                                    await message.channel.send(to_print)
+                                await updateData(* await LoungeAPIFunctions.getByFCs([fc for fc, _ in players]))
+                                tags_player_fcs = TagAIShell.determineTags(players, this_bot.getWar().playersPerTeam)
+                                this_bot.getWar().set_temp_team_tags(tags_player_fcs)
+
+                                if not this_bot.getWar().is_ffa():
+                                    to_send = f"{this_bot.getWar().get_tags_str()}\n***Is this correct?** Respond `{server_prefix}yes` or `{server_prefix}no`*"
+                                    await message.channel.send(to_send)
                                     this_bot.prev_command_sw = True
     
                                 else:
@@ -1790,13 +1754,13 @@ class TablingCommands:
     
     @staticmethod                  
     async def after_start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        this_bot.prev_command_sw = False
-        this_bot.manualWarSetUp = False
         if args[0].lower().strip() not in ['yes', 'no', 'y', 'n']:
-            this_bot.setWar(None)
-            await message.channel.send(f"Please put {server_prefix}yes or {server_prefix}no to **Is this correct?** - War stopped.")   
+            #this_bot.setWar(None)
+            await message.channel.send(f"Respond `{server_prefix}yes` or `{server_prefix}no`. Were the teams I sent correct?")   
             return
         
+        this_bot.prev_command_sw = False
+        this_bot.manualWarSetUp = False
         if args[0].lower().strip() in ['no', 'n']:
             await message.channel.send(f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{server_prefix}A 2 3 / B 1 4 / Player 5 6*")
             this_bot.manualWarSetUp = True
@@ -1808,38 +1772,14 @@ class TablingCommands:
             return
     
     
-        fc_tags = {}
+        
         numGPS = this_bot.getWar().numberOfGPs
         players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
-        player_fcs_tags, hasANoneTag = this_bot.getWar().get_temp_team_tags()
-        if hasANoneTag:
-            player_fcs_tags = {}
-            for fc_player in players:
-                player_fcs_tags[fc_player] = TagAIShell.getTag(fc_player[1])
-        player_fcs_tags = sorted(player_fcs_tags.items(), key=lambda x: x[1])
                 
         if len(players) != this_bot.getWar().get_num_players():
             await message.channel.send(f'''Respond "{server_prefix}no" when asked ***Is this correct?*** - the number of players in the room doesn't match your war format and teams. Trying to still start war, but teams will be incorrect.''')
-        
-        teamTag = None
-        previous_tags = []
-        tag_counter = 0
-        for playerNum, ((fc, playerName), (_, playerTag)) in enumerate(player_fcs_tags):
-            if len(playerTag) < 1:
-                playerTag = str(playerNum+1)
             
-            if (playerNum) % this_bot.getWar().playersPerTeam == 0:
-                #Start a new team
-                teamTag = playerTag
-                if teamTag in previous_tags:
-                    tag_counter += 1
-                    teamTag = f"{teamTag}_{tag_counter}"
-                else:
-                    tag_counter = 0
-                previous_tags.append(teamTag)
-            fc_tags[fc] = teamTag
-            
-        this_bot.getWar().setTeams(fc_tags)
+        this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
         await message.channel.send(this_bot.get_room_started_message())
 
     @staticmethod                  
@@ -2146,53 +2086,27 @@ class TablingCommands:
             
     @staticmethod
     async def manual_war_setup(message:discord.Message, this_bot:ChannelBot, command:str):
-        this_bot.manualWarSetUp = False
         
         if this_bot.getRoom() is None or not this_bot.getRoom().is_initialized():
             await message.channel.send("Unexpected error. Somehow, there is no room loaded. Recommend the command: reset")
+            this_bot.manualWarSetUp = False
             this_bot.setWar(None)
             return
     
-        numGPS = this_bot.getWar().numberOfGPs
+        fc_tag = this_bot.getWar().getConvertedTempTeams()
         
-        players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
-        player_fcs_tags, hasANoneTag = this_bot.getWar().get_temp_team_tags()
-        if hasANoneTag:
-            player_fcs_tags = {}
-            for fc_player in players:
-                player_fcs_tags[fc_player] = TagAIShell.getTag(fc_player[1])
-    
-        #sort the fcs_tags by their tag
-        player_fcs_tags = sorted(player_fcs_tags.items(), key=lambda x: x[1])
-    
-        fc_tag = {} #FC is the key, and tag is the value
-        teamTag = None
-        previous_tags = []
-        tag_counter = 0
-        for playerNum, ((fc, playerName), (_, playerTag)) in enumerate(player_fcs_tags):
-            if len(playerTag) < 1:
-                playerTag = str(playerNum+1)
-            
-            if (playerNum) % this_bot.getWar().playersPerTeam == 0:
-                #Start a new team
-                teamTag = playerTag
-                if teamTag in previous_tags:
-                    tag_counter += 1
-                    teamTag = f"{teamTag}_{tag_counter}"
-                else:
-                    tag_counter = 0
-                previous_tags.append(teamTag)
-            fc_tag[fc] = teamTag
-    
-    
+        def setTeamTagAtIndex(index, teamTag):
+            for cur_ind, fc in enumerate(fc_tag):
+                if cur_ind == index:
+                    fc_tag[fc] = teamTag
+                    break
+        
         teamBlob = command.split("/")
-        
-        
         for team in teamBlob:
             teamArgs = team.split()
             if len(teamArgs) < 2:
-                await message.channel.send("Each team should have at least 1 player...")
-                this_bot.setWar(None)
+                await message.channel.send("Each team should have at least 1 player. Try putting the teams in again.")
+                #this_bot.setWar(None)
                 return
             
             teamTag = teamArgs[0]
@@ -2200,14 +2114,12 @@ class TablingCommands:
                 if not pos.isnumeric():
                     processed_team_name = UtilityFunctions.process_name(str(teamTag))
                     userinput_team_position = UtilityFunctions.process_name(str(pos))
-                    await message.channel.send(f"On team {processed_team_name}, {userinput_team_position} isn't a number. War stopped.")
-                    this_bot.setWar(None)
+                    await message.channel.send(f"On team {processed_team_name}, {userinput_team_position} isn't a number. Try putting in the teams again.")
+                    #this_bot.setWar(None)
                     return
-                if int(pos) <= len(player_fcs_tags) and int(pos) >= 1:
-                    fc_tag[player_fcs_tags[int(pos)-1][0][0]] = teamTag
-             
-                
+                setTeamTagAtIndex(int(pos)-1, teamTag) 
         else:
+            this_bot.manualWarSetUp = False
             this_bot.getWar().setTeams(fc_tag)
             await message.channel.send(this_bot.get_room_started_message())
     
