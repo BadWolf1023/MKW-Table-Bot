@@ -79,7 +79,7 @@ def get_alpha_AI_results(players, playersPerTeam=None):
 
 def get_beta_AI_results(players, playersPerTeam=None):
     all_player_names = [player_data[1] for player_data in players]
-    players_per_team_guess, team_results = beta_AI(all_player_names)
+    players_per_team_guess, team_results = beta_AI(all_player_names, target_size=playersPerTeam)
     #Change results format into the format Table Bot expects:
     table_bot_formatted_results = {}
     for team_tag, team_player_indexes in team_results.items():
@@ -93,10 +93,11 @@ def get_beta_AI_results(players, playersPerTeam=None):
     return players_per_team_guess, table_bot_formatted_results
     
     
-def determineTags(players, playersPerTeam=None):
+def determineTags(players, playersPerTeam=None, give_beta_ai_format=False):
     alpha_team_results = None
     beta_team_results = None
     beta_players_per_team_guess = None
+    beta_ai_players_per_team = playersPerTeam if give_beta_ai_format else None
     if RUN_ALPHA_AI or not USE_BETA_AI:
         try:
             #Run Alpha AI:
@@ -114,7 +115,7 @@ def determineTags(players, playersPerTeam=None):
         #Run Beta AI:
         try:
             t0_beta = time.perf_counter()
-            beta_players_per_team_guess, beta_team_results = get_beta_AI_results(players)
+            beta_players_per_team_guess, beta_team_results = get_beta_AI_results(players, playersPerTeam=beta_ai_players_per_team)
             t1_beta = time.perf_counter()
             time_taken_beta = t1_beta - t0_beta
             if LOG_AI_RESULTS:
@@ -134,16 +135,16 @@ def initialize():
     TagAI_Andrew.initialize()
     load_pkl_list(AI_Results, AI_Results_file_name)
     
-def rerun_AIs_for_all():
+def rerun_AIs_for_all(give_beta_ai_format=False):
     #WARNING: Calling this will replace whatever old results you may have had in "AI_Results" with brand new results
     fc_players_data = [all_data for all_data in AI_Results]
     AI_Results.clear()
     for fc_player, alpha_AI_data, beta_AI_data in fc_players_data:
         if alpha_AI_data[2] is None:
             print("Warning, no known players per team was found, so using Beta's guess for Alpha's determination")
-            determineTags(fc_player, beta_AI_data[2])
+            determineTags(fc_player, beta_AI_data[2], give_beta_ai_format)
         else:
-            determineTags(fc_player, alpha_AI_data[2])
+            determineTags(fc_player, alpha_AI_data[2], give_beta_ai_format)
 
 
 def format_into_comparable(teams):
@@ -205,15 +206,18 @@ def view_AI_results():
                 print(f"{nice_print_teams(alpha_teams, 2)}")
                 print("\tBeta  AI's teams (in comparable format):")
                 print(f"{nice_print_teams(beta_teams, 2)}")
-                print("\tDetailed player data:")
-                print(f"\t\t{stored_fc_players}")
+                #print("\tDetailed player data:")
+                #print(f"\t\t{stored_fc_players}")
     
     print(f"\nSUMMARY:\nBeta AI inaccurate players per team: {beta_AI_inaccurate_format_amount} times out of {len(AI_Results)}")
     print(f"AIs had same tags {len(AI_Results) - total_results_differed} times out of {len(AI_Results)}")
-    print(f"Alpha AIs average time for solving: {round((total_alpha_ai_time_taken/total_alpha_ai_results),10)}s")
-    print(f"Beta  AIs average time for solving: {round((total_beta_ai_time_taken/total_beta_ai_results),10)}s")
+    print(f"Alpha AIs average time for solving: {round((total_alpha_ai_time_taken/total_alpha_ai_results), 5)}s")
+    print(f"Beta  AIs average time for solving: {round((total_beta_ai_time_taken/total_beta_ai_results), 5)}s")
+    print(f"Alpha AIs longest time for solving: {round(max(data[1][1] for data in AI_Results), 5)}s")
+    print(f"Beta  AIs longest time for solving: {round(max(data[2][1] for data in AI_Results), 5)}s")
             
 if __name__ == '__main__':
     initialize()
-    rerun_AIs_for_all()
+    GIVE_BETA_AI_TEAM_FORMAT = True
+    rerun_AIs_for_all(GIVE_BETA_AI_TEAM_FORMAT)
     view_AI_results()
