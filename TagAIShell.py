@@ -159,7 +159,8 @@ def match_names_with_tags():
     pass
 
 def view_AI_results():
-    SHOULD_PRINT_VERBOSE = False
+    SHOULD_PRINT_VERBOSE = True
+    ONLY_PRINT_DIFFERENT_IN_VERBOSE = True
     beta_AI_inaccurate_format_amount = 0
     total_results_differed = 0
     total_alpha_ai_results = 0
@@ -188,12 +189,13 @@ def view_AI_results():
         
         
         if SHOULD_PRINT_VERBOSE:
-            print("\tAlpha AI's teams (in comparable format):")
-            print(f"\t\t{comparable_alpha_teams}")
-            print("\tBeta  AI's teams (in comparable format):")
-            print(f"\t\t{comparable_beta_teams}")
-            print("\tDetailed player data:")
-            print(f"\t\t{stored_fc_players}")
+            if not ONLY_PRINT_DIFFERENT_IN_VERBOSE or results_differed:
+                print("\tAlpha AI's teams (in comparable format):")
+                print(f"\t\t{comparable_alpha_teams}")
+                print("\tBeta  AI's teams (in comparable format):")
+                print(f"\t\t{comparable_beta_teams}")
+                print("\tDetailed player data:")
+                print(f"\t\t{stored_fc_players}")
     
     print(f"\nSUMMARY:\nBeta AI inaccurate players per team: {beta_AI_inaccurate_format_amount} times out of {len(AI_Results)}")
     print(f"Alpha AI gave alphabetical list {sum(1 for x in AI_Results if x[1][0] is None)} times out of {len(AI_Results)}")
