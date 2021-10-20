@@ -9,6 +9,7 @@ import numpy as np
 import math
 from collections import defaultdict
 import copy
+import BaseTagAI
 
 team_formats = {}
 VALID_CHARS = "/\\*^+abcdefghijklmnopqrstuvwxyz\u03A9\u038F" + "abcdefghijklmnopqrstuvwxyz0123456789".upper()
@@ -186,7 +187,7 @@ def get_teams(players, X):
                     tag_count[tag] += 1
 
             if len(tag_count) == 0:
-                best_tag = "No Tag"
+                best_tag = BaseTagAI.UNKNOWN_TAG_NAME
             else:
                 best_tag = max(tag_count.keys(), key=lambda k: tag_count[k])
                 if tag_count[best_tag] == 1:
@@ -194,7 +195,7 @@ def get_teams(players, X):
                     if len(longest_name) > 0:
                         best_tag = longest_name[0]
                     else:
-                        best_tag = "No Tag"
+                        best_tag = BaseTagAI.UNKNOWN_TAG_NAME
 
             tagged_teams[best_tag] = team
 
@@ -213,6 +214,8 @@ def get_teams_smart(players, formats=None, target_size=None):
         
     if not target_size:
         team_sizes = [6,4,5,3,2]
+    elif target_size == 1:
+        return target_size, BaseTagAI.get_ffa_teams([i for i in range(len(players))])
     else:
         team_sizes = [target_size]
     
@@ -241,6 +244,8 @@ def get_teams_smart(players, formats=None, target_size=None):
             best_size = team_size
 
     #print(best_teams)
+    if best_size == 1:
+        best_teams = BaseTagAI.get_ffa_teams([i for i in range(len(players))])
     return best_size, best_teams
 
 def print_teams(teams, players):
