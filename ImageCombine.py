@@ -89,10 +89,14 @@ def add_autotable_footer(footer, table_image_path=TESTING_IMAGE, out_image_path=
 
     # Setting the points for cropped image
     if footer_width > table_width:
+        """
         excess_width = footer_width - table_width
         left = excess_width//2
         right = footer_width - (excess_width - left)
         footer_array = footer_array[0:len(footer_array),left:right]
+        """
+        #instead of cutting off, resize
+        
     elif footer_width < table_width:
         add_left_footer = int((table_width - footer_width)/2)
         add_right_footer = int(table_width - (add_left_footer + footer_width))
