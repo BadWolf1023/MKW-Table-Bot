@@ -206,7 +206,7 @@ def get_teams_smart(players, formats=None, target_size=None):
         formats = team_formats
     best_score = 0
     best_teams = None
-    best_size = 1
+    best_size = 1 
 
     bonus = {2:0, 3:0, 4:0, 5:0, 6:0}
     if len(players) == 10:
@@ -232,7 +232,7 @@ def get_teams_smart(players, formats=None, target_size=None):
         #print(f'Team Size={team_size}; Score={adjusted_score}')
         
         if target_size:
-            return best_size, teams
+            return target_size, teams
 
         if adjusted_score > best_score and adjusted_score>=0.80 and len(teams)>1:
             if team_size == 2:
