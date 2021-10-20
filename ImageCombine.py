@@ -89,10 +89,17 @@ def add_autotable_footer(footer, table_image_path=TESTING_IMAGE, out_image_path=
 
     # Setting the points for cropped image
     if footer_width > table_width:
+        """
         excess_width = footer_width - table_width
         left = excess_width//2
         right = footer_width - (excess_width - left)
         footer_array = footer_array[0:len(footer_array),left:right]
+        """
+        #instead of cutting off, resize
+        scale_ratio = table_width / footer_width
+        height = int(footer_height * scale_ratio)
+        dim = (table_width, height)
+        footer_array = cv2.resize(footer_array, dim, interpolation = cv2.INTER_AREA)
     elif footer_width < table_width:
         add_left_footer = int((table_width - footer_width)/2)
         add_right_footer = int(table_width - (add_left_footer + footer_width))
