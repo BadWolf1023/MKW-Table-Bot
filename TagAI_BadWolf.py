@@ -7,7 +7,7 @@ from typing import List, Set, Dict, Tuple
 from copy import copy
 from datetime import datetime, timedelta
 from _collections import defaultdict
-
+import time
 
 VALID_CHARS = "/\\*^+abcdefghijklmnopqrstuvwxyz\u03A9\u038F" + "abcdefghijklmnopqrstuvwxyz0123456789".upper()
 UNICODE_MAPPINGS_TO_ALPHA = {"@":"A", "\u00A7":"S", "$":"S", "\u00A2":"c", "\u00A5":"Y", "\u20AC":"E", "\u00A3":"E", "\u00E0":"a", "\u00E1":"a", "\u00E2":"a", "\u00E4":"a", "\u00E5":"a", "\u00E6":"ae", "\u00E3":"a", "\u00E7":"c", "\u00E8":"e", "\u00E9":"e", "\u00EA":"e", "\u00EB":"e", "\u00EC":"i", "\u00ED":"i", "\u00EE":"i", "\u00EF":"i", "\u00F1":"n", "\u00F2":"o", "\u00F3":"o", "\u00F4":"o", "\u00F6":"o", "\u0153":"oe", "\u00F8":"o", "\u00F5":"o", "\u00DF":"B", "\u00F9":"u", "\u00FA":"u", "\u00FB":"u", "\u00FC":"u", "\u00FD":"y", "\u00FF":"y", "\u00C0":"A", "\u00C1":"A", "\u00C2":"A", "\u00C4":"A", "\u00C5":"A", "\u00C6":"AE", "\u00C3":"A", "\u00C7":"C", "\u00C8":"E", "\u00C9":"E", "\u00CA":"E", "\u00CB":"E", "\u00CC":"I", "\u00CD":"I", "\u00CE":"I", "\u00CF":"I", "\u00D1":"N", "\u00D2":"O", "\u00D3":"O", "\u00D4":"O", "\u00D6":"O", "\u0152":"OE", "\u00D8":"O", "\u00D5":"O", "\u00D9":"U", "\u00DA":"U", "\u00DB":"U", "\u00DC":"U", "\u00DD":"Y", "\u0178":"Y", "\u03B1":"a", "\u03B2":"B", "\u03B3":"y", "\u03B4":"o", "\u03B5":"e", "\u03B6":"Z", "\u03B7":"n", "\u03B8":"O", "\u03B9":"i", "\u03BA":"k", "\u03BB":"A", "\u03BC":"u", "\u03BD":"v", "\u03BE":"E", "\u03BF":"o", "\u03C0":"r", "\u03C1":"p", "\u03C3":"o", "\u03C4":"t", "\u03C5":"u", "\u03C6":"O", "\u03C7":"X", "\u03C8":"w", "\u03C9":"W", "\u0391":"A", "\u0392":"B", "\u0393":"r", "\u0394":"A", "\u0395":"E", "\u0396":"Z", "\u0397":"H", "\u0398":"O", "\u0399":"I", "\u039A":"K", "\u039B":"A", "\u039C":"M", "\u039D":"N", "\u039E":"E", "\u039F":"O", "\u03A0":"N", "\u03A1":"P", "\u03A3":"E", "\u03A4":"T", "\u03A5":"Y", "\u03A6":"O", "\u03A7":"X", "\u03A8":"w", "\u0386":"A", "\u0388":"E", "\u0389":"H", "\u038A":"I", "\u038C":"O", "\u038E":"Y", "\u0390":"i", "\u03AA":"I", "\u03AB":"Y", "\u03AC":"a", "\u03AD":"E", "\u03AE":"n", "\u03AF":"i", "\u03B0":"u", "\u03C2":"c", "\u03CA":"i", "\u03CB":"u", "\u03CC":"o", "\u03CD":"u", "\u03CE":"w", "\u2122":"TM", "\u1D49":"e", "\u00A9":"C", "\u00AE":"R", "\u00BA":"o", "\u00AA":"a", "\u266D":"b"}
@@ -169,12 +169,18 @@ def count_tags_at_front(solution):
             if name.startswith(tag.lower()):
                 count += 1
     return count
+
 def __choose_best_solution(solutions: List[Dict[Tuple[str, str, int], Set[Tuple[str,str]]]]) -> Dict[Tuple[str, str, int], Set[Tuple[str,str]]]:
     
-    proccessing_solution_start_time = datetime.now()
+    proccessing_solution_start_time = time.perf_counter()
     did_cut_off = False
-    def should_cut_off(max_time=timedelta(seconds=5)):
-        return (datetime.now() - proccessing_solution_start_time) > max_time
+    notified = False
+    def should_cut_off(max_time=5):
+        is_beyond_time = (time.perf_counter() - proccessing_solution_start_time) > max_time
+        if is_beyond_time and not notified:
+            print("is beyond time in choosing best solution")
+            notified = True
+        return 
     
 
     if len(solutions) == 0: #There were no solutions
@@ -285,13 +291,20 @@ def __clean_by_overlap(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str
             solution_copy[( copy(tag[0]), copy(tag[1]), copy(tag[2]) )] = players_copy
         return solution_copy
     
-    max_time_solving = timedelta(seconds=5)
-    tag_recur_start = datetime.now()
+    max_time_solving = 5
+    tag_recur_start = time.perf_counter()
+    notified = False
     def beyond_time():
-        return (datetime.now() - tag_recur_start) > max_time_solving
-        
+        is_beyond_time = (time.perf_counter() - tag_recur_start) > max_time_solving
+        if is_beyond_time and not notified:
+            print("is beyond time")
+            notified = True
+        return is_beyond_time
+    
+    
     def all_possible_solutions_recurrsion(duplicates:List[Tuple[str, str]], tags_possibilities:List[Tuple[str, Set[Tuple[str,str]]]], allPlayers:List[Tuple[str, str]], possible_solutions:List[Tuple[str, Set[Tuple[str,str]]]], playersPerTeam:int):
         if beyond_time():
+            
             return
         
         if is_possible_solution(tags_possibilities, allPlayers, playersPerTeam):
