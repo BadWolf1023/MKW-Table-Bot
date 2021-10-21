@@ -13,11 +13,13 @@ import discord
 from pathlib import Path
 import ssl
 import certifi
+import dill
+
 
 sslcontext = ssl.create_default_context(cafile=certifi.where())
 print(certifi.where())
 
-version = "11.4.0"
+version = "11.5.0"
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
@@ -117,6 +119,7 @@ FLAG_EXCEPTION_FILE = f"{DATA_PATH}flag_exceptions.txt"
 
 PRIVATE_INFO_FILE = f'{DATA_PATH}private.txt'
 STATS_FILE = f"{DATA_PATH}stats.txt"
+ROOM_DATA_TRACKER_FILE = f"{DATA_PATH}all_room_data.pkl"
 
 TABLE_BOT_PKL_FILE = f'{DATA_PATH}tablebots.pkl'
 VR_IS_ON_FILE = f"{DATA_PATH}vr_is_on.pkl"
@@ -407,4 +410,22 @@ async def safe_delete(message):
         await message.delete()
     except discord.errors.NotFound:
         pass
+    
+def dump_pkl(data, file_name, error_message, display_data_on_error=False):
+    with open(file_name, "wb") as pickle_out:
+        try:
+            dill.dump(data, pickle_out)
+        except:
+            print(error_message)
+            if display_data_on_error:
+                print(f"Current data: {data}")
+
+def load_pkl(file_name, error_message, default):
+    if os.path.exists(file_name):
+        with open(file_name, "rb") as pickle_in:
+            try:
+                return dill.load(pickle_in)
+            except:
+                print(error_message)
+    return default()
     
