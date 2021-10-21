@@ -5,6 +5,7 @@ Created on Jul 12, 2020
 '''
 from UserDataProcessing import lounge_add
 import UtilityFunctions
+import Player
 
 DEBUGGING = False
 DISCONNECTION_TIME = (999,999,999)
@@ -62,6 +63,9 @@ class Placement:
         self.place = place
         self.time = self._createTime_(time)
         self.delta = self._process_delta_(delta)
+        
+    def getPlayer(self) -> Player.Player:
+        return self.player
         
     
     def __lt__(self, other):

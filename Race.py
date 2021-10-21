@@ -5,7 +5,9 @@ Created on Jul 12, 2020
 '''
 import UtilityFunctions
 import UserDataProcessing
-from Placement import DISCONNECTION_TIME
+from Placement import DISCONNECTION_TIME, Placement
+from collections import defaultdict
+from typing import List
 
 CTGP_CTWW_ROOM_TYPE = 'vs_54'
 BATTLE_ROOM_TYPE = 'bt'
@@ -70,11 +72,14 @@ class Race:
 
 
 
-    def __init__(self, matchTime, matchID, raceNumber, roomID, roomType, cc, track, placements=None):
+    def __init__(self, matchTime, matchID, raceNumber, roomID, roomType, cc, track, rxx=None, raceID=None, trackURL=None, placements=None):
         self.matchTime = matchTime
         self.matchID = matchID
         self.raceNumber = raceNumber
         self.roomID = roomID
+        self.rxx = rxx
+        self.trackURL = trackURL
+        self.raceID = raceID
         self.roomType = roomType
         self.track = str(track)
         if self.track == "u":
@@ -94,6 +99,13 @@ class Race:
             return 0
         return len(self.placements)
     
+    def updateRoomType(self):
+        roomTypeCount = defaultdict(int)
+        for placement in self.getPlacements():
+            roomTypeCount[placement.getPlayer().room_type] += 1
+        mostCommonRoomType = max(roomTypeCount, key=lambda x: roomTypeCount[x])
+        self.roomType = mostCommonRoomType
+            
     def addPlacement(self, placement):
         #I'm seriously lazy, but it doesn't matter if we sort 12 times rather than inserting in the correct place - this is a small list
         self.placements.append(placement)
@@ -102,6 +114,7 @@ class Race:
         while i < len(self.placements):
             self.placements[i].place = i+1
             i += 1
+        self.updateRoomType()
          
     def setRegion(self, region):
         self.region = region
@@ -143,10 +156,10 @@ class Race:
             placement.place = place
 
     
-    def getPlacements(self):
+    def getPlacements(self) -> List[Placement]:
         return self.placements
     
-    def getPlacement(self, fc):
+    def getPlacement(self, fc) -> Placement:
         for p in self.placements:
             if p.player.FC == fc:
                 return p

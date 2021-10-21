@@ -427,6 +427,17 @@ class Room(object):
             del textList[0]
         
         return raceTime, matchID, raceNumber, roomID, roomType, cc, track, placements
+    
+    def getRXXFromHTMLLine(self, line):
+        roomLink = line.find_all('a')[1]['href']
+        return roomLink.split("/")[-1]
+        
+    def getRaceIDFromHTMLLine(self, line):
+        return line.get('id')
+    
+    def getTrackURLFromHTMLLine(self, line):
+        return line.find_all('a')[2]['href']
+        
       
     def getRacesList(self, roomSoup):
         #Utility function
@@ -443,8 +454,11 @@ class Room(object):
                     #they have race numbers, the number doesn't match where they actually are on the page
                     #This was leading to out of bounds exceptions.
                     raceTime, matchID, _, roomID, roomType, cc, track, placements = self.getRaceInfoFromList(line.findAll(text=True))
+                    room_rxx = self.getRXXFromHTMLLine(line)
+                    race_id = self.getRaceIDFromHTMLLine(line)
+                    trackURL = self.getTrackURLFromHTMLLine(line)
                     raceNumber = None
-                    races.insert(0, Race.Race(raceTime, matchID, raceNumber, roomID, roomType, cc, track))
+                    races.insert(0, Race.Race(raceTime, matchID, raceNumber, roomID, roomType, cc, track, room_rxx, race_id, trackURL))
                     foundRaceHeader = True
                 else:
                     FC, roomPosition, role, vr, delta, time, playerName = self.getPlacementInfo(line)
@@ -457,6 +471,10 @@ class Room(object):
                     p = Placement.Placement(plyr, -1, time, delta)
                     races[0].addPlacement(p)
         
+        if DEBUG_RACES:
+            for race in races:
+                print(f"Race Time: {race.raceTime}\nMatch ID: {matchID}\nRoom ID: {roomID}\nRoom Type: {roomType}\ncc: {cc}\nTrack: {track}\nrxx: {room_rxx}\nRace ID: {race_id}\nTrack URL:{trackURL}")
+
         #We have a memory leak, and it's not incredibly clear how BS4 objects work and if
         #Python's automatic garbage collection can figure out how to collect
         while len(tableLines) > 0:
