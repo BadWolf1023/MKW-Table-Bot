@@ -16,6 +16,7 @@ import URLShortener
 import AbuseTracking
 import WiimmfiSiteFunctions
 import TagAIShell
+from data_tracking import RoomTracker
 
 #External library imports for this file
 import discord
@@ -353,6 +354,7 @@ def private_data_init():
 def initialize():
     create_folders()
     private_data_init()
+    RoomTracker.initialize()
     UserDataProcessing.initialize()
     ServerFunctions.initialize()
     UtilityFunctions.initialize()
@@ -978,6 +980,7 @@ def save_data():
     if not successful:
         print("LOUNGE API DATA DUMP FAILED! CRITICAL!")
         common.log_text("LOUNGE API DATA DUMP FAILED! CRITICAL!", common.ERROR_LOGGING_TYPE)
+    RoomTracker.on_exit()
     pickle_tablebots()
     pickle_CTGP_region()
     pickle_lounge_updates()
