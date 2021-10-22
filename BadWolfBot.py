@@ -82,6 +82,7 @@ DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
 
 
 
+
 #Commands that require a war to be started, but don't modify the war/room/table in any way
 TABLE_TEXT_TERMS = {"tt", "tabletext"}
 WAR_PICTURE_TERMS = {"wp", "warpicture", "wo", "w;", "w["}
@@ -355,6 +356,7 @@ def initialize():
     create_folders()
     private_data_init()
     RoomTracker.initialize()
+    Race.initialize()
     UserDataProcessing.initialize()
     ServerFunctions.initialize()
     UtilityFunctions.initialize()
@@ -981,6 +983,7 @@ def save_data():
         print("LOUNGE API DATA DUMP FAILED! CRITICAL!")
         common.log_text("LOUNGE API DATA DUMP FAILED! CRITICAL!", common.ERROR_LOGGING_TYPE)
     RoomTracker.on_exit()
+    Race.on_exit()
     pickle_tablebots()
     pickle_CTGP_region()
     pickle_lounge_updates()

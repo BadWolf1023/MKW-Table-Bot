@@ -30,7 +30,7 @@ MAX_PREFIX_LENGTH = 3
 #current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = False
+in_testing_server = True
 running_beta = False
 beta_is_real = False
 
@@ -120,6 +120,7 @@ FLAG_EXCEPTION_FILE = f"{DATA_PATH}flag_exceptions.txt"
 PRIVATE_INFO_FILE = f'{DATA_PATH}private.txt'
 STATS_FILE = f"{DATA_PATH}stats.txt"
 ROOM_DATA_TRACKER_FILE = f"{DATA_PATH}all_room_data.pkl"
+SHA_TRACK_NAMES_FILE = f"{DATA_PATH}sha_track_names.pkl"
 
 TABLE_BOT_PKL_FILE = f'{DATA_PATH}tablebots.pkl'
 VR_IS_ON_FILE = f"{DATA_PATH}vr_is_on.pkl"
@@ -177,7 +178,9 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    LOUNGE_TABLE_UPDATES_FILE,
                    STATS_FILE,
                    TABLE_BOT_PKL_FILE,
-                   VR_IS_ON_FILE
+                   VR_IS_ON_FILE,
+                   ROOM_DATA_TRACKER_FILE,
+                   SHA_TRACK_NAMES_FILE
                    }
 
 LEFT_ARROW_EMOTE = '\u25c0'
@@ -326,6 +329,9 @@ def check_create(file_name):
 def full_command_log(message, extra_text=""):
     to_log = f"Server Name: {message.guild} - Server ID: {message.guild.id} - Channel: {message.channel} - Channel ID: {message.channel.id} - User: {message.author} - User ID: {message.author.id} - User Name: {message.author.display_name} - Command: {message.content} {extra_text}"
     return log_text(to_log, FULL_MESSAGE_LOGGING_TYPE)
+
+def log_error(text):
+    return log_text(text, logging_type=ERROR_LOGGING_TYPE)
     
 def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
     logging_file = MESSAGE_LOGGING_FILE

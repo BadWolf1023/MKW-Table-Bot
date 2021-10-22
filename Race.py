@@ -8,6 +8,7 @@ import UserDataProcessing
 from Placement import DISCONNECTION_TIME, Placement
 from collections import defaultdict
 from typing import List
+import common
 
 CTGP_CTWW_ROOM_TYPE = 'vs_54'
 BATTLE_ROOM_TYPE = 'bt'
@@ -61,7 +62,15 @@ track_name_abbreviation_mappings = {
     "N64 Bowser's Castle (Nintendo)": ("BC64", "64BC")
     }
 
+hex_chars = "abcdef0123456789"
 sha_track_name_mappings = {"9f09ddb05bc5c7b04bb7aa120f6d0f21774143eb":"Waluigi's Motocross (v1.9)"}
+
+def initialize():
+    sha_track_name_mappings.clear()
+    sha_track_name_mappings.update(common.load_pkl(common.SHA_TRACK_NAMES_FILE, "Could not load in SHA Track names. Using empty dict instead", default=dict))
+    
+def on_exit():
+    common.dump_pkl(sha_track_name_mappings, common.SHA_TRACK_NAMES_FILE, "Could not dump pkl for SHA Track names.", display_data_on_error=True)
 
 def set_ctgp_region(new_region:str):
     global CTGP_CTWW_ROOM_TYPE
@@ -86,12 +95,17 @@ class Race:
         self.track = str(track)
         if self.track in sha_track_name_mappings:
             self.track = sha_track_name_mappings[self.track]
+        self.track_check()
         self.cc = cc
         self.placements = []
         self.region = None
         self.is_ct = is_ct
         
     
+    def track_check(self):
+        if all(c in hex_chars for c in self.track):
+            common.log_error(f"The following track had no SHA mapping: {self.track}")
+            
     
     def hasFC(self, FC):
         return False if self.getPlacement(FC) is None else True
@@ -330,5 +344,5 @@ class Race:
             placementsSTR += str("\n\t" + str(placement))
         return curStr + placementsSTR
             
-    
+
         

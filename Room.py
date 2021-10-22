@@ -434,7 +434,6 @@ class Room(object):
         is_ct = str(textList[-1]) in {'u', 'c'}
         track = "Unknown_Track (Bad HTML, mkwx messed up)"
         try:
-            print(len(textList), textList)
             if len(textList) == 12:
                 track = str(textList[9])
             elif len(textList) == 10:
@@ -511,7 +510,7 @@ class Room(object):
                 print(f"Track URL: {race.trackURL}")
                 print(f"Race cc: {race.cc}")
                 print(f"Race Region: {race.region}")
-                print(f"Is RT? {race.is_rt}")
+                print(f"Is CT? {race.is_ct}")
             if DEBUG_PLACEMENTS:
                 for placement in race.getPlacements():
                     print()
