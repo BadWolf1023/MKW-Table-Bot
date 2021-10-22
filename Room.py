@@ -13,6 +13,10 @@ from _collections import defaultdict
 import UtilityFunctions
 import TagAIShell
 from copy import copy, deepcopy
+from UtilityFunctions import isint, isfloat
+
+DEBUG_RACES = True
+DEBUG_PLACEMENTS = False
 
 #Function takes a default dictionary, the key being a number, and makes any keys that are greater than the threshold one less, then removes that threshold, if it exists
 def generic_dictionary_shifter(old_dict, threshold):
@@ -370,32 +374,47 @@ class Room(object):
     @staticmethod
     def getPlacementInfo(line):
         allRows = line.find_all("td")
+        playerPageLink = str(allRows[0].find("a")['href'])
+        
+        
         FC = str(allRows[0].find("span").string)
+        ol_status = str(allRows[1]["data-tooltip"])
     
         roomPosition = -1
+        
         role = "-1"
-
         if (allRows[1].find("b") is not None):
             roomPosition = 1
             role = "host"
         else:
             temp = str(allRows[1].string).strip().split()
             roomPosition = temp[0].strip(".")
-            role = temp[1]
+            role = temp[1].strip()
         
+        playerRoomType = str(allRows[2].string)
+        playerConnFails = str(allRows[3].string)
+        if not isint(playerConnFails) and not isfloat(playerConnFails):
+            playerConnFails = None
+        else:
+            playerConnFails = float(playerConnFails)
         #TODO: Handle VR?
-        vr = str(-1)
+        vr = str(allRows[4].string)
+        if not isint(vr):
+            vr = None
+        else:
+            vr = int(vr)
         
-        delta = allRows[7].string #Not true delta, but significant delta (above .5)
+        driver_vehicle = str(allRows[5]['data-tooltip'])
+        
+        delta = str(allRows[7].string) #Not true delta, but significant delta (above .5)
         
         time = str(allRows[8].string)
         
         playerName = str(allRows[9].string)
-        
         while len(allRows) > 0:
             del allRows[0]
         
-        return FC, roomPosition, role, vr, delta, time, playerName
+        return FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, driver_vehicle, delta, time, playerName
     
     def getRaceInfoFromList(self, textList):
         '''Utility Function'''
@@ -412,12 +431,16 @@ class Room(object):
         roomType = str(textList[6])
         
         cc = str(textList[7])[3:-2] #strip white spaces, the star, and the cc
-        
+        is_ct = str(textList[-1]) in {'u', 'c'}
         track = "Unknown_Track (Bad HTML, mkwx messed up)"
-        if 'rLIDs' in self.__dict__:
-            track += str(self.rLIDs)
         try:
-            track = str(textList[9])
+            print(len(textList), textList)
+            if len(textList) == 12:
+                track = str(textList[9])
+            elif len(textList) == 10:
+                track = str(textList[8]).split(":")[-1].strip()
+            else:
+                track = str(textList[9]).strip()
         except IndexError:
             pass
         
@@ -426,7 +449,7 @@ class Room(object):
         while len(textList) > 0:
             del textList[0]
         
-        return raceTime, matchID, raceNumber, roomID, roomType, cc, track, placements
+        return raceTime, matchID, raceNumber, roomID, roomType, cc, track, placements, is_ct
     
     def getRXXFromHTMLLine(self, line):
         roomLink = line.find_all('a')[1]['href']
@@ -436,7 +459,10 @@ class Room(object):
         return line.get('id')
     
     def getTrackURLFromHTMLLine(self, line):
-        return line.find_all('a')[2]['href']
+        try:
+            return line.find_all('a')[2]['href']
+        except IndexError:
+            return "No Track Page"
         
       
     def getRacesList(self, roomSoup):
@@ -453,27 +479,63 @@ class Room(object):
                     #_ used to be the racenumber, but mkwx deletes races 24 hours after being played. This leads to rooms getting races removed, and even though
                     #they have race numbers, the number doesn't match where they actually are on the page
                     #This was leading to out of bounds exceptions.
-                    raceTime, matchID, _, roomID, roomType, cc, track, placements = self.getRaceInfoFromList(line.findAll(text=True))
+                    raceTime, matchID, _, roomID, roomType, cc, track, placements, is_rt = self.getRaceInfoFromList(line.findAll(text=True))
                     room_rxx = self.getRXXFromHTMLLine(line)
                     race_id = self.getRaceIDFromHTMLLine(line)
                     trackURL = self.getTrackURLFromHTMLLine(line)
                     raceNumber = None
-                    races.insert(0, Race.Race(raceTime, matchID, raceNumber, roomID, roomType, cc, track, room_rxx, race_id, trackURL))
+                    races.insert(0, Race.Race(raceTime, matchID, raceNumber, roomID, roomType, cc, track, is_rt, room_rxx, race_id, trackURL))
                     foundRaceHeader = True
                 else:
-                    FC, roomPosition, role, vr, delta, time, playerName = self.getPlacementInfo(line)
+                    FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, driver_vehicle, delta, time, playerName = self.getPlacementInfo(line)
                     if races[0].hasFC(FC):
                         FC = FC + "-2"
-                    plyr = Player.Player(FC, playerName, role, roomPosition, vr)
+                    plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, driver_vehicle, playerName)
                     
                     if plyr.FC in self.name_changes:
                         plyr.name = self.name_changes[plyr.FC] + " (Tabler Changed)"
                     p = Placement.Placement(plyr, -1, time, delta)
                     races[0].addPlacement(p)
         
-        if DEBUG_RACES:
-            for race in races:
-                print(f"Race Time: {race.raceTime}\nMatch ID: {matchID}\nRoom ID: {roomID}\nRoom Type: {roomType}\ncc: {cc}\nTrack: {track}\nrxx: {room_rxx}\nRace ID: {race_id}\nTrack URL:{trackURL}")
+        for race in races:
+            if DEBUG_RACES:
+                print()
+                print(f"Room ID: {race.roomID}")
+                print(f"Room rxx: {race.rxx}")
+                print(f"Room Type: {race.roomType}")
+                print(f"Race Match ID: {race.matchID}")
+                print(f"Race ID: {race.raceID}")
+                print(f"Race Time: {race.matchTime}")
+                print(f"Race Number: {race.raceNumber}")
+                print(f"Race Track: {race.track}")
+                print(f"Track URL: {race.trackURL}")
+                print(f"Race cc: {race.cc}")
+                print(f"Race Region: {race.region}")
+                print(f"Is RT? {race.is_rt}")
+            if DEBUG_PLACEMENTS:
+                for placement in race.getPlacements():
+                    print()
+                    print(f"\tPlayer Name: {placement.getPlayer().name}")
+                    print(f"\tPlayer FC: {placement.getPlayer().FC}")
+                    print(f"\tPlayer Page: {placement.getPlayer().playerPageLink}")
+                    print(f"\tPlayer ID: {placement.getPlayer().pid}")
+                    print(f"\tFinish Time: {placement.get_time_string()}")
+                    print(f"\tPlace: {placement.place}")
+                    print(f"\ol_status: {placement.getPlayer().ol_status}")
+                    print(f"\tPosition in Room: {placement.getPlayer().positionInRoom}")
+                    print(f"\tPlayer Room Type: {placement.getPlayer().room_type}")
+                    print(f"\tPlayer Conn Fails: {placement.getPlayer().playerConnFails}")
+                    print(f"\Role: {placement.getPlayer().role}")
+                    print(f"\tVR: {placement.getPlayer().vr}")
+                    print(f"\tCharacter: {placement.getPlayer().character}")
+                    print(f"\tVehicle: {placement.getPlayer().vehicle}")
+                    print(f"\tDiscord name: {placement.getPlayer().discord_name}")
+                    print(f"\tLounge name: {placement.getPlayer().lounge_name}")
+                    print(f"\tCharacter: {placement.getPlayer().character}")
+                    print(f"\tVehicle: {placement.getPlayer().vehicle}")
+                    print(f"\Player Discord name: {placement.getPlayer().discord_name}")
+                    print(f"\Player lounge name: {placement.getPlayer().lounge_name}")
+                    print(f"\Player mii hex: {placement.getPlayer().mii_hex}")
 
         #We have a memory leak, and it's not incredibly clear how BS4 objects work and if
         #Python's automatic garbage collection can figure out how to collect

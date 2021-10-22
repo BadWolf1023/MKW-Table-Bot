@@ -35,29 +35,38 @@ class Player(object):
     '''
 
 
-    def __init__(self, FC, name, role, positionInRoom, vr, points=0, discord_name=None, lounge_name=None, driver_vehicle="", room_type=""):
+    def __init__(self, FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, driver_vehicle, playerName, discord_name=None, lounge_name=None, mii_hex=None):
         '''
         Constructor
         '''
         self.FC = str(FC)
-        self.name = str(name)
-        if self.name == "no name":
-            self.name = "Player"
+        self.playerPageLink = str(playerPageLink)
+        self.pid = self.playerPageLink.split("/")[-1].strip('p')
+        self.ol_status = ol_status
+        self.positionInRoom = roomPosition
+        self.room_type = playerRoomType
+        self.playerConnFails = playerConnFails
         self.role = str(role)
-        
-        self.points = str(points)
-        self.positionInRoom = positionInRoom
         self.vr = vr
-        self.discord_name = discord_name
-        self.lounge_name = lounge_name
-        self.driver = None
+        self.character = None
         self.vehicle = None
         self.input_driver_vehicle(driver_vehicle)
-        self.room_type = room_type
+        self.name = str(playerName)
+        if self.name == "no name":
+            self.name = "Player"
+        self.discord_name = discord_name
+        self.lounge_name = lounge_name
+        self.mii_hex = mii_hex
+    
+    def set_mii_hex(self, mii_hex):
+        self.mii_hex = mii_hex
+    
+    def get_mii_hex(self):
+        return self.mii_hex
     
     def input_driver_vehicle(self, driver_vehicle):
         if driver_vehicle is None:
-            self.driver = None
+            self.character = None
             self.vehicle = None
             return
         if "@" not in driver_vehicle:
