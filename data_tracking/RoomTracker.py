@@ -33,7 +33,7 @@ def dump_room_data():
 
 def load_room_data():
     room_data.clear()
-    room_data.update(common.load_pkl(room_data, common.ROOM_DATA_TRACKER_FILE, "Could not load pickle for room data in data tracking, using empty data instead.", default=dict))
+    room_data.update(common.load_pkl(common.ROOM_DATA_TRACKER_FILE, "Could not load pickle for room data in data tracking, using empty data instead.", default=dict))
 
 def initialize():
     load_room_data()
