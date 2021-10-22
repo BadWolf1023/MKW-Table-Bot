@@ -135,6 +135,37 @@ class BadWolfCommands:
         if os.path.exists(common.FULL_MESSAGE_LOGGING_FILE):
             await message.channel.send(file=discord.File(common.FULL_MESSAGE_LOGGING_FILE))
 
+    @staticmethod
+    async def add_sha_track(message:discord.Message, args:List[str], command):
+        BadWolfCommands.is_badwolf_check(message.author, "cannot add sha track")
+        if len(args) < 3:
+            await message.channel.send("Requires 2 args `SHA, track_name`")
+            return
+        if not UtilityFunctions.is_hex(args[1]):
+            await message.channel.send(f"The given track is not an SHA: {args[1]}")
+            return
+        given_track_name = " ".join(command.split()[2:])
+        if args[1] in Race.sha_track_name_mappings:
+            await message.channel.send(f"The given track is already in SHA mappings with the following name: {args[1]}\nOverwriting...")
+        Race.sha_track_name_mappings[args[1]] = given_track_name
+        await message.channel.send(f"Added: {args[1]} -> {given_track_name}")
+    
+    @staticmethod
+    async def remove_sha_track(message:discord.Message, args:List[str]):
+        BadWolfCommands.is_badwolf_check(message.author, "cannot remove sha track")
+        if len(args) != 2:
+            await message.channel.send("Requires 1 args `SHA`")
+            return
+        if not UtilityFunctions.is_hex(args[1]):
+            await message.channel.send(f"The given track is not an SHA: {args[1]}")
+            return
+        if args[1] not in Race.sha_track_name_mappings:
+            await message.channel.send(f"The given track is not in SHA mappings. Current mappings: {'  |  '.join([str(k)+' : '+str(v) for k,v in Race.sha_track_name_mappings.items()])}")
+            return
+        given_track_name = Race.sha_track_name_mappings[args[1]]
+        del Race.sha_track_name_mappings[args[1]]
+        await message.channel.send(f"Removed: {args[1]} -> {given_track_name}")
+        
         
     #Adds or removes a discord ID to/from the bot admins
     @staticmethod

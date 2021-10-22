@@ -176,6 +176,10 @@ async def safe_send_file(message:discord.Message, content):
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
+
+hex_chars = "ABCDEFabcdef0123456789" 
+def is_hex(text):
+    return all(c in hex_chars for c in text)
     
 def initialize():
     common.botAdmins.clear()

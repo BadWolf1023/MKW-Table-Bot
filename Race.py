@@ -62,7 +62,6 @@ track_name_abbreviation_mappings = {
     "N64 Bowser's Castle (Nintendo)": ("BC64", "64BC")
     }
 
-hex_chars = "abcdef0123456789"
 sha_track_name_mappings = {"9f09ddb05bc5c7b04bb7aa120f6d0f21774143eb":"Waluigi's Motocross (v1.9)"}
 
 def initialize():
@@ -103,7 +102,7 @@ class Race:
         
     
     def track_check(self):
-        if all(c in hex_chars for c in self.track):
+        if UtilityFunctions.is_hex(self.track):
             common.log_error(f"The following track had no SHA mapping: {self.track}")
             
     

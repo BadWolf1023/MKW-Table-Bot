@@ -158,6 +158,8 @@ LOOKUP_TERMS = {"lookup"}
 ADD_BOT_ADMIN_TERMS = {"addbotadmin", "addadmin"}
 REMOVE_BOT_ADMIN_TERMS = {"removebotadmin", "removeadmin"}
 GET_LOGS_TERMS = {"getlog", "getlogs", "logs"}
+ADD_SHA_TERMS = {"addsha", "sha"}
+REMOVE_SHA_TERMS = {"removesha", "delsha"}
 
 needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS
 
@@ -618,6 +620,12 @@ async def on_message(message: discord.Message):
             
             elif args[0] in GET_LOGS_TERMS:
                 await commands.BadWolfCommands.get_logs_command(message)
+            
+            elif args[0] in ADD_SHA_TERMS:
+                await commands.BadWolfCommands.add_sha_track(message, args, command)
+                
+            elif args[0] in REMOVE_SHA_TERMS:
+                await commands.BadWolfCommands.remove_sha_track(message, args)
                 
             elif args[0] in {"aidata"} and (common.is_bad_wolf(message.author) or message.author.id == 267395889423712258):
                 if os.path.exists(TagAIShell.AI_Results_file_name):
