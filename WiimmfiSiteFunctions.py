@@ -50,7 +50,8 @@ f"{submkwxURL}r0000002":("Table Bot Challenge Room Two", "testing_rooms/TableBot
 f"{submkwxURL}r0000003":("Table Bot Remove Race Test w/ quickedit", "testing_rooms/removerace_one.html"),
 f"{submkwxURL}r0000004":("Table Bot Remove Race Test w/ quickedit, 2nd room to merge", "testing_rooms/removerace_two.html"),
 f"{submkwxURL}r0000005":("Clean room with no errors.", "testing_rooms/clean_room.html"),
-f"{submkwxURL}r0000006":("Tag in brackets.", "testing_rooms/tag_in_brackets.html")}
+f"{submkwxURL}r0000006":("Tag in brackets.", "testing_rooms/tag_in_brackets.html"),
+f"{submkwxURL}r0000007":("Room with an unknown track name (SHA name).", "testing_rooms/unknown_track.html")}
 
 
 
