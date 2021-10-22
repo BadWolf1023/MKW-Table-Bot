@@ -479,12 +479,12 @@ class Room(object):
                     #_ used to be the racenumber, but mkwx deletes races 24 hours after being played. This leads to rooms getting races removed, and even though
                     #they have race numbers, the number doesn't match where they actually are on the page
                     #This was leading to out of bounds exceptions.
-                    raceTime, matchID, _, roomID, roomType, cc, track, placements, is_rt = self.getRaceInfoFromList(line.findAll(text=True))
+                    raceTime, matchID, _, roomID, roomType, cc, track, placements, is_ct = self.getRaceInfoFromList(line.findAll(text=True))
                     room_rxx = self.getRXXFromHTMLLine(line)
                     race_id = self.getRaceIDFromHTMLLine(line)
                     trackURL = self.getTrackURLFromHTMLLine(line)
                     raceNumber = None
-                    races.insert(0, Race.Race(raceTime, matchID, raceNumber, roomID, roomType, cc, track, is_rt, room_rxx, race_id, trackURL))
+                    races.insert(0, Race.Race(raceTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, room_rxx, race_id, trackURL))
                     foundRaceHeader = True
                 else:
                     FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, driver_vehicle, delta, time, playerName = self.getPlacementInfo(line)

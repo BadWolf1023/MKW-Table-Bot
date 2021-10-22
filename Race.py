@@ -61,7 +61,7 @@ track_name_abbreviation_mappings = {
     "N64 Bowser's Castle (Nintendo)": ("BC64", "64BC")
     }
 
-sha_track_name_mappings = {"":""}
+sha_track_name_mappings = {"9f09ddb05bc5c7b04bb7aa120f6d0f21774143eb":"Waluigi's Motocross (v1.9)"}
 
 def set_ctgp_region(new_region:str):
     global CTGP_CTWW_ROOM_TYPE
@@ -74,7 +74,7 @@ class Race:
 
 
 
-    def __init__(self, matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_rt, rxx=None, raceID=None, trackURL=None, placements=None):
+    def __init__(self, matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, rxx=None, raceID=None, trackURL=None, placements=None):
         self.matchTime = matchTime
         self.matchID = matchID
         self.raceNumber = raceNumber
@@ -84,12 +84,12 @@ class Race:
         self.raceID = raceID
         self.roomType = roomType
         self.track = str(track)
-        if self.track == "u":
-            self.track = "Unknown Track"
+        if self.track in sha_track_name_mappings:
+            self.track = sha_track_name_mappings[self.track]
         self.cc = cc
         self.placements = []
         self.region = None
-        self.is_rt = is_rt
+        self.is_ct = is_ct
         
     
     
