@@ -333,7 +333,18 @@ class Race:
         if region == PRIVATE_ROOM_TYPE:
             return "Private"
         return "Unknown"
-        
+    
+    def isCustomTrack(self):
+        return self.is_ct
+    
+    def hasBlankTime(self):
+        return any(placement.is_disconnected() for placement in self.getPlacements())
+    
+    def entireRoomBlankTimes(self):
+        return all(placement.is_disconnected() for placement in self.getPlacements())
+    
+    def multipleBlankTimes(self):
+        return not self.entireRoomBlankTimes() and sum(1 for placement in self.getPlacements() if placement.is_disconnected()) > 1
         
     def __str__(self):
         curStr = "Race #" + str(self.raceNumber) + " - " + UtilityFunctions.process_name(self.getTrackNameWithoutAuthor()) + " - " + str(self.cc) + "cc" + \
