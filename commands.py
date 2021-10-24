@@ -6,7 +6,6 @@ Created on Jun 26, 2021
 
 #Bot internal imports - stuff I coded
 import WiimmfiSiteFunctions
-from WiimmfiSiteFunctions import _is_rLID, _is_fc
 import ServerFunctions
 import ImageCombine
 import War
@@ -521,7 +520,7 @@ class OtherCommands:
     
     
         FC = None
-        if _is_fc(discordIDToLoad):
+        if UtilityFunctions.is_fc(discordIDToLoad):
             FC = discordIDToLoad
         else:
             id_lounge, fc_id = await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad])
@@ -690,7 +689,7 @@ class OtherCommands:
                 successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
                 if not successful:
                     await message.channel.send(f"Could not find {UtilityFunctions.process_name(str(message.mentions[0].name))} in a room. (This could be an error if I couldn't find their FC in the database.)")                      
-            elif _is_fc(args[1]):
+            elif UtilityFunctions.is_fc(args[1]):
                 successful, room_data, last_match_str, rLID = await this_bot.verify_room([args[1]])
                 if not successful:
                     await message.channel.send("Could not find this FC in a room.")
@@ -1710,11 +1709,11 @@ class TablingCommands:
                             if not successful:
                                 lookup_name = UtilityFunctions.process_name(str(message.mentions[0].name))
                                 await message.channel.send(f"Could not find {lookup_name} in a room. **Did they finish the first race?**")                      
-                        elif _is_rLID(args[3]):
+                        elif UtilityFunctions.is_rLID(args[3]):
                             successful = await this_bot.load_room_smart([args[3]])
                             if not successful:
                                 await message.channel.send("Could not find this rxx number. Is the room over 24 hours old?")                                            
-                        elif _is_fc(args[3]):
+                        elif UtilityFunctions.is_fc(args[3]):
                             successful = await this_bot.load_room_smart([args[3]])
                             if not successful:
                                 await message.channel.send("Could not find this FC in a room. **Did they finish the first race?**")
@@ -1821,7 +1820,7 @@ class TablingCommands:
         if len(args) < 2:
             await message.channel.send("Nothing given to mergeroom. No merges nor changes made.") 
             return
-        rxx_given = _is_rLID(args[1])
+        rxx_given = UtilityFunctions.is_rLID(args[1])
         if rxx_given and args[1] in this_bot.getRoom().rLIDs:
             await message.channel.send("The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `?undo`.") 
     
