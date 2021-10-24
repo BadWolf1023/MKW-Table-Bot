@@ -9,7 +9,6 @@ import War
 from datetime import datetime
 import humanize
 from bs4 import NavigableString, Tag
-from WiimmfiSiteFunctions import _is_fc
 import MiiPuller
 #import concurrent.futures
 import common
@@ -17,6 +16,8 @@ from typing import Dict, Tuple
 import Mii
 import ServerFunctions
 import asyncio
+from data_tracking import DataTracker
+import UtilityFunctions
 
 
 lorenzi_style_key = "#style"
@@ -49,7 +50,7 @@ class ChannelBot(object):
     '''
     classdocs
     '''
-    def __init__(self, numTeams=None, warFormat=None, prev_command_sw=False, room=None, war=None, manualWarSetup=False, server_id=None):
+    def __init__(self, numTeams=None, warFormat=None, prev_command_sw=False, room=None, war=None, manualWarSetup=False, server_id=None, channel_id=None):
         self.numTeams = numTeams
         self.warFormat = warFormat
         self.room:Room.Room = room
@@ -69,6 +70,8 @@ class ChannelBot(object):
         self.should_send_mii_notification = True
         self.set_style_and_graph(server_id)
         self.set_dc_points(server_id)
+        self.server_id = server_id
+        self.channel_id = channel_id
         self.race_size = 4
     
     def get_room_started_message(self):
@@ -245,6 +248,8 @@ class ChannelBot(object):
         if self.room is None:
             return False
         success = await self.room.update_room()
+        if success:
+            DataTracker.RoomTracker.add_data(self)
         self.updateLoungeFinishTime()
         return success
 
@@ -312,7 +317,7 @@ class ChannelBot(object):
             del place_in_room
             
             mii_classes = correctLevel.find_all(class_="mii-font")
-            if len(place_in_room_str) == 0 or len(mii_classes) != 1 or not _is_fc(FC_data_str):
+            if len(place_in_room_str) == 0 or len(mii_classes) != 1 or not UtilityFunctions.is_fc(FC_data_str):
                 player_data[FC_data_str] = ("bad data", "bad data")
                 common.log_text(str(place_in_room_str), common.ERROR_LOGGING_TYPE)
                 common.log_text(str(mii_classes), common.ERROR_LOGGING_TYPE)

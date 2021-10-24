@@ -16,7 +16,7 @@ import URLShortener
 import AbuseTracking
 import WiimmfiSiteFunctions
 import TagAIShell
-from data_tracking import RoomTracker
+from data_tracking import DataTracker
 
 #External library imports for this file
 import discord
@@ -200,8 +200,8 @@ elif common.running_beta and not common.beta_is_real:
 
 bad_wolf_facts = []
 
-def createEmptyTableBot(server_id=None):
-    return TableBot.ChannelBot(server_id=server_id)
+def createEmptyTableBot(server_id=None, channel_id=None):
+    return TableBot.ChannelBot(server_id=server_id, channel_id=channel_id)
 
 client = discord.Client()
 
@@ -320,7 +320,7 @@ def check_create_channel_bot(message:discord.Message):
     if server_id not in table_bots:
         table_bots[server_id] = {}
     if channel_id not in table_bots[server_id]:
-        table_bots[server_id][channel_id] = createEmptyTableBot(server_id)
+        table_bots[server_id][channel_id] = createEmptyTableBot(server_id, channel_id)
     table_bots[server_id][channel_id].updatedLastUsed()
     return table_bots[server_id][channel_id]
     
@@ -357,7 +357,7 @@ def private_data_init():
 def initialize():
     create_folders()
     private_data_init()
-    RoomTracker.initialize()
+    DataTracker.initialize()
     Race.initialize()
     UserDataProcessing.initialize()
     ServerFunctions.initialize()
@@ -630,7 +630,6 @@ async def on_message(message: discord.Message):
             elif args[0] in {"aidata"} and (common.is_bad_wolf(message.author) or message.author.id == 267395889423712258):
                 if os.path.exists(TagAIShell.AI_Results_file_name):
                     await message.channel.send(content="Put in Table Bot directory, and use `TagAIShell.view_AI_results()`", file=discord.File(TagAIShell.AI_Results_file_name))
-
 
             elif args[0] in RACES_TERMS:
                 await commands.TablingCommands.display_races_played_command(message, this_bot, server_prefix, is_lounge_server)
@@ -990,7 +989,7 @@ def save_data():
     if not successful:
         print("LOUNGE API DATA DUMP FAILED! CRITICAL!")
         common.log_text("LOUNGE API DATA DUMP FAILED! CRITICAL!", common.ERROR_LOGGING_TYPE)
-    RoomTracker.on_exit()
+    DataTracker.on_exit()
     Race.on_exit()
     pickle_tablebots()
     pickle_CTGP_region()
