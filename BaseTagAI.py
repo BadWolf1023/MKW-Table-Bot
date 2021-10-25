@@ -16,3 +16,15 @@ PLAYER_TAG = "Player"
 #Give this function a list of whatever you'd normally return on a single team
 def get_ffa_teams(items):
     return {UNKNOWN_TAG_NAME:[item for item in items]}
+
+def get_alphabetical_tags(players, tagDeterminer, players_per_team=2):
+    if players_per_team is None:
+        players_per_team = 2
+    
+    teams = {}
+    for i, playerName in enumerate(players):
+        playerTag = tagDeterminer(playerName)
+        if playerTag not in teams:
+            teams[playerTag] = []
+        teams[playerTag].append(i)
+    return teams

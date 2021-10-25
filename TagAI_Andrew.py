@@ -10,11 +10,12 @@ import math
 from collections import defaultdict
 import copy
 import BaseTagAI
+import TagAI_BadWolf
 
 team_formats = {}
-VALID_CHARS = "/\\*^+abcdefghijklmnopqrstuvwxyz\u03A9\u038F" + "abcdefghijklmnopqrstuvwxyz0123456789".upper()
+VALID_CHARS = "/\\*^+abcdefghijklmnopqrstuvwxyz\u03A9\u038F" + "abcdefghijklmnopqrstuvwxyz0123456789[]".upper()
 UNICODE_MAPPINGS_TO_ALPHA = {"@":"A", "\u00A7":"S", "$":"S", "\u00A2":"c", "\u00A5":"Y", "\u20AC":"E", "\u00A3":"E", "\u00E0":"a", "\u00E1":"a", "\u00E2":"a", "\u00E4":"a", "\u00E5":"a", "\u00E6":"ae", "\u00E3":"a", "\u00E7":"c", "\u00E8":"e", "\u00E9":"e", "\u00EA":"e", "\u00EB":"e", "\u00EC":"i", "\u00ED":"i", "\u00EE":"i", "\u00EF":"i", "\u00F1":"n", "\u00F2":"o", "\u00F3":"o", "\u00F4":"o", "\u00F6":"o", "\u0153":"oe", "\u00F8":"o", "\u00F5":"o", "\u00DF":"B", "\u00F9":"u", "\u00FA":"u", "\u00FB":"u", "\u00FC":"u", "\u00FD":"y", "\u00FF":"y", "\u00C0":"A", "\u00C1":"A", "\u00C2":"A", "\u00C4":"A", "\u00C5":"A", "\u00C6":"AE", "\u00C3":"A", "\u00C7":"C", "\u00C8":"E", "\u00C9":"E", "\u00CA":"E", "\u00CB":"E", "\u00CC":"I", "\u00CD":"I", "\u00CE":"I", "\u00CF":"I", "\u00D1":"N", "\u00D2":"O", "\u00D3":"O", "\u00D4":"O", "\u00D6":"O", "\u0152":"OE", "\u00D8":"O", "\u00D5":"O", "\u00D9":"U", "\u00DA":"U", "\u00DB":"U", "\u00DC":"U", "\u00DD":"Y", "\u0178":"Y", "\u03B1":"a", "\u03B2":"B", "\u03B3":"y", "\u03B4":"o", "\u03B5":"e", "\u03B6":"Z", "\u03B7":"n", "\u03B8":"O", "\u03B9":"i", "\u03BA":"k", "\u03BB":"A", "\u03BC":"u", "\u03BD":"v", "\u03BE":"E", "\u03BF":"o", "\u03C0":"r", "\u03C1":"p", "\u03C3":"o", "\u03C4":"t", "\u03C5":"u", "\u03C6":"O", "\u03C7":"X", "\u03C8":"w", "\u03C9":"W", "\u0391":"A", "\u0392":"B", "\u0393":"r", "\u0394":"A", "\u0395":"E", "\u0396":"Z", "\u0397":"H", "\u0398":"O", "\u0399":"I", "\u039A":"K", "\u039B":"A", "\u039C":"M", "\u039D":"N", "\u039E":"E", "\u039F":"O", "\u03A0":"N", "\u03A1":"P", "\u03A3":"E", "\u03A4":"T", "\u03A5":"Y", "\u03A6":"O", "\u03A7":"X", "\u03A8":"w", "\u0386":"A", "\u0388":"E", "\u0389":"H", "\u038A":"I", "\u038C":"O", "\u038E":"Y", "\u0390":"i", "\u03AA":"I", "\u03AB":"Y", "\u03AC":"a", "\u03AD":"E", "\u03AE":"n", "\u03AF":"i", "\u03B0":"u", "\u03C2":"c", "\u03CA":"i", "\u03CB":"u", "\u03CC":"o", "\u03CD":"u", "\u03CE":"w", "\u2122":"TM", "\u1D49":"e", "\u00A9":"C", "\u00AE":"R", "\u00BA":"o", "\u00AA":"a", "\u266D":"b"}
-REMOVE_IF_START_WITH = "/\\*^+\[\]"
+REMOVE_IF_START_WITH = "/\\*^+"
 
 
 def find_team_combo(teams, players_left, num_teams, team_size, r):
@@ -70,30 +71,65 @@ def get_tags(name):
     for i in range(len(name)):
         tags.add(name[0:i+1])
         tags.add(name[-i-1:])
+
+    bracketTag = TagAI_BadWolf.__get_bracket_tag(name)
+    if bracketTag is not None:
+        tags = tags.union(_get_tag_value(bracketTag[0], map=True))
+        tags.add(bracketTag[0])
+
     return tags
 
+def is_bad_bracket_tag(tag):
+    if tag == '[' or tag == ']':
+        return True
+
+    if '[' in tag and ']' in tag:
+        if tag.index('[') != 0 or tag.index(']') != len(tag)-1:
+            return True
+
+    return False
+
 def get_all_tags(name):
-    return get_tags(_get_tag_value(name)).union(get_tags(_get_tag_value(name, map=True)))
+    tags = get_tags(_get_tag_value(name)).union(get_tags(_get_tag_value(name, map=True)))
+    return set([t for t in tags if (not is_bad_bracket_tag(t))])
 
 def tag_rating(tag, names=[]):
     special = sum([c in UNICODE_MAPPINGS_TO_ALPHA for c in tag])
 
     front_bonus = 0
     for name in names:
-        if name and (get_tag_loc(name, tag)[1] == "front"):
-            front_bonus += 2
+        tag_formatted, loc = get_tag_loc(name, tag)
+        if name and (loc== "front") and tag_formatted != "@":
+            front_bonus += 2.1
     front_bonus /= len(names)
 
     return len(tag) + special/2 + front_bonus
 
 def get_tag_loc(raw_name, tag):
-    for upper_name, name in [_get_tag_value(raw_name, both=True), _get_tag_value(raw_name,map=True, both=True)]:
-        if upper_name[0:len(tag)] == tag:
+    upper_name, name = _get_tag_value(raw_name, both=True)
+    if upper_name[0:len(tag)] == tag:
+        return name[0:len(tag)], "front"
+    elif upper_name[-len(tag):] == tag:
+        return name[-len(tag):], "back"
+
+    upper_name2, name2 = _get_tag_value(raw_name, map=True, both=True)
+    if upper_name2[0:len(tag)] == tag:
+        if (len(name2) == len(name)):
             return name[0:len(tag)], "front"
-        elif upper_name[-len(tag):] == tag:
+        return name2[0:len(tag)], "front"
+    elif upper_name2[-len(tag):] == tag:
+        if (len(name2) == len(name)):
             return name[-len(tag):], "back"
+        return name2[-len(tag):], "back"
+
+    return tag, "front"
+
+
 
 def best_shared_tag_rating(a_tags, b_tags, a, b):
+    if a == '' or b == '':
+        return 0.1
+
     shared = a_tags.intersection(b_tags)
 
     if len(shared) > 0:
@@ -120,24 +156,26 @@ def decode_from_row(row):
             k+=1
     return teams
 
+
 def get_teams(players, X):
     score_vec = []
+    
     player_tags = [get_all_tags(p) for p in players]
 
     for i in range(12):
-        for j in range(i+1, 12):
+        for j in range(i + 1, 12):
             score = 0
             if i < len(players) and j < len(players):
                 score = best_shared_tag_rating(player_tags[i], player_tags[j], players[i], players[j])
             score_vec.append(score)
 
     score_vec = np.array(score_vec)
-    valid_vec = (score_vec>0).astype(int)
+    valid_vec = (score_vec > 0).astype(int)
 
     valid_scores = X.dot(valid_vec)
 
     max_score = np.max(valid_scores)
-    max_indices = np.argwhere(valid_scores==max_score).reshape(-1)
+    max_indices = np.argwhere(valid_scores == max_score).reshape(-1)
 
     tiebreaker_scores = X[max_indices].dot(score_vec)
 
@@ -147,6 +185,8 @@ def get_teams(players, X):
 
     unknown_players = 0
     back_tags = 0
+
+    tag_counts = defaultdict(int)
 
     for team in teams:
         team = [t for t in team if t < len(players)]
@@ -159,7 +199,7 @@ def get_teams(players, X):
         except:
             pass
 
-        if len(team_tags)>0:
+        if len(team_tags) > 0:
             team_names = [players[i] for i in team]
             best_tag = max(team_tags, key=lambda x: tag_rating(x, team_names))
 
@@ -169,15 +209,11 @@ def get_teams(players, X):
                 if loc == 'back' and len(tag) <= 1:
                     back_tags += 1
                 variants[tag] += 1
-            best_tag = max(variants.keys(), key=lambda k: variants[k])
 
-            while best_tag in tagged_teams:
-                best_tag += "_"
-                
+            best_tag = max(variants.keys(), key=lambda k: variants[k] + 0.1 * int(k.isupper()))
+
             if (len(team) == 1):
                 best_tag = best_tag[0]
-
-            tagged_teams[best_tag] = team
         else:
             unknown_players += len(team)
 
@@ -187,26 +223,45 @@ def get_teams(players, X):
                     tag_count[tag] += 1
 
             if len(tag_count) == 0:
-                best_tag = BaseTagAI.UNKNOWN_TAG_NAME
+                best_tag = "No Tag"
             else:
                 best_tag = max(tag_count.keys(), key=lambda k: tag_count[k])
                 if tag_count[best_tag] == 1:
                     longest_name = max([_get_tag_value(players[i], map=True) for i in team], key=len)
-                    if len(longest_name) > 0:
+
+                    bracketTag = TagAI_BadWolf.__get_bracket_tag(longest_name)
+                    if bracketTag is not None:
+                        best_tag = bracketTag[0]
+                    elif len(longest_name) > 0 and not is_bad_bracket_tag(longest_name[0]):
                         best_tag = longest_name[0]
                     else:
-                        best_tag = BaseTagAI.UNKNOWN_TAG_NAME
+                        best_tag = "No Tag"
 
-            tagged_teams[best_tag] = team
+        if tag_counts[best_tag] > 0:
+            if tag_counts[best_tag] == 1:
+                tagged_teams[best_tag + "1"] = tagged_teams[best_tag]
+                del tagged_teams[best_tag]
 
-    return tagged_teams, max_score, tiebreaker_scores[best], {"unknown_players": unknown_players, "back_tags": back_tags}
+            tag_counts[best_tag] += 1
+            best_tag += str(tag_counts[best_tag])
+        else:
+            tag_counts[best_tag] += 1
+
+        tagged_teams[best_tag] = team
+
+    return tagged_teams, max_score, tiebreaker_scores[best], {"unknown_players": unknown_players,
+                                                              "back_tags": back_tags}
 
 def get_teams_smart(players, formats=None, target_size=None):
     if formats is None:
         formats = team_formats
     best_score = 0
     best_teams = None
-    best_size = 1 
+    best_size = 1
+
+    for i in range(len(players)):
+        if players[i] == "None" or ("email" in players[i] and "protected" in players[i]):
+            players[i] = ''
 
     bonus = {2:0, 3:0, 4:0, 5:0, 6:0}
     if len(players) == 10:
@@ -218,6 +273,9 @@ def get_teams_smart(players, formats=None, target_size=None):
         return target_size, BaseTagAI.get_ffa_teams([i for i in range(len(players))])
     else:
         team_sizes = [target_size]
+    
+    if len(players) > 12 or len(players) < 2:
+        return target_size, BaseTagAI.get_alphabetical_tags(players, lambda name: TagAI_BadWolf.getTagSmart(name)[0], players_per_team=target_size)
     
     for team_size in team_sizes:
         X = formats[team_size]

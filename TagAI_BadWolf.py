@@ -511,7 +511,7 @@ def getTagSmart(name:str):
         return (BaseTagAI.PLAYER_TAG, BaseTagAI.PLAYER_TAG)
 
     if len(name) == 0:
-        return ("","")
+        return (BaseTagAI.PLAYER_TAG, BaseTagAI.PLAYER_TAG)
     else:
         #Return the Alpha value (for sorting) in the first tuple index, and the actual tag as the 2nd index
         return (_get_tag_value(name[0]), name[0])

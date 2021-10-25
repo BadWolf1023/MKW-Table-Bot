@@ -16,10 +16,10 @@ import dill
 import common
 from copy import copy
 
-USE_BETA_AI = False
-RUN_ALPHA_AI = True
+USE_BETA_AI = True
+RUN_ALPHA_AI = False
 RUN_BETA_AI = True
-LOG_AI_RESULTS = True
+LOG_AI_RESULTS = False
 
 
 if USE_BETA_AI:
@@ -74,6 +74,13 @@ def log_AI_results(fc_players, tag_AI_results, time_taken, war_format, is_alpha_
     
     dump_to_pkl(AI_Results, AI_Results_file_name)
 
+def sort_dict(my_dict:dict, key=None):
+    sorted_keys = sorted(my_dict.keys(), key=key)
+    result = {}
+    for k in sorted_keys:
+        result[k] = my_dict[k]
+    return result
+
 def get_alpha_AI_results(players, playersPerTeam=None):
     return alpha_AI(players, playersPerTeam)
 
@@ -90,10 +97,11 @@ def get_beta_AI_results(players, playersPerTeam=None):
                 table_bot_formatted_results[team_tag] = []
             table_bot_formatted_results[team_tag].append((friend_code, player_name))
     
+    table_bot_formatted_results = sort_dict(table_bot_formatted_results, key=lambda s:s.lower())
     return players_per_team_guess, table_bot_formatted_results
     
     
-def determineTags(players, playersPerTeam=None, give_beta_ai_format=False):
+def determineTags(players, playersPerTeam=None, give_beta_ai_format=True):
     alpha_team_results = None
     beta_team_results = None
     beta_players_per_team_guess = None
