@@ -8,14 +8,15 @@ This module helps track and store data from Wiimmfi.
 '''
 import common
 from collections import defaultdict
-from datetime import datetime
-import Race
+from datetime import datetime, timedelta
+import Race as TableBotRace
 from typing import List
 import UtilityFunctions
 
 #dict of channel IDs to tier numbers
 RT_NAME = "rt"
 CT_NAME = "ct"
+RXX_LOCKER_NAME = "rxx_locker"
 RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS = {
     843981870751678484:8,
     836652527432499260:7,
@@ -50,6 +51,8 @@ CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS = {
 
 RT_REVERSE_TIER_MAPPINGS = defaultdict(set)
 CT_REVERSE_TIER_MAPPINGS = defaultdict(set)
+ALREADY_ADDED_ERROR = 11
+FATAL_ERROR = 12
 for k,v in RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
     RT_REVERSE_TIER_MAPPINGS[v].add(k)
 for k,v in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
@@ -57,9 +60,46 @@ for k,v in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
 TABLE_BOT_CHANNEL_TIER_MAPPINGS = {RT_NAME:RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS, CT_NAME:CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS}
 
 room_data = {RT_NAME:{},
-             CT_NAME:{}
+             CT_NAME:{},
+             RXX_LOCKER_NAME:{}
              }
 #Need rxx -> [channel_id:channel_data:default_dict, room_data]
+
+from collections import namedtuple
+Place = namedtuple('Place', ['fc', 'name', 'place', 'time', 'lagStart', 'playerURL', 'pid', 'ol_status', 'roomPosition', 'roomType', 'connectionFails', 'role', 'vr', 'character', 'vehicle', 'discord_name', 'lounge_name', 'mii_hex'])
+Race = namedtuple('Race', ['timeAdded', 'tier', 'matchTime', 'id', 'raceNumber', 'roomID', 'rxx', 'trackURL', 'roomType', 'trackName', 'cc', 'placements', 'region', 'is_ct'])
+Event = namedtuple('Event', ['races', 'name_changes', 'removed_races', 'placement_history', 'forcedRoomSize', 'playerPenalties', 'dc_on_or_before', 'set_up_user', 'sub_ins', 'playersPerTeam', 'numberOfTeams', 'defaultRoomSize', 'numberOfGPs', 'eventName', 'missingRacePts', 'manualEdits', 'ignoreLargeTimes', 'teamPenalties', 'forcedRoomSize', 'teams', 'miis'])
+
+LOCK_OBTAINED = 0
+NO_LOCK = 1
+LOCK_IN_USE = 2
+def obtain_rxx_lock(rxx):
+    create_rxx_lock_if_needed()
+    if rxx in room_data[RXX_LOCKER_NAME]:
+        if not room_data[RXX_LOCKER_NAME][rxx][0]:
+            room_data[RXX_LOCKER_NAME][rxx][0] = True
+            room_data[RXX_LOCKER_NAME][rxx][1] = datetime.now()
+            return LOCK_OBTAINED
+        else:
+            return LOCK_IN_USE
+    else:
+        return NO_LOCK
+    
+def create_rxx_lock_if_needed(rxx):
+    if rxx in room_data[RXX_LOCKER_NAME]:
+        return
+    room_data[RXX_LOCKER_NAME][rxx] = [False, datetime.now()]
+
+def release_rxx_lock(rxx):
+    room_data[RXX_LOCKER_NAME][rxx][0] = False
+
+def free_old_locks():
+    MAX_LOCK_TIME = timedelta(seconds=15)
+    for rxx_lock in room_data[RXX_LOCKER_NAME].values():
+        cur_time = datetime.now()
+        if rxx_lock[0] and (cur_time - MAX_LOCK_TIME) > rxx_lock[1]: #Assume we locked and didn't release somehow
+            rxx_lock[0] = False
+            
 
 class RoomTracker(object):
     
@@ -78,14 +118,64 @@ class RoomTracker(object):
         return RoomTracker.new_channel_data(channel_id, is_ct)
     
     @staticmethod
-    def check_create_channel_data(self, channel_id, rxx, rxx_dict):
+    def check_create_channel_data(channel_id, rxx, rxx_dict, channel_bot):
         if rxx not in rxx_dict:
             rxx_dict[rxx] = {}
         if channel_id not in rxx_dict[rxx]:
             rxx_dict[rxx][channel_id] = [RoomTracker.new_channel_data(channel_id), []]
+    
     @staticmethod
-    def add_race(channel_data_info, race:Race.Race):
+    def create_placement(placement:TableBotRace.Placement) -> Place:
+        pass
+    
+    @staticmethod
+    def create_race(race:TableBotRace.Race) -> Race:
+        pass
+    
+    @staticmethod
+    def create_event(channel_bot) -> Event:
+        event = Event()
+    
+    @staticmethod
+    def add_race(channel_data_info, race:TableBotRace.Race):
         _, race_data = channel_data_info
+        for r in race_data:
+            if r.rxx != race_data.rxx:
+                common.log_error(f"rxx's didn't match in add_race:\n{race_data}\n{r}")
+                return FATAL_ERROR
+            if r.id == race.raceID:
+                return ALREADY_ADDED_ERROR
+        lock_status = obtain_rxx_lock(race.rxx)
+        if lock_status != LOCK_OBTAINED: #in use
+            return
+        
+        race_data.append()
+        
+        """
+        {"r3560913":[internal_date_time_added,
+             is_rt,
+             tier,
+             Room(roomID,
+                  "r3560913",
+                  [Race(track_name,
+                        date_and_time_of_race,
+                        roomID,
+                        "r3560913",
+                        cc,
+                        [Placement(finish_time,
+                                   lag_start,
+                                   Player(FC,
+                                          mii_name
+                                         ),
+                                   character,
+                                   vehicle
+                                   )
+                        ]
+                       )
+                   ]
+             ]
+  ...
+}```"""
         
     
     @staticmethod
@@ -96,14 +186,14 @@ class RoomTracker(object):
         
     @staticmethod
     def add_races(channel_id, channel_bot):
-        races:List[Race.Race] = channel_bot.getRoom().getRaces()
+        races:List[TableBotRace.Race] = channel_bot.getRoom().getRaces()
         update_channel_data = True
         for race in races:
             if race.rxx is None or not UtilityFunctions.is_rLID(race.rxx):
                 common.log_error(f"No rxx for this race: {race}")
                 continue
             rxx_dict = room_data[CT_NAME] if race.isCustomTrack() else room_data[RT_NAME]
-            RoomTracker.check_create_channel_data(channel_id, race.rxx, rxx_dict)
+            RoomTracker.check_create_channel_data(channel_id, race.rxx, rxx_dict, channel_bot)
             if update_channel_data:
                 update_channel_data = False
                 RoomTracker.update_channel_meta_data(rxx_dict[race.rxx][channel_id])
@@ -113,6 +203,7 @@ class RoomTracker(object):
     #Greedily add all races
     @staticmethod
     def add_data(channel_bot):
+        free_old_locks()
         pass
         
             
