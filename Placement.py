@@ -63,10 +63,6 @@ class Placement:
         self.place = place
         self.time = self._createTime_(time)
         self.delta = self._process_delta_(delta)
-        
-    def getPlayer(self) -> Player.Player:
-        return self.player
-        
     
     def __lt__(self, other):
         return self.time < other.time
@@ -86,6 +82,15 @@ class Placement:
     
     def get_time(self):
         return self.time
+    
+    def get_place(self):
+        return self.place
+        
+    def get_delta(self):
+        return self.delta
+    
+    def getPlayer(self) -> Player.Player:
+        return self.player
     
     def should_display_delta(self):
         return self.delta < NO_DELTA_DISPLAY_RANGE[0] or self.delta > NO_DELTA_DISPLAY_RANGE[1]

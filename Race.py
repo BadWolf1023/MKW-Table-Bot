@@ -64,6 +64,35 @@ track_name_abbreviation_mappings = {
 
 sha_track_name_mappings = {"9f09ddb05bc5c7b04bb7aa120f6d0f21774143eb":"Waluigi's Motocross (v1.9)"}
 
+def remove_author_and_version_from_name(track_name):
+    if track_name is None or track_name == "None":
+        return "No track"
+    tempName = track_name.strip()
+    if "(" in tempName:
+        author_index = tempName.rfind("(")
+        if author_index > 2:
+            tempName = tempName[:author_index-1].strip()
+    
+    for i in reversed(range(2, len(tempName))):
+        
+        if tempName[i].isnumeric() and tempName[i-1] == 'v':
+            tempName = tempName[:i-1].strip()
+            
+            break
+    
+    if "beta" in tempName.lower():
+        betaIndex = tempName.lower().rfind("beta")
+        if betaIndex > 0:
+            temp = tempName[:betaIndex].strip()
+            if len(temp) > 0:
+                tempName = temp
+    
+    tempOld = tempName.replace(".ctgp", "").strip()
+    if len(tempOld) > 0:
+        return tempOld
+    
+    return tempName
+
 def initialize():
     sha_track_name_mappings.clear()
     sha_track_name_mappings.update(common.load_pkl(common.SHA_TRACK_NAMES_FILE, "Could not load in SHA Track names. Using empty dict instead", default=dict))
@@ -99,6 +128,29 @@ class Race:
         self.placements = []
         self.region = None
         self.is_ct = is_ct
+        
+    def get_match_start_time(self):
+        return self.matchTime
+    def get_match_id(self):
+        return self.matchID
+    def get_race_number(self):
+        return self.raceNumber
+    def get_room_id(self):
+        return self.roomID
+    def get_rxx(self):
+        return self.rxx
+    def get_track_url(self):
+        return self.trackURL
+    def get_race_id(self):
+        return self.raceID
+    def get_room_type(self):
+        return self.roomType
+    def get_track_name(self):
+        return self.track
+    def get_cc(self):
+        return self.cc
+    def get_region(self):
+        return self.region
         
     
     def track_check(self):
@@ -193,33 +245,7 @@ class Race:
     
     
     def getTrackNameWithoutAuthor(self):
-        if self.track is None or self.track == "None":
-            return "No track"
-        tempName = self.track.strip()
-        if "(" in tempName:
-            author_index = tempName.rfind("(")
-            if author_index > 2:
-                tempName = tempName[:author_index-1].strip()
-        
-        for i in reversed(range(2, len(tempName))):
-            
-            if tempName[i].isnumeric() and tempName[i-1] == 'v':
-                tempName = tempName[:i-1].strip()
-                
-                break
-        
-        if "beta" in tempName.lower():
-            betaIndex = tempName.lower().rfind("beta")
-            if betaIndex > 0:
-                temp = tempName[:betaIndex].strip()
-                if len(temp) > 0:
-                    tempName = temp
-        
-        tempOld = tempName.replace(".ctgp", "").strip()
-        if len(tempOld) > 0:
-            return tempOld
-        
-        return tempName
+        return remove_author_and_version_from_name(self.track)
     
     def hasTie(self):
         for placement_1 in self.placements:
@@ -334,7 +360,7 @@ class Race:
             return "Private"
         return "Unknown"
     
-    def isCustomTrack(self):
+    def is_custom_track(self):
         return self.is_ct
     
     def hasBlankTime(self):

@@ -63,6 +63,38 @@ class Player(object):
     
     def get_mii_hex(self):
         return self.mii_hex
+    def get_lounge_name(self):
+        return self.lounge_name
+    def get_discord_name(self):
+        return self.discord_name
+    def get_vehicle(self):
+        return self.vehicle
+    def get_character(self):
+        return self.character
+    def get_VR(self):
+        return self.vr
+    def get_role(self):
+        return self.role
+    def get_connection_fails(self):
+        return self.playerConnFails
+    def get_room_type(self):
+        return self.room_type
+    def get_position(self):
+        return self.positionInRoom
+    def get_ol_status(self):
+        return self.ol_status
+    def get_player_id(self):
+        return self.pid
+    def get_mkwx_url(self):
+        return self.playerPageLink
+    def get_name(self):
+        return self.name
+    def get_FC(self):
+        return self.FC
+        
+        
+        
+        
     
     def input_driver_vehicle(self, driver_vehicle):
         if driver_vehicle is None:

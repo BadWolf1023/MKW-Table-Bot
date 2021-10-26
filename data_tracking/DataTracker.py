@@ -10,8 +10,10 @@ import common
 from collections import defaultdict
 from datetime import datetime, timedelta
 import Race as TableBotRace
-from typing import List
+from typing import List, Dict, Tuple
 import UtilityFunctions
+from copy import deepcopy
+
 
 #dict of channel IDs to tier numbers
 RT_NAME = "rt"
@@ -53,6 +55,8 @@ RT_REVERSE_TIER_MAPPINGS = defaultdict(set)
 CT_REVERSE_TIER_MAPPINGS = defaultdict(set)
 ALREADY_ADDED_ERROR = 11
 FATAL_ERROR = 12
+RACE_ADD_SUCCESS = 10
+DATA_DUMP_SUCCESS = 9
 for k,v in RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
     RT_REVERSE_TIER_MAPPINGS[v].add(k)
 for k,v in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
@@ -67,9 +71,10 @@ room_data = {RT_NAME:{},
 
 from collections import namedtuple
 Place = namedtuple('Place', ['fc', 'name', 'place', 'time', 'lagStart', 'playerURL', 'pid', 'ol_status', 'roomPosition', 'roomType', 'connectionFails', 'role', 'vr', 'character', 'vehicle', 'discord_name', 'lounge_name', 'mii_hex'])
-Race = namedtuple('Race', ['timeAdded', 'tier', 'matchTime', 'id', 'raceNumber', 'roomID', 'rxx', 'trackURL', 'roomType', 'trackName', 'cc', 'placements', 'region', 'is_ct'])
-Event = namedtuple('Event', ['races', 'name_changes', 'removed_races', 'placement_history', 'forcedRoomSize', 'playerPenalties', 'dc_on_or_before', 'set_up_user', 'sub_ins', 'playersPerTeam', 'numberOfTeams', 'defaultRoomSize', 'numberOfGPs', 'eventName', 'missingRacePts', 'manualEdits', 'ignoreLargeTimes', 'teamPenalties', 'forcedRoomSize', 'teams', 'miis'])
+Race = namedtuple('Race', ['timeAdded', 'channel_id', 'tier', 'matchTime', 'id', 'raceNumber', 'roomID', 'rxx', 'trackURL', 'roomType', 'trackName', 'trackNameFixed', 'cc', 'placements', 'region', 'is_ct'])
+Event = namedtuple('Event', ['allFCs', 'races', 'name_changes', 'removed_races', 'placement_history', 'forcedRoomSize', 'playerPenalties', 'dc_on_or_before', 'set_up_user', 'sub_ins', 'playersPerTeam', 'numberOfTeams', 'defaultRoomSize', 'numberOfGPs', 'eventName', 'missingRacePts', 'manualEdits', 'ignoreLargeTimes', 'teamPenalties', 'forcedRoomSize', 'teams', 'miis'])
 
+"""
 LOCK_OBTAINED = 0
 NO_LOCK = 1
 LOCK_IN_USE = 2
@@ -99,7 +104,63 @@ def free_old_locks():
         cur_time = datetime.now()
         if rxx_lock[0] and (cur_time - MAX_LOCK_TIME) > rxx_lock[1]: #Assume we locked and didn't release somehow
             rxx_lock[0] = False
+"""
+def get_start_time(channel_data):
+    return channel_data[1]
+def get_last_updated(channel_data):
+    return channel_data[2]
+def get_room_update_count(channel_data):
+    return channel_data[3]
+def get_tier(channel_data):
+    return channel_data[4]
+
+def tier_matches(tier, channel_data):
+    if tier is None:
+        return True
+    return tier == get_tier(channel_data)
+
+class DataRetriever(object):
+    #TODO: Finish method
+    @staticmethod
+    def choose_best_event_data(channel_id_events:Dict[int, List[List, Event]], prefer_tier=False) -> Tuple[List, Event]:
+        '''Takes a dictionary with channel ids mapping to event data and returns the channel data and event that is most likely to be legitimate and accurate'''
+        LEIGITMATE_ROOM_UPDATE_COUNT = 3
+        cur_best = None
+        for channel_data, event in channel_id_events.values():
+            if prefer_tier and get_tier(channel_data) is None:
+                continue
+            if get_room_update_count(channel_data) < LEIGITMATE_ROOM_UPDATE_COUNT:
+                continue
+            if cur_best is None:
+                cur_best = (channel_data, event)
+                continue
+        
+        #choose best out of the ones that didn't have a tier
             
+            
+        return cur_best
+            
+    
+    @staticmethod
+    def get_filtered_events(rxx_dict, tier=None, in_last_days=None):
+        time_cutoff = (datetime.now() - timedelta(days=in_last_days)) if in_last_days else datetime.min
+        results = []
+        for rxx in rxx_dict:
+            channel_data, event = DataRetriever.choose_best_event_data(rxx_dict[rxx], prefer_tier=(tier is None))
+            if tier_matches(tier, channel_data) and time_cutoff < get_start_time(channel_data):
+                results.append(event)
+        return results
+    @staticmethod
+    def get_popular_characters(is_ct=False, tier=None, in_last_days=None, starting_position=None):
+        pass
+    
+    @staticmethod
+    def get_popular_tracks(is_ct=False, tier=None, in_last_days=None):
+        track_count = defaultdict(int)
+        rxx_dict = room_data[CT_NAME] if is_ct else room_data[RT_NAME]
+        filtered_rxxs = DataRetriever.get_filtered_rxxs(rxx_dict, tier, in_last_days)
+        
+        
 
 class RoomTracker(object):
     
@@ -110,101 +171,177 @@ class RoomTracker(object):
             lounge_tier = RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[channel_id]
         if channel_id in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
             lounge_tier = CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[channel_id]
-        #channelid, first command time, last command time, total commands sent, tier
+        #channelid, first command time, last command time, total room updates sent, tier
         return [channel_id, datetime.now(), datetime.now(), 0, lounge_tier]
     
     @staticmethod
-    def create_channel_data(channel_id, is_ct):
-        return RoomTracker.new_channel_data(channel_id, is_ct)
-    
-    @staticmethod
-    def check_create_channel_data(channel_id, rxx, rxx_dict, channel_bot):
+    def check_create_channel_data(rxx, rxx_dict, channel_bot):
         if rxx not in rxx_dict:
             rxx_dict[rxx] = {}
-        if channel_id not in rxx_dict[rxx]:
-            rxx_dict[rxx][channel_id] = [RoomTracker.new_channel_data(channel_id), []]
+        if channel_bot.channel_id not in rxx_dict[rxx]:
+            rxx_dict[rxx][channel_bot.channel_id] = [RoomTracker.new_channel_data(channel_bot.channel_id), RoomTracker.create_event(channel_bot)]
+            return False
+        return True
     
     @staticmethod
     def create_placement(placement:TableBotRace.Placement) -> Place:
-        pass
+        player = placement.getPlayer()
+        return Place(fc=player.get_FC(),
+                     name=player.get_name(),
+                     place=placement.get_place(),
+                     time=placement.get_time(),
+                     lagStart=placement.get_delta(),
+                     playerURL=player.get_mkwx_url(),
+                     pid=player.get_player_id(),
+                     ol_status=player.get_ol_status(),
+                     roomPosition=player.get_position(),
+                     roomType=player.get_room_type(),
+                     connectionFails=player.get_connection_fails(),
+                     role=player.get_role(),
+                     vr=player.get_VR(),
+                     character=player.get_character(),
+                     vehicle=player.get_vehicle(),
+                     discord_name=player.get_discord_name(),
+                     lounge_name=player.get_lounge_name(),
+                     mii_hex=player.get_mii_hex())
     
     @staticmethod
-    def create_race(race:TableBotRace.Race) -> Race:
-        pass
+    def create_race(channel_data_info, race:TableBotRace.Race) -> Race:
+        channel_id = channel_data_info[0]
+        tier = channel_data_info[4]
+        all_placements = [RoomTracker.create_placement(p) for p in race.getPlacements()]
+        return Race(timeAdded=datetime.now(),
+                    channel_id=channel_id,
+                    tier=tier,
+                    matchTime=race.get_match_start_time(),
+                    id=race.get_race_id(),
+                    raceNumber=race.get_race_number(),
+                    roomID=race.get_room_id(),
+                    rxx=race.get_rxx(),
+                    trackURL=race.get_track_url(),
+                    roomType=race.get_room_type(),
+                    trackName=race.get_track_name(),
+                    trackNameFixed=Race.remove_author_and_version_from_name(race.get_track_name()),
+                    cc=race.get_cc(),
+                    region=race.get_region(),
+                    is_ct=race.is_custom_track(),
+                    placements=all_placements)
     
+    @staticmethod
+    def get_miis(channel_bot) -> Dict[str, str]:
+        return {mii.FC : mii.mii_data_hex_str for mii in channel_bot.miis}
+            
     @staticmethod
     def create_event(channel_bot) -> Event:
-        event = Event()
+        return Event(allFCs=set(channel_bot.getRoom().getFCs()),
+                     races=[],
+                     name_changes=channel_bot.getRoom().name_changes.copy(),
+                     removed_races=channel_bot.getRoom().removed_races.copy(),
+                     placement_history=channel_bot.getRoom().placement_history.copy(),
+                     forcedRoomSize=channel_bot.getRoom().forcedRoomSize.copy(),
+                     playerPenalties=channel_bot.getRoom().playerPenalties.copy(),
+                     dc_on_or_before=channel_bot.getRoom().dc_on_or_before.copy(),
+                     sub_ins=deepcopy(channel_bot.getRoom().sub_ins),
+                     set_up_user_discord_id=channel_bot.getRoom().set_up_user,
+                     set_up_user_display_name=channel_bot.getRoom().set_up_user_display_name,
+                     playersPerTeam=channel_bot.getWar().playersPerTeam,
+                     numberOfTeams=channel_bot.getWar().numberOfTeams,
+                     defaultRoomSize=channel_bot.getWar().get_num_players(),
+                     numberOfGPs=channel_bot.getWar().numberOfGPs,
+                     eventName=channel_bot.getWar().warName,
+                     missingRacePts=channel_bot.getWar().missingRacePts,
+                     manualEdits=channel_bot.getWar().manualEdits.copy(),
+                     ignoreLargeTimes=channel_bot.getWar().ignoreLargeTimes,
+                     teamPenalties=channel_bot.getWar().teamPenalties.copy(),
+                     forcedRoomSize=channel_bot.getWar().forcedRoomSize.copy(),
+                     teams=channel_bot.getWar().teams.copy(),
+                     miis=RoomTracker.get_miis(channel_bot))
+    @staticmethod
+    def update_event_data(channel_bot, channel_data_info):
+        channel_data_info[1].allFCs.update(channel_bot.getRoom().getFCs())
+        channel_data_info[1].miis.update(RoomTracker.get_miis(channel_bot))
+        channel_data_info[1] = Event(allFCs=channel_data_info[1].allFCs,
+                                     races=channel_data_info[1].races,
+                                     name_changes=channel_bot.getRoom().name_changes.copy(),
+                                     removed_races=channel_bot.getRoom().removed_races.copy(),
+                                     placement_history=channel_bot.getRoom().placement_history.copy(),
+                                     forcedRoomSize=channel_bot.getRoom().forcedRoomSize.copy(),
+                                     playerPenalties=channel_bot.getRoom().playerPenalties.copy(),
+                                     dc_on_or_before=channel_bot.getRoom().dc_on_or_before.copy(),
+                                     sub_ins=deepcopy(channel_bot.getRoom().sub_ins),
+                                     set_up_user_discord_id=channel_bot.getRoom().set_up_user,
+                                     set_up_user_display_name=channel_bot.getRoom().set_up_user_display_name,
+                                     playersPerTeam=channel_bot.getWar().playersPerTeam,
+                                     numberOfTeams=channel_bot.getWar().numberOfTeams,
+                                     defaultRoomSize=channel_bot.getWar().get_num_players(),
+                                     numberOfGPs=channel_bot.getWar().numberOfGPs,
+                                     eventName=channel_bot.getWar().warName,
+                                     missingRacePts=channel_bot.getWar().missingRacePts,
+                                     manualEdits=channel_bot.getWar().manualEdits.copy(),
+                                     ignoreLargeTimes=channel_bot.getWar().ignoreLargeTimes,
+                                     teamPenalties=channel_bot.getWar().teamPenalties.copy(),
+                                     forcedRoomSize=channel_bot.getWar().forcedRoomSize.copy(),
+                                     teams=channel_bot.getWar().teams.copy(),
+                                     miis=channel_data_info[1].miis)
     
     @staticmethod
     def add_race(channel_data_info, race:TableBotRace.Race):
-        _, race_data = channel_data_info
-        for r in race_data:
-            if r.rxx != race_data.rxx:
-                common.log_error(f"rxx's didn't match in add_race:\n{race_data}\n{r}")
+        _, event = channel_data_info
+        for r in event.races:
+            if r.rxx != race.get_rxx():
+                common.log_error(f"rxx's didn't match in add_race:\n{race}\n{r}")
                 return FATAL_ERROR
             if r.id == race.raceID:
                 return ALREADY_ADDED_ERROR
-        lock_status = obtain_rxx_lock(race.rxx)
-        if lock_status != LOCK_OBTAINED: #in use
-            return
+        #lock_status = obtain_rxx_lock(race.get_rxx())
+        #if lock_status != LOCK_OBTAINED: #in use
+        #    return
         
-        race_data.append()
-        
-        """
-        {"r3560913":[internal_date_time_added,
-             is_rt,
-             tier,
-             Room(roomID,
-                  "r3560913",
-                  [Race(track_name,
-                        date_and_time_of_race,
-                        roomID,
-                        "r3560913",
-                        cc,
-                        [Placement(finish_time,
-                                   lag_start,
-                                   Player(FC,
-                                          mii_name
-                                         ),
-                                   character,
-                                   vehicle
-                                   )
-                        ]
-                       )
-                   ]
-             ]
-  ...
-}```"""
+        event.races.append(RoomTracker.create_race(race))
+        return RACE_ADD_SUCCESS
         
     
     @staticmethod
-    def update_channel_meta_data(channel_data_info):
-        channel_meta_data, _ = channel_data_info
-        channel_meta_data[2] = datetime.now()
-        channel_meta_data[3] += 1
+    def update_channel_meta_data(channel_bot, channel_data_info):
+        channel_meta_data, event = channel_data_info
+        roomRaceIDs = set(r.get_race_id() for r in channel_bot.getRoom().getRaces())
+        eventRaceIDs = set(r.get_race_id() for r in event.races)
+        if not (len(roomRaceIDs.difference(eventRaceIDs)) == 0 or roomRaceIDs.issubset(eventRaceIDs)): #The room added a race
+            channel_meta_data[2] = datetime.now()
+            channel_meta_data[3] += 1
         
     @staticmethod
-    def add_races(channel_id, channel_bot):
+    def add_races(channel_bot):
         races:List[TableBotRace.Race] = channel_bot.getRoom().getRaces()
         update_channel_data = True
+        update_event_data = True
         for race in races:
-            if race.rxx is None or not UtilityFunctions.is_rLID(race.rxx):
+            if race.get_rxx() is None or not UtilityFunctions.is_rLID(race.get_rxx()):
                 common.log_error(f"No rxx for this race: {race}")
                 continue
-            rxx_dict = room_data[CT_NAME] if race.isCustomTrack() else room_data[RT_NAME]
-            RoomTracker.check_create_channel_data(channel_id, race.rxx, rxx_dict, channel_bot)
+            rxx_dict = room_data[CT_NAME] if race.is_custom_track() else room_data[RT_NAME]
+            update_event_data = RoomTracker.check_create_channel_data(race.get_rxx(), rxx_dict, channel_bot)
             if update_channel_data:
                 update_channel_data = False
-                RoomTracker.update_channel_meta_data(rxx_dict[race.rxx][channel_id])
+                RoomTracker.update_channel_meta_data(channel_bot, rxx_dict[race.get_rxx()][channel_bot.channel_id])
+            if update_event_data:
+                update_event_data = False
+                RoomTracker.update_event_data(channel_bot, rxx_dict[race.get_rxx()][channel_bot.channel_id])
             
-            RoomTracker.add_race(rxx_dict[race.rxx][channel_id], race)
-            
+            success_code = RoomTracker.add_race(rxx_dict[race.get_rxx()][channel_bot.channel_id], race)
+            if success_code == FATAL_ERROR:
+                return FATAL_ERROR
+        return DATA_DUMP_SUCCESS
     #Greedily add all races
     @staticmethod
     def add_data(channel_bot):
-        free_old_locks()
-        pass
+        #free_old_locks()
+        if channel_bot.is_initialized():
+            try:
+                success_code = RoomTracker.add_races(channel_bot)
+            except Exception as e:
+                raise e
+        print(room_data)
         
             
 

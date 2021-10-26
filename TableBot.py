@@ -50,9 +50,7 @@ class ChannelBot(object):
     '''
     classdocs
     '''
-    def __init__(self, numTeams=None, warFormat=None, prev_command_sw=False, room=None, war=None, manualWarSetup=False, server_id=None, channel_id=None):
-        self.numTeams = numTeams
-        self.warFormat = warFormat
+    def __init__(self, prev_command_sw=False, room=None, war=None, manualWarSetup=False, server_id=None, channel_id=None):
         self.room:Room.Room = room
         self.war:War.War = war
         self.prev_command_sw = prev_command_sw
@@ -489,8 +487,6 @@ class ChannelBot(object):
     
     def reset(self, server_id):
         self.destroy()
-        self.numTeams = None
-        self.warFormat = None
         self.room = None
         self.war = None
         self.prev_command_sw = False
