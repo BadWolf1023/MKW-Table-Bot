@@ -13,14 +13,19 @@ import discord
 from pathlib import Path
 import ssl
 import certifi
+import dill
+
 
 sslcontext = ssl.create_default_context(cafile=certifi.where())
 print(certifi.where())
 
-version = "11.4.0"
+version = "11.5.0"
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
+ON_WINDOWS = os.name == 'nt'
+HREF_HTML_NAME = 'href' if ON_WINDOWS else 'data-href'
+TOOLTIP_NAME = "data-tooltip" if ON_WINDOWS else "title"
 
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
@@ -28,7 +33,7 @@ MAX_PREFIX_LENGTH = 3
 #current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = False
+in_testing_server = True
 running_beta = False
 beta_is_real = False
 
@@ -117,6 +122,8 @@ FLAG_EXCEPTION_FILE = f"{DATA_PATH}flag_exceptions.txt"
 
 PRIVATE_INFO_FILE = f'{DATA_PATH}private.txt'
 STATS_FILE = f"{DATA_PATH}stats.txt"
+ROOM_DATA_TRACKER_FILE = f"{DATA_PATH}all_room_data.pkl"
+SHA_TRACK_NAMES_FILE = f"{DATA_PATH}sha_track_names.pkl"
 
 TABLE_BOT_PKL_FILE = f'{DATA_PATH}tablebots.pkl'
 VR_IS_ON_FILE = f"{DATA_PATH}vr_is_on.pkl"
@@ -174,7 +181,9 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    LOUNGE_TABLE_UPDATES_FILE,
                    STATS_FILE,
                    TABLE_BOT_PKL_FILE,
-                   VR_IS_ON_FILE
+                   VR_IS_ON_FILE,
+                   ROOM_DATA_TRACKER_FILE,
+                   SHA_TRACK_NAMES_FILE
                    }
 
 LEFT_ARROW_EMOTE = '\u25c0'
@@ -323,6 +332,14 @@ def check_create(file_name):
 def full_command_log(message, extra_text=""):
     to_log = f"Server Name: {message.guild} - Server ID: {message.guild.id} - Channel: {message.channel} - Channel ID: {message.channel.id} - User: {message.author} - User ID: {message.author.id} - User Name: {message.author.display_name} - Command: {message.content} {extra_text}"
     return log_text(to_log, FULL_MESSAGE_LOGGING_TYPE)
+
+def log_error(text):
+    return log_text(text, logging_type=ERROR_LOGGING_TYPE)
+
+def log_traceback(traceback):
+    with open(ERROR_LOGS_FILE, "a+", encoding="utf-8") as f:
+        f.write(f"\n{str(datetime.now())}: \n")
+        traceback.print_exc(file=f)
     
 def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
     logging_file = MESSAGE_LOGGING_FILE
@@ -407,4 +424,22 @@ async def safe_delete(message):
         await message.delete()
     except discord.errors.NotFound:
         pass
+    
+def dump_pkl(data, file_name, error_message, display_data_on_error=False):
+    with open(file_name, "wb") as pickle_out:
+        try:
+            dill.dump(data, pickle_out)
+        except:
+            print(error_message)
+            if display_data_on_error:
+                print(f"Current data: {data}")
+
+def load_pkl(file_name, error_message, default):
+    if os.path.exists(file_name):
+        with open(file_name, "rb") as pickle_in:
+            try:
+                return dill.load(pickle_in)
+            except:
+                print(error_message)
+    return default()
     

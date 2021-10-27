@@ -12,6 +12,7 @@ import codecs
 import asyncio
 import TableBotExceptions
 import common
+import UtilityFunctions
 USING_EXPERIMENTAL_REQUEST = False
 if USING_EXPERIMENTAL_REQUEST:
     #from concurrent.futures.process import ProcessPoolExecutor
@@ -50,7 +51,8 @@ f"{submkwxURL}r0000002":("Table Bot Challenge Room Two", "testing_rooms/TableBot
 f"{submkwxURL}r0000003":("Table Bot Remove Race Test w/ quickedit", "testing_rooms/removerace_one.html"),
 f"{submkwxURL}r0000004":("Table Bot Remove Race Test w/ quickedit, 2nd room to merge", "testing_rooms/removerace_two.html"),
 f"{submkwxURL}r0000005":("Clean room with no errors.", "testing_rooms/clean_room.html"),
-f"{submkwxURL}r0000006":("Tag in brackets.", "testing_rooms/tag_in_brackets.html")}
+f"{submkwxURL}r0000006":("Tag in brackets.", "testing_rooms/tag_in_brackets.html"),
+f"{submkwxURL}r0000007":("Room with an unknown track name (SHA name).", "testing_rooms/unknown_track.html")}
 
 
 
@@ -337,15 +339,11 @@ async def getrLIDSoup(rLID):
         return temp
     return None
         
-def _is_rLID(roomID):
-    return re.match("^r[0-9]{7}$", roomID) is not None
 
-def _is_fc(fc):
-    return re.match("^[0-9]{4}[-][0-9]{4}[-][0-9]{4}$", fc.strip()) is not None
 
 #getRoomLink old name
 async def getRoomData(rid_or_rlid):
-    if _is_rLID(rid_or_rlid): #It is a unique rxxxxxxx number given
+    if UtilityFunctions.is_rLID(rid_or_rlid): #It is a unique rxxxxxxx number given
         #Check if the rLID is a valid link (bogus input check, or the link may have expired)
         rLIDSoup = await getrLIDSoup(rid_or_rlid)
         if rLIDSoup is not None:
@@ -359,7 +357,7 @@ async def getRoomData(rid_or_rlid):
     roomIDSpot = mkwxSoup.find(text=rid_or_rlid)
     if roomIDSpot is None:
         return None, None, None
-    link = str(roomIDSpot.find_previous('a')['data-href'])
+    link = str(roomIDSpot.find_previous('a')[common.HREF_HTML_NAME])
     rLID = link.split("/")[-1]
     rLIDSoup = await getrLIDSoup(rLID)
     return wiimmfi_url + link, rLID, rLIDSoup #link example: /stats/mkwx/list/r1279851
@@ -432,7 +430,7 @@ async def getRoomDataByFC(fcs):
             continue
         if 'id' in correctLevel.attrs:
             break
-    link = correctLevel.find('a')['data-href']
+    link = correctLevel.find('a')[common.HREF_HTML_NAME]
     rLID = link.split("/")[-1]
     rLIDSoup = await getrLIDSoup(rLID)
     return wiimmfi_url + link, rLID, rLIDSoup #link example: /stats/mkwx/list/r1279851
@@ -442,10 +440,10 @@ async def getRoomDataByFC(fcs):
 async def getRoomDataSmart(load_me):
     if not isinstance(load_me, list):
         load_me = load_me.strip().lower()
-        if _is_rLID(load_me):
+        if UtilityFunctions.is_rLID(load_me):
             return await getRoomData(load_me)
         
-        if _is_fc(load_me):
+        if UtilityFunctions.is_fc(load_me):
             return await getRoomDataByFC([load_me])
         
         FCs = UserDataProcessing.getFCsByLoungeName(load_me)
@@ -459,7 +457,7 @@ async def getRoomHTMLDataSmart(load_me):
     if not isinstance(load_me, list):
         load_me = load_me.strip().lower()
         
-        if _is_fc(load_me):
+        if UtilityFunctions.is_fc(load_me):
             return await getMKWXHTMLDataByFC([load_me])
         
         
