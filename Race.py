@@ -96,9 +96,12 @@ def remove_author_and_version_from_name(track_name):
 def initialize():
     sha_track_name_mappings.clear()
     sha_track_name_mappings.update(common.load_pkl(common.SHA_TRACK_NAMES_FILE, "Could not load in SHA Track names. Using empty dict instead", default=dict))
+
+def save_data():
+    common.dump_pkl(sha_track_name_mappings, common.SHA_TRACK_NAMES_FILE, "Could not dump pkl for SHA Track names.", display_data_on_error=True)
     
 def on_exit():
-    common.dump_pkl(sha_track_name_mappings, common.SHA_TRACK_NAMES_FILE, "Could not dump pkl for SHA Track names.", display_data_on_error=True)
+    save_data()
 
 def set_ctgp_region(new_region:str):
     global CTGP_CTWW_ROOM_TYPE

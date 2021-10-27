@@ -23,6 +23,9 @@ version = "11.5.0"
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
+ON_WINDOWS = os.name == 'nt'
+HREF_HTML_NAME = 'href' if ON_WINDOWS else 'data-href'
+TOOLTIP_NAME = "data-tooltip" if ON_WINDOWS else "title"
 
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
@@ -332,6 +335,11 @@ def full_command_log(message, extra_text=""):
 
 def log_error(text):
     return log_text(text, logging_type=ERROR_LOGGING_TYPE)
+
+def log_traceback(traceback):
+    with open(ERROR_LOGS_FILE, "a+", encoding="utf-8") as f:
+        f.write(f"\n{str(datetime.now())}: \n")
+        traceback.print_exc(file=f)
     
 def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
     logging_file = MESSAGE_LOGGING_FILE

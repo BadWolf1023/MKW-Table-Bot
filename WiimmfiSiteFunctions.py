@@ -357,7 +357,7 @@ async def getRoomData(rid_or_rlid):
     roomIDSpot = mkwxSoup.find(text=rid_or_rlid)
     if roomIDSpot is None:
         return None, None, None
-    link = str(roomIDSpot.find_previous('a')['data-href'])
+    link = str(roomIDSpot.find_previous('a')[common.HREF_HTML_NAME])
     rLID = link.split("/")[-1]
     rLIDSoup = await getrLIDSoup(rLID)
     return wiimmfi_url + link, rLID, rLIDSoup #link example: /stats/mkwx/list/r1279851
@@ -430,7 +430,7 @@ async def getRoomDataByFC(fcs):
             continue
         if 'id' in correctLevel.attrs:
             break
-    link = correctLevel.find('a')['data-href']
+    link = correctLevel.find('a')[common.HREF_HTML_NAME]
     rLID = link.split("/")[-1]
     rLIDSoup = await getrLIDSoup(rLID)
     return wiimmfi_url + link, rLID, rLIDSoup #link example: /stats/mkwx/list/r1279851

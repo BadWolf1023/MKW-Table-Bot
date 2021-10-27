@@ -179,18 +179,33 @@ class ChannelBot(object):
     def remove_miis_with_missing_files(self):
         to_delete = set()
         for fc, mii in self.miis.items():
+            
             if not mii.has_table_picture_file():
+                
+                tier = None
+                if self.channel_id in DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
+                    tier = str(DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
+                if self.channel_id in DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
+                    tier = str(DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
+                common.log_error(f"{fc} does not have a mii picture - channel {self.channel_id} {'' if tier is None else 'T'+tier}")
                 to_delete.add(fc)
         for fc in to_delete:
             try:
                 self.miis[fc].clean_up()
                 del self.miis[fc]
             except:
+                tier = None
+                if self.channel_id in DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
+                    tier = str(DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
+                if self.channel_id in DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
+                    tier = str(DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
+                common.log_error(f"Exception in remove_miis_with_missing_files: {fc} failed to clean up - channel {self.channel_id} {'' if tier is None else 'T'+tier}")
                 pass
             
     async def populate_miis(self, message_id:str):
         if common.MIIS_ON_TABLE_DISABLED:
             return
+        #print("\n\n\n" + str(self.get_miis()))
         if self.getWar() is not None and self.getWar().displayMiis:
             if self.populating:
                 return
@@ -199,9 +214,14 @@ class ChannelBot(object):
             if self.getRoom() is not None:
                 self.remove_miis_with_missing_files()
                 all_fcs_in_room = self.getRoom().getFCs()
+                
+                OBTAINED_MIIS = self.miis.keys()
+                
                 if all_fcs_in_room != self.miis.keys():
-                    max_concurrent = 5
+                    #print("Populating miis...")
+                    max_concurrent = 6
                     all_missing_fcs = [fc for fc in self.getRoom().getFCs() if fc not in self.miis]
+                    #print(f"Missing FCs: {all_missing_fcs}")
                     missing_fc_chunks = [all_missing_fcs[i:i+max_concurrent] for i in range(len(all_missing_fcs))[::max_concurrent]]
                     for missing_fc_chunk in missing_fc_chunks:
                         future_to_fc = {MiiPuller.get_mii(fc, message_id):fc for fc in missing_fc_chunk}
@@ -268,7 +288,7 @@ class ChannelBot(object):
         
         
         created_when = str(temp_test.contents[2].string).strip()
-        rLID = str(temp_test.contents[1]['data-href']).split("/")[4]
+        rLID = str(temp_test.contents[1][common.HREF_HTML_NAME]).split("/")[4]
         created_when = created_when[:created_when.index("ago)")+len("ago)")].strip()
         room_str = "Room " + str(temp_test.contents[1].text) + ": " + created_when + " - "
         last_match = str(temp_test.contents[6].string).strip("\n\t ")
@@ -353,6 +373,7 @@ class ChannelBot(object):
             if temp.is_initialized():
                 self.room = temp
                 self.updateLoungeFinishTime()
+                DataTracker.RoomTracker.add_data(self)
                 success = True
         
         while len(soups) > 0:

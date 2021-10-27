@@ -8,6 +8,7 @@ import Placement
 import Player
 import WiimmfiSiteFunctions
 import UserDataProcessing
+import common
 
 from _collections import defaultdict
 import UtilityFunctions
@@ -15,7 +16,7 @@ import TagAIShell
 from copy import copy, deepcopy
 from UtilityFunctions import isint, isfloat
 
-DEBUG_RACES = True
+DEBUG_RACES = False
 DEBUG_PLACEMENTS = False
 
 #Function takes a default dictionary, the key being a number, and makes any keys that are greater than the threshold one less, then removes that threshold, if it exists
@@ -74,6 +75,7 @@ class Room(object):
         
         if len(self.races) > 0:
             self.roomID = self.races[0].roomID
+            
         else: #Hmmmm, if there are no races, what should we do? We currently unload the room... edge case...
             self.rLIDs = None
             self.races = None
@@ -237,6 +239,15 @@ class Room(object):
         if FC in player_list:
             return player_list[FC]
         return "no name"
+    
+    def get_room_type(self):
+        race_types = set(race.get_room_type() for race in self.getRaces())
+        if len(race_types) != 1:
+            return Race.UNKNOWN_ROOM_TYPE
+        for race_type in race_types:
+            return race_type
+        
+            
             
     
     def fcIsInRoom(self, FC):
@@ -374,11 +385,11 @@ class Room(object):
     @staticmethod
     def getPlacementInfo(line):
         allRows = line.find_all("td")
-        playerPageLink = str(allRows[0].find("a")['href'])
+        playerPageLink = str(allRows[0].find("a")[common.HREF_HTML_NAME])
         
         
         FC = str(allRows[0].find("span").string)
-        ol_status = str(allRows[1]["data-tooltip"])
+        ol_status = str(allRows[1][common.TOOLTIP_NAME]).split(":")[1].strip()
     
         roomPosition = -1
         
@@ -403,8 +414,8 @@ class Room(object):
             vr = None
         else:
             vr = int(vr)
+        character_vehicle = str(allRows[5][common.TOOLTIP_NAME])
         
-        driver_vehicle = str(allRows[5]['data-tooltip'])
         
         delta = str(allRows[7].string) #Not true delta, but significant delta (above .5)
         
@@ -414,7 +425,7 @@ class Room(object):
         while len(allRows) > 0:
             del allRows[0]
         
-        return FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, driver_vehicle, delta, time, playerName
+        return FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, delta, time, playerName
     
     def getRaceInfoFromList(self, textList):
         '''Utility Function'''
@@ -451,7 +462,7 @@ class Room(object):
         return raceTime, matchID, raceNumber, roomID, roomType, cc, track, placements, is_ct
     
     def getRXXFromHTMLLine(self, line):
-        roomLink = line.find_all('a')[1]['href']
+        roomLink = line.find_all('a')[1][common.HREF_HTML_NAME]
         return roomLink.split("/")[-1]
         
     def getRaceIDFromHTMLLine(self, line):
@@ -459,7 +470,7 @@ class Room(object):
     
     def getTrackURLFromHTMLLine(self, line):
         try:
-            return line.find_all('a')[2]['href']
+            return line.find_all('a')[2][common.HREF_HTML_NAME]
         except IndexError:
             return "No Track Page"
         
@@ -486,10 +497,10 @@ class Room(object):
                     races.insert(0, Race.Race(raceTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, room_rxx, race_id, trackURL))
                     foundRaceHeader = True
                 else:
-                    FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, driver_vehicle, delta, time, playerName = self.getPlacementInfo(line)
+                    FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, delta, time, playerName = self.getPlacementInfo(line)
                     if races[0].hasFC(FC):
                         FC = FC + "-2"
-                    plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, driver_vehicle, playerName)
+                    plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, playerName)
                     
                     if plyr.FC in self.name_changes:
                         plyr.name = self.name_changes[plyr.FC] + " (Tabler Changed)"

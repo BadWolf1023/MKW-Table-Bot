@@ -10,7 +10,7 @@ import binascii
 from typing import Tuple
 import Mii
 import miirender
-import requests
+#import requests
 import common
 from datetime import timedelta, datetime
 
@@ -50,6 +50,7 @@ SAKE_HEADERS = {"Host":"mariokartwii.sake.gs.wiimmfi.de",
                 "SOAPAction":"http://gamespy.net/sake/SearchForRecords"}
 
 MII_CACHE = {}
+REQUEST_TIME_OUT_SECONDS = 5
 MII_DEFAULT_CACHE_TIME = timedelta(minutes=7)
 MIN_FAILURES_BEFORE_BACKOFF = 3
 BACK_OFF_SECONDS_AMOUNT = 20
@@ -113,7 +114,7 @@ def mii_data_is_corrupt(mii_data:str):
 async def get_mii_data_from_pid(pid:int) -> str:
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(pid), ssl=common.sslcontext, timeout=2) as data:
+            async with session.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(pid), ssl=common.sslcontext, timeout=REQUEST_TIME_OUT_SECONDS) as data:
                 miidatab64 = str(await data.content.read())
                 miidatahex = base64.b64decode(miidatab64[399:527])
                 encode = binascii.hexlify(miidatahex)
@@ -149,11 +150,11 @@ async def get_mii(fc:str, message_id:str, picture_width=512):
         return Mii.Mii(mii_bytes, mii_hex_str, folder_path, file_name, fc)
 
 
-
+"""
 #======================== The functions below are the same as above, except they are BLOCKING ========================
 def get_mii_data_from_pid_blocking(playerid:int) -> str:
     try:
-        mii_data = requests.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(playerid), verify=common.certifi.where(), timeout=2)
+        mii_data = requests.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(playerid), verify=common.certifi.where(), timeout=REQUEST_TIME_OUT_SECONDS)
         miidatab64 = str(mii_data.content)
         miidatahex = base64.b64decode(miidatab64[399:527])
         encode = binascii.hexlify(miidatahex)
@@ -183,3 +184,4 @@ def get_mii_blocking(fc:str, message_id:str, picture_width=512):
         if success is None:
             return MII_DOWNLOAD_FAILURE_ERROR_MESSAGE
         return Mii.Mii(mii_bytes, mii_hex_str, folder_path, file_name, fc)
+"""

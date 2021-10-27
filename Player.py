@@ -35,7 +35,7 @@ class Player(object):
     '''
 
 
-    def __init__(self, FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, driver_vehicle, playerName, discord_name=None, lounge_name=None, mii_hex=None):
+    def __init__(self, FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, playerName, discord_name=None, lounge_name=None, mii_hex=None):
         '''
         Constructor
         '''
@@ -50,7 +50,7 @@ class Player(object):
         self.vr = vr
         self.character = None
         self.vehicle = None
-        self.input_driver_vehicle(driver_vehicle)
+        self.input_character_vehicle(character_vehicle)
         self.name = str(playerName)
         if self.name == "no name":
             self.name = "Player"
@@ -96,21 +96,22 @@ class Player(object):
         
         
     
-    def input_driver_vehicle(self, driver_vehicle):
-        if driver_vehicle is None:
+    def input_character_vehicle(self, character_vehicle):
+        if character_vehicle is None:
             self.character = None
             self.vehicle = None
             return
-        if "@" not in driver_vehicle:
+        if "@" not in character_vehicle:
             return
-        driver, vehicle = driver_vehicle.split('@', 1)
-        driver = driver.strip()
+
+        character, vehicle = character_vehicle.split('@', 1)
+        character = character.strip()
         vehicle = vehicle.strip()
-        if vehicle == "" or vehicle == LONG_DASH or driver == "" or driver == LONG_DASH:
-            self.driver = None
+        if vehicle == "" or vehicle == LONG_DASH or character == "" or character == LONG_DASH:
+            self.character = None
             self.vehicle = None
         else:
-            self.driver = driver
+            self.character = character
             self.vehicle = vehicle
             
     #Returns the player's skill rating based on their VR and vehicle combination

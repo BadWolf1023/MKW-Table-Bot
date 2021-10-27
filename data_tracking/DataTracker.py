@@ -12,10 +12,13 @@ from datetime import datetime, timedelta
 import Race as TableBotRace
 from typing import List, Dict, Tuple
 import UtilityFunctions
-from copy import deepcopy
-
+from copy import deepcopy, copy
+import pprint
+import traceback
+DEBUGGING_DATA_TRACKER = False
 
 #dict of channel IDs to tier numbers
+
 RT_NAME = "rt"
 CT_NAME = "ct"
 RXX_LOCKER_NAME = "rxx_locker"
@@ -53,26 +56,28 @@ CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS = {
 
 RT_REVERSE_TIER_MAPPINGS = defaultdict(set)
 CT_REVERSE_TIER_MAPPINGS = defaultdict(set)
-ALREADY_ADDED_ERROR = 11
-FATAL_ERROR = 12
-RACE_ADD_SUCCESS = 10
-DATA_DUMP_SUCCESS = 9
+
 for k,v in RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
     RT_REVERSE_TIER_MAPPINGS[v].add(k)
 for k,v in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
-    CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[v].add(k)
+    CT_REVERSE_TIER_MAPPINGS[v].add(k)
+    
 TABLE_BOT_CHANNEL_TIER_MAPPINGS = {RT_NAME:RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS, CT_NAME:CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS}
 
 room_data = {RT_NAME:{},
              CT_NAME:{},
              RXX_LOCKER_NAME:{}
              }
+ALREADY_ADDED_ERROR = 11
+FATAL_ERROR = 12
+RACE_ADD_SUCCESS = 10
+DATA_DUMP_SUCCESS = 9
 #Need rxx -> [channel_id:channel_data:default_dict, room_data]
 
 from collections import namedtuple
 Place = namedtuple('Place', ['fc', 'name', 'place', 'time', 'lagStart', 'playerURL', 'pid', 'ol_status', 'roomPosition', 'roomType', 'connectionFails', 'role', 'vr', 'character', 'vehicle', 'discord_name', 'lounge_name', 'mii_hex'])
 Race = namedtuple('Race', ['timeAdded', 'channel_id', 'tier', 'matchTime', 'id', 'raceNumber', 'roomID', 'rxx', 'trackURL', 'roomType', 'trackName', 'trackNameFixed', 'cc', 'placements', 'region', 'is_ct'])
-Event = namedtuple('Event', ['allFCs', 'races', 'name_changes', 'removed_races', 'placement_history', 'forcedRoomSize', 'playerPenalties', 'dc_on_or_before', 'set_up_user', 'sub_ins', 'playersPerTeam', 'numberOfTeams', 'defaultRoomSize', 'numberOfGPs', 'eventName', 'missingRacePts', 'manualEdits', 'ignoreLargeTimes', 'teamPenalties', 'forcedRoomSize', 'teams', 'miis'])
+Event = namedtuple('Event', ['allFCs', 'races', 'room_type', 'name_changes', 'removed_races', 'placement_history', 'forcedRoomSize', 'playerPenalties', 'dc_on_or_before', 'sub_ins', 'set_up_user_discord_id', 'set_up_user_display_name', 'playersPerTeam', 'numberOfTeams', 'defaultRoomSize', 'numberOfGPs', 'eventName', 'missingRacePts', 'manualEdits', 'ignoreLargeTimes', 'teamPenalties', 'teams', 'miis'])
 
 """
 LOCK_OBTAINED = 0
@@ -122,11 +127,13 @@ def tier_matches(tier, channel_data):
 class DataRetriever(object):
     #TODO: Finish method
     @staticmethod
-    def choose_best_event_data(channel_id_events:Dict[int, List[List, Event]], prefer_tier=False) -> Tuple[List, Event]:
+    def choose_best_event_data(channel_id_events:Dict[int, List], prefer_tier=False, require_private_room=True) -> Tuple[List, Event]:
         '''Takes a dictionary with channel ids mapping to event data and returns the channel data and event that is most likely to be legitimate and accurate'''
         LEIGITMATE_ROOM_UPDATE_COUNT = 3
         cur_best = None
-        for channel_data, event in channel_id_events.values():
+        #Filter by private rooms only if required
+        filtered_events = filter(channel_id_events.values(), lambda event_data: (not require_private_room or all(race.roomType == TableBotRace.PRIVATE_ROOM_TYPE for race in event_data[1].races)))
+        for channel_data, event in filtered_events:
             if prefer_tier and get_tier(channel_data) is None:
                 continue
             if get_room_update_count(channel_data) < LEIGITMATE_ROOM_UPDATE_COUNT:
@@ -146,7 +153,10 @@ class DataRetriever(object):
         time_cutoff = (datetime.now() - timedelta(days=in_last_days)) if in_last_days else datetime.min
         results = []
         for rxx in rxx_dict:
-            channel_data, event = DataRetriever.choose_best_event_data(rxx_dict[rxx], prefer_tier=(tier is None))
+            best_data = DataRetriever.choose_best_event_data(rxx_dict[rxx], prefer_tier=(tier is None))
+            if best_data is None:
+                continue
+            channel_data, event = best_data
             if tier_matches(tier, channel_data) and time_cutoff < get_start_time(channel_data):
                 results.append(event)
         return results
@@ -207,8 +217,8 @@ class RoomTracker(object):
     
     @staticmethod
     def create_race(channel_data_info, race:TableBotRace.Race) -> Race:
-        channel_id = channel_data_info[0]
-        tier = channel_data_info[4]
+        channel_id = channel_data_info[0][0]
+        tier = get_tier(channel_data_info[0])
         all_placements = [RoomTracker.create_placement(p) for p in race.getPlacements()]
         return Race(timeAdded=datetime.now(),
                     channel_id=channel_id,
@@ -221,7 +231,7 @@ class RoomTracker(object):
                     trackURL=race.get_track_url(),
                     roomType=race.get_room_type(),
                     trackName=race.get_track_name(),
-                    trackNameFixed=Race.remove_author_and_version_from_name(race.get_track_name()),
+                    trackNameFixed=TableBotRace.remove_author_and_version_from_name(race.get_track_name()),
                     cc=race.get_cc(),
                     region=race.get_region(),
                     is_ct=race.is_custom_track(),
@@ -229,18 +239,20 @@ class RoomTracker(object):
     
     @staticmethod
     def get_miis(channel_bot) -> Dict[str, str]:
-        return {mii.FC : mii.mii_data_hex_str for mii in channel_bot.miis}
+        #[print(mii) for mii in channel_bot.get_miis()]
+        return {FC : mii.mii_data_hex_str for (FC,mii) in channel_bot.get_miis().items()}
             
     @staticmethod
     def create_event(channel_bot) -> Event:
         return Event(allFCs=set(channel_bot.getRoom().getFCs()),
                      races=[],
-                     name_changes=channel_bot.getRoom().name_changes.copy(),
-                     removed_races=channel_bot.getRoom().removed_races.copy(),
-                     placement_history=channel_bot.getRoom().placement_history.copy(),
-                     forcedRoomSize=channel_bot.getRoom().forcedRoomSize.copy(),
-                     playerPenalties=channel_bot.getRoom().playerPenalties.copy(),
-                     dc_on_or_before=channel_bot.getRoom().dc_on_or_before.copy(),
+                     room_type=channel_bot.getRoom().get_room_type(),
+                     name_changes=copy(channel_bot.getRoom().name_changes),
+                     removed_races=copy(channel_bot.getRoom().removed_races),
+                     placement_history=copy(channel_bot.getRoom().placement_history),
+                     forcedRoomSize=copy(channel_bot.getRoom().forcedRoomSize),
+                     playerPenalties=copy(channel_bot.getRoom().playerPenalties),
+                     dc_on_or_before=copy(channel_bot.getRoom().dc_on_or_before),
                      sub_ins=deepcopy(channel_bot.getRoom().sub_ins),
                      set_up_user_discord_id=channel_bot.getRoom().set_up_user,
                      set_up_user_display_name=channel_bot.getRoom().set_up_user_display_name,
@@ -250,11 +262,10 @@ class RoomTracker(object):
                      numberOfGPs=channel_bot.getWar().numberOfGPs,
                      eventName=channel_bot.getWar().warName,
                      missingRacePts=channel_bot.getWar().missingRacePts,
-                     manualEdits=channel_bot.getWar().manualEdits.copy(),
+                     manualEdits=copy(channel_bot.getWar().manualEdits),
                      ignoreLargeTimes=channel_bot.getWar().ignoreLargeTimes,
-                     teamPenalties=channel_bot.getWar().teamPenalties.copy(),
-                     forcedRoomSize=channel_bot.getWar().forcedRoomSize.copy(),
-                     teams=channel_bot.getWar().teams.copy(),
+                     teamPenalties=copy(channel_bot.getWar().teamPenalties),
+                     teams=copy(channel_bot.getWar().teams),
                      miis=RoomTracker.get_miis(channel_bot))
     @staticmethod
     def update_event_data(channel_bot, channel_data_info):
@@ -262,12 +273,13 @@ class RoomTracker(object):
         channel_data_info[1].miis.update(RoomTracker.get_miis(channel_bot))
         channel_data_info[1] = Event(allFCs=channel_data_info[1].allFCs,
                                      races=channel_data_info[1].races,
-                                     name_changes=channel_bot.getRoom().name_changes.copy(),
-                                     removed_races=channel_bot.getRoom().removed_races.copy(),
-                                     placement_history=channel_bot.getRoom().placement_history.copy(),
-                                     forcedRoomSize=channel_bot.getRoom().forcedRoomSize.copy(),
-                                     playerPenalties=channel_bot.getRoom().playerPenalties.copy(),
-                                     dc_on_or_before=channel_bot.getRoom().dc_on_or_before.copy(),
+                                     room_type=channel_bot.getRoom().get_room_type(),
+                                     name_changes=copy(channel_bot.getRoom().name_changes),
+                                     removed_races=copy(channel_bot.getRoom().removed_races),
+                                     placement_history=copy(channel_bot.getRoom().placement_history),
+                                     forcedRoomSize=copy(channel_bot.getRoom().forcedRoomSize),
+                                     playerPenalties=copy(channel_bot.getRoom().playerPenalties),
+                                     dc_on_or_before=copy(channel_bot.getRoom().dc_on_or_before),
                                      sub_ins=deepcopy(channel_bot.getRoom().sub_ins),
                                      set_up_user_discord_id=channel_bot.getRoom().set_up_user,
                                      set_up_user_display_name=channel_bot.getRoom().set_up_user_display_name,
@@ -277,11 +289,10 @@ class RoomTracker(object):
                                      numberOfGPs=channel_bot.getWar().numberOfGPs,
                                      eventName=channel_bot.getWar().warName,
                                      missingRacePts=channel_bot.getWar().missingRacePts,
-                                     manualEdits=channel_bot.getWar().manualEdits.copy(),
+                                     manualEdits=copy(channel_bot.getWar().manualEdits),
                                      ignoreLargeTimes=channel_bot.getWar().ignoreLargeTimes,
-                                     teamPenalties=channel_bot.getWar().teamPenalties.copy(),
-                                     forcedRoomSize=channel_bot.getWar().forcedRoomSize.copy(),
-                                     teams=channel_bot.getWar().teams.copy(),
+                                     teamPenalties=copy(channel_bot.getWar().teamPenalties),
+                                     teams=copy(channel_bot.getWar().teams),
                                      miis=channel_data_info[1].miis)
     
     @staticmethod
@@ -297,7 +308,7 @@ class RoomTracker(object):
         #if lock_status != LOCK_OBTAINED: #in use
         #    return
         
-        event.races.append(RoomTracker.create_race(race))
+        event.races.append(RoomTracker.create_race(channel_data_info, race))
         return RACE_ADD_SUCCESS
         
     
@@ -305,7 +316,7 @@ class RoomTracker(object):
     def update_channel_meta_data(channel_bot, channel_data_info):
         channel_meta_data, event = channel_data_info
         roomRaceIDs = set(r.get_race_id() for r in channel_bot.getRoom().getRaces())
-        eventRaceIDs = set(r.get_race_id() for r in event.races)
+        eventRaceIDs = set(r.id for r in event.races)
         if not (len(roomRaceIDs.difference(eventRaceIDs)) == 0 or roomRaceIDs.issubset(eventRaceIDs)): #The room added a race
             channel_meta_data[2] = datetime.now()
             channel_meta_data[3] += 1
@@ -336,12 +347,16 @@ class RoomTracker(object):
     @staticmethod
     def add_data(channel_bot):
         #free_old_locks()
-        if channel_bot.is_initialized():
+        
+        if channel_bot.getRoom().is_initialized():
             try:
                 success_code = RoomTracker.add_races(channel_bot)
-            except Exception as e:
-                raise e
-        print(room_data)
+                if DEBUGGING_DATA_TRACKER:
+                    dump_room_data()
+                    pretty_print_room_data()
+            except:
+                common.log_traceback(traceback)
+        
         
             
 
@@ -356,8 +371,24 @@ class RoomTracker(object):
 
 
 
-
-
+def pretty_print_room_data():
+    temp_data = deepcopy(room_data)
+    rt_rxx_dict = temp_data[RT_NAME]
+    ct_rxx_dict = temp_data[CT_NAME]
+    for rxx_dict in [rt_rxx_dict, ct_rxx_dict]:
+        for channel_ids in rxx_dict.values():
+            for rxx_channel_data in channel_ids.values():
+                _, event = rxx_channel_data
+                if event.races is not None:
+                    for race_index, race in enumerate(event.races):
+                        for place_index, place in enumerate(race.placements):
+                            race.placements[place_index] = place._asdict()
+                        event.races[race_index] = race._asdict()
+                with open("room_race_data.txt", "w", encoding="utf-8") as g:
+                    pprint.pprint([r for r in reversed(event.races)], stream=g, depth=15, width=200, sort_dicts=False)
+                rxx_channel_data[1] = event._asdict()
+    with open("room_data.txt", "w", encoding="utf-8") as f:
+        pprint.pprint(temp_data, stream=f, depth=15, width=200)
 
 
             
@@ -366,11 +397,24 @@ def dump_room_data():
 
 def load_room_data():
     room_data.clear()
-    room_data.update(common.load_pkl(common.ROOM_DATA_TRACKER_FILE, "Could not load pickle for room data in data tracking, using empty data instead.", default=dict))
+    default_data_load = lambda:{RT_NAME:{},
+             CT_NAME:{},
+             RXX_LOCKER_NAME:{}
+             }
+    room_data.update(common.load_pkl(common.ROOM_DATA_TRACKER_FILE, "Could not load pickle for room data in data tracking, using empty data instead.", default=default_data_load))
+    
 
 def initialize():
     load_room_data()
 
-def on_exit():
+def save_data():
     dump_room_data()
+    
+def on_exit():
+    save_data()
+
+
+if __name__ == '__init__':
+    initialize()
+    pretty_print_room_data()
     
