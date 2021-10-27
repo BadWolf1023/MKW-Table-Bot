@@ -16,6 +16,7 @@ import URLShortener
 import AbuseTracking
 import WiimmfiSiteFunctions
 import TagAIShell
+from data_tracking import DataTracker
 
 #External library imports for this file
 import discord
@@ -78,6 +79,7 @@ QUICK_EDIT_TERMS = DEPRECATED_QUICK_EDIT_TERMS | {"changeplace", "changeposition
 TABLE_THEME_TERMS = {'style', 'theme', 'tablestyle', 'tabletheme'}
 GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
 DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
+
 
 
 
@@ -156,6 +158,8 @@ LOOKUP_TERMS = {"lookup"}
 ADD_BOT_ADMIN_TERMS = {"addbotadmin", "addadmin"}
 REMOVE_BOT_ADMIN_TERMS = {"removebotadmin", "removeadmin"}
 GET_LOGS_TERMS = {"getlog", "getlogs", "logs"}
+ADD_SHA_TERMS = {"addsha", "sha"}
+REMOVE_SHA_TERMS = {"removesha", "delsha"}
 
 needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS
 
@@ -196,8 +200,8 @@ elif common.running_beta and not common.beta_is_real:
 
 bad_wolf_facts = []
 
-def createEmptyTableBot(server_id=None):
-    return TableBot.ChannelBot(server_id=server_id)
+def createEmptyTableBot(server_id=None, channel_id=None):
+    return TableBot.ChannelBot(server_id=server_id, channel_id=channel_id)
 
 client = discord.Client()
 
@@ -316,7 +320,7 @@ def check_create_channel_bot(message:discord.Message):
     if server_id not in table_bots:
         table_bots[server_id] = {}
     if channel_id not in table_bots[server_id]:
-        table_bots[server_id][channel_id] = createEmptyTableBot(server_id)
+        table_bots[server_id][channel_id] = createEmptyTableBot(server_id, channel_id)
     table_bots[server_id][channel_id].updatedLastUsed()
     return table_bots[server_id][channel_id]
     
@@ -353,6 +357,8 @@ def private_data_init():
 def initialize():
     create_folders()
     private_data_init()
+    DataTracker.initialize()
+    Race.initialize()
     UserDataProcessing.initialize()
     ServerFunctions.initialize()
     UtilityFunctions.initialize()
@@ -571,6 +577,8 @@ async def on_message(message: discord.Message):
                 size_str += "Lounge submission tracking size (KiB): " + str(get_size(lounge_submissions)//1024)
                 print(f"get_size: FC_DiscordID:")
                 size_str += "\nFC_DiscordID (KiB): " + str(get_size(UserDataProcessing.FC_DiscordID)//1024)
+                print(f"get_size: Data tracking room data (KiB):")
+                size_str += "Data tracking room data (KiB): " + str(get_size(DataTracker.room_data)//1024)
                 print(f"get_size: discordID_Lounges:")
                 size_str += "\ndiscordID_Lounges (KiB): " + str(get_size(UserDataProcessing.discordID_Lounges)//1024)
                 print(f"get_size: discordID_Flags (KiB):")
@@ -614,11 +622,16 @@ async def on_message(message: discord.Message):
             
             elif args[0] in GET_LOGS_TERMS:
                 await commands.BadWolfCommands.get_logs_command(message)
+            
+            elif args[0] in ADD_SHA_TERMS:
+                await commands.BadWolfCommands.add_sha_track(message, args, command)
+                
+            elif args[0] in REMOVE_SHA_TERMS:
+                await commands.BadWolfCommands.remove_sha_track(message, args)
                 
             elif args[0] in {"aidata"} and (common.is_bad_wolf(message.author) or message.author.id == 267395889423712258):
                 if os.path.exists(TagAIShell.AI_Results_file_name):
                     await message.channel.send(content="Put in Table Bot directory, and use `TagAIShell.view_AI_results()`", file=discord.File(TagAIShell.AI_Results_file_name))
-
 
             elif args[0] in RACES_TERMS:
                 await commands.TablingCommands.display_races_played_command(message, this_bot, server_prefix, is_lounge_server)
@@ -687,7 +700,6 @@ async def on_message(message: discord.Message):
             
             else:
                 await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  
-            
                 
 
     except discord.errors.Forbidden:
@@ -750,10 +762,7 @@ async def on_message(message: discord.Message):
         await common.safe_send(message, "MKW Table Bot cannot access the website. Wiimm has neglected this situation. There is no path forward unless Wiimm whitelists Table Bot. I suggest you go to <https://forum.wii-homebrew.com>, go to 'User Introductions', and create a post about it.")
 
     except:
-        with open(common.ERROR_LOGS_FILE, "a+", encoding="utf-8") as f:
-            f.write(f"\n{str(datetime.now())}: \n")
-            traceback.print_exc(file=f)
-
+        common.log_traceback(traceback)
         lounge_submissions.clear_user_cooldown(message.author)
         await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please use {server_prefix}log to tell me what happened. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
         raise
@@ -971,20 +980,26 @@ def destroy_all_tablebots():
     for server_id in table_bots:
         for channel_id in table_bots[server_id]:
             table_bots[server_id][channel_id].destroy()
-    
+
+def on_exit():
+    save_data()
+    destroy_all_tablebots()
+    print(f"{str(datetime.now())}: All table bots cleaned up.")
+     
 def save_data():
     print(f"{str(datetime.now())}: Saving data")
     successful = UserDataProcessing.non_async_dump_data()
     if not successful:
         print("LOUNGE API DATA DUMP FAILED! CRITICAL!")
         common.log_text("LOUNGE API DATA DUMP FAILED! CRITICAL!", common.ERROR_LOGGING_TYPE)
+    DataTracker.save_data()
+    Race.save_data()
     pickle_tablebots()
     pickle_CTGP_region()
     pickle_lounge_updates()
     pkl_bad_wolf_facts()
     Stats.backup_files()
     Stats.dump_to_stats_file()
-    destroy_all_tablebots()
     #do_lounge_name_matching()
     
     print(f"{str(datetime.now())}: Finished saving data")
@@ -1038,7 +1053,7 @@ def handler(signum, frame):
 
 signal.signal(signal.SIGINT, handler)
 
-atexit.register(save_data)
+atexit.register(on_exit)
 
 initialize()
 if common.in_testing_server:

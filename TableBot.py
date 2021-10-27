@@ -9,7 +9,6 @@ import War
 from datetime import datetime
 import humanize
 from bs4 import NavigableString, Tag
-from WiimmfiSiteFunctions import _is_fc
 import MiiPuller
 #import concurrent.futures
 import common
@@ -17,6 +16,8 @@ from typing import Dict, Tuple
 import Mii
 import ServerFunctions
 import asyncio
+from data_tracking import DataTracker
+import UtilityFunctions
 
 
 lorenzi_style_key = "#style"
@@ -49,9 +50,7 @@ class ChannelBot(object):
     '''
     classdocs
     '''
-    def __init__(self, numTeams=None, warFormat=None, prev_command_sw=False, room=None, war=None, manualWarSetup=False, server_id=None):
-        self.numTeams = numTeams
-        self.warFormat = warFormat
+    def __init__(self, prev_command_sw=False, room=None, war=None, manualWarSetup=False, server_id=None, channel_id=None):
         self.room:Room.Room = room
         self.war:War.War = war
         self.prev_command_sw = prev_command_sw
@@ -69,6 +68,8 @@ class ChannelBot(object):
         self.should_send_mii_notification = True
         self.set_style_and_graph(server_id)
         self.set_dc_points(server_id)
+        self.server_id = server_id
+        self.channel_id = channel_id
         self.race_size = 4
     
     def get_room_started_message(self):
@@ -178,18 +179,33 @@ class ChannelBot(object):
     def remove_miis_with_missing_files(self):
         to_delete = set()
         for fc, mii in self.miis.items():
+            
             if not mii.has_table_picture_file():
+                
+                tier = None
+                if self.channel_id in DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
+                    tier = str(DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
+                if self.channel_id in DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
+                    tier = str(DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
+                common.log_error(f"{fc} does not have a mii picture - channel {self.channel_id} {'' if tier is None else 'T'+tier}")
                 to_delete.add(fc)
         for fc in to_delete:
             try:
                 self.miis[fc].clean_up()
                 del self.miis[fc]
             except:
+                tier = None
+                if self.channel_id in DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
+                    tier = str(DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
+                if self.channel_id in DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
+                    tier = str(DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
+                common.log_error(f"Exception in remove_miis_with_missing_files: {fc} failed to clean up - channel {self.channel_id} {'' if tier is None else 'T'+tier}")
                 pass
             
     async def populate_miis(self, message_id:str):
         if common.MIIS_ON_TABLE_DISABLED:
             return
+        #print("\n\n\n" + str(self.get_miis()))
         if self.getWar() is not None and self.getWar().displayMiis:
             if self.populating:
                 return
@@ -198,9 +214,14 @@ class ChannelBot(object):
             if self.getRoom() is not None:
                 self.remove_miis_with_missing_files()
                 all_fcs_in_room = self.getRoom().getFCs()
+                
+                OBTAINED_MIIS = self.miis.keys()
+                
                 if all_fcs_in_room != self.miis.keys():
-                    max_concurrent = 5
+                    #print("Populating miis...")
+                    max_concurrent = 6
                     all_missing_fcs = [fc for fc in self.getRoom().getFCs() if fc not in self.miis]
+                    #print(f"Missing FCs: {all_missing_fcs}")
                     missing_fc_chunks = [all_missing_fcs[i:i+max_concurrent] for i in range(len(all_missing_fcs))[::max_concurrent]]
                     for missing_fc_chunk in missing_fc_chunks:
                         future_to_fc = {MiiPuller.get_mii(fc, message_id):fc for fc in missing_fc_chunk}
@@ -245,6 +266,8 @@ class ChannelBot(object):
         if self.room is None:
             return False
         success = await self.room.update_room()
+        if success:
+            DataTracker.RoomTracker.add_data(self)
         self.updateLoungeFinishTime()
         return success
 
@@ -265,7 +288,7 @@ class ChannelBot(object):
         
         
         created_when = str(temp_test.contents[2].string).strip()
-        rLID = str(temp_test.contents[1]['data-href']).split("/")[4]
+        rLID = str(temp_test.contents[1][common.HREF_HTML_NAME]).split("/")[4]
         created_when = created_when[:created_when.index("ago)")+len("ago)")].strip()
         room_str = "Room " + str(temp_test.contents[1].text) + ": " + created_when + " - "
         last_match = str(temp_test.contents[6].string).strip("\n\t ")
@@ -312,7 +335,7 @@ class ChannelBot(object):
             del place_in_room
             
             mii_classes = correctLevel.find_all(class_="mii-font")
-            if len(place_in_room_str) == 0 or len(mii_classes) != 1 or not _is_fc(FC_data_str):
+            if len(place_in_room_str) == 0 or len(mii_classes) != 1 or not UtilityFunctions.is_fc(FC_data_str):
                 player_data[FC_data_str] = ("bad data", "bad data")
                 common.log_text(str(place_in_room_str), common.ERROR_LOGGING_TYPE)
                 common.log_text(str(mii_classes), common.ERROR_LOGGING_TYPE)
@@ -350,6 +373,7 @@ class ChannelBot(object):
             if temp.is_initialized():
                 self.room = temp
                 self.updateLoungeFinishTime()
+                DataTracker.RoomTracker.add_data(self)
                 success = True
         
         while len(soups) > 0:
@@ -484,8 +508,6 @@ class ChannelBot(object):
     
     def reset(self, server_id):
         self.destroy()
-        self.numTeams = None
-        self.warFormat = None
         self.room = None
         self.war = None
         self.prev_command_sw = False

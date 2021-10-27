@@ -35,41 +35,83 @@ class Player(object):
     '''
 
 
-    def __init__(self, FC, name, role, positionInRoom, vr, points=0, discord_name=None, lounge_name=None, driver_vehicle="", room_type=""):
+    def __init__(self, FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, playerName, discord_name=None, lounge_name=None, mii_hex=None):
         '''
         Constructor
         '''
         self.FC = str(FC)
-        self.name = str(name)
+        self.playerPageLink = str(playerPageLink)
+        self.pid = self.playerPageLink.split("/")[-1].strip('p')
+        self.ol_status = ol_status
+        self.positionInRoom = roomPosition
+        self.room_type = playerRoomType
+        self.playerConnFails = playerConnFails
+        self.role = str(role)
+        self.vr = vr
+        self.character = None
+        self.vehicle = None
+        self.input_character_vehicle(character_vehicle)
+        self.name = str(playerName)
         if self.name == "no name":
             self.name = "Player"
-        self.role = str(role)
-        
-        self.points = str(points)
-        self.positionInRoom = positionInRoom
-        self.vr = vr
         self.discord_name = discord_name
         self.lounge_name = lounge_name
-        self.driver = None
-        self.vehicle = None
-        self.input_driver_vehicle(driver_vehicle)
-        self.room_type = room_type
+        self.mii_hex = mii_hex
     
-    def input_driver_vehicle(self, driver_vehicle):
-        if driver_vehicle is None:
-            self.driver = None
+    def set_mii_hex(self, mii_hex):
+        self.mii_hex = mii_hex
+    
+    def get_mii_hex(self):
+        return self.mii_hex
+    def get_lounge_name(self):
+        return self.lounge_name
+    def get_discord_name(self):
+        return self.discord_name
+    def get_vehicle(self):
+        return self.vehicle
+    def get_character(self):
+        return self.character
+    def get_VR(self):
+        return self.vr
+    def get_role(self):
+        return self.role
+    def get_connection_fails(self):
+        return self.playerConnFails
+    def get_room_type(self):
+        return self.room_type
+    def get_position(self):
+        return self.positionInRoom
+    def get_ol_status(self):
+        return self.ol_status
+    def get_player_id(self):
+        return self.pid
+    def get_mkwx_url(self):
+        return self.playerPageLink
+    def get_name(self):
+        return self.name
+    def get_FC(self):
+        return self.FC
+        
+        
+        
+        
+    
+    def input_character_vehicle(self, character_vehicle):
+        if character_vehicle is None:
+            self.character = None
             self.vehicle = None
             return
-        if "@" not in driver_vehicle:
+        if "@" not in character_vehicle:
             return
-        driver, vehicle = driver_vehicle.split('@', 1)
-        driver = driver.strip()
+
+        character, vehicle = character_vehicle.split('@', 1)
+        character = character.strip()
         vehicle = vehicle.strip()
-        if vehicle == "" or vehicle == LONG_DASH or driver == "" or driver == LONG_DASH:
-            self.driver = None
+        if vehicle == "" or vehicle == LONG_DASH or character == "" or character == LONG_DASH:
+            self.character = None
             self.vehicle = None
         else:
-            self.driver = driver
+            self.character = character
             self.vehicle = vehicle
             
     #Returns the player's skill rating based on their VR and vehicle combination

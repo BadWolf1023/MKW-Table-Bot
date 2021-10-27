@@ -4,6 +4,7 @@ import common
 from typing import List
 import discord
 from pathlib import Path
+import re
 
     
         
@@ -176,6 +177,16 @@ async def safe_send_file(message:discord.Message, content):
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
+
+hex_chars = "ABCDEFabcdef0123456789" 
+def is_hex(text):
+    return all(c in hex_chars for c in text)
+
+def is_rLID(roomID):
+    return re.match("^r[0-9]{7}$", roomID) is not None
+
+def is_fc(fc):
+    return re.match("^[0-9]{4}[-][0-9]{4}[-][0-9]{4}$", fc.strip()) is not None
     
 def initialize():
     common.botAdmins.clear()

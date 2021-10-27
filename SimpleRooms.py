@@ -14,6 +14,7 @@ from bs4.element import Tag
 import itertools
 import asyncio
 from typing import List
+import common
 
 
 def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
@@ -53,8 +54,8 @@ def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
             
             
             vehicle_combinations = [None, None]
-            if 'data-tooltip' in allRows[6].attrs:
-                vehicle_combination = allRows[6]['data-tooltip']
+            if common.TOOLTIP_NAME in allRows[6].attrs:
+                vehicle_combination = allRows[6][common.TOOLTIP_NAME]
                 if '<br>' in vehicle_combination:
                     combo1, combo2 = vehicle_combination.split('<br>')
                     vehicle_combinations = [combo1, combo2]
@@ -69,9 +70,9 @@ def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
                 playerNames.append('no name')
                 playerNames.append('no name')
             index = 0
-            plyr1 = Player.Player(FCs[index], playerNames[index], roles[index], roomPositions[index], vrs[index], driver_vehicle=vehicle_combinations[index], room_type=room_types[index])
+            plyr1 = Player.Player(FC=FCs[index], playerPageLink="", ol_status="", roomPosition=roomPositions[index], playerRoomType=room_types[index], playerConnFails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], playerName=playerNames[index])
             index = 1
-            plyr2 = Player.Player(FCs[index], playerNames[index], roles[index], roomPositions[index], vrs[index], driver_vehicle=vehicle_combinations[index], room_type=room_types[index])
+            plyr2 = Player.Player(FC=FCs[index], playerPageLink="", ol_status="", roomPosition=roomPositions[index], playerRoomType=room_types[index], playerConnFails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], playerName=playerNames[index])
             
             placements.append(Placement.Placement(plyr1, -1, times[0]))
             placements.append(Placement.Placement(plyr2, -1, times[1]))
@@ -106,10 +107,8 @@ def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
             
             while len(allRows) > 0:
                 del allRows[0]
-            
-            
-            
-            plyr = Player.Player(FC, playerName, role, roomPosition, vr, driver_vehicle=vehicle_combination, room_type=room_type)
+
+            plyr = Player.Player(FC=FC, playerPageLink="", ol_status="", roomPosition=roomPosition, playerRoomType=room_type, playerConnFails=None, role=role, vr=vr, character_vehicle=vehicle_combination, playerName=playerName)
             p = Placement.Placement(plyr, -1, time)
             placements.append(p)
     except Exception as e:
@@ -210,7 +209,7 @@ def get_race_from_mkwx_bs4_room_header(bs4_room_header:List[str]):
         track = track.replace('Last track:', '').strip()
     #print(f"RoomID: {roomID}, roomType: {roomType}, cc: {cc}, matchTime: {matchTime}, raceNumber: {raceNumber}, track: {track}")
             
-    return Race.Race(matchTime, matchID, raceNumber, roomID, roomType, cc, track)
+    return Race.Race(matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct=False)
 
     
 

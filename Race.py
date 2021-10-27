@@ -5,7 +5,10 @@ Created on Jul 12, 2020
 '''
 import UtilityFunctions
 import UserDataProcessing
-from Placement import DISCONNECTION_TIME
+from Placement import DISCONNECTION_TIME, Placement
+from collections import defaultdict
+from typing import List
+import common
 
 CTGP_CTWW_ROOM_TYPE = 'vs_54'
 BATTLE_ROOM_TYPE = 'bt'
@@ -59,6 +62,47 @@ track_name_abbreviation_mappings = {
     "N64 Bowser's Castle (Nintendo)": ("BC64", "64BC")
     }
 
+sha_track_name_mappings = {"9f09ddb05bc5c7b04bb7aa120f6d0f21774143eb":"Waluigi's Motocross (v1.9)"}
+
+def remove_author_and_version_from_name(track_name):
+    if track_name is None or track_name == "None":
+        return "No track"
+    tempName = track_name.strip()
+    if "(" in tempName:
+        author_index = tempName.rfind("(")
+        if author_index > 2:
+            tempName = tempName[:author_index-1].strip()
+    
+    for i in reversed(range(2, len(tempName))):
+        
+        if tempName[i].isnumeric() and tempName[i-1] == 'v':
+            tempName = tempName[:i-1].strip()
+            
+            break
+    
+    if "beta" in tempName.lower():
+        betaIndex = tempName.lower().rfind("beta")
+        if betaIndex > 0:
+            temp = tempName[:betaIndex].strip()
+            if len(temp) > 0:
+                tempName = temp
+    
+    tempOld = tempName.replace(".ctgp", "").strip()
+    if len(tempOld) > 0:
+        return tempOld
+    
+    return tempName
+
+def initialize():
+    sha_track_name_mappings.clear()
+    sha_track_name_mappings.update(common.load_pkl(common.SHA_TRACK_NAMES_FILE, "Could not load in SHA Track names. Using empty dict instead", default=dict))
+
+def save_data():
+    common.dump_pkl(sha_track_name_mappings, common.SHA_TRACK_NAMES_FILE, "Could not dump pkl for SHA Track names.", display_data_on_error=True)
+    
+def on_exit():
+    save_data()
+
 def set_ctgp_region(new_region:str):
     global CTGP_CTWW_ROOM_TYPE
     CTGP_CTWW_ROOM_TYPE = new_region
@@ -70,20 +114,52 @@ class Race:
 
 
 
-    def __init__(self, matchTime, matchID, raceNumber, roomID, roomType, cc, track, placements=None):
+    def __init__(self, matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, rxx=None, raceID=None, trackURL=None, placements=None):
         self.matchTime = matchTime
         self.matchID = matchID
         self.raceNumber = raceNumber
         self.roomID = roomID
+        self.rxx = rxx
+        self.trackURL = trackURL
+        self.raceID = raceID
         self.roomType = roomType
         self.track = str(track)
-        if self.track == "u":
-            self.track = "Unknown Track"
+        if self.track in sha_track_name_mappings:
+            self.track = sha_track_name_mappings[self.track]
+        self.track_check()
         self.cc = cc
         self.placements = []
         self.region = None
+        self.is_ct = is_ct
+        
+    def get_match_start_time(self):
+        return self.matchTime
+    def get_match_id(self):
+        return self.matchID
+    def get_race_number(self):
+        return self.raceNumber
+    def get_room_id(self):
+        return self.roomID
+    def get_rxx(self):
+        return self.rxx
+    def get_track_url(self):
+        return self.trackURL
+    def get_race_id(self):
+        return self.raceID
+    def get_room_type(self):
+        return self.roomType
+    def get_track_name(self):
+        return self.track
+    def get_cc(self):
+        return self.cc
+    def get_region(self):
+        return self.region
         
     
+    def track_check(self):
+        if UtilityFunctions.is_hex(self.track):
+            common.log_error(f"The following track had no SHA mapping: {self.track}")
+            
     
     def hasFC(self, FC):
         return False if self.getPlacement(FC) is None else True
@@ -94,6 +170,13 @@ class Race:
             return 0
         return len(self.placements)
     
+    def updateRoomType(self):
+        roomTypeCount = defaultdict(int)
+        for placement in self.getPlacements():
+            roomTypeCount[placement.getPlayer().room_type] += 1
+        mostCommonRoomType = max(roomTypeCount, key=lambda x: roomTypeCount[x])
+        self.roomType = mostCommonRoomType
+            
     def addPlacement(self, placement):
         #I'm seriously lazy, but it doesn't matter if we sort 12 times rather than inserting in the correct place - this is a small list
         self.placements.append(placement)
@@ -102,6 +185,7 @@ class Race:
         while i < len(self.placements):
             self.placements[i].place = i+1
             i += 1
+        self.updateRoomType()
          
     def setRegion(self, region):
         self.region = region
@@ -143,10 +227,10 @@ class Race:
             placement.place = place
 
     
-    def getPlacements(self):
+    def getPlacements(self) -> List[Placement]:
         return self.placements
     
-    def getPlacement(self, fc):
+    def getPlacement(self, fc) -> Placement:
         for p in self.placements:
             if p.player.FC == fc:
                 return p
@@ -164,33 +248,7 @@ class Race:
     
     
     def getTrackNameWithoutAuthor(self):
-        if self.track is None or self.track == "None":
-            return "No track"
-        tempName = self.track.strip()
-        if "(" in tempName:
-            author_index = tempName.rfind("(")
-            if author_index > 2:
-                tempName = tempName[:author_index-1].strip()
-        
-        for i in reversed(range(2, len(tempName))):
-            
-            if tempName[i].isnumeric() and tempName[i-1] == 'v':
-                tempName = tempName[:i-1].strip()
-                
-                break
-        
-        if "beta" in tempName.lower():
-            betaIndex = tempName.lower().rfind("beta")
-            if betaIndex > 0:
-                temp = tempName[:betaIndex].strip()
-                if len(temp) > 0:
-                    tempName = temp
-        
-        tempOld = tempName.replace(".ctgp", "").strip()
-        if len(tempOld) > 0:
-            return tempOld
-        
-        return tempName
+        return remove_author_and_version_from_name(self.track)
     
     def hasTie(self):
         for placement_1 in self.placements:
@@ -304,7 +362,18 @@ class Race:
         if region == PRIVATE_ROOM_TYPE:
             return "Private"
         return "Unknown"
-        
+    
+    def is_custom_track(self):
+        return self.is_ct
+    
+    def hasBlankTime(self):
+        return any(placement.is_disconnected() for placement in self.getPlacements())
+    
+    def entireRoomBlankTimes(self):
+        return all(placement.is_disconnected() for placement in self.getPlacements())
+    
+    def multipleBlankTimes(self):
+        return not self.entireRoomBlankTimes() and sum(1 for placement in self.getPlacements() if placement.is_disconnected()) > 1
         
     def __str__(self):
         curStr = "Race #" + str(self.raceNumber) + " - " + UtilityFunctions.process_name(self.getTrackNameWithoutAuthor()) + " - " + str(self.cc) + "cc" + \
@@ -314,5 +383,5 @@ class Race:
             placementsSTR += str("\n\t" + str(placement))
         return curStr + placementsSTR
             
-    
+
         

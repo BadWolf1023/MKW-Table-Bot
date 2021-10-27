@@ -6,7 +6,6 @@ Created on Jun 26, 2021
 
 #Bot internal imports - stuff I coded
 import WiimmfiSiteFunctions
-from WiimmfiSiteFunctions import _is_rLID, _is_fc
 import ServerFunctions
 import ImageCombine
 import War
@@ -135,6 +134,37 @@ class BadWolfCommands:
         if os.path.exists(common.FULL_MESSAGE_LOGGING_FILE):
             await message.channel.send(file=discord.File(common.FULL_MESSAGE_LOGGING_FILE))
 
+    @staticmethod
+    async def add_sha_track(message:discord.Message, args:List[str], command):
+        BadWolfCommands.is_badwolf_check(message.author, "cannot add sha track")
+        if len(args) < 3:
+            await message.channel.send("Requires 2 args `SHA, track_name`")
+            return
+        if not UtilityFunctions.is_hex(args[1]):
+            await message.channel.send(f"The given track is not an SHA: {args[1]}")
+            return
+        given_track_name = " ".join(command.split()[2:])
+        if args[1] in Race.sha_track_name_mappings:
+            await message.channel.send(f"The given track is already in SHA mappings with the following name: {args[1]}\nOverwriting...")
+        Race.sha_track_name_mappings[args[1]] = given_track_name
+        await message.channel.send(f"Added: {args[1]} -> {given_track_name}")
+    
+    @staticmethod
+    async def remove_sha_track(message:discord.Message, args:List[str]):
+        BadWolfCommands.is_badwolf_check(message.author, "cannot remove sha track")
+        if len(args) != 2:
+            await message.channel.send("Requires 1 args `SHA`")
+            return
+        if not UtilityFunctions.is_hex(args[1]):
+            await message.channel.send(f"The given track is not an SHA: {args[1]}")
+            return
+        if args[1] not in Race.sha_track_name_mappings:
+            await message.channel.send(f"The given track is not in SHA mappings. Current mappings: {'  |  '.join([str(k)+' : '+str(v) for k,v in Race.sha_track_name_mappings.items()])}")
+            return
+        given_track_name = Race.sha_track_name_mappings[args[1]]
+        del Race.sha_track_name_mappings[args[1]]
+        await message.channel.send(f"Removed: {args[1]} -> {given_track_name}")
+        
         
     #Adds or removes a discord ID to/from the bot admins
     @staticmethod
@@ -490,7 +520,7 @@ class OtherCommands:
     
     
         FC = None
-        if _is_fc(discordIDToLoad):
+        if UtilityFunctions.is_fc(discordIDToLoad):
             FC = discordIDToLoad
         else:
             id_lounge, fc_id = await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad])
@@ -659,7 +689,7 @@ class OtherCommands:
                 successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
                 if not successful:
                     await message.channel.send(f"Could not find {UtilityFunctions.process_name(str(message.mentions[0].name))} in a room. (This could be an error if I couldn't find their FC in the database.)")                      
-            elif _is_fc(args[1]):
+            elif UtilityFunctions.is_fc(args[1]):
                 successful, room_data, last_match_str, rLID = await this_bot.verify_room([args[1]])
                 if not successful:
                     await message.channel.send("Could not find this FC in a room.")
@@ -1638,8 +1668,7 @@ class TablingCommands:
                     delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
                     await delete_me.delete(delay=5)
                 else:
-                    this_bot.reset(server_id)
-                    this_bot.updateRLCoolDown()
+                    this_bot.reset(server_id)                    
                     
                     warFormat = args[1]
                     numTeams = args[2]
@@ -1654,6 +1683,16 @@ class TablingCommands:
                     if iLTPos < 0:
                         ignoreLargeTimes = ServerFunctions.get_server_large_time_setting(server_id)
                     
+                    try:
+                        this_bot.setWar(War.War(warFormat, numTeams, numgps, ignoreLargeTimes=ignoreLargeTimes, displayMiis=useMiis))
+                    except TableBotExceptions.InvalidWarFormatException:
+                        this_bot.setWar(None)
+                        await message.channel.send("War format was incorrect. Valid options: FFA, 1v1, 2v2, 3v3, 4v4, 5v5, 6v6. War not created.")
+                    except TableBotExceptions.InvalidNumberOfPlayersException:
+                        this_bot.setWar(None)
+                        await message.channel.send("Too many players based on the teams and war format. War not created.")
+                    
+                    this_bot.updateRLCoolDown()
                     message2 = await message.channel.send("Loading room...")
                     #This is the background task for getting miis, it will be awaited once everything in ?sw finishes
                     #Case 1: No mention, get FCs for the user - this happens when len(args) = 3
@@ -1663,79 +1702,72 @@ class TablingCommands:
                     #Case 5: Lounge name: No mention, len(args) > 3, neither rLID nor FC
                     successful = False
                     discordIDToLoad = None
-                    if len(args) == 3 or (len(args) > 3 and (numGPsPos == 3 or iLTPos == 3 or miisPos == 3)):
-                        discordIDToLoad = str(author_id)
-                        await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]) )
-                        FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-                        successful = await this_bot.load_room_smart([FCs])
-                        if not successful:
-                            await message.channel.send("Could not find you in a room. **Did you finish the first race?**")
-                    elif len(args) > 3:
-                        if len(message.raw_mentions) > 0:
-                            discordIDToLoad = str(message.raw_mentions[0])
-                            await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
+                    try:
+                        if len(args) == 3 or (len(args) > 3 and (numGPsPos == 3 or iLTPos == 3 or miisPos == 3)):
+                            discordIDToLoad = str(author_id)
+                            await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]) )
                             FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
                             successful = await this_bot.load_room_smart([FCs])
                             if not successful:
-                                lookup_name = UtilityFunctions.process_name(str(message.mentions[0].name))
-                                await message.channel.send(f"Could not find {lookup_name} in a room. **Did they finish the first race?**")                      
-                        elif _is_rLID(args[3]):
-                            successful = await this_bot.load_room_smart([args[3]])
-                            if not successful:
-                                await message.channel.send("Could not find this rxx number. Is the room over 24 hours old?")                                            
-                        elif _is_fc(args[3]):
-                            successful = await this_bot.load_room_smart([args[3]])
-                            if not successful:
-                                await message.channel.send("Could not find this FC in a room. **Did they finish the first race?**")
-                        else:
-                            their_name = ""
-                            for arg in command.split()[3:]:
-                                if '=' in arg:
-                                    break
-                                their_name += arg + " "
-                            their_name = their_name.strip()
-                            await updateData( * await LoungeAPIFunctions.getByLoungeNames([their_name]))
-                            FCs = UserDataProcessing.getFCsByLoungeName(their_name)
-                            successful = await this_bot.load_room_smart([FCs])
-                            if not successful:
-                                processed_lookup_name = UtilityFunctions.process_name(their_name)
-                                await message.channel.send(f"Could not find {processed_lookup_name} in a room. **Did they finish the first race?**")                      
-                    
+                                await message.channel.send("Could not find you in a room. **Did you finish the first race?**")
+                        elif len(args) > 3:
+                            if len(message.raw_mentions) > 0:
+                                discordIDToLoad = str(message.raw_mentions[0])
+                                await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
+                                FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
+                                successful = await this_bot.load_room_smart([FCs])
+                                if not successful:
+                                    lookup_name = UtilityFunctions.process_name(str(message.mentions[0].name))
+                                    await message.channel.send(f"Could not find {lookup_name} in a room. **Did they finish the first race?**")                      
+                            elif UtilityFunctions.is_rLID(args[3]):
+                                successful = await this_bot.load_room_smart([args[3]])
+                                if not successful:
+                                    await message.channel.send("Could not find this rxx number. Is the room over 24 hours old?")                                            
+                            elif UtilityFunctions.is_fc(args[3]):
+                                successful = await this_bot.load_room_smart([args[3]])
+                                if not successful:
+                                    await message.channel.send("Could not find this FC in a room. **Did they finish the first race?**")
+                            else:
+                                their_name = ""
+                                for arg in command.split()[3:]:
+                                    if '=' in arg:
+                                        break
+                                    their_name += arg + " "
+                                their_name = their_name.strip()
+                                await updateData( * await LoungeAPIFunctions.getByLoungeNames([their_name]))
+                                FCs = UserDataProcessing.getFCsByLoungeName(their_name)
+                                successful = await this_bot.load_room_smart([FCs])
+                                if not successful:
+                                    processed_lookup_name = UtilityFunctions.process_name(their_name)
+                                    await message.channel.send(f"Could not find {processed_lookup_name} in a room. **Did they finish the first race?**")                      
+                    finally:
+                        if not successful:
+                            this_bot.setWar(None)
                     #Room loaded successfully
                     if successful:
                         this_bot.freeLock()
                         this_bot.getRoom().setSetupUser(author_id,  message.author.display_name)
-                        try:
-                            this_bot.setWar(War.War(warFormat, numTeams, numgps, ignoreLargeTimes=ignoreLargeTimes, displayMiis=useMiis))
-                        except TableBotExceptions.InvalidWarFormatException:
-                            this_bot.setWar(None)
-                            await message.channel.send("War format was incorrect. Valid options: FFA, 1v1, 2v2, 3v3, 4v4, 5v5, 6v6. War not created.")
-                        except TableBotExceptions.InvalidNumberOfPlayersException:
-                            this_bot.setWar(None)
-                            await message.channel.send("Too many players based on the teams and war format. War not created.")
-                        else:  
-                        
-                            if this_bot.getWar() is not None:
-                                asyncio.create_task(this_bot.populate_miis(str(message.id)))
-                                players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numgps*4).items())
-                                await updateData(* await LoungeAPIFunctions.getByFCs([fc for fc, _ in players]))
-                                tags_player_fcs = TagAIShell.determineTags(players, this_bot.getWar().playersPerTeam)
-                                this_bot.getWar().set_temp_team_tags(tags_player_fcs)
+                        if this_bot.getWar() is not None:
+                            asyncio.create_task(this_bot.populate_miis(str(message.id)))
+                            players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numgps*4).items())
+                            await updateData(* await LoungeAPIFunctions.getByFCs([fc for fc, _ in players]))
+                            tags_player_fcs = TagAIShell.determineTags(players, this_bot.getWar().playersPerTeam)
+                            this_bot.getWar().set_temp_team_tags(tags_player_fcs)
 
-                                if not this_bot.getWar().is_ffa():
-                                    to_send = f"{this_bot.getWar().get_tags_str()}\n***Is this correct?** Respond `{server_prefix}yes` or `{server_prefix}no`*"
-                                    await message.channel.send(to_send)
-                                    this_bot.prev_command_sw = True
-    
-                                else:
-                                    dummy_teams = {}
-                                    
-                                    for teamNumber in range(0, min(this_bot.getWar().numberOfTeams, len(players))):
-                                        dummy_teams[players[teamNumber][0]] = str(teamNumber)
-                                    this_bot.getWar().setTeams(dummy_teams)
-                                    await message.channel.send(this_bot.get_room_started_message())
+                            if not this_bot.getWar().is_ffa():
+                                to_send = f"{this_bot.getWar().get_tags_str()}\n***Is this correct?** Respond `{server_prefix}yes` or `{server_prefix}no`*"
+                                await message.channel.send(to_send)
+                                this_bot.prev_command_sw = True
+
+                            else:
+                                dummy_teams = {}
                                 
-                                this_bot.setShouldSendNotification(True)
+                                for teamNumber in range(0, min(this_bot.getWar().numberOfTeams, len(players))):
+                                    dummy_teams[players[teamNumber][0]] = str(teamNumber)
+                                this_bot.getWar().setTeams(dummy_teams)
+                                await message.channel.send(this_bot.get_room_started_message())
+                            
+                            this_bot.setShouldSendNotification(True)
                     else:
                         this_bot.setWar(None)
                         this_bot.setRoom(None)
@@ -1790,7 +1822,7 @@ class TablingCommands:
         if len(args) < 2:
             await message.channel.send("Nothing given to mergeroom. No merges nor changes made.") 
             return
-        rxx_given = _is_rLID(args[1])
+        rxx_given = UtilityFunctions.is_rLID(args[1])
         if rxx_given and args[1] in this_bot.getRoom().rLIDs:
             await message.channel.send("The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `?undo`.") 
     
@@ -2176,7 +2208,7 @@ class TablingCommands:
         else:
             if len(args) == 1:
                 to_send = this_bot.getRoom().get_sorted_player_list_string()
-                to_send += "\n**To change the placement of the 8th player on the list for the 7th race to 4th place, do:** *" + server_prefix + "quickedit 8 7 4*"
+                to_send += "\n**To change the placement of the 8th player on the list for the 7th race to 4th place, do:** *" + server_prefix + "changeplace 8 7 4*"
                 await message.channel.send(to_send)
             elif len(args) == 4:
                 playerNum = command.split()[1].strip()
