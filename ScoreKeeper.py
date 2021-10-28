@@ -337,16 +337,20 @@ def get_race_scores_for_fc(friend_code:str, channel_bot:TableBot.ChannelBot, use
     return None
 
 team_tag_mapping = {"λρ":"Apocalypse"}
-def format_sorted_data_for_gsc(scores_by_team):
+def format_sorted_data_for_gsc(scores_by_team, team_penalties):
     gsc_tag_scores = defaultdict(lambda:[0, 0, 0, 0])
     for tag, players in scores_by_team:
         for _, (_, player_overall, score_by_race) in players:
             cur_team = gsc_tag_scores[tag]
             cur_team[3] += player_overall
-            chunked_scores = [score_by_race[i:i+4] for i in range(len(score_by_race))[::4]]
+            chunked_scores = [score_by_race[i:i+4] for i in range(len(score_by_race))[:12:4]]
             for gpNum, gpScores in enumerate(chunked_scores):
                 cur_team[gpNum] += sum(gpScores)
     
+    for tag in team_penalties:
+        if tag in gsc_tag_scores:
+            gsc_tag_scores[tag][3] -= team_penalties[tag]
+            
     all_tags = [tag for tag in gsc_tag_scores]
     first_team_tag = all_tags[0]
     second_team_tag = all_tags[1]
