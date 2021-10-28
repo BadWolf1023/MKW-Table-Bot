@@ -2046,9 +2046,14 @@ class TablingCommands:
                         lounge_replace = True
                     
                     step = this_bot.get_race_size()
+                    output_gsc_table = False
                     if len(args) > 1 and args[1] in {'byrace', 'race'}:
                         step = 1
+                    if len(args) > 1 and args[1] in {'gsc'}:
+                        output_gsc_table = True
                     table_text, table_sorted_data = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=use_lounge_otherwise_mii, use_miis=usemiis, lounge_replace=lounge_replace, server_id=server_id, missingRacePts=this_bot.dc_points, step=step)
+                    if output_gsc_table:
+                        table_text = SK.format_sorted_data_for_gsc(table_sorted_data)
                     table_text_with_style_and_graph = table_text + this_bot.get_lorenzi_style_and_graph(prepend_newline=True)
                     display_url_table_text = urllib.parse.quote(table_text)
                     true_url_table_text = urllib.parse.quote(table_text_with_style_and_graph)
