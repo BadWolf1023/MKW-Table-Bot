@@ -17,7 +17,6 @@ import dill
 
 
 sslcontext = ssl.create_default_context(cafile=certifi.where())
-print(certifi.where())
 
 version = "11.6.2" #GSC Special tables + data tracking restructure
 
@@ -106,7 +105,7 @@ MIIS_PATH = "miis/"
 TABLE_HEADERS_PATH = "table_headers/"
 DATA_PATH = "tablebot_data/"
 LOGGING_PATH = "logging/"
-DATA_TRACKING_PATH = "data_tracking/"
+DATA_TRACKING_PATH = "./data_tracking/"
 
 DATA_TRACKING_DATABASE_FILE = f"{DATA_TRACKING_PATH}room_data_tracking.db"
 DATA_TRACKING_DATABASE_CREATION_SQL = f"{DATA_TRACKING_PATH}room_tracking_db_setup.sql"

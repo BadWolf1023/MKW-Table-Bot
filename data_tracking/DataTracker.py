@@ -15,6 +15,7 @@ import UtilityFunctions
 from copy import deepcopy, copy
 import pprint
 import traceback
+import os
 DEBUGGING_DATA_TRACKER = False
 
 #dict of channel IDs to tier numbers
@@ -414,13 +415,10 @@ def dump_room_data():
     common.dump_pkl(room_data, common.ROOM_DATA_TRACKER_FILE, "Could not dump pickle room data in data tracking.", display_data_on_error=True)
 
 def load_room_data():
-    room_data.clear()
-    default_data_load = lambda:{RT_NAME:{},
-             CT_NAME:{},
-             RXX_LOCKER_NAME:{}
-             }
-    room_data.update(common.load_pkl(common.ROOM_DATA_TRACKER_FILE, "Could not load pickle for room data in data tracking, using empty data instead.", default=default_data_load))
-    
+    if not os.path.exists(common.DATA_TRACKING_DATABASE_FILE):
+        print("Warning: No database for data tracking found, to creating a new one. If you should have had a database, stop the program immediately using Ctrl+Z, locate the data tracking database or restore a backup.")
+        from data_tracking import sql_database_setup
+        sql_database_setup.create_room_tracking_database()
 
 def initialize():
     load_room_data()
