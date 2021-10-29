@@ -415,10 +415,15 @@ def dump_room_data():
     common.dump_pkl(room_data, common.ROOM_DATA_TRACKER_FILE, "Could not dump pickle room data in data tracking.", display_data_on_error=True)
 
 def load_room_data():
-    if not os.path.exists(common.DATA_TRACKING_DATABASE_FILE):
-        print("Warning: No database for data tracking found, to creating a new one. If you should have had a database, stop the program immediately using Ctrl+Z, locate the data tracking database or restore a backup.")
+    if not os.path.exists(common.ROOM_DATA_TRACKING_DATABASE_FILE):
+        print("Warning: No database for room tracking found, to creating a new one. If you should have had a database, stop the program immediately using Ctrl+Z, locate the room tracking database or restore a backup.")
         from data_tracking import sql_database_setup
-        sql_database_setup.create_room_tracking_database()
+        try:
+            sql_database_setup.create_room_tracking_database()
+        except:
+            os.remove(common.ROOM_DATA_TRACKING_DATABASE_FILE)
+            print("Warning: Failed to create database")
+            raise
 
 def initialize():
     load_room_data()
