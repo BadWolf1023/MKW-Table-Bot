@@ -41,7 +41,7 @@ class Player(object):
         '''
         self.FC = str(FC)
         self.playerPageLink = str(playerPageLink)
-        self.pid = self.playerPageLink.split("/")[-1].strip('p')
+        self.pid = int(self.playerPageLink.split("/")[-1].strip('p'))
         self.ol_status = ol_status
         self.positionInRoom = roomPosition
         self.room_type = playerRoomType

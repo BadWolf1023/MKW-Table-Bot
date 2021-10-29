@@ -16,7 +16,8 @@ import UtilityFunctions
 from copy import deepcopy, copy
 import pprint
 import traceback
-import itertools
+#import itertools
+#from contextlib import closing
 
 import os
 from data_tracking import Data_Tracker_SQL_Query_Builder as QB
@@ -26,6 +27,12 @@ DEBUGGING_DATA_TRACKER = False
 import sqlite3
 database_connection:sqlite3.Connection = None
 
+class SQLDataBad(Exception):
+    pass
+class SQLTypeWrong(SQLDataBad):
+    pass
+class FormatWrong(SQLDataBad):
+    pass
 
 #dict of channel IDs to tier numbers
 
@@ -186,20 +193,35 @@ class RoomTrackerSQL(object):
     def __init__(self, channel_bot):
         self.channel_bot = channel_bot
     
+    def wrong_type_message(self, data, expected_type):
+        return f"{data} of type {type(data)} is not an {str(expected_type.__class__)}"
+    
+    def validate_player_data(self, players:List[TableBotPlayer.Player]):
+        '''Validates that all the data is players is the correct type and format before going into the database'''
+        for player in players:
+            if not isinstance(player.get_FC(), str):
+                raise SQLTypeWrong(self.wrong_type_message(player.get_FC(), str))
+            if not UtilityFunctions.is_fc(player.get_FC()):
+                raise SQLTypeWrong(f"{player.get_FC()} is not a formatted like an FC")
+            if not isinstance(player.get_player_id(), int):
+                raise SQLTypeWrong(self.wrong_type_message(player.get_player_id(), int))
+            if not isinstance(player.get_mkwx_url(), str):
+                raise SQLTypeWrong(self.wrong_type_message(player.get_mkwx_url(), str))
+    
     def insert_players_into_database(self, players:List[TableBotPlayer.Player]):
-        insert_players_statement = "\n".join(QB.get_insert_into_player_table_script() for _ in range(len(players)))
-        insert_players_statement = QB.surround_script_begin_commit(insert_players_statement)
-        all_data = list(itertools.chain.from_iterable((p.get_FC(), p.get_player_id(), p.get_mkwx_url()) for p in players))
-        result = set(database_connection.execute(insert_players_statement, all_data))
-        for r in result:
-            print(r)
+        self.validate_player_data(players)
+        insert_player_statement = QB.get_insert_into_player_table_script()      
+        all_data = [(p.get_FC(), int(p.get_player_id()), p.get_mkwx_url()) for p in players]
+        with database_connection:
+            result = database_connection.executemany(insert_player_statement, all_data)
             
     def insert_missing_players_into_database(self):
         room_fc_placements = self.channel_bot.getRoom().getFCPlacements()
         find_fcs_statement = QB.get_fcs_in_Player_table(room_fc_placements.keys())
-        found_fcs = set(database_connection.execute(find_fcs_statement, [k for k in room_fc_placements]))
+        found_fcs = set(result[0] for result in database_connection.execute(find_fcs_statement, [k for k in room_fc_placements]))
         print(found_fcs)
         missing_fcs = set(room_fc_placements).difference(found_fcs)
+        print(missing_fcs)
         if len(missing_fcs) > 0:
             self.insert_players_into_database([room_fc_placements[fc].getPlayer() for fc in missing_fcs])
         

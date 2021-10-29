@@ -12,7 +12,7 @@ WHERE fc in ({', '.join('?'*len(fcs))});"""
 
 def get_insert_into_player_table_script():
     return """INSERT INTO Player (fc, pid, player_url)
-VALUES(?, ?, ?);"""
+VALUES(?, ?, ?)"""
     
 def surround_script_begin_commit(script):
     return f"""BEGIN;
