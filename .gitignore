@@ -31,3 +31,4 @@ data_tracking/room_data_tracking.db
 tablebot_data/all_room_data.pkl
 tablebot_data/all_room_data.pkl
 tablebot_data/sha_track_names.pkl
+helpful_tools/DB.Browser.for.SQLite-3.12.2-win32.msi
