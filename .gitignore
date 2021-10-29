@@ -27,3 +27,7 @@ tablebot_data/all_room_data.pkl
 tablebot_data/sha_track_names.pkl
 AI_data.pkl
 room_data_tracking.db
+data_tracking/room_data_tracking.db
+tablebot_data/all_room_data.pkl
+tablebot_data/all_room_data.pkl
+tablebot_data/sha_track_names.pkl
