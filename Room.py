@@ -200,6 +200,15 @@ class Room(object):
             removed_str += "- " + raceName + " (originally race #" + str(raceInd+1) + ") removed by tabler\n"
         return removed_str
     
+    #Should only call if you know the data for an FC among the placements will be unique
+    def getFCPlacements(self, startrace=1,endrace=None):
+        fcPlacementDict = {}
+        if endrace is None:
+            endrace = len(self.races)
+        for race in self.races[startrace-1:endrace]:
+            for placement in race.getPlacements():
+                fcPlacementDict[placement.FC] = placement
+        return fcPlacementDict
     
     def getFCPlayerList(self, startrace=1,endrace=12):
         fcNameDict = {}
@@ -269,7 +278,8 @@ class Room(object):
     def setRaces(self, races):
         self.races = races
         
-    def getRaces(self):
+    def getRaces(self, startRace=1, endRace=None):
+        
         return self.races
     
     def getRXXText(self):
