@@ -414,7 +414,10 @@ class Room(object):
             vr = None
         else:
             vr = int(vr)
-        character_vehicle = str(allRows[5][common.TOOLTIP_NAME])
+        
+        character_vehicle = None
+        if common.TOOLTIP_NAME in allRows[5]:
+            character_vehicle = str(allRows[5][common.TOOLTIP_NAME])
         
         
         delta = str(allRows[7].string) #Not true delta, but significant delta (above .5)

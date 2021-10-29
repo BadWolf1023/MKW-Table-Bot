@@ -335,3 +335,53 @@ def get_race_scores_for_fc(friend_code:str, channel_bot:TableBot.ChannelBot, use
             if fc == friend_code:
                 return player_data[2]
     return None
+
+team_tag_mapping = {"λρ":"Apocalypse"}
+def format_sorted_data_for_gsc(scores_by_team, team_penalties):
+    gsc_tag_scores = defaultdict(lambda:[0, 0, 0, 0])
+    for tag, players in scores_by_team:
+        for _, (_, player_overall, score_by_race) in players:
+            cur_team = gsc_tag_scores[tag]
+            cur_team[3] += player_overall
+            chunked_scores = [score_by_race[i:i+4] for i in range(len(score_by_race))[:12:4]]
+            for gpNum, gpScores in enumerate(chunked_scores):
+                cur_team[gpNum] += sum(gpScores)
+    
+    for tag in team_penalties:
+        if tag in gsc_tag_scores:
+            gsc_tag_scores[tag][3] -= team_penalties[tag]
+            
+    all_tags = [tag for tag in gsc_tag_scores]
+    first_team_tag = all_tags[0]
+    second_team_tag = all_tags[1]
+    first_team_tag_altered = team_tag_mapping[first_team_tag] if first_team_tag in team_tag_mapping else first_team_tag
+    second_team_tag_altered = team_tag_mapping[second_team_tag] if second_team_tag in team_tag_mapping else second_team_tag
+    
+    gsc_team_scores = {first_team_tag:[0, 0, 0, 0],
+                       second_team_tag:[0, 0, 0, 0]}
+    for gp_index, first_team_score, second_team_score in zip(range(len(gsc_tag_scores[first_team_tag])), gsc_tag_scores[first_team_tag], gsc_tag_scores[second_team_tag]):
+        multiplier = 1 if gp_index != 3 else 2
+        if first_team_score > second_team_score:
+            gsc_team_scores[first_team_tag][gp_index] = 2
+        elif first_team_score < second_team_score:
+            gsc_team_scores[second_team_tag][gp_index] = 2
+        else:
+            gsc_team_scores[first_team_tag][gp_index] = 1
+            gsc_team_scores[second_team_tag][gp_index] = 1
+        
+        gsc_team_scores[first_team_tag][gp_index] *= multiplier
+        gsc_team_scores[second_team_tag][gp_index] *= multiplier
+            
+        
+    first_team_gps_text = "|".join(str(s) for s in gsc_team_scores[first_team_tag]) 
+    second_team_gps_text = "|".join(str(s) for s in gsc_team_scores[second_team_tag]) 
+    
+    
+    gsc_table_text = f"""#title Grand Star Cup
+{first_team_tag}
+{first_team_tag_altered} {first_team_gps_text}
+{second_team_tag}
+{second_team_tag_altered} {second_team_gps_text}"""
+    return gsc_table_text
+            
+            

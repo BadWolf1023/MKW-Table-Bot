@@ -8,6 +8,8 @@ MiiPuller.py: Collaboration between [BadWolf1023](https://github.com/BadWolf1023
 
 miirender.py: [WilliamTX](https://github.com/willsigg)
 
+New Tag AI (better and faster):
+TagAI_Andrew.py: [ForestMKW](https://github.com/ForestMKW)
 
 ‎
 ‎		

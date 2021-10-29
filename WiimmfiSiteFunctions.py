@@ -180,8 +180,8 @@ async def threaded_fetch(session, url, use_long_cache_time=False):
         return await __fetch__(session, url, use_long_cache_time)
         
           
-def fetch(session, url, use_long_cache_time=False):
-    return asyncio.run(__fetch__(session, url, use_long_cache_time))
+#def fetch(session, url, use_long_cache_time=False):
+#    return asyncio.run(__fetch__(session, url, use_long_cache_time))
 
 async def __fetch__(session, url, use_long_cache_time=False):
     #print_url_cache()

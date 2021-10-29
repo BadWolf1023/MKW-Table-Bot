@@ -77,7 +77,8 @@ DATA_DUMP_SUCCESS = 9
 from collections import namedtuple
 Place = namedtuple('Place', ['fc', 'name', 'place', 'time', 'lagStart', 'playerURL', 'pid', 'ol_status', 'roomPosition', 'roomType', 'connectionFails', 'role', 'vr', 'character', 'vehicle', 'discord_name', 'lounge_name', 'mii_hex'])
 Race = namedtuple('Race', ['timeAdded', 'channel_id', 'tier', 'matchTime', 'id', 'raceNumber', 'roomID', 'rxx', 'trackURL', 'roomType', 'trackName', 'trackNameFixed', 'cc', 'placements', 'region', 'is_ct'])
-Event = namedtuple('Event', ['allFCs', 'races', 'room_type', 'name_changes', 'removed_races', 'placement_history', 'forcedRoomSize', 'playerPenalties', 'dc_on_or_before', 'sub_ins', 'set_up_user_discord_id', 'set_up_user_display_name', 'playersPerTeam', 'numberOfTeams', 'defaultRoomSize', 'numberOfGPs', 'eventName', 'missingRacePts', 'manualEdits', 'ignoreLargeTimes', 'teamPenalties', 'teams', 'miis'])
+Event = namedtuple('Event', ['timeAdded', 'allFCs', 'races', 'room_type', 'name_changes', 'removed_races', 'placement_history', 'forcedRoomSize', 'playerPenalties', 'dc_on_or_before', 'sub_ins', 'set_up_user_discord_id', 'set_up_user_display_name', 'playersPerTeam', 'numberOfTeams', 'defaultRoomSize', 'numberOfGPs', 'eventName', 'missingRacePts', 'manualEdits', 'ignoreLargeTimes', 'teamPenalties', 'teams', 'miis'])
+
 
 """
 LOCK_OBTAINED = 0
@@ -244,7 +245,8 @@ class RoomTracker(object):
             
     @staticmethod
     def create_event(channel_bot) -> Event:
-        return Event(allFCs=set(channel_bot.getRoom().getFCs()),
+        return Event(timeAdded=datetime.now(),
+                     allFCs=set(channel_bot.getRoom().getFCs()),
                      races=[],
                      room_type=channel_bot.getRoom().get_room_type(),
                      name_changes=copy(channel_bot.getRoom().name_changes),
@@ -271,7 +273,8 @@ class RoomTracker(object):
     def update_event_data(channel_bot, channel_data_info):
         channel_data_info[1].allFCs.update(channel_bot.getRoom().getFCs())
         channel_data_info[1].miis.update(RoomTracker.get_miis(channel_bot))
-        channel_data_info[1] = Event(allFCs=channel_data_info[1].allFCs,
+        channel_data_info[1] = Event(timeAdded=channel_data_info[1].timeAdded,
+                                     allFCs=channel_data_info[1].allFCs,
                                      races=channel_data_info[1].races,
                                      room_type=channel_bot.getRoom().get_room_type(),
                                      name_changes=copy(channel_bot.getRoom().name_changes),
@@ -391,6 +394,21 @@ def pretty_print_room_data():
         pprint.pprint(temp_data, stream=f, depth=15, width=200)
 
 
+data_change_versions = {1:"added the time an event was added to Event.timeAdded"}
+def modify_existing_data(version=1):
+    rt_rxx_dict = room_data[RT_NAME]
+    ct_rxx_dict = room_data[CT_NAME]
+    if version == 1:
+        for rxx_dict in [rt_rxx_dict, ct_rxx_dict]:
+            for channel_ids in rxx_dict.values():
+                for rxx_channel_data in channel_ids.values():
+                    if not 'timeAdded' in rxx_channel_data[1]._fields:
+                        time_added = get_start_time(rxx_channel_data[0])
+                        rxx_channel_data[1] = Event(timeAdded=time_added, **rxx_channel_data[1])
+                    
+                        
+                        
+                        
             
 def dump_room_data():
     common.dump_pkl(room_data, common.ROOM_DATA_TRACKER_FILE, "Could not dump pickle room data in data tracking.", display_data_on_error=True)
@@ -406,6 +424,8 @@ def load_room_data():
 
 def initialize():
     load_room_data()
+    for update_number in data_change_versions:
+        modify_existing_data(update_number)
 
 def save_data():
     dump_room_data()
