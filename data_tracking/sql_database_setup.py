@@ -11,7 +11,6 @@ def create_room_tracking_database():
     try:
         cur = con.cursor()
         sql_setup_script = common.read_sql_file(common.ROOM_DATA_TRACKING_DATABASE_CREATION_SQL)
-        print(sql_setup_script)
         cur.executescript(sql_setup_script)
     except:
         con.close()
