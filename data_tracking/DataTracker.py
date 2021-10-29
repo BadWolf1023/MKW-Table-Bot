@@ -416,7 +416,7 @@ def dump_room_data():
 
 def load_room_data():
     if not os.path.exists(common.ROOM_DATA_TRACKING_DATABASE_FILE):
-        print("Warning: No database for room tracking found, to creating a new one. If you should have had a database, stop the program immediately using Ctrl+Z, locate the room tracking database or restore a backup.")
+        print("Warning: No database for room tracking found, so creating a new one. If you should have had a database, stop the program immediately using Ctrl+Z, locate the room tracking database or restore a backup.")
         from data_tracking import sql_database_setup
         try:
             sql_database_setup.create_room_tracking_database()
