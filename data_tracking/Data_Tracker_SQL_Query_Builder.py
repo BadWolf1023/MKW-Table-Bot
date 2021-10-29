@@ -10,6 +10,15 @@ def get_fcs_in_Player_table(fcs):
 FROM Player
 WHERE fc in ({', '.join('?'*len(fcs))});"""
 
+def get_insert_into_player_table_script():
+    return """INSERT INTO Player (fc, pid, player_url)
+VALUES(?, ?, ?);"""
+    
+def surround_script_begin_commit(script):
+    return f"""BEGIN;
+{script.rstrip(';')};
+COMMIT;"""
+
 
 
 
