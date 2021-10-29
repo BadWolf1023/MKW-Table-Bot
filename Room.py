@@ -207,8 +207,9 @@ class Room(object):
             endrace = len(self.races)
         for race in self.races[startrace-1:endrace]:
             for placement in race.getPlacements():
-                fcPlacementDict[placement.FC] = placement
+                fcPlacementDict[placement.getPlayer().get_FC()] = placement
         return fcPlacementDict
+
     
     def getFCPlayerList(self, startrace=1,endrace=12):
         fcNameDict = {}
