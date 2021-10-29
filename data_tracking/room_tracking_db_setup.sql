@@ -39,7 +39,6 @@ CREATE TABLE Race(
     cc TEXT NOT NULL,
     region TEXT NULL,
     PRIMARY KEY(race_id),
-    UNIQUE(rxx),
     FOREIGN KEY (track_name)
        REFERENCES Track(track_name)
           ON UPDATE CASCADE
