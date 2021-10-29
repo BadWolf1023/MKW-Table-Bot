@@ -8,9 +8,12 @@ This entire file was written by ForestMKW. His Github can be found here: https:/
 import numpy as np
 import math
 from collections import defaultdict
+from datetime import datetime
 import copy
 import BaseTagAI
 import TagAI_BadWolf
+import common
+import os
 
 team_formats = {}
 VALID_CHARS = "/\\*^+abcdefghijklmnopqrstuvwxyz\u03A9\u038F" + "abcdefghijklmnopqrstuvwxyz0123456789[]".upper()
@@ -314,10 +317,21 @@ def print_teams(teams, players):
             print(tag, [players[i] for i in teams[tag] if i < len(players)])
 
 
-
-def initialize():
+def generate_team_formats():
     for team_size in [2,3,4,5,6]:
         combos = []
         find_team_combo([], list(range(12)), 12//team_size, team_size, combos)
         team_formats[team_size] = np.array([encode_to_row(c) for c in combos])
-    print("TagAI_Andrew formats generated")
+    return team_formats
+
+def initialize():
+    print(f"{datetime.now()}: Beginning TagAI_Andrew formats generation")
+    andrew_team_formats_file_name = "team_formats.pkl"
+    if not os.path.exists(andrew_team_formats_file_name):
+        generate_team_formats()
+        common.dump_pkl(team_formats, andrew_team_formats_file_name, "Couldn't dump team formats for Andrew Tag AI", display_data_on_error=False)
+    else:
+        team_formats.clear()
+        team_formats.update(common.load_pkl(andrew_team_formats_file_name, "Couldn't load team formats for Andrew Tag AI", generate_team_formats))
+    
+    print(f"{datetime.now()}: TagAI_Andrew formats generated")
