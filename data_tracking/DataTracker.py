@@ -10,11 +10,13 @@ import common
 from collections import defaultdict
 from datetime import datetime, timedelta
 import Race as TableBotRace
+import Player as TableBotPlayer
 from typing import List, Dict, Tuple
 import UtilityFunctions
 from copy import deepcopy, copy
 import pprint
 import traceback
+import itertools
 
 import os
 from data_tracking import Data_Tracker_SQL_Query_Builder as QB
@@ -183,14 +185,23 @@ class DataRetriever(object):
 class RoomTrackerSQL(object):
     def __init__(self, channel_bot):
         self.channel_bot = channel_bot
-        
+    
+    def insert_players_into_database(self, players:List[TableBotPlayer.Player]):
+        insert_players_statement = "\n".join(QB.get_insert_into_player_table_script() for _ in range(len(players)))
+        insert_players_statement = QB.surround_script_begin_commit(insert_players_statement)
+        all_data = list(itertools.chain.from_iterable((p.get_FC(), p.get_player_id(), p.get_mkwx_url()) for p in players))
+        result = set(database_connection.execute(insert_players_statement, all_data))
+        for r in result:
+            print(r)
+            
     def insert_missing_players_into_database(self):
-        rooms_fcs = self.channel_bot.getRoom().getFCPlacements()
-        find_fcs_statement = QB.get_fcs_in_Player_table(rooms_fcs.keys())
-        found_fcs = set(database_connection.execute(find_fcs_statement, [k for k in rooms_fcs]))
+        room_fc_placements = self.channel_bot.getRoom().getFCPlacements()
+        find_fcs_statement = QB.get_fcs_in_Player_table(room_fc_placements.keys())
+        found_fcs = set(database_connection.execute(find_fcs_statement, [k for k in room_fc_placements]))
         print(found_fcs)
-        missing_fcs = set(rooms_fcs).difference(found_fcs)
-        print(f"Missing: {missing_fcs}")
+        missing_fcs = set(room_fc_placements).difference(found_fcs)
+        if len(missing_fcs) > 0:
+            self.insert_players_into_database([room_fc_placements[fc].getPlayer() for fc in missing_fcs])
         
         
         
