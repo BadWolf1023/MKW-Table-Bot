@@ -15,8 +15,15 @@ import UtilityFunctions
 from copy import deepcopy, copy
 import pprint
 import traceback
+
 import os
+from data_tracking import Data_Tracker_SQL_Query_Builder as QB
+
 DEBUGGING_DATA_TRACKER = False
+
+import sqlite3
+database_connection:sqlite3.Connection = None
+
 
 #dict of channel IDs to tier numbers
 
@@ -171,6 +178,20 @@ class DataRetriever(object):
         track_count = defaultdict(int)
         rxx_dict = room_data[CT_NAME] if is_ct else room_data[RT_NAME]
         filtered_rxxs = DataRetriever.get_filtered_rxxs(rxx_dict, tier, in_last_days)
+
+
+class RoomTrackerSQL(object):
+    def __init__(self, channel_bot):
+        self.channel_bot = channel_bot
+        
+    def insert_missing_players_into_database(self):
+        rooms_fcs = self.channel_bot.getRoom().getFCPlacements()
+        find_fcs_statement = QB.get_fcs_in_Player_table(rooms_fcs.keys())
+        found_fcs = set(database_connection.execute(find_fcs_statement, [k for k in rooms_fcs]))
+        print(found_fcs)
+        missing_fcs = set(rooms_fcs).difference(found_fcs)
+        print(f"Missing: {missing_fcs}")
+        
         
         
 
@@ -328,6 +349,8 @@ class RoomTracker(object):
     @staticmethod
     def add_races(channel_bot):
         races:List[TableBotRace.Race] = channel_bot.getRoom().getRaces()
+        sql_helper = RoomTrackerSQL(channel_bot)
+        sql_helper.insert_missing_players_into_database()
         update_channel_data = True
         update_event_data = True
         for race in races:
@@ -359,6 +382,7 @@ class RoomTracker(object):
                     dump_room_data()
                     pretty_print_room_data()
             except:
+                raise
                 common.log_traceback(traceback)
         
         
@@ -425,8 +449,14 @@ def load_room_data():
             print("Warning: Failed to create database")
             raise
 
+
+def start_database():
+    global database_connection
+    database_connection = sqlite3.connect(common.ROOM_DATA_TRACKING_DATABASE_FILE)
+
 def initialize():
     load_room_data()
+    start_database()
     for update_number in data_change_versions:
         modify_existing_data(update_number)
 
