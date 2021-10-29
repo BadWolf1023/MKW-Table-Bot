@@ -1,4 +1,3 @@
-
 .project
 .pydevproject
 tablebot_data/bad_wolf_facts.pkl
@@ -26,9 +25,9 @@ room_race_data.txt
 tablebot_data/all_room_data.pkl
 tablebot_data/sha_track_names.pkl
 AI_data.pkl
+helpful_tools/DB.Browser.for.SQLite-3.12.2-win32.msi
 room_data_tracking.db
 data_tracking/room_data_tracking.db
-tablebot_data/all_room_data.pkl
-tablebot_data/all_room_data.pkl
-tablebot_data/sha_track_names.pkl
-helpful_tools/DB.Browser.for.SQLite-3.12.2-win32.msi
+*/room_data_tracking.db
+team_formats.pkl
+
