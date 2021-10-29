@@ -1686,11 +1686,11 @@ class TablingCommands:
                     try:
                         this_bot.setWar(War.War(warFormat, numTeams, numgps, ignoreLargeTimes=ignoreLargeTimes, displayMiis=useMiis))
                     except TableBotExceptions.InvalidWarFormatException:
-                        this_bot.setWar(None)
                         await message.channel.send("War format was incorrect. Valid options: FFA, 1v1, 2v2, 3v3, 4v4, 5v5, 6v6. War not created.")
+                        return
                     except TableBotExceptions.InvalidNumberOfPlayersException:
-                        this_bot.setWar(None)
                         await message.channel.send("Too many players based on the teams and war format. War not created.")
+                        return
                     
                     this_bot.updateRLCoolDown()
                     message2 = await message.channel.send("Loading room...")

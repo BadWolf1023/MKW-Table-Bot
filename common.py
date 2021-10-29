@@ -19,7 +19,7 @@ import dill
 sslcontext = ssl.create_default_context(cafile=certifi.where())
 print(certifi.where())
 
-version = "11.6.1" #GSC Special tables
+version = "11.6.2" #GSC Special tables + data tracking restructure
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
