@@ -105,10 +105,10 @@ MIIS_PATH = "miis/"
 TABLE_HEADERS_PATH = "table_headers/"
 DATA_PATH = "tablebot_data/"
 LOGGING_PATH = "logging/"
-DATA_TRACKING_PATH = "./data_tracking/"
+DATA_TRACKING_PATH = "data_tracking/"
 
-DATA_TRACKING_DATABASE_FILE = f"{DATA_TRACKING_PATH}room_data_tracking.db"
-DATA_TRACKING_DATABASE_CREATION_SQL = f"{DATA_TRACKING_PATH}room_tracking_db_setup.sql"
+ROOM_DATA_TRACKING_DATABASE_FILE = f"{DATA_PATH}room_data_tracking.db"
+ROOM_DATA_TRACKING_DATABASE_CREATION_SQL = f"{DATA_TRACKING_PATH}room_tracking_db_setup.sql"
 
 LOUNGE_ID_COUNTER_FILE = f"{DATA_PATH}lounge_counter.pkl"
 LOUNGE_TABLE_UPDATES_FILE = f"{DATA_PATH}lounge_table_update_ids.pkl"
@@ -186,7 +186,8 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    TABLE_BOT_PKL_FILE,
                    VR_IS_ON_FILE,
                    ROOM_DATA_TRACKER_FILE,
-                   SHA_TRACK_NAMES_FILE
+                   SHA_TRACK_NAMES_FILE,
+                   ROOM_DATA_TRACKING_DATABASE_FILE
                    }
 
 LEFT_ARROW_EMOTE = '\u25c0'
@@ -428,7 +429,7 @@ async def safe_delete(message):
     except discord.errors.NotFound:
         pass
 
-async def read_file(file_name):
+def read_sql_file(file_name):
     with open(file_name, "r", encoding="utf-8") as f:
         return f.read()
     
