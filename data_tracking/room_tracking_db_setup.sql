@@ -17,6 +17,14 @@ CREATE TABLE Place(
     lounge_name TEXT NULL,
     mii_hex TEXT NULL,
     PRIMARY KEY(fc, race_id)
+    FOREIGN KEY (race_id)
+       REFERENCES Race(race_id)
+          ON UPDATE CASCADE
+          ON DELETE RESTRICT,
+    FOREIGN KEY (fc)
+       REFERENCES Player(fc)
+          ON UPDATE CASCADE
+          ON DELETE RESTRICT
 );
 
 CREATE TABLE Race(
@@ -32,12 +40,8 @@ CREATE TABLE Race(
     region TEXT NULL,
     PRIMARY KEY(race_id),
     UNIQUE(rxx),
-    FOREIGN KEY (race_id)
-       REFERENCES Place(race_id)
-          ON UPDATE CASCADE
-          ON DELETE RESTRICT,
-    FOREIGN KEY (race_id)
-       REFERENCES Event_Races(race_id)
+    FOREIGN KEY (track_name)
+       REFERENCES Track(track_name)
           ON UPDATE CASCADE
            ON DELETE RESTRICT
 );
@@ -48,26 +52,14 @@ CREATE TABLE Track(
     fixed_track_name INT NOT NULL,
     is_ct TINYINT(1) NOT NULL,
     track_name_lookup TEXT NOT NULL,
-    PRIMARY KEY(track_name),
-    FOREIGN KEY (track_name)
-       REFERENCES Race(track_name)
-          ON UPDATE CASCADE
-           ON DELETE RESTRICT
+    PRIMARY KEY(track_name)
 );
 
 CREATE TABLE Player(
     fc TEXT NOT NULL,
     pid INT UNSIGNED NOT NULL,
     player_url TEXT NOT NULL,
-    PRIMARY KEY(fc),
-    FOREIGN KEY (fc)
-       REFERENCES Place(fc)
-          ON UPDATE CASCADE
-           ON DELETE RESTRICT,
-    FOREIGN KEY (fc)
-       REFERENCES Event_FCs(fc)
-          ON UPDATE CASCADE
-           ON DELETE RESTRICT
+    PRIMARY KEY(fc)
 );
 
 CREATE TABLE Event(
@@ -80,16 +72,8 @@ CREATE TABLE Event(
     set_up_user_discord_id INT NULL,
     set_up_user_display_name TEXT NULL,
     PRIMARY KEY(event_id),
-    FOREIGN KEY (event_id)
-       REFERENCES Event_FCs(event_id)
-          ON UPDATE CASCADE
-           ON DELETE RESTRICT,
-    FOREIGN KEY (event_id)
-       REFERENCES Event_Races(event_id)
-          ON UPDATE CASCADE
-           ON DELETE RESTRICT
-    FOREIGN KEY (event_id)
-       REFERENCES Event_Structure(event_id)
+    FOREIGN KEY (channel_id)
+       REFERENCES Tier(channel_id)
           ON UPDATE CASCADE
            ON DELETE RESTRICT
 
@@ -98,24 +82,44 @@ CREATE TABLE Event(
 CREATE TABLE Tier(
     channel_id INT UNSIGNED NOT NULL,
     tier INT NULL,
-    PRIMARY KEY(channel_id),
-    FOREIGN KEY (channel_id)
-       REFERENCES Event(channel_id)
-          ON UPDATE CASCADE
-           ON DELETE RESTRICT
+    PRIMARY KEY(channel_id)
 );
 
 CREATE TABLE Event_Races(
     event_id INT UNSIGNED NOT NULL,
     race_id INT NOT NULL,
-    PRIMARY KEY(event_id, race_id)
+    PRIMARY KEY(event_id, race_id),
+    FOREIGN KEY (race_id)
+       REFERENCES Race(race_id)
+          ON UPDATE CASCADE
+           ON DELETE RESTRICT,
+    FOREIGN KEY (event_id)
+       REFERENCES Event(event_id)
+          ON UPDATE CASCADE
+           ON DELETE RESTRICT,
+    FOREIGN KEY (event_id)
+       REFERENCES Event_Structure(event_id)
+          ON UPDATE CASCADE
+           ON DELETE RESTRICT
 );
 
 CREATE TABLE Event_FCs(
     event_id INT UNSIGNED NOT NULL,
     fc INT NOT NULL,
     mii_hex TEXT NULL,
-    PRIMARY KEY(event_id, fc)
+    PRIMARY KEY(event_id, fc),
+    FOREIGN KEY (fc)
+       REFERENCES Player(fc)
+          ON UPDATE CASCADE
+           ON DELETE RESTRICT,
+    FOREIGN KEY (event_id)
+       REFERENCES Event(event_id)
+          ON UPDATE CASCADE
+           ON DELETE RESTRICT,
+    FOREIGN KEY (event_id)
+       REFERENCES Event_Structure(event_id)
+          ON UPDATE CASCADE
+           ON DELETE RESTRICT
 );
 
 CREATE TABLE Event_Structure(
