@@ -1,3 +1,4 @@
+BEGIN;
 CREATE TABLE Place(
     race_id INT UNSIGNED NOT NULL,
     fc TEXT NOT NULL,
@@ -147,3 +148,4 @@ CREATE TABLE Event_Structure(
           ON UPDATE CASCADE
            ON DELETE RESTRICT
 );
+COMMIT;
