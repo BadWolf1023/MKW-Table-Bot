@@ -21,3 +21,8 @@ tablebot_data/vr_is_on.pkl
 .settings/org.eclipse.core.resources.prefs
 
 chrome-cli/*
+room_data.txt
+room_race_data.txt
+tablebot_data/all_room_data.pkl
+tablebot_data/sha_track_names.pkl
+AI_data.pkl
