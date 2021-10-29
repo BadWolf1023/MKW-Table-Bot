@@ -106,6 +106,10 @@ MIIS_PATH = "miis/"
 TABLE_HEADERS_PATH = "table_headers/"
 DATA_PATH = "tablebot_data/"
 LOGGING_PATH = "logging/"
+DATA_TRACKING_PATH = "data_tracking/"
+
+DATA_TRACKING_DATABASE_FILE = f"{DATA_TRACKING_PATH}room_data_tracking.db"
+DATA_TRACKING_DATABASE_CREATION_SQL = f"{DATA_TRACKING_PATH}room_tracking_db_setup.sql"
 
 LOUNGE_ID_COUNTER_FILE = f"{DATA_PATH}lounge_counter.pkl"
 LOUNGE_TABLE_UPDATES_FILE = f"{DATA_PATH}lounge_table_update_ids.pkl"
@@ -424,6 +428,10 @@ async def safe_delete(message):
         await message.delete()
     except discord.errors.NotFound:
         pass
+
+async def read_file(file_name):
+    with open(file_name, "r", encoding="utf-8") as f:
+        return f.read()
     
 def dump_pkl(data, file_name, error_message, display_data_on_error=False):
     with open(file_name, "wb") as pickle_out:
