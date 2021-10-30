@@ -43,7 +43,6 @@ import os
 from datetime import datetime
 import URLShortener
 import Stats
-from BadWolfBot import is_vr_command
 
 vr_is_on = False
 
