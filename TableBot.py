@@ -354,7 +354,7 @@ class ChannelBot(object):
         return True, player_data, room_str, rLID
     
     
-    async def load_room_smart(self, load_me):
+    async def load_room_smart(self, load_me, is_vr_command=False):
         rLIDs = []
         soups = []
         success = False
@@ -373,7 +373,8 @@ class ChannelBot(object):
             if temp.is_initialized():
                 self.room = temp
                 self.updateLoungeFinishTime()
-                DataTracker.RoomTracker.add_data(self)
+                if not is_vr_command:
+                    DataTracker.RoomTracker.add_data(self)
                 success = True
         
         while len(soups) > 0:

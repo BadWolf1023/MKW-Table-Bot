@@ -43,6 +43,7 @@ import os
 from datetime import datetime
 import URLShortener
 import Stats
+from BadWolfBot import is_vr_command
 
 vr_is_on = False
 
@@ -640,7 +641,7 @@ class OtherCommands:
     
     @staticmethod
     async def vr_command_get_races(rLID:str, temp_bot):
-        successful = await temp_bot.load_room_smart([rLID])
+        successful = await temp_bot.load_room_smart([rLID], is_vr_command=True)
         if not successful:
             return None
         return temp_bot.getRoom().get_races_abbreviated(last_x_races=12)
