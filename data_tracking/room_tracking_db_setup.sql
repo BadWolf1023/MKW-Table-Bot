@@ -77,13 +77,14 @@ CREATE TABLE Event(
 
 CREATE TABLE Tier(
     channel_id INT UNSIGNED NOT NULL,
-    tier INT NULL,
+    tier INT NOT NULL,
+    is_ct TINYINT(1) NOT NULL,
     PRIMARY KEY(channel_id)
 );
 
 CREATE TABLE Event_Races(
     event_id INT UNSIGNED NOT NULL,
-    race_id INT NOT NULL,
+    race_id INT UNSIGNED NOT NULL,
     PRIMARY KEY(event_id, race_id),
     FOREIGN KEY (race_id)
        REFERENCES Race(race_id)
@@ -101,7 +102,7 @@ CREATE TABLE Event_Races(
 
 CREATE TABLE Event_FCs(
     event_id INT UNSIGNED NOT NULL,
-    fc INT NOT NULL,
+    fc TEXT NOT NULL,
     mii_hex TEXT NULL,
     PRIMARY KEY(event_id, fc),
     FOREIGN KEY (fc)
