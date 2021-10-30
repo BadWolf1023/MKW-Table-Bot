@@ -71,11 +71,7 @@ CREATE TABLE Event(
     room_type TEXT NOT NULL,
     set_up_user_discord_id INT NULL,
     set_up_user_display_name TEXT NULL,
-    PRIMARY KEY(event_id),
-    FOREIGN KEY (channel_id)
-       REFERENCES Tier(channel_id)
-          ON UPDATE CASCADE
-           ON DELETE RESTRICT
+    PRIMARY KEY(event_id)
 
 );
 
