@@ -93,10 +93,6 @@ CREATE TABLE Event_Races(
     FOREIGN KEY (event_id)
        REFERENCES Event(event_id)
           ON UPDATE CASCADE
-           ON DELETE RESTRICT,
-    FOREIGN KEY (event_id)
-       REFERENCES Event_Structure(event_id)
-          ON UPDATE CASCADE
            ON DELETE RESTRICT
 );
 
@@ -111,10 +107,6 @@ CREATE TABLE Event_FCs(
            ON DELETE RESTRICT,
     FOREIGN KEY (event_id)
        REFERENCES Event(event_id)
-          ON UPDATE CASCADE
-           ON DELETE RESTRICT,
-    FOREIGN KEY (event_id)
-       REFERENCES Event_Structure(event_id)
           ON UPDATE CASCADE
            ON DELETE RESTRICT
 );
