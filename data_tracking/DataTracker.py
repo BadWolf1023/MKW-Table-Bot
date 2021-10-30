@@ -384,6 +384,7 @@ class RoomTracker(object):
         races:List[TableBotRace.Race] = channel_bot.getRoom().getRaces()
         sql_helper = RoomTrackerSQL(channel_bot)
         sql_helper.insert_missing_players_into_database()
+        #sql_helper.
         update_channel_data = True
         update_event_data = True
         for race in races:
@@ -487,9 +488,15 @@ def start_database():
     global database_connection
     database_connection = sqlite3.connect(common.ROOM_DATA_TRACKING_DATABASE_FILE)
 
+def populate_tier_table():
+    cur = database_connection.cursor()
+    populate_tier_table_script = common.read_sql_file(common.ROOM_DATA_POPULATE_TIER_TABLE_SQL)
+    cur.executescript(populate_tier_table_script)
+    
 def initialize():
     load_room_data()
     start_database()
+    populate_tier_table()
     for update_number in data_change_versions:
         modify_existing_data(update_number)
 
