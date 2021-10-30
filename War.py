@@ -38,7 +38,7 @@ class War(object):
 
     __formatMapping = {u"ffa":1,u"1v1":1, u"2v2":2, u"3v3":3, u"4v4":4, u"5v5":5, u"6v6":6}
 
-    def __init__(self, formatt, numberOfTeams, numberOfGPs=3, missingRacePts=3, ignoreLargeTimes=False, displayMiis=True):
+    def __init__(self, formatt, numberOfTeams, message_id, numberOfGPs=3, missingRacePts=3, ignoreLargeTimes=False, displayMiis=True):
         self.teamColors = None
         self.setWarFormat(formatt, numberOfTeams)
         self.numberOfGPs = numberOfGPs
@@ -51,6 +51,7 @@ class War(object):
         self.forcedRoomSize = {}
         self.teams = None
         self.temporary_tag_data = None
+        self.war_id = message_id
         
 
         

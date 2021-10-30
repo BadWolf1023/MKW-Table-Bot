@@ -1685,7 +1685,7 @@ class TablingCommands:
                         ignoreLargeTimes = ServerFunctions.get_server_large_time_setting(server_id)
                     
                     try:
-                        this_bot.setWar(War.War(warFormat, numTeams, numgps, ignoreLargeTimes=ignoreLargeTimes, displayMiis=useMiis))
+                        this_bot.setWar(War.War(warFormat, numTeams, message.id, numgps, ignoreLargeTimes=ignoreLargeTimes, displayMiis=useMiis))
                     except TableBotExceptions.InvalidWarFormatException:
                         await message.channel.send("War format was incorrect. Valid options: FFA, 1v1, 2v2, 3v3, 4v4, 5v5, 6v6. War not created.")
                         return
@@ -1693,8 +1693,7 @@ class TablingCommands:
                         await message.channel.send("Too many players based on the teams and war format. War not created.")
                         return
                     
-                    this_bot.updateRLCoolDown()
-                    message2 = await message.channel.send("Loading room...")
+                    
                     #This is the background task for getting miis, it will be awaited once everything in ?sw finishes
                     #Case 1: No mention, get FCs for the user - this happens when len(args) = 3
                     #Case 2: Mention, get FCs for the mentioned user, this happens when len(args) > 3 and len(mentions) > 1
@@ -1703,7 +1702,10 @@ class TablingCommands:
                     #Case 5: Lounge name: No mention, len(args) > 3, neither rLID nor FC
                     successful = False
                     discordIDToLoad = None
+                    message2 = None
                     try:
+                        this_bot.updateRLCoolDown()
+                        message2 = await message.channel.send("Loading room...")
                         if len(args) == 3 or (len(args) > 3 and (numGPsPos == 3 or iLTPos == 3 or miisPos == 3)):
                             discordIDToLoad = str(author_id)
                             await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]) )
@@ -1772,8 +1774,8 @@ class TablingCommands:
                     else:
                         this_bot.setWar(None)
                         this_bot.setRoom(None)
-                    
-                    await common.safe_delete(message2)
+                    if message2 is not None:
+                        await common.safe_delete(message2)
         else:
             await message.channel.send(f"You can only load a room for yourself in Lounge. Do this instead: `{server_prefix}{args[0]} {args[1]} {args[2]}`")
      
