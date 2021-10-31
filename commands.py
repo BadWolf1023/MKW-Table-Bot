@@ -551,7 +551,7 @@ class OtherCommands:
                     mii.clean_up()
                     
     @staticmethod
-    async def wws_command(client, this_bot:TableBot.ChannelBot, message:discord.Message, ww_type=Race.RT_WW_ROOM_TYPE):
+    async def wws_command(client, this_bot:TableBot.ChannelBot, message:discord.Message, ww_type=Race.RT_WW_REGION):
         await mkwx_check(message, "WWs command disabled.")
 
         rlCooldown = this_bot.getRLCooldownSeconds()
@@ -564,13 +564,13 @@ class OtherCommands:
             sr = SimpleRooms.SimpleRooms()
             await sr.populate_rooms_information()
             rooms = []
-            if ww_type == Race.RT_WW_ROOM_TYPE:
+            if ww_type == Race.RT_WW_REGION:
                 rooms = sr.get_RT_WWs()
-            elif ww_type == Race.CTGP_CTWW_ROOM_TYPE:
+            elif ww_type == Race.CTGP_CTWW_REGION:
                 rooms = sr.get_CTGP_WWs()
-            elif ww_type == Race.BATTLE_ROOM_TYPE:
+            elif ww_type == Race.BATTLE_REGION:
                 rooms = sr.get_battle_WWs()
-            elif ww_type == Race.UNKNOWN_ROOM_TYPE:
+            elif ww_type == Race.UNKNOWN_REGION:
                 rooms = sr.get_other_rooms()
             else:
                 rooms = sr.get_private_rooms()

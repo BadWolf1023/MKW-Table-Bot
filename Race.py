@@ -10,11 +10,11 @@ from collections import defaultdict
 from typing import List
 import common
 
-CTGP_CTWW_ROOM_TYPE = 'vs_54'
-BATTLE_ROOM_TYPE = 'bt'
-RT_WW_ROOM_TYPE = 'vs'
-PRIVATE_ROOM_TYPE = 'priv'
-UNKNOWN_ROOM_TYPE = 'unk'
+CTGP_CTWW_REGION = 'vs_54'
+BATTLE_REGION = 'bt'
+RT_WW_REGION = 'vs'
+PRIVATE_ROOM_REGION = 'priv'
+UNKNOWN_REGION = 'unk'
 
 
 
@@ -107,8 +107,8 @@ def on_exit():
     save_data()
 
 def set_ctgp_region(new_region:str):
-    global CTGP_CTWW_ROOM_TYPE
-    CTGP_CTWW_ROOM_TYPE = new_region
+    global CTGP_CTWW_REGION
+    CTGP_CTWW_REGION = new_region
     
 class Race:
     '''
@@ -143,7 +143,7 @@ class Race:
         return self.raceNumber
     def set_race_number(self, race_number):
         self.raceNumber = race_number
-    def get_room_id(self):
+    def get_room_name(self):
         return self.roomID
     def get_rxx(self):
         return self.rxx
@@ -175,12 +175,12 @@ class Race:
             return 0
         return len(self.placements)
     
-    def updateRoomType(self):
-        roomTypeCount = defaultdict(int)
+    def update_region(self):
+        regionCount = defaultdict(int)
         for placement in self.getPlacements():
-            roomTypeCount[placement.getPlayer().room_type] += 1
-        mostCommonRoomType = max(roomTypeCount, key=lambda x: roomTypeCount[x])
-        self.roomType = mostCommonRoomType
+            regionCount[placement.getPlayer().region] += 1
+        mostCommonRegion = max(regionCount, key=lambda x: regionCount[x])
+        self.region = mostCommonRegion
             
     def addPlacement(self, placement):
         #I'm seriously lazy, but it doesn't matter if we sort 12 times rather than inserting in the correct place - this is a small list
@@ -190,7 +190,7 @@ class Race:
         while i < len(self.placements):
             self.placements[i].place = i+1
             i += 1
-        self.updateRoomType()
+        self.update_region()
          
     def setRegion(self, region):
         self.region = region
@@ -198,21 +198,21 @@ class Race:
     def setRegionFromPlacements(self):
         if len(self.placements) > 0:
             first_placement = self.placements[0]
-            self.region = first_placement.player.room_type
+            self.region = first_placement.player.region
     
     def isCTGPWW(self):
-        return self.region == CTGP_CTWW_ROOM_TYPE
+        return self.region == CTGP_CTWW_REGION
     
     def isRTWW(self):
-        return self.region == RT_WW_ROOM_TYPE
+        return self.region == RT_WW_REGION
     
     def isBattleWW(self):
-        return self.region == BATTLE_ROOM_TYPE
+        return self.region == BATTLE_REGION
     
     def isPrivateRoom(self):
-        return self.region == PRIVATE_ROOM_TYPE
+        return self.region == PRIVATE_ROOM_REGION
     
-    def isUnknownRoomType(self):
+    def isUnknownRegion(self):
         return not self.isCTGPWW() and not self.isRTWW() and not self.isBattleWW() and not self.isPrivateRoom()
     
     def getRoomRating(self):
@@ -344,13 +344,13 @@ class Race:
         if self.region is None:
             return ""
         
-        if self.region == CTGP_CTWW_ROOM_TYPE:
+        if self.region == CTGP_CTWW_REGION:
             return "CTWW (CTGP)"
-        if self.region == RT_WW_ROOM_TYPE:
+        if self.region == RT_WW_REGION:
             return "WW"
-        if self.region == BATTLE_ROOM_TYPE:
+        if self.region == BATTLE_REGION:
             return "Battle WW"
-        if self.region == PRIVATE_ROOM_TYPE:
+        if self.region == PRIVATE_ROOM_REGION:
             return "Private Room"
         return "Unknown"
     
@@ -358,13 +358,13 @@ class Race:
     def getWWFullName(region):
         if region is None:
             return ""
-        if region == CTGP_CTWW_ROOM_TYPE:
+        if region == CTGP_CTWW_REGION:
             return "CTGP Custom Track Worldwide"
-        if region == RT_WW_ROOM_TYPE:
+        if region == RT_WW_REGION:
             return "Regular Track Worldwide"
-        if region == BATTLE_ROOM_TYPE:
+        if region == BATTLE_REGION:
             return "Battle Worldwide"
-        if region == PRIVATE_ROOM_TYPE:
+        if region == PRIVATE_ROOM_REGION:
             return "Private"
         return "Unknown"
     

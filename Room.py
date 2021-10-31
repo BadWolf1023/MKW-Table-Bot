@@ -250,12 +250,12 @@ class Room(object):
             return player_list[FC]
         return "no name"
     
-    def get_room_type(self):
-        race_types = set(race.get_room_type() for race in self.getRaces())
-        if len(race_types) != 1:
-            return Race.UNKNOWN_ROOM_TYPE
-        for race_type in race_types:
-            return race_type
+    def get_region(self):
+        regions = set(race.get_region() for race in self.getRaces())
+        if len(regions) != 1:
+            return Race.UNKNOWN_REGION
+        for region in regions:
+            return regions
         
             
             
@@ -413,7 +413,7 @@ class Room(object):
             roomPosition = temp[0].strip(".")
             role = temp[1].strip()
         
-        playerRoomType = str(allRows[2].string)
+        playerRegion = str(allRows[2].string)
         playerConnFails = str(allRows[3].string)
         if not isint(playerConnFails) and not isfloat(playerConnFails):
             playerConnFails = None
@@ -439,7 +439,7 @@ class Room(object):
         while len(allRows) > 0:
             del allRows[0]
         
-        return FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, delta, time, playerName
+        return FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, delta, time, playerName
     
     def getRaceInfoFromList(self, textList):
         '''Utility Function'''
@@ -512,10 +512,10 @@ class Room(object):
                     foundRaceHeader = True
                     
                 else:
-                    FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, delta, time, playerName = self.getPlacementInfo(line)
+                    FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, delta, time, playerName = self.getPlacementInfo(line)
                     if races[0].hasFC(FC):
                         FC = FC + "-2"
-                    plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, playerName)
+                    plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, playerName)
                     p = Placement.Placement(plyr, -1, time, delta)
                     races[0].addPlacement(p)
         
@@ -534,7 +534,6 @@ class Room(object):
                 print(f"Race Track: {race.track}")
                 print(f"Track URL: {race.trackURL}")
                 print(f"Race cc: {race.cc}")
-                print(f"Race Region: {race.region}")
                 print(f"Is CT? {race.is_ct}")
             if DEBUG_PLACEMENTS:
                 for placement in race.getPlacements():
@@ -547,7 +546,7 @@ class Room(object):
                     print(f"\tPlace: {placement.place}")
                     print(f"\ol_status: {placement.getPlayer().ol_status}")
                     print(f"\tPosition in Room: {placement.getPlayer().positionInRoom}")
-                    print(f"\tPlayer Room Type: {placement.getPlayer().room_type}")
+                    print(f"\tPlayer Region: {placement.getPlayer().region}")
                     print(f"\tPlayer Conn Fails: {placement.getPlayer().playerConnFails}")
                     print(f"\Role: {placement.getPlayer().role}")
                     print(f"\tVR: {placement.getPlayer().vr}")

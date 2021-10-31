@@ -4,7 +4,7 @@ Created on Jun 12, 2021
 @author: willg
 '''
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import numpy as np
 import aiohttp
 import TableBotExceptions
@@ -452,3 +452,5 @@ def load_pkl(file_name, error_message, default):
                 print(error_message)
     return default()
     
+def get_utc_time():
+    return datetime.now(timezone.utc)

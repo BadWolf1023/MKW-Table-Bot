@@ -3,6 +3,7 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
+from Race import BATTLE_REGION
 
 vehicle_ratings = {"Mach Bike":10,
                   "Flame Runner":10,
@@ -18,7 +19,7 @@ VR_WEIGHT = .8
 VEHICLE_WEIGHT = .2
 
 LONG_DASH = "u\2014"
-BATTLE_ROOM_TYPE = 'bt'
+BATTLE_REGION = 'bt'
 
 def get_scaled_rating(rating):
     if rating >= .9:
@@ -35,7 +36,7 @@ class Player(object):
     '''
 
 
-    def __init__(self, FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, playerName, discord_name=None, lounge_name=None, mii_hex=None):
+    def __init__(self, FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, playerName, discord_name=None, lounge_name=None, mii_hex=None):
         '''
         Constructor
         '''
@@ -44,7 +45,7 @@ class Player(object):
         self.pid = int(self.playerPageLink.split("/")[-1].strip('p'))
         self.ol_status = ol_status
         self.positionInRoom = roomPosition
-        self.room_type = playerRoomType
+        self.region = playerRegion
         self.playerConnFails = playerConnFails
         self.role = str(role)
         self.vr = vr
@@ -77,8 +78,8 @@ class Player(object):
         return self.role
     def get_connection_fails(self):
         return self.playerConnFails
-    def get_room_type(self):
-        return self.room_type
+    def get_region(self):
+        return self.region
     def get_position(self):
         return self.positionInRoom
     def get_ol_status(self):
@@ -124,7 +125,7 @@ class Player(object):
             vehicle_rating = vehicle_ratings[self.vehicle] / MAX_VEHICLE_RATING
         elif self.vehicle == LONG_DASH:
             vehicle_rating = .5
-        elif self.room_type == BATTLE_ROOM_TYPE:
+        elif self.region == BATTLE_REGION:
             vehicle_rating = 1
         
         temp_vr = 5000
