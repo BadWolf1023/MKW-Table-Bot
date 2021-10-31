@@ -195,10 +195,6 @@ class Race:
     def setRegion(self, region):
         self.region = region
         
-    def setRegionFromPlacements(self):
-        if len(self.placements) > 0:
-            first_placement = self.placements[0]
-            self.region = first_placement.player.region
     
     def isCTGPWW(self):
         return self.region == CTGP_CTWW_REGION

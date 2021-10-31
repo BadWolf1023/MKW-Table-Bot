@@ -3,7 +3,6 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
-from Race import BATTLE_REGION
 
 vehicle_ratings = {"Mach Bike":10,
                   "Flame Runner":10,
