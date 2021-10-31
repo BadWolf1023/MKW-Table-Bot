@@ -19,6 +19,17 @@ import traceback
 #import itertools
 #from contextlib import closing
 
+"""SELECT
+    Race.track_name,
+    COUNT(Race.race_id) as times_played
+FROM
+    Race LEFT JOIN Track ON Race.track_name = Track.track_name
+WHERE
+    Track.is_ct == 1
+GROUP BY
+    Race.track_name
+ORDER BY
+    2 DESC, 1 ASC;"""
 import os
 from data_tracking import Data_Tracker_SQL_Query_Builder as QB
 
@@ -151,7 +162,7 @@ class DataRetriever(object):
         LEIGITMATE_ROOM_UPDATE_COUNT = 3
         cur_best = None
         #Filter by private rooms only if required
-        filtered_events = filter(channel_id_events.values(), lambda event_data: (not require_private_room or all(race.roomType == TableBotRace.PRIVATE_ROOM_TYPE for race in event_data[1].races)))
+        filtered_events = filter(channel_id_events.values(), lambda event_data: (not require_private_room or all(race.roomType == TableBotRace.PRIVATE_ROOM_REGION for race in event_data[1].races)))
         for channel_data, event in filtered_events:
             if prefer_tier and get_tier(channel_data) is None:
                 continue
@@ -234,10 +245,23 @@ class RoomTrackerSQL(object):
             self.insert_players_into_database([room_fc_placements[fc].getPlayer() for fc in missing_fcs])
     
     def validate_races_data(self, races:List[TableBotRace.Race]):
-        raise NotImplementedError()
+        RACE_TABLE_NAMES = ["race_id", "rxx", "time_added", "match_time", "race_number", "room_name", "track_name", "room_type", "cc", "region"]
+        for race in races:
+            print(self.get_race_as_sql_tuple(race))
+            race:TableBotRace.Race
+        #raise NotImplementedError()
     
-    def get_race_as_sql_tuple(self, race):
-        raise NotImplementedError()
+    def get_race_as_sql_tuple(self, race:TableBotRace.Race):
+        return (race.get_race_id(),
+                race.get_rxx(),
+                common.get_utc_time(),
+                race.get_match_start_time(),
+                race.get_race_number(),
+                race.get_room_name(),
+                race.get_track_name(),
+                race.get_room_type(),
+                race.get_cc(),
+                race.get_region())
     
     def get_race_as_sql_track_tuple(self, race):
         no_author_name = race.getTrackNameWithoutAuthor()
@@ -346,7 +370,7 @@ class RoomTracker(object):
                      pid=player.get_player_id(),
                      ol_status=player.get_ol_status(),
                      roomPosition=player.get_position(),
-                     roomType=player.get_room_type(),
+                     roomType=player.get_region(),
                      connectionFails=player.get_connection_fails(),
                      role=player.get_role(),
                      vr=player.get_VR(),
@@ -367,7 +391,7 @@ class RoomTracker(object):
                     matchTime=race.get_match_start_time(),
                     id=race.get_race_id(),
                     raceNumber=race.get_race_number(),
-                    roomID=race.get_room_id(),
+                    roomID=race.get_room_name(),
                     rxx=race.get_rxx(),
                     trackURL=race.get_track_url(),
                     roomType=race.get_room_type(),
