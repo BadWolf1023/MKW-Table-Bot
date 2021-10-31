@@ -91,6 +91,9 @@ class Player(object):
         return self.name
     def get_FC(self):
         return self.FC
+    
+    def set_name(self, new_name):
+        self.name = new_name
         
         
         

@@ -510,17 +510,15 @@ class Room(object):
                     raceNumber = None
                     races.insert(0, Race.Race(raceTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, room_rxx, race_id, trackURL))
                     foundRaceHeader = True
+                    
                 else:
                     FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, delta, time, playerName = self.getPlacementInfo(line)
                     if races[0].hasFC(FC):
                         FC = FC + "-2"
                     plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, playerName)
-                    
-                    if plyr.FC in self.name_changes:
-                        plyr.name = self.name_changes[plyr.FC] + " (Tabler Changed)"
                     p = Placement.Placement(plyr, -1, time, delta)
                     races[0].addPlacement(p)
-        
+                    
         for race in races:
             if DEBUG_RACES:
                 print()
@@ -570,9 +568,16 @@ class Room(object):
         for raceNum, race in enumerate(races, 1):
             race.raceNumber = raceNum
         
+        #Next, apply name chanes
+        for race in self.races:
+            for placement in race.getPlacements():
+                if placement.getPlayer().get_FC() in self.name_changes:
+                    placement.getPlayer().set_name(f"{self.name_changes[plyr.FC]} (Tabler Changed)")
+        
         #Next, we remove races
         for removed_race_ind, _ in self.removed_races:
             self.__remove_race__(removed_race_ind, races)
+        
             
         #Next, we need to renumber the races
         for raceNum, race in enumerate(races, 1):
