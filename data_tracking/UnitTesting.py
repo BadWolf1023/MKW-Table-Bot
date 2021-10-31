@@ -34,6 +34,16 @@ WHERE race_id in (?, ?, ?, ?);""", f"get_existing_race_ids_in_Race_table did not
     
 class SQLInsertStatementTests(unittest.TestCase):
     pass
+
+class SQLDataValidation_players(unittest.TestCase):
+    """validate_player_data"""
+    def test_validate_players_data_1(self):
+        raise NotImplemented()
+    
+class SQLDataValidation_races(unittest.TestCase):
+    """validate_races_data"""
+    def test_validate_races_data_1(self):
+        raise NotImplemented()
     
 class SQLDataValidation_tracks(unittest.TestCase):
     '''Class to test data validation before inserting into database'''
