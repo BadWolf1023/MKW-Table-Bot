@@ -35,7 +35,7 @@ class Room(object):
     '''
     classdocs
     '''
-    def __init__(self, rLIDs, roomSoup, database_call, is_vr_command):
+    def __init__(self, rLIDs, roomSoup):
         self.name_changes = {}
         self.removed_races = []
         
@@ -55,11 +55,11 @@ class Room(object):
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         self.sub_ins = {}
         
-        self.initialize(rLIDs, roomSoup, database_call, is_vr_command)
+        self.initialize(rLIDs, roomSoup)
         
 
     
-    def initialize(self, rLIDs, roomSoup, database_call, is_vr_command):
+    def initialize(self, rLIDs, roomSoup):
         self.rLIDs = rLIDs
         
         if roomSoup is None:
