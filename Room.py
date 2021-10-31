@@ -35,7 +35,7 @@ class Room(object):
     '''
     classdocs
     '''
-    def __init__(self, rLIDs, roomSoup):
+    def __init__(self, rLIDs, roomSoup, database_call, is_vr_command):
         self.name_changes = {}
         self.removed_races = []
         
@@ -55,11 +55,11 @@ class Room(object):
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         self.sub_ins = {}
         
-        self.initialize(rLIDs, roomSoup)
+        self.initialize(rLIDs, roomSoup, database_call, is_vr_command)
         
 
     
-    def initialize(self, rLIDs, roomSoup):
+    def initialize(self, rLIDs, roomSoup, database_call, is_vr_command):
         self.rLIDs = rLIDs
         
         if roomSoup is None:
@@ -71,7 +71,7 @@ class Room(object):
             
             
 
-        self.races = self.getRacesList(roomSoup)
+        self.races = self.getRacesList(roomSoup, database_call, is_vr_command)
         
         if len(self.races) > 0:
             self.roomID = self.races[0].roomID
@@ -489,7 +489,7 @@ class Room(object):
             return "No Track Page"
         
       
-    def getRacesList(self, roomSoup):
+    def getRacesList(self, roomSoup, database_call, is_vr_command):
         #Utility function
         tableLines = roomSoup.find_all("tr")
         
@@ -518,7 +518,11 @@ class Room(object):
                     plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, playerName)
                     p = Placement.Placement(plyr, -1, time, delta)
                     races[0].addPlacement(p)
-                    
+        
+        #Make call to database to add data
+        if not is_vr_command:
+            database_call()
+            
         for race in races:
             if DEBUG_RACES:
                 print()
@@ -596,7 +600,7 @@ class Room(object):
     def getNumberOfGPS(self):
         return int((len(self.races)-1)/4)+1
     
-    async def update_room(self):
+    async def update_room(self, database_call, is_vr_command):
         if self.is_initialized():
             soups = []
             rLIDs = []
@@ -610,7 +614,7 @@ class Room(object):
             
             to_return = False
             if tempSoup is not None:
-                self.initialize(rLIDs, tempSoup)
+                self.initialize(rLIDs, tempSoup, database_call, is_vr_command)
                 tempSoup.decompose()
                 del tempSoup
                 to_return = True

@@ -265,9 +265,7 @@ class ChannelBot(object):
     async def update_room(self) -> bool:
         if self.room is None:
             return False
-        success = await self.room.update_room()
-        if success:
-            DataTracker.RoomTracker.add_data(self)
+        success = await self.room.update_room(lambda:DataTracker.RoomTracker.add_data(self), is_vr_command=False)
         self.updateLoungeFinishTime()
         return success
 
@@ -367,14 +365,12 @@ class ChannelBot(object):
                 break
         else:
             roomSoup = WiimmfiSiteFunctions.combineSoups(soups)
-            temp = Room.Room(rLIDs, roomSoup)
+            temp = Room.Room(rLIDs, roomSoup, lambda:DataTracker.RoomTracker.add_data(self), is_vr_command)
             
             
             if temp.is_initialized():
                 self.room = temp
                 self.updateLoungeFinishTime()
-                if not is_vr_command:
-                    DataTracker.RoomTracker.add_data(self)
                 success = True
         
         while len(soups) > 0:
