@@ -23,6 +23,7 @@ import os
 from data_tracking import Data_Tracker_SQL_Query_Builder as QB
 
 DEBUGGING_DATA_TRACKER = False
+DEBUGGING_SQL = True
 
 import sqlite3
 database_connection:sqlite3.Connection = None
@@ -221,10 +222,14 @@ class RoomTrackerSQL(object):
     def insert_missing_players_into_database(self):
         room_fc_placements = self.channel_bot.getRoom().getFCPlacements()
         find_fcs_statement = QB.get_fcs_in_Player_table(room_fc_placements.keys())
+        if DEBUGGING_SQL:
+            print(f"FCs in room: {set(room_fc_placements)}")
         found_fcs = set(result[0] for result in database_connection.execute(find_fcs_statement, [k for k in room_fc_placements]))
-        print(found_fcs)
+        if DEBUGGING_SQL:
+            print(f"FCs found in database: {found_fcs}")
         missing_fcs = set(room_fc_placements).difference(found_fcs)
-        print(missing_fcs)
+        if DEBUGGING_SQL:
+            print(f"Missing FCs: {missing_fcs}")
         if len(missing_fcs) > 0:
             self.insert_players_into_database([room_fc_placements[fc].getPlayer() for fc in missing_fcs])
     
@@ -239,7 +244,7 @@ class RoomTrackerSQL(object):
         return (race.get_track_name(),
                 race.get_track_url(),
                 no_author_name,
-                Race.is_custom_track(),
+                race.is_custom_track(),
                 TableBotRace.get_track_name_lookup(no_author_name)
                 )
     
@@ -252,11 +257,15 @@ class RoomTrackerSQL(object):
     
     def insert_missing_races_into_database(self):
         race_id_races = {race.get_race_id():race for race in self.channel_bot.getRoom().races}
+        if DEBUGGING_SQL:
+            print(f"All race ids in event: {set(race_id_races)}")
         find_race_ids_statement = QB.get_existing_race_ids_in_Race_table(race_id_races)
         found_race_ids = set(result[0] for result in database_connection.execute(find_race_ids_statement, [k for k in race_id_races]))
-        print(found_race_ids)
+        if DEBUGGING_SQL:
+            print(f"Race ids found in database: {found_race_ids}")
         missing_race_ids = set(race_id_races).difference(found_race_ids)
-        print(missing_race_ids)
+        if DEBUGGING_SQL:
+            print(f"Missing race ids: {missing_race_ids}")
         if len(missing_race_ids) > 0:
             self.insert_races_into_database([race_id_races[race_id] for race_id in missing_race_ids])
 
@@ -291,11 +300,15 @@ class RoomTrackerSQL(object):
     
     def insert_missing_tracks_into_database(self):
         track_names = {race.get_track_name():race for race in self.channel_bot.getRoom().races}
+        if DEBUGGING_SQL:
+            print(f"Tracks in room: {set(track_names)}")
         find_track_names_statement = QB.get_existing_tracks_in_Track_table(track_names)
         found_track_names = set(result[0] for result in database_connection.execute(find_track_names_statement, [tn for tn in track_names]))
-        print(found_track_names)
+        if DEBUGGING_SQL:
+            print(f"Track names found in database: {found_track_names}")
         missing_track_names = set(track_names).difference(found_track_names)
-        print(missing_track_names)
+        if DEBUGGING_SQL:
+            print(f"Missing track names: {missing_track_names}")
         if len(missing_track_names) > 0:
             self.insert_tracks_into_database([track_names[tn] for tn in missing_track_names])
         
