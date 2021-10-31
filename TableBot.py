@@ -365,13 +365,17 @@ class ChannelBot(object):
                 break
         else:
             roomSoup = WiimmfiSiteFunctions.combineSoups(soups)
-            temp = Room.Room(rLIDs, roomSoup, lambda:DataTracker.RoomTracker.add_data(self), is_vr_command)
+            temp = Room.Room(rLIDs, roomSoup)
             
             
             if temp.is_initialized():
                 self.room = temp
                 self.updateLoungeFinishTime()
                 success = True
+                #Make call to database to add data
+                if not is_vr_command:
+                    DataTracker.RoomTracker.add_data(self)
+                self.getRoom().apply_tabler_adjustments()
         
         while len(soups) > 0:
             if soups[0] is not None:

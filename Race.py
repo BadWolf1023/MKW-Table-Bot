@@ -141,6 +141,8 @@ class Race:
         return self.matchID
     def get_race_number(self):
         return self.raceNumber
+    def set_race_number(self, race_number):
+        self.raceNumber = race_number
     def get_room_id(self):
         return self.roomID
     def get_rxx(self):

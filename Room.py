@@ -75,10 +75,6 @@ class Room(object):
         
         if len(self.races) > 0:
             self.roomID = self.races[0].roomID
-            #Make call to database to add data
-            if not is_vr_command:
-                database_call()
-            self.apply_tabler_adjustments()
             
         else: #Hmmmm, if there are no races, what should we do? We currently unload the room... edge case...
             self.rLIDs = None
@@ -571,7 +567,7 @@ class Room(object):
             del tableLines[0]
         
 
-        seen_race_id_numbering = defaultdict(lambda:[dict, 0])
+        seen_race_id_numbering = defaultdict(lambda:[{}, 0])
         for race in races:
             race:Race.Race
             rxx_numbering = seen_race_id_numbering[race.get_rxx()]
@@ -603,6 +599,10 @@ class Room(object):
             to_return = False
             if tempSoup is not None:
                 self.initialize(rLIDs, tempSoup, database_call, is_vr_command)
+                #Make call to database to add data
+                if not is_vr_command:
+                    database_call()
+                self.apply_tabler_adjustments()
                 tempSoup.decompose()
                 del tempSoup
                 to_return = True
