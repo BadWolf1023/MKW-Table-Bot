@@ -71,10 +71,14 @@ class Room(object):
             
             
 
-        self.races = self.getRacesList(roomSoup, database_call, is_vr_command)
+        self.races = self.getRacesList(roomSoup)
         
         if len(self.races) > 0:
             self.roomID = self.races[0].roomID
+            #Make call to database to add data
+            if not is_vr_command:
+                database_call()
+            self.apply_tabler_adjustments()
             
         else: #Hmmmm, if there are no races, what should we do? We currently unload the room... edge case...
             self.rLIDs = None
@@ -489,7 +493,7 @@ class Room(object):
             return "No Track Page"
         
       
-    def getRacesList(self, roomSoup, database_call, is_vr_command):
+    def getRacesList(self, roomSoup):
         #Utility function
         tableLines = roomSoup.find_all("tr")
         
@@ -519,9 +523,7 @@ class Room(object):
                     p = Placement.Placement(plyr, -1, time, delta)
                     races[0].addPlacement(p)
         
-        #Make call to database to add data
-        if not is_vr_command:
-            database_call()
+
             
         for race in races:
             if DEBUG_RACES:
@@ -568,29 +570,15 @@ class Room(object):
         while len(tableLines) > 0:
             del tableLines[0]
         
-        #First, we number all races
-        for raceNum, race in enumerate(races, 1):
-            race.raceNumber = raceNum
-        
-        #Next, apply name chanes
-        for race in self.races:
-            for placement in race.getPlacements():
-                if placement.getPlayer().get_FC() in self.name_changes:
-                    placement.getPlayer().set_name(f"{self.name_changes[plyr.FC]} (Tabler Changed)")
-        
-        #Next, we remove races
-        for removed_race_ind, _ in self.removed_races:
-            self.__remove_race__(removed_race_ind, races)
-        
-            
-        #Next, we need to renumber the races
-        for raceNum, race in enumerate(races, 1):
-            race.raceNumber = raceNum
-        
-        #Next, we apply quick edits
-        for race_number, race in enumerate(races, 1):
-            if race_number in self.placement_history:
-                race.applyPlacementChanges(self.placement_history[race_number])
+
+        seen_race_id_numbering = defaultdict(lambda:[dict, 0])
+        for race in races:
+            race:Race.Race
+            rxx_numbering = seen_race_id_numbering[race.get_rxx()]
+            if race.get_race_id() not in rxx_numbering:
+                rxx_numbering[1] += 1
+                rxx_numbering[0][race.get_race_id()] = rxx_numbering[1]
+            race.set_race_number(rxx_numbering[0][race.get_race_id()])
         
         return races
     
@@ -624,6 +612,32 @@ class Room(object):
                 del soups[0]
             return to_return
         return False
+    
+    def apply_tabler_adjustments(self):
+        #First, we number all races
+        for raceNum, race in enumerate(self.races, 1):
+            race.raceNumber = raceNum
+            
+        #Next, apply name changes
+        for FC, name_change in self.name_changes.items():
+            for race in self.races:
+                for placement in race.getPlacements():
+                    if placement.getPlayer().get_FC() == FC:
+                        placement.getPlayer().set_name(f"{name_change} (Tabler Changed)")
+        
+        #Next, we remove races
+        for removed_race_ind, _ in self.removed_races:
+            self.__remove_race__(removed_race_ind, self.races)
+        
+            
+        #Next, we need to renumber the races
+        for raceNum, race in enumerate(self.races, 1):
+            race.raceNumber = raceNum
+        
+        #Next, we apply quick edits
+        for race_number, race in enumerate(self.races, 1):
+            if race_number in self.placement_history:
+                race.applyPlacementChanges(self.placement_history[race_number])
         
     def getRacesPlayed(self):
         return [r.track for r in self.races]
