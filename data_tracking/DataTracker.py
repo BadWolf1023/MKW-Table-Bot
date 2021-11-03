@@ -118,7 +118,7 @@ def tier_matches(tier, channel_data):
     if tier is None:
         return True
     return tier == get_tier(channel_data)
-
+"""
 class DataRetriever(object):
     #TODO: Finish method
     @staticmethod
@@ -164,7 +164,7 @@ class DataRetriever(object):
         track_count = defaultdict(int)
         rxx_dict = room_data[CT_NAME] if is_ct else room_data[RT_NAME]
         filtered_rxxs = DataRetriever.get_filtered_rxxs(rxx_dict, tier, in_last_days)
-
+"""
 class ChannelBotSQLDataValidator(object):
     
     def wrong_type_message(self, data, expected_type, multi=False):
@@ -234,11 +234,11 @@ class ChannelBotSQLDataValidator(object):
             if not isinstance(race.get_room_name(), str):
                 raise SQLTypeWrong(self.wrong_type_message(race.get_room_name(), int))
             
-            if not isinstance(race.room_type(), str):
-                raise SQLTypeWrong(self.wrong_type_message(race.room_type(), str))
+            if not isinstance(race.get_room_type(), str):
+                raise SQLTypeWrong(self.wrong_type_message(race.get_room_type(), str))
             
-            if not isinstance(race.cc(), str):
-                raise SQLTypeWrong(self.wrong_type_message(race.cc(), str))
+            if not isinstance(race.get_cc(), str):
+                raise SQLTypeWrong(self.wrong_type_message(race.get_cc(), str))
             
             if not isinstance(race.get_region(), str):
                 raise SQLTypeWrong(self.wrong_type_message(race.get_region(), str))
@@ -398,9 +398,9 @@ class RoomTracker(object):
             rxx_dict[rxx][channel_bot.channel_id] = [RoomTracker.new_channel_data(channel_bot.channel_id), RoomTracker.create_event(channel_bot)]
             return False
         return True
-    
+    """
     @staticmethod
-    def create_placement(placement:TableBotRace.Placement) -> Place:
+    def create_placement(placement:TableBotRace.Placement):
         player = placement.getPlayer()
         return Place(fc=player.get_FC(),
                      name=player.get_name(),
@@ -442,12 +442,12 @@ class RoomTracker(object):
                     region=race.get_region(),
                     is_ct=race.is_custom_track(),
                     placements=all_placements)
-    
+    """
     @staticmethod
     def get_miis(channel_bot) -> Dict[str, str]:
         #[print(mii) for mii in channel_bot.get_miis()]
         return {FC : mii.mii_data_hex_str for (FC,mii) in channel_bot.get_miis().items()}
-            
+    """    
     @staticmethod
     def create_event(channel_bot) -> Event:
         return Event(timeAdded=datetime.now(),
@@ -502,7 +502,7 @@ class RoomTracker(object):
                                      teamPenalties=copy(channel_bot.getWar().teamPenalties),
                                      teams=copy(channel_bot.getWar().teams),
                                      miis=channel_data_info[1].miis)
-    
+    """
     @staticmethod
     def add_race(channel_data_info, race:TableBotRace.Race):
         _, event = channel_data_info
@@ -530,7 +530,7 @@ class RoomTracker(object):
             channel_meta_data[3] += 1
         
     @staticmethod
-    def add_races(channel_bot):
+    def add_everything_to_database(channel_bot):
         races:List[TableBotRace.Race] = channel_bot.getRoom().getRaces()
         sql_helper = RoomTrackerSQL(channel_bot)
         sql_helper.insert_missing_players_into_database()
@@ -556,73 +556,20 @@ class RoomTracker(object):
             if success_code == FATAL_ERROR:
                 return FATAL_ERROR
         return DATA_DUMP_SUCCESS
-    #Greedily add all races
+    
+    
     @staticmethod
     def add_data(channel_bot):
-        #free_old_locks()
-        
         if channel_bot.getRoom().is_initialized():
-            try:
-                success_code = RoomTracker.add_races(channel_bot)
-                if DEBUGGING_DATA_TRACKER:
-                    dump_room_data()
-                    pretty_print_room_data()
-            except:
-                raise
-                common.log_traceback(traceback)
-        
-        
-            
-
-
-
-
-
-
-
-
-
-
-
-
-def pretty_print_room_data():
-    temp_data = deepcopy(room_data)
-    rt_rxx_dict = temp_data[RT_NAME]
-    ct_rxx_dict = temp_data[CT_NAME]
-    for rxx_dict in [rt_rxx_dict, ct_rxx_dict]:
-        for channel_ids in rxx_dict.values():
-            for rxx_channel_data in channel_ids.values():
-                _, event = rxx_channel_data
-                if event.races is not None:
-                    for race_index, race in enumerate(event.races):
-                        for place_index, place in enumerate(race.placements):
-                            race.placements[place_index] = place._asdict()
-                        event.races[race_index] = race._asdict()
-                with open("room_race_data.txt", "w", encoding="utf-8") as g:
-                    pprint.pprint([r for r in reversed(event.races)], stream=g, depth=15, width=200, sort_dicts=False)
-                rxx_channel_data[1] = event._asdict()
-    with open("room_data.txt", "w", encoding="utf-8") as f:
-        pprint.pprint(temp_data, stream=f, depth=15, width=200)
-
-
-data_change_versions = {1:"added the time an event was added to Event.timeAdded"}
-def modify_existing_data(version=1):
-    rt_rxx_dict = room_data[RT_NAME]
-    ct_rxx_dict = room_data[CT_NAME]
-    if version == 1:
-        for rxx_dict in [rt_rxx_dict, ct_rxx_dict]:
-            for channel_ids in rxx_dict.values():
-                for rxx_channel_data in channel_ids.values():
-                    if not 'timeAdded' in rxx_channel_data[1]._fields:
-                        time_added = get_start_time(rxx_channel_data[0])
-                        rxx_channel_data[1] = Event(timeAdded=time_added, **rxx_channel_data[1])
-                    
+            #Make a deep copy to avoid asyncio switching current task to a tabler command and modifying our data in the middle of us validating it or adding it
+            deepcopied_channel_bot = deepcopy(channel_bot)
+            if deepcopied_channel_bot.getRoom().is_initialized(): #This check might seem unnecessary, but we'll leave it in case we convert things to asyncio that aren't currently asynchronous (making it necessary)
+                try:
+                    success_code = RoomTracker.add_everything_to_database(deepcopied_channel_bot)
+                except:
+                    common.log_traceback(traceback)
+                    raise
                         
-                        
-                        
-            
-def dump_room_data():
-    common.dump_pkl(room_data, common.ROOM_DATA_TRACKER_FILE, "Could not dump pickle room data in data tracking.", display_data_on_error=True)
 
 def load_room_data():
     if not os.path.exists(common.ROOM_DATA_TRACKING_DATABASE_FILE):
@@ -649,17 +596,15 @@ def initialize():
     load_room_data()
     start_database()
     populate_tier_table()
-    for update_number in data_change_versions:
-        modify_existing_data(update_number)
 
 def save_data():
-    dump_room_data()
+    pass
     
 def on_exit():
     save_data()
+    database_connection.close()
 
 
 if __name__ == '__init__':
     initialize()
-    pretty_print_room_data()
     
