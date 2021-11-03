@@ -8,7 +8,7 @@ CREATE TABLE Place(
     lag_start DOUBLE(8, 2) NULL,
     ol_status TEXT NOT NULL,
     room_position INT NOT NULL,
-    room_type TEXT NOT NULL,
+    region TEXT NOT NULL,
     connection_fails DOUBLE(8, 2) NULL,
     role TEXT NOT NULL,
     vr INT NULL,
@@ -17,6 +17,7 @@ CREATE TABLE Place(
     discord_name TEXT NULL,
     lounge_name TEXT NULL,
     mii_hex TEXT NULL,
+    is_wiimmfi_place TINYINT(1) NOT NULL,
     PRIMARY KEY(fc, race_id)
     FOREIGN KEY (race_id)
        REFERENCES Race(race_id)

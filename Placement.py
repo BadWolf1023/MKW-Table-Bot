@@ -17,7 +17,6 @@ NO_DELTA_DISPLAY_RANGE = (-.5, .5)
 
 class Placement:
 
-    
     def _createTime_(self, time):
         temp = ""
         minute = "-1"
@@ -58,11 +57,12 @@ class Placement:
             return False
         return self.time > BOGUS_TIME_LIMIT
     
-    def __init__(self, player, place, time, delta=None):
+    def __init__(self, player, place, time, delta=None, is_wiimmfi_place=False):
         self.player = player
         self.place = place
         self.time = self._createTime_(time)
         self.delta = self._process_delta_(delta)
+        self.is_wiimmfi_place = is_wiimmfi_place
     
     def __lt__(self, other):
         return self.time < other.time
@@ -91,6 +91,9 @@ class Placement:
     
     def getPlayer(self) -> Player.Player:
         return self.player
+    
+    def is_from_wiimmfi(self):
+        return self.is_wiimmfi_place
     
     def should_display_delta(self):
         return self.delta < NO_DELTA_DISPLAY_RANGE[0] or self.delta > NO_DELTA_DISPLAY_RANGE[1]
