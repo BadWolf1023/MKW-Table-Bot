@@ -6,7 +6,7 @@ Created on Oct 29, 2021
 PLAYER_TABLE_NAMES = ["fc", "pid", "player_url"]
 RACE_TABLE_NAMES = ["race_id", "rxx", "time_added", "match_time", "race_number", "room_name", "track_name", "room_type", "cc", "region", "is_wiimmfi_race"]
 TRACK_TABLE_NAMES = ["track_name", "url", "fixed_track_name", "is_ct", "track_name_lookup"]
-PLACE_TABLE_NAMES = ["race_id", "fc", "name", "place", "time", "lag_start", "ol_status", "room_position", "room_type", "connection_fails", "role", "vr", "character", "vehicle", "discord_name", "lounge_name", "mii_hex"]
+PLACE_TABLE_NAMES = ["race_id", "fc", "name", "place", "time", "lag_start", "ol_status", "room_position", "region", "connection_fails", "role", "vr", "character", "vehicle", "discord_name", "lounge_name", "mii_hex", "is_wiimmfi_place"]
 EVENT_RACES_TABLE_NAMES = ["event_id", "race_id"]
 EVENT_FCS_TABLE_NAMES = ["event_id", "fc", "mii_hex"]
 TIER_TABLE_NAMES = ["channel_id", "tier"]
@@ -17,6 +17,11 @@ def get_existing_race_fcs_in_Place_table(race_id_fcs):
     return f"""SELECT {PLACE_TABLE_NAMES[0]}, {PLACE_TABLE_NAMES[1]}
 FROM Place
 WHERE {build_multiple_coniditional_operators([PLACE_TABLE_NAMES[0], PLACE_TABLE_NAMES[1]], ['=','='], race_id_fcs)};"""
+
+def get_existing_race_fcs_in_Place_table_with_null_mii_hex(race_id_fcs):
+    return f"""SELECT {PLACE_TABLE_NAMES[0]}, {PLACE_TABLE_NAMES[1]}
+FROM Place
+WHERE {build_multiple_coniditional_operators([PLACE_TABLE_NAMES[0], PLACE_TABLE_NAMES[1], PLACE_TABLE_NAMES[16]], ['=','=', 'IS'], race_id_fcs)};"""
 
 def get_fcs_in_Player_table(fcs):
     return f"""SELECT {PLAYER_TABLE_NAMES[0]}
@@ -56,6 +61,14 @@ def build_sql_args_list(iterable):
 
 def build_data_names(data_names):
     return f"({', '.join(data_names)})"
+
+def get_insert_into_place_table_script():
+    return f"""INSERT INTO Place {build_data_names(PLACE_TABLE_NAMES)}
+VALUES{build_sql_args_list(PLACE_TABLE_NAMES)}"""
+
+def get_replace_into_place_table_script():
+    return f"""REPLACE INTO Place {build_data_names(PLACE_TABLE_NAMES)}
+VALUES{build_sql_args_list(PLACE_TABLE_NAMES)}"""
 
 def get_insert_into_race_table_script():
     return f"""INSERT INTO Race {build_data_names(RACE_TABLE_NAMES)}

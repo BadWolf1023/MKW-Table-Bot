@@ -9,14 +9,15 @@ This module helps track and store data from Wiimmfi.
 import common
 from collections import defaultdict
 from datetime import datetime, timedelta
-import Race as TableBotRace
-import Player as TableBotPlayer
+import Placement
+import Race
+import Player
 from typing import List, Dict, Tuple
 import UtilityFunctions
 from copy import deepcopy, copy
-import pprint
 import traceback
-from numpy.ma.extras import isin
+from itertools import chain
+from numpy import place
 #import itertools
 #from contextlib import closing
 
@@ -127,7 +128,7 @@ class DataRetriever(object):
         LEIGITMATE_ROOM_UPDATE_COUNT = 3
         cur_best = None
         #Filter by private rooms only if required
-        filtered_events = filter(channel_id_events.values(), lambda event_data: (not require_private_room or all(race.roomType == TableBotRace.PRIVATE_ROOM_REGION for race in event_data[1].races)))
+        filtered_events = filter(channel_id_events.values(), lambda event_data: (not require_private_room or all(race.roomType == Race.PRIVATE_ROOM_REGION for race in event_data[1].races)))
         for channel_data, event in filtered_events:
             if prefer_tier and get_tier(channel_data) is None:
                 continue
@@ -167,28 +168,37 @@ class DataRetriever(object):
 """
 class ChannelBotSQLDataValidator(object):
     
+    def fc_validation(self, fc):
+        if not isinstance(fc, str):
+            raise SQLTypeWrong(self.wrong_type_message(fc, str))
+        if not UtilityFunctions.is_fc(fc):
+            raise SQLFormatWrong(f"{fc} is not a formatted like an FC")
+    
+    def race_id_validation(self, race_id):
+        if not isinstance(race_id, str):
+            raise SQLTypeWrong(self.wrong_type_message(race_id, str))
+        if not UtilityFunctions.is_race_ID(race_id):
+            raise SQLFormatWrong(f"{race_id} is not a formatted like a race ID")
+    
     def wrong_type_message(self, data, expected_type, multi=False):
         if multi:
             return f"{data} of type {type(data)} is not any of the expected types: ({', '.join([(t.__name__ if t is not None else 'None') for t in expected_type])})"
         else:
             return f"{data} of type {type(data)} is not expected type: {expected_type.__name__}"
     
-    def validate_player_data(self, players:List[TableBotPlayer.Player]):
+    def validate_player_data(self, players:List[Player.Player]):
         '''Validates that all the data in players is the correct type and format before going into the database'''
         for player in players:
-            if not isinstance(player.get_FC(), str):
-                raise SQLTypeWrong(self.wrong_type_message(player.get_FC(), str))
-            if not UtilityFunctions.is_fc(player.get_FC()):
-                raise SQLFormatWrong(f"{player.get_FC()} is not a formatted like an FC")
+            self.fc_validation(player.get_FC())
             if not isinstance(player.get_player_id(), int):
                 raise SQLTypeWrong(self.wrong_type_message(player.get_player_id(), int))
             if not isinstance(player.get_mkwx_url(), str):
                 raise SQLTypeWrong(self.wrong_type_message(player.get_mkwx_url(), str))
             
-    def validate_tracks_data(self, races:List[TableBotRace.Race]):
+    def validate_tracks_data(self, races:List[Race.Race]):
         '''Validates that all the relevant data (regarding track information) in races is the correct type and format before going into the database'''
         for race in races:
-            race:TableBotRace.Race
+            race:Race.Race
             if not isinstance(race.get_track_name(), str):
                 raise SQLTypeWrong(self.wrong_type_message(race.get_track_name(), str))
             if race.get_track_name() == "None":
@@ -203,18 +213,15 @@ class ChannelBotSQLDataValidator(object):
             if not isinstance(race.is_custom_track(), bool):
                 raise SQLTypeWrong(self.wrong_type_message(race.is_custom_track(), bool))
             
-            if not isinstance(TableBotRace.get_track_name_lookup(no_author_name), str):
-                raise SQLTypeWrong(self.wrong_type_message(TableBotRace.get_track_name_lookup(no_author_name), str))
+            if not isinstance(Race.get_track_name_lookup(no_author_name), str):
+                raise SQLTypeWrong(self.wrong_type_message(Race.get_track_name_lookup(no_author_name), str))
             
         
-    def validate_races_data(self, races:List[TableBotRace.Race]):
+    def validate_races_data(self, races:List[Race.Race]):
         '''Validates that all the data in races is the correct type and format before going into the database'''
         for race in races:
-            race:TableBotRace.Race
-            if not isinstance(race.get_race_id(), str):
-                raise SQLTypeWrong(self.wrong_type_message(race.get_race_id(), str))
-            if not UtilityFunctions.is_race_ID(race.get_race_id()):
-                raise SQLFormatWrong(f"{race.get_race_id()} is not a formatted like a race ID")
+            race:Race.Race
+            self.race_id_validation(race.get_race_id())
             
             if not isinstance(race.get_rxx(), str):
                 raise SQLTypeWrong(self.wrong_type_message(race.get_rxx(), str))
@@ -242,13 +249,21 @@ class ChannelBotSQLDataValidator(object):
             
             if not isinstance(race.get_region(), str):
                 raise SQLTypeWrong(self.wrong_type_message(race.get_region(), str))
-            if not TableBotRace.is_valid_region(race.get_region()):
+            if not Race.is_valid_region(race.get_region()):
                 raise SQLFormatWrong(f"{race.get_region()} region is not a valid region (see Race.is_valid_region)")
             
             if not isinstance(race.is_from_wiimmfi(), bool):
                 raise SQLTypeWrong(self.wrong_type_message(race.is_from_wiimmfi(), bool))
             
         self.validate_tracks_data(races)
+            
+    def validate_placement_data(self, placements:Dict[Tuple,Placement.Placement]):
+        for (race_id, fc), placement in placements.items():
+            self.race_id_validation(race_id)
+            self.fc_validation(fc)
+            
+            
+
             
 
 class RoomTrackerSQL(object):
@@ -257,7 +272,7 @@ class RoomTrackerSQL(object):
         self.data_validator = ChannelBotSQLDataValidator()
             
     
-    def get_race_as_sql_tuple(self, race:TableBotRace.Race):
+    def get_race_as_sql_tuple(self, race:Race.Race):
         '''Converts a given table bot race into a tuple that is ready to be inserted into the Race SQL table'''
         return (race.get_race_id(),
                 race.get_rxx(),
@@ -278,7 +293,7 @@ class RoomTrackerSQL(object):
                 race.get_track_url(),
                 no_author_name,
                 race.is_custom_track(),
-                TableBotRace.get_track_name_lookup(no_author_name)
+                Race.get_track_name_lookup(no_author_name)
                 )
     
     def get_player_as_sql_player_tuple(self, player):
@@ -286,8 +301,63 @@ class RoomTrackerSQL(object):
         return (player.get_FC(),
                 int(player.get_player_id()),
                 player.get_mkwx_url())
+        
+    def get_placement_as_sql_place_tuple(self, race_id, placement:Placement.Placement):
+        '''Converts a given table bot Placement into a tuple that is ready to be inserted into the Place SQL table'''
+        player:Placement.Player.Player = placement.getPlayer()
+        return (race_id,
+                player.get_FC(),
+                player.get_name(),
+                placement.get_place(),
+                placement.get_time_string(),
+                placement.get_delta(),
+                player.get_ol_status(),
+                player.get_position(),
+                player.get_region(),
+                player.get_connection_fails(),
+                player.get_role(),
+                player.get_VR(),
+                player.get_character(),
+                player.get_vehicle(),
+                player.get_discord_name(),
+                player.get_lounge_name(),
+                player.get_mii_hex(),
+                placement.is_from_wiimmfi())
     
-    def insert_players_into_database(self, players:List[TableBotPlayer.Player]):
+    
+    def insert_placements_into_database(self, placements, replace_into=False):
+        self.data_validator.validate_placement_data(placements)
+        insert_place_statement = QB.get_replace_into_place_table_script() if replace_into else QB.get_insert_into_place_table_script()
+        all_data = [self.get_placement_as_sql_place_tuple(race_id, p) for (race_id, _), p in placements.items()]
+        with database_connection:
+            result = database_connection.executemany(insert_place_statement, all_data)
+        return all_data
+        
+    def insert_missing_placements_into_database(self):
+        '''Determines which placements in self.channel_bot's races are not in the Place table in the database yet.
+        Then, it attempts to insert those placements (that are not in the Place table yet) into the Place table.
+        May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
+        Returns the a list of the inserted placements (as tuples) upon success. (An empty list is returned if no placements were inserted.)'''
+
+        race_id_fc_placements = {(race.get_race_id(), placement.getPlayer().get_FC()):placement for race in self.channel_bot.getRoom().races for placement in race.getPlacements()}
+        if DEBUGGING_SQL:
+            print(f"All race_id, fcs in event: {set(race_id_fc_placements)}")
+        find_race_ids_fcs_statement = QB.get_existing_race_fcs_in_Place_table(race_id_fc_placements)
+        where_statement_args = list(chain.from_iterable((race_id, fc) for race_id, fc in race_id_fc_placements))
+        found_race_id_fcs = set((result[0], result[1]) for result in database_connection.execute(find_race_ids_fcs_statement, where_statement_args))
+        
+        if DEBUGGING_SQL:
+            print(f"Race_id, fcs found in database: {found_race_id_fcs}")
+        missing_race_id_fcs = set(race_id_fc_placements).difference(found_race_id_fcs)
+        if DEBUGGING_SQL:
+            print(f"Missing race id, fcs: {missing_race_id_fcs}")
+        if len(missing_race_id_fcs) > 0:
+            return self.insert_placements_into_database({k:race_id_fc_placements[k] for k in missing_race_id_fcs})
+        return []
+    
+        
+        
+    def insert_players_into_database(self, players:List[Player.Player]):
         '''First checks if the player for each player is valid. If it isn't, one of the following may be raised: SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Otherwise, for each player, inserts its data into the Player table in the database.
         Returns the a list of the inserted Players (as tuples) upon success'''
@@ -317,7 +387,9 @@ class RoomTrackerSQL(object):
             return self.insert_players_into_database([room_fc_placements[fc].getPlayer() for fc in missing_fcs])
         return []
     
-    def insert_races_into_database(self, races:List[TableBotRace.Race]):
+    
+    
+    def insert_races_into_database(self, races:List[Race.Race]):
         '''First checks if the race information in each race is valid. If it isn't, one of the following may be raised: SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Otherwise, for each race, inserts its data into the Race table in the database.
         Returns the a list of the inserted Races (as tuples) upon success'''
@@ -347,7 +419,9 @@ class RoomTrackerSQL(object):
             return self.insert_races_into_database([race_id_races[race_id] for race_id in missing_race_ids])
         return []
     
-    def insert_tracks_into_database(self, races:List[TableBotRace.Race]):
+
+
+    def insert_tracks_into_database(self, races:List[Race.Race]):
         '''First checks if the track information in each race is valid. If it isn't, one of the following may be raised: SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Otherwise, for each race (that isn't yet in the Track table), inserts its track into the Track table in the database.
         Returns the a list of the inserted tracks (as tuples) upon success'''
@@ -377,7 +451,23 @@ class RoomTrackerSQL(object):
             return self.insert_tracks_into_database([track_names[tn] for tn in missing_track_names])
         return []
         
+    def update_database_place_miis(self):
+        have_miis_for_placements = {(race.get_race_id(), placement.getPlayer().get_FC(), None):placement for race in self.channel_bot.getRoom().races for placement in race.getPlacements() if placement.getPlayer().get_mii_hex() is not None}
+        if DEBUGGING_SQL:
+            print(f"Have miis for race_id, fcs: {set(have_miis_for_placements)}")
+        if len(have_miis_for_placements) == 0:
+            return []
+        find_race_ids_fcs_statement = QB.get_existing_race_fcs_in_Place_table_with_null_mii_hex(have_miis_for_placements)
+        where_statement_args = list(chain.from_iterable((race_id, fc, x) for race_id, fc, x in have_miis_for_placements))
+        print(where_statement_args)
+        found_race_id_fcs_with_null_miis = set((result[0], result[1]) for result in database_connection.execute(find_race_ids_fcs_statement, where_statement_args))
+        
+        if DEBUGGING_SQL:
+            print(f"Race_id, fcs found in database with null miis: {found_race_id_fcs_with_null_miis}")
 
+        if len(found_race_id_fcs_with_null_miis) > 0:
+            return self.insert_placements_into_database({k:have_miis_for_placements[(*k, None)] for k in found_race_id_fcs_with_null_miis}, replace_into=True)
+        return []
 class RoomTracker(object):
     
     @staticmethod
@@ -400,7 +490,7 @@ class RoomTracker(object):
         return True
     """
     @staticmethod
-    def create_placement(placement:TableBotRace.Placement):
+    def create_placement(placement:Race.Placement):
         player = placement.getPlayer()
         return Place(fc=player.get_FC(),
                      name=player.get_name(),
@@ -422,7 +512,7 @@ class RoomTracker(object):
                      mii_hex=player.get_mii_hex())
     
     @staticmethod
-    def create_race(channel_data_info, race:TableBotRace.Race) -> Race:
+    def create_race(channel_data_info, race:Race.Race) -> Race:
         channel_id = channel_data_info[0][0]
         tier = get_tier(channel_data_info[0])
         all_placements = [RoomTracker.create_placement(p) for p in race.getPlacements()]
@@ -437,7 +527,7 @@ class RoomTracker(object):
                     trackURL=race.get_track_url(),
                     roomType=race.get_room_type(),
                     trackName=race.get_track_name(),
-                    trackNameFixed=TableBotRace.remove_author_and_version_from_name(race.get_track_name()),
+                    trackNameFixed=Race.remove_author_and_version_from_name(race.get_track_name()),
                     cc=race.get_cc(),
                     region=race.get_region(),
                     is_ct=race.is_custom_track(),
@@ -504,7 +594,7 @@ class RoomTracker(object):
                                      miis=channel_data_info[1].miis)
     """
     @staticmethod
-    def add_race(channel_data_info, race:TableBotRace.Race):
+    def add_race(channel_data_info, race:Race.Race):
         _, event = channel_data_info
         for r in event.races:
             if r.rxx != race.get_rxx():
@@ -531,15 +621,19 @@ class RoomTracker(object):
         
     @staticmethod
     def add_everything_to_database(channel_bot):
-        races:List[TableBotRace.Race] = channel_bot.getRoom().getRaces()
+        races:List[Race.Race] = channel_bot.getRoom().getRaces()
         sql_helper = RoomTrackerSQL(channel_bot)
         added_players = sql_helper.insert_missing_players_into_database()
         added_tracks = sql_helper.insert_missing_tracks_into_database()
         added_races = sql_helper.insert_missing_races_into_database()
+        added_placements = sql_helper.insert_missing_placements_into_database()
+        added_miis = sql_helper.update_database_place_miis()
         if DEBUGGING_SQL:
             print(f"Added players: {added_players}")
             print(f"Added tracks: {added_tracks}")
             print(f"Added races: {added_races}")
+            print(f"Added placements: {added_placements}")
+            print(f"Added miis: {added_miis}")
         return
         #sql_helper.
         update_channel_data = True
