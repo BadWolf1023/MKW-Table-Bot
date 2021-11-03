@@ -262,7 +262,7 @@ class RoomTrackerSQL(object):
         return (race.get_race_id(),
                 race.get_rxx(),
                 common.get_utc_time(),
-                race.get_match_start_time(),
+                UtilityFunctions.get_wiimmfi_utc_time(race.get_match_start_time()),
                 race.get_race_number(),
                 race.get_room_name(),
                 race.get_track_name(),
