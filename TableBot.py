@@ -201,12 +201,12 @@ class ChannelBot(object):
                     tier = str(DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
                 common.log_error(f"Exception in remove_miis_with_missing_files: {fc} failed to clean up - channel {self.channel_id} {'' if tier is None else 'T'+tier}")
                 pass
-            
+        
     async def populate_miis(self, message_id:str):
         if common.MIIS_ON_TABLE_DISABLED:
             return
         #print("\n\n\n" + str(self.get_miis()))
-        if self.getWar() is not None and self.getWar().displayMiis:
+        if self.getWar() is not None:
             if self.populating:
                 return
             self.populating = True
@@ -232,23 +232,6 @@ class ChannelBot(object):
                                 mii_pull_result.output_table_mii_to_disc()
                                 mii_pull_result.__remove_main_mii_picture__()
                             
-                    """
-                    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                        future_to_fc = {executor.submit(MiiPuller.get_mii_blocking, fc, message_id): fc for fc in missing_fcs }
-                        for future in concurrent.futures.as_completed(future_to_fc):
-                            fc = future_to_fc[future]
-                            try:
-                                mii_pull_result = future.result()
-                            except Exception as exc:
-                                common.log_text(f'{fc} generated an exception: {exc}', common.ERROR_LOGGING_TYPE)
-                            else:
-                                if not isinstance(mii_pull_result, str):
-                                    self.miis[fc] = mii_pull_result
-                                    mii_pull_result.output_table_mii_to_disc()
-                                    mii_pull_result.__remove_main_mii_picture__()
-                                else:
-                                    pass
-                    """
                 for mii in self.miis.values():
                     if mii.lounge_name == "":
                         mii.update_lounge_name()
@@ -265,7 +248,7 @@ class ChannelBot(object):
     async def update_room(self) -> bool:
         if self.room is None:
             return False
-        success = await self.room.update_room(lambda:DataTracker.RoomTracker.add_data(self), is_vr_command=False)
+        success = await self.room.update_room(lambda:DataTracker.RoomTracker.add_data(self), is_vr_command=False, mii_dict=self.miis)
         self.updateLoungeFinishTime()
         return success
 

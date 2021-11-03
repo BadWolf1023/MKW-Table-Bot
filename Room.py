@@ -59,7 +59,7 @@ class Room(object):
         
 
     
-    def initialize(self, rLIDs, roomSoup):
+    def initialize(self, rLIDs, roomSoup, mii_dict=None):
         self.rLIDs = rLIDs
         
         if roomSoup is None:
@@ -71,7 +71,7 @@ class Room(object):
             
             
 
-        self.races = self.getRacesList(roomSoup)
+        self.races = self.getRacesList(roomSoup, mii_dict)
         
         if len(self.races) > 0:
             self.roomID = self.races[0].roomID
@@ -427,7 +427,7 @@ class Room(object):
             vr = int(vr)
         
         character_vehicle = None
-        if common.TOOLTIP_NAME in allRows[5]:
+        if allRows[5].has_attr(common.TOOLTIP_NAME):
             character_vehicle = str(allRows[5][common.TOOLTIP_NAME])
         
         
@@ -489,7 +489,7 @@ class Room(object):
             return "No Track Page"
         
       
-    def getRacesList(self, roomSoup):
+    def getRacesList(self, roomSoup, mii_dict=None):
         #Utility function
         tableLines = roomSoup.find_all("tr")
         
@@ -515,7 +515,10 @@ class Room(object):
                     FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, delta, time, playerName = self.getPlacementInfo(line)
                     if races[0].hasFC(FC):
                         FC = FC + "-2"
-                    plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, playerName)
+                    mii_hex = None
+                    if mii_dict is not None and FC in mii_dict:
+                        mii_hex = mii_dict[FC].mii_data_hex_str
+                    plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, playerName, mii_hex=mii_hex)
                     p = Placement.Placement(plyr, -1, time, delta)
                     races[0].addPlacement(p)
         
@@ -544,11 +547,11 @@ class Room(object):
                     print(f"\tPlayer ID: {placement.getPlayer().pid}")
                     print(f"\tFinish Time: {placement.get_time_string()}")
                     print(f"\tPlace: {placement.place}")
-                    print(f"\ol_status: {placement.getPlayer().ol_status}")
+                    print(f"\tol_status: {placement.getPlayer().ol_status}")
                     print(f"\tPosition in Room: {placement.getPlayer().positionInRoom}")
                     print(f"\tPlayer Region: {placement.getPlayer().region}")
                     print(f"\tPlayer Conn Fails: {placement.getPlayer().playerConnFails}")
-                    print(f"\Role: {placement.getPlayer().role}")
+                    print(f"\tRole: {placement.getPlayer().role}")
                     print(f"\tVR: {placement.getPlayer().vr}")
                     print(f"\tCharacter: {placement.getPlayer().character}")
                     print(f"\tVehicle: {placement.getPlayer().vehicle}")
@@ -556,9 +559,9 @@ class Room(object):
                     print(f"\tLounge name: {placement.getPlayer().lounge_name}")
                     print(f"\tCharacter: {placement.getPlayer().character}")
                     print(f"\tVehicle: {placement.getPlayer().vehicle}")
-                    print(f"\Player Discord name: {placement.getPlayer().discord_name}")
-                    print(f"\Player lounge name: {placement.getPlayer().lounge_name}")
-                    print(f"\Player mii hex: {placement.getPlayer().mii_hex}")
+                    print(f"\tPlayer Discord name: {placement.getPlayer().discord_name}")
+                    print(f"\tPlayer lounge name: {placement.getPlayer().lounge_name}")
+                    print(f"\tPlayer mii hex: {placement.getPlayer().mii_hex}")
 
         #We have a memory leak, and it's not incredibly clear how BS4 objects work and if
         #Python's automatic garbage collection can figure out how to collect
@@ -583,7 +586,7 @@ class Room(object):
     def getNumberOfGPS(self):
         return int((len(self.races)-1)/4)+1
     
-    async def update_room(self, database_call, is_vr_command):
+    async def update_room(self, database_call, is_vr_command, mii_dict=None):
         if self.is_initialized():
             soups = []
             rLIDs = []
@@ -597,7 +600,8 @@ class Room(object):
             
             to_return = False
             if tempSoup is not None:
-                self.initialize(rLIDs, tempSoup, database_call, is_vr_command)
+                self.initialize(rLIDs, tempSoup, mii_dict)
+                
                 #Make call to database to add data
                 if not is_vr_command:
                     database_call()
