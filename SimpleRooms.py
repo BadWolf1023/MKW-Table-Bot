@@ -54,7 +54,7 @@ def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
             
             
             vehicle_combinations = [None, None]
-            if common.TOOLTIP_NAME in allRows[6].attrs:
+            if allRows[6].has_attr(common.TOOLTIP_NAME):
                 vehicle_combination = allRows[6][common.TOOLTIP_NAME]
                 if '<br>' in vehicle_combination:
                     combo1, combo2 = vehicle_combination.split('<br>')
