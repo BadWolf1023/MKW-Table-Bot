@@ -39,6 +39,7 @@ CREATE TABLE Race(
     room_type TEXT NOT NULL,
     cc TEXT NOT NULL,
     region TEXT NULL,
+    is_wiimmfi_race TINYINT(1) NOT NULL,
     PRIMARY KEY(race_id),
     FOREIGN KEY (track_name)
        REFERENCES Track(track_name)
