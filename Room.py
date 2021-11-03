@@ -250,7 +250,7 @@ class Room(object):
             return player_list[FC]
         return "no name"
     
-    def get_region(self):
+    def get_known_region(self):
         regions = set(race.get_region() for race in self.getRaces())
         if len(regions) != 1:
             return Race.UNKNOWN_REGION
