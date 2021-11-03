@@ -4,7 +4,7 @@ Created on Oct 29, 2021
 @author: willg
 '''
 PLAYER_TABLE_NAMES = ["fc", "pid", "player_url"]
-RACE_TABLE_NAMES = ["race_id", "rxx", "time_added", "match_time", "race_number", "room_name", "track_name", "room_type", "cc", "region"]
+RACE_TABLE_NAMES = ["race_id", "rxx", "time_added", "match_time", "race_number", "room_name", "track_name", "room_type", "cc", "region", "is_wiimmfi_race"]
 TRACK_TABLE_NAMES = ["track_name", "url", "fixed_track_name", "is_ct", "track_name_lookup"]
 PLACE_TABLE_NAMES = ["race_id", "fc", "name", "place", "time", "lag_start", "ol_status", "room_position", "room_type", "connection_fails", "role", "vr", "character", "vehicle", "discord_name", "lounge_name", "mii_hex"]
 EVENT_RACES_TABLE_NAMES = ["event_id", "race_id"]
