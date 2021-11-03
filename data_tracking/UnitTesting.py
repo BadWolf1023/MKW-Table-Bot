@@ -9,7 +9,25 @@ from data_tracking import DataTracker
 from data_tracking.Data_Tracker_SQL_Query_Builder import *
 import UtilityFunctions
 
+
+class SQLInsertStatementTests(unittest.TestCase):
+    def test_validate_players_data_1(self):
+        pass
+
+class SQLDataValidation_players(unittest.TestCase):
+    """validate_player_data"""
+    def test_validate_players_data_1(self):
+        pass
+    
+class SQLDataValidation_races(unittest.TestCase):
+    """validate_races_data"""
+    def test_validate_races_data_1(self):
+        pass
+
+
+
 class PlayerSQLStatementTests(unittest.TestCase):
+    
     def test_prepared_get_fcs(self):
         result = get_fcs_in_Player_table([1, 2, 3])
         self.assertEqual(result, """SELECT fc
@@ -28,26 +46,34 @@ WHERE track_name in (?, ?);""", f"get_existing_tracks_in_Track_table did not pro
 FROM Race
 WHERE race_id in (?, ?, ?, ?);""", f"get_existing_race_ids_in_Race_table did not produce expected result")
     
-    
+    def test_prepared_get_race_id_fcs(self):
+        result = get_existing_race_fcs_in_Place_table({('r0000000', '0000-0000-0000'),
+                                                      ('r0000000', '0000-0000-0001'),
+                                                      ('r0000001', '0000-0000-0000'),
+                                                      ('r0000001', '0000-0000-0001')})
+        expected_result = """SELECT race_id, fc
+FROM Place
+WHERE (race_id = ? AND fc = ?)
+OR (race_id = ? AND fc = ?)
+OR (race_id = ? AND fc = ?)
+OR (race_id = ? AND fc = ?);"""
+        self.assertEqual(result, expected_result)
+
     def test_build_data_names(self):
         result = build_data_names(['1', '2', '3', '4'])
         self.assertEqual(result, """(1, 2, 3, 4)""", f"build_data_names did not produce expected result")
+        
+    def test_build_multiple_coniditional_operators(self):
+        test_data = [ ("race_id", "fc"), ("=", "="), [(-1, -2), (2, 3)] ]
+        result = build_multiple_coniditional_operators(*test_data)
+        self.assertEqual(result, "(race_id = ? AND fc = ?)\nOR (race_id = ? AND fc = ?)")
     
-class SQLInsertStatementTests(unittest.TestCase):
-    pass
-
-class SQLDataValidation_players(unittest.TestCase):
-    """validate_player_data"""
-    def test_validate_players_data_1(self):
-        pass
-        raise NotImplemented()
     
-class SQLDataValidation_races(unittest.TestCase):
-    """validate_races_data"""
-    def test_validate_races_data_1(self):
-        pass
-        raise NotImplemented()
-    
+    def test_build_multiple_coniditional_operators_2(self):
+        test_data = [ ("race_id", "fc"), ("=", "="), [(-1, -2)] ]
+        result = build_multiple_coniditional_operators(*test_data)
+        self.assertEqual(result, "(race_id = ? AND fc = ?)")
+   
 class WiimmfiTimeValidation(unittest.TestCase):
     "is_wiimmfi_utc_time and get_wiimmfi_utc_time"
     def test_is_wiimmfi_utc_time_1(self):
@@ -117,47 +143,47 @@ class SQLDataValidation_tracks(unittest.TestCase):
     
     '''is_ct not correct type'''
     def test_validate_tracks_data_1(self):
-        data_tracker = DataTracker.RoomTrackerSQL(None)
+        data_validator = DataTracker.ChannelBotSQLDataValidator()
         test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=None, trackURL=None)]
-        self.assertRaises(DataTracker.SQLTypeWrong, lambda:data_tracker.validate_tracks_data(test_races))
+        self.assertRaises(DataTracker.SQLTypeWrong, lambda:data_validator.validate_tracks_data(test_races))
     
     '''is_ct is correct type'''
     def test_validate_tracks_data_2(self):
-        data_tracker = DataTracker.RoomTrackerSQL(None)
+        data_validator = DataTracker.ChannelBotSQLDataValidator()
         test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=True, trackURL=None)]
-        data_tracker.validate_tracks_data(test_races)
+        data_validator.validate_tracks_data(test_races)
         
     '''is_ct is correct type #2'''
     def test_validate_tracks_data_3(self):
-        data_tracker = DataTracker.RoomTrackerSQL(None)
+        data_validator = DataTracker.ChannelBotSQLDataValidator()
         test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=False, trackURL=None)]
-        data_tracker.validate_tracks_data(test_races)
+        data_validator.validate_tracks_data(test_races)
     
     '''track_name cannot be blank (or None)'''
     def test_validate_tracks_data_4(self):
-        data_tracker = DataTracker.RoomTrackerSQL(None)
+        data_validator = DataTracker.ChannelBotSQLDataValidator()
         test_races = [Race.Race(None, None, 1, None, None, None, None, is_ct=True, trackURL=None)]
-        self.assertRaises(DataTracker.SQLDataBad, lambda:data_tracker.validate_tracks_data(test_races))
+        self.assertRaises(DataTracker.SQLDataBad, lambda:data_validator.validate_tracks_data(test_races))
     
     '''track_name is correct type'''
     def test_validate_tracks_data_5(self):
-        data_tracker = DataTracker.RoomTrackerSQL(None)
+        data_validator = DataTracker.ChannelBotSQLDataValidator()
         test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=True, trackURL=None)]
-        data_tracker.validate_tracks_data(test_races)
+        data_validator.validate_tracks_data(test_races)
         
     '''track_url is not correct type'''
     def test_validate_tracks_data_6(self):
-        data_tracker = DataTracker.RoomTrackerSQL(None)
+        data_validator = DataTracker.ChannelBotSQLDataValidator()
         test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=True, trackURL=10)]
-        self.assertRaises(DataTracker.SQLTypeWrong, lambda:data_tracker.validate_tracks_data(test_races))
+        self.assertRaises(DataTracker.SQLTypeWrong, lambda:data_validator.validate_tracks_data(test_races))
         
     '''track_url is correct type'''
     def test_validate_tracks_data_7(self):
-        data_tracker = DataTracker.RoomTrackerSQL(None)
+        data_validator = DataTracker.ChannelBotSQLDataValidator()
         test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=True, trackURL="https://wiimmfi.de/test")]
-        data_tracker.validate_tracks_data(test_races)
+        data_validator.validate_tracks_data(test_races)
     
-        
+    
 if __name__ == '__main__':
     unittest.main()
     
