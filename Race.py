@@ -15,8 +15,11 @@ BATTLE_REGION = 'bt'
 RT_WW_REGION = 'vs'
 PRIVATE_ROOM_REGION = 'priv'
 UNKNOWN_REGION = 'unk'
+VALID_REGIONS = {CTGP_CTWW_REGION, BATTLE_REGION, RT_WW_REGION, PRIVATE_ROOM_REGION, UNKNOWN_REGION}
 
 
+def is_valid_region(region:str):
+    return region in VALID_REGIONS or region.startswith("vs_")
 
 
 track_name_abbreviation_mappings = {
@@ -117,7 +120,7 @@ class Race:
 
 
 
-    def __init__(self, matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, rxx=None, raceID=None, trackURL=None, placements=None):
+    def __init__(self, matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, rxx=None, raceID=None, trackURL=None, placements=None, is_wiimmfi_race=True):
         self.matchTime = matchTime
         self.matchID = matchID
         self.raceNumber = raceNumber
@@ -134,6 +137,7 @@ class Race:
         self.placements = []
         self.region = None
         self.is_ct = is_ct
+        self.is_wiimmfi_race = is_wiimmfi_race
         
     def get_match_start_time(self):
         return self.matchTime
@@ -159,6 +163,8 @@ class Race:
         return self.cc
     def get_region(self):
         return self.region
+    def is_from_wiimmfi(self):
+        return self.is_wiimmfi_race
         
     
     def track_check(self):
