@@ -201,7 +201,7 @@ def get_wiimmfi_utc_time(race_time:str):
     if race_time.endswith("UTC"):
         race_time = race_time[:-3]
     race_time = race_time.strip()
-    return datetime(*datetime.strptime(race_time, '%Y-%m-%d %H:%M'), tz_info=timezone.utc)
+    return datetime.strptime(race_time, '%Y-%m-%d %H:%M').replace(tzinfo=timezone.utc)
 
 def is_race_ID(raceID):
     return re.match("^r[0-9]{7}$", raceID) is not None
