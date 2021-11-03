@@ -533,9 +533,14 @@ class RoomTracker(object):
     def add_everything_to_database(channel_bot):
         races:List[TableBotRace.Race] = channel_bot.getRoom().getRaces()
         sql_helper = RoomTrackerSQL(channel_bot)
-        sql_helper.insert_missing_players_into_database()
-        sql_helper.insert_missing_tracks_into_database()
-        added_race_ids = sql_helper.insert_missing_races_into_database()
+        added_players = sql_helper.insert_missing_players_into_database()
+        added_tracks = sql_helper.insert_missing_tracks_into_database()
+        added_races = sql_helper.insert_missing_races_into_database()
+        if DEBUGGING_SQL:
+            print(f"Added players: {added_players}")
+            print(f"Added tracks: {added_tracks}")
+            print(f"Added races: {added_races}")
+        return
         #sql_helper.
         update_channel_data = True
         update_event_data = True
