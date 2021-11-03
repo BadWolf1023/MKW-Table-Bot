@@ -7,6 +7,7 @@ import unittest
 import Race
 from data_tracking import DataTracker
 from data_tracking.Data_Tracker_SQL_Query_Builder import *
+import UtilityFunctions
 
 class PlayerSQLStatementTests(unittest.TestCase):
     def test_prepared_get_fcs(self):
@@ -38,12 +39,78 @@ class SQLInsertStatementTests(unittest.TestCase):
 class SQLDataValidation_players(unittest.TestCase):
     """validate_player_data"""
     def test_validate_players_data_1(self):
+        pass
         raise NotImplemented()
     
 class SQLDataValidation_races(unittest.TestCase):
     """validate_races_data"""
     def test_validate_races_data_1(self):
+        pass
         raise NotImplemented()
+    
+class WiimmfiTimeValidation(unittest.TestCase):
+    "is_wiimmfi_utc_time and get_wiimmfi_utc_time"
+    def test_is_wiimmfi_utc_time_1(self):
+        result = UtilityFunctions.is_wiimmfi_utc_time("2021-08-30 09:37UTC")
+        self.assertTrue(result)
+    
+    def test_is_wiimmfi_utc_time_2(self):
+        result = UtilityFunctions.is_wiimmfi_utc_time("2021-08-30 09:37")
+        self.assertTrue(result)
+    
+    def test_is_wiimmfi_utc_time_3(self):
+        result = UtilityFunctions.is_wiimmfi_utc_time("2021-08-30 09:3")
+        self.assertFalse(result)
+        
+    def test_is_wiimmfi_utc_time_4(self):
+        """February doesn't have 30 days"""
+        result = UtilityFunctions.is_wiimmfi_utc_time("2029-30-02 22:30 UTC")
+        self.assertFalse(result) #Because 
+    
+    def test_is_wiimmfi_utc_time_5(self):
+        result = UtilityFunctions.is_wiimmfi_utc_time("2029-30-02 22:30 UT")
+        self.assertFalse(result)
+        
+    def test_is_wiimmfi_utc_time_6(self):
+        """Valid date, but wrong format"""
+        result = UtilityFunctions.is_wiimmfi_utc_time("2021-08-3 09:37")
+        self.assertFalse(result)
+    
+    def test_is_wiimmfi_utc_time_7(self):
+        """Valid date, but wrong format"""
+        result = UtilityFunctions.is_wiimmfi_utc_time("2021-8-30 09:37")
+        self.assertFalse(result)
+    
+    def test_is_wiimmfi_utc_time_8(self):
+        """Valid date, but wrong format"""
+        result = UtilityFunctions.is_wiimmfi_utc_time("08-31-2021 09:37")
+        self.assertFalse(result)
+    
+    def test_is_wiimmfi_utc_time_9(self):
+        """Valid date, but wrong format"""
+        result = UtilityFunctions.is_wiimmfi_utc_time("21-08-30 09:37")
+        self.assertFalse(result)
+        
+    def test_is_wiimmfi_utc_time_10(self):
+        """Valid date, but wrong format"""
+        result = UtilityFunctions.is_wiimmfi_utc_time("2021-08-30 9:30")
+        self.assertFalse(result)
+    
+    def test_is_wiimmfi_utc_time_11(self):
+        """With space at end"""
+        result = UtilityFunctions.is_wiimmfi_utc_time("2021-08-30 09:30 UTC ")
+        self.assertTrue(result)
+        
+    def test_is_wiimmfi_utc_time_12(self):
+        """Impossible time"""
+        result = UtilityFunctions.is_wiimmfi_utc_time("2021-08-30 09:60 UTC ")
+        self.assertFalse(result)
+        
+    def test_is_wiimmfi_utc_time_13(self):
+        """Impossible time"""
+        result = UtilityFunctions.is_wiimmfi_utc_time("2021-08-30 24:00 UTC ")
+        self.assertFalse(result)
+        
     
 class SQLDataValidation_tracks(unittest.TestCase):
     '''Class to test data validation before inserting into database'''
