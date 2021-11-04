@@ -276,6 +276,19 @@ class ChannelBotSQLDataValidator(object):
         if event_id < 1:
             raise SQLFormatWrong(f"{event_id} is not a formatted like an event id, which should be a number")
     
+    def channel_id_validation(self, channel_id):
+        if not isinstance(channel_id, int):
+            raise SQLTypeWrong(self.wrong_type_message(channel_id, int))
+        if channel_id < 1:
+            raise SQLFormatWrong(f"{channel_id} is not a formatted like an channel id, which should be a number")
+    
+    def discord_id_validation(self, discord_id):
+        if not isinstance(discord_id, int):
+            raise SQLTypeWrong(self.wrong_type_message(discord_id, int))
+        if discord_id < 1:
+            raise SQLFormatWrong(f"{discord_id} is not a formatted like a discord id, which should be a number")
+        
+    
     def validate_event_id_race_ids(self, event_id_race_ids:Set[Tuple]):
         for event_id, race_id in event_id_race_ids:
             self.event_id_validation(event_id)
@@ -286,6 +299,15 @@ class ChannelBotSQLDataValidator(object):
             self.race_id_validation(race_id)
             self.fc_validation(fc)
             self.mii_hex_validation(placement.getPlayer().get_mii_hex())
+            
+    def validate_event_data(self, channel_bot):
+        self.event_id_validation(channel_bot.get_event_id())
+        self.channel_id_validation(channel_bot.get_channel_id())
+        self.discord_id_validation(channel_bot.getRoom().get_set_up_user_discord_id())
+        if not isinstance(channel_bot.getRoom().get_known_region(), str):
+            raise SQLTypeWrong(self.wrong_type_message(channel_bot.getRoom().get_known_region(), str))
+        if not isinstance(channel_bot.getRoom().get_set_up_display_name(), str):
+            raise SQLTypeWrong(self.wrong_type_message(channel_bot.getRoom().get_set_up_display_name(), str))
             
             
 
@@ -470,6 +492,28 @@ class RoomTrackerSQL(object):
         with database_connection:
             return list(database_connection.execute(insert_ignore_script, values_args))
         return []
+    
+    def get_event_as_upsert_sql_place_tuple(self, channel_bot):
+        '''Converts a given table bot a tuple that is ready to be inserted into the Event SQL table'''
+        return (channel_bot.get_event_id(),
+                channel_bot.get_channel_id(),
+                common.get_utc_time(),
+                common.get_utc_time(),
+                0,
+                channel_bot.getRoom().get_known_region(),
+                channel_bot.getRoom().get_set_up_user_discord_id(),
+                channel_bot.getRoom().get_set_up_display_name())
+        
+    def insert_missing_event(self, was_real_update=False):
+        self.data_validator.validate_event_data(self.channel_bot)
+        event_sql_args = [*self.get_event_as_upsert_sql_place_tuple(self.channel_bot)] #Note this is a set of tuples, not a dict
+        if len(event_sql_args) < 1:
+            return []
+        
+        upsert_script = QB.build_event_upsert_script(was_real_update)
+        with database_connection:
+            return list(database_connection.execute(upsert_script, event_sql_args))
+        return []
         
 
 class RoomTracker(object):
@@ -632,13 +676,17 @@ class RoomTracker(object):
         added_races = sql_helper.insert_missing_races_into_database()
         added_placements = sql_helper.insert_missing_placements_into_database()
         added_miis = sql_helper.update_database_place_miis()
+        added_event_ids = sql_helper.insert_missing_event(was_real_update=len(added_races) > 0)
         added_event_ids_race_ids = sql_helper.insert_missing_event_ids_race_ids()
+        
+        
         if DEBUGGING_SQL:
             print(f"Added players: {added_players}")
             print(f"Added tracks: {added_tracks}")
             print(f"Added races: {added_races}")
             print(f"Added placements: {added_placements}")
             print(f"Added miis: {added_miis}")
+            print(f"Added event ids: {added_event_ids}")
             print(f"Added event_id, race_id's: {added_event_ids_race_ids}")
         return
         #sql_helper.
@@ -696,10 +744,15 @@ def populate_tier_table():
     cur = database_connection.cursor()
     populate_tier_table_script = common.read_sql_file(common.ROOM_DATA_POPULATE_TIER_TABLE_SQL)
     cur.executescript(populate_tier_table_script)
+
+def ensure_foreign_keys_on():
+    cur = database_connection.cursor()
+    cur.executescript("""PRAGMA foreign_keys = ON;""")
     
 def initialize():
     load_room_data()
     start_database()
+    ensure_foreign_keys_on()
     populate_tier_table()
 
 def save_data():
