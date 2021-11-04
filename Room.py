@@ -35,7 +35,7 @@ class Room(object):
     '''
     classdocs
     '''
-    def __init__(self, rLIDs, roomSoup):
+    def __init__(self, rLIDs, roomSoup, setup_discord_id, setup_display_name):
         self.name_changes = {}
         self.removed_races = []
         
@@ -50,18 +50,18 @@ class Room(object):
         
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
         self.dc_on_or_before = defaultdict(dict)
-        self.set_up_user = None
-        self.set_up_user_display_name = ""
+        self.set_up_user = setup_discord_id
+        self.set_up_user_display_name = setup_display_name
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         self.sub_ins = {}
         
         self.initialize(rLIDs, roomSoup)
-        
+        self.is_freed = False
     
     def get_set_up_user_discord_id(self):
         return self.set_up_user
     def get_set_up_display_name(self):
-        return self.set_up_user
+        return self.set_up_user_display_name
     
     def initialize(self, rLIDs, roomSoup, mii_dict=None):
         self.rLIDs = rLIDs
@@ -697,7 +697,7 @@ class Room(object):
             
     
     def canModifyTable(self, discord_id:int):
-        if self.getSetupUser() is None or self.getSetupUser() == discord_id:
+        if self.is_freed or self.getSetupUser() == discord_id:
             return True
         discord_ids = [data[0] for data in self.getRoomFCDiscordIDs().values()]
         return str(discord_id) in discord_ids
@@ -714,6 +714,7 @@ class Room(object):
         return self.set_up_user
     
     def setSetupUser(self, setupUser, displayName:str):
+        self.freed = False
         self.set_up_user = setupUser
         self.set_up_user_display_name = displayName
     

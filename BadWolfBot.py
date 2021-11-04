@@ -224,11 +224,10 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     if command not in needPermissionCommands:
         return True
     
-    if this_bot is None or this_bot.getRoom() is None or not this_bot.getRoom().is_initialized() or this_bot.getRoom().getSetupUser() is None:
+    if this_bot is None or this_bot.getRoom() is None or not this_bot.getRoom().is_initialized() or not this_bot.getRoom().is_freed:
         return True
 
     #At this point, we know the command's server is Lounge, it's not staff, and a room has been loaded
-    #Check if the user was the setUpuser
     return this_bot.getRoom().canModifyTable(message_author.id)
 
     
@@ -298,7 +297,7 @@ async def send_bad_wolf_fact(message:discord.Message):
 async def send_lounge_locked_message(message, this_bot):
     to_send = "The bot is locked to players in this room only: **"
     if this_bot.getRoom() is not None:
-        if this_bot.getRoom().getSetupUser() is not None:
+        if not this_bot.getRoom().is_freed:
             room_lounge_names = this_bot.getRoom().get_loungenames_can_modify_table()
             to_send += ", ".join(room_lounge_names)
             to_send += "**."

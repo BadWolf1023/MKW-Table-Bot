@@ -72,6 +72,7 @@ class ChannelBot(object):
         self.channel_id = channel_id
         self.race_size = 4
         self.event_id = None
+        
 
     def get_race_size(self):
         return self.race_size
@@ -199,7 +200,7 @@ class ChannelBot(object):
         
         
     def getBotunlockedInStr(self):
-        if self.room is None or self.room.set_up_user is None or self.room.races is None or len(self.room.races) < 12:
+        if self.room is None or self.room.is_freed or self.room.races is None or len(self.room.races) < 12:
             return None
         
         time_passed_since_lounge_finish = datetime.now() - self.loungeFinishTime
@@ -372,7 +373,7 @@ class ChannelBot(object):
         return True, player_data, room_str, rLID
     
     
-    async def load_room_smart(self, load_me, is_vr_command=False, message_id=None):
+    async def load_room_smart(self, load_me, is_vr_command=False, message_id=None, setup_discord_id=0, setup_display_name=""):
         rLIDs = []
         soups = []
         success = False
@@ -385,7 +386,7 @@ class ChannelBot(object):
                 break
         else:
             roomSoup = WiimmfiSiteFunctions.combineSoups(soups)
-            temp = Room.Room(rLIDs, roomSoup)
+            temp = Room.Room(rLIDs, roomSoup, setup_discord_id, setup_display_name)
             
             
             if temp.is_initialized():
@@ -461,7 +462,7 @@ class ChannelBot(object):
         if self.getRoom() is None or not self.getRoom().is_initialized():
             return True
         
-        if self.room.set_up_user is None:
+        if self.room.is_freed:
             return True
         
         if self.lastWPTime is not None:
@@ -482,9 +483,10 @@ class ChannelBot(object):
         
     def freeLock(self):
         if self.room is not None:
-            self.room.set_up_user = None
-            self.room.set_up_user_display_name = ""
-            self.loungeFinishTime = None
+            self.room.is_freed = True
+            #self.room.set_up_user = None
+            #self.room.set_up_user_display_name = ""
+            #self.loungeFinishTime = None
 
     def isInactive(self):
         curTime = datetime.now()

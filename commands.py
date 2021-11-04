@@ -1660,6 +1660,7 @@ class TablingCommands:
         server_id = message.guild.id
         author_id = message.author.id
         message_id = message.id
+        author_name = message.author.display_name
         if not is_lounge_server or permission_check(message.author) or (len(args) - command.count(" gps=") - command.count(" sui=") - command.count(" psb=")) <= 3:
             if len(args) < 3:
                 #TODO: sui=yes = psb
@@ -1711,7 +1712,7 @@ class TablingCommands:
                             discordIDToLoad = str(author_id)
                             await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]) )
                             FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-                            successful = await this_bot.load_room_smart([FCs], message_id=message_id)
+                            successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                             if not successful:
                                 await message.channel.send("Could not find you in a room. **Did you finish the first race?**")
                         elif len(args) > 3:
@@ -1719,16 +1720,16 @@ class TablingCommands:
                                 discordIDToLoad = str(message.raw_mentions[0])
                                 await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
                                 FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-                                successful = await this_bot.load_room_smart([FCs], message_id=message_id)
+                                successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
                                     lookup_name = UtilityFunctions.process_name(str(message.mentions[0].name))
                                     await message.channel.send(f"Could not find {lookup_name} in a room. **Did they finish the first race?**")                      
                             elif UtilityFunctions.is_rLID(args[3]):
-                                successful = await this_bot.load_room_smart([args[3]], message_id=message_id)
+                                successful = await this_bot.load_room_smart([args[3]], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
                                     await message.channel.send("Could not find this rxx number. Is the room over 24 hours old?")                                            
                             elif UtilityFunctions.is_fc(args[3]):
-                                successful = await this_bot.load_room_smart([args[3]], message_id=message_id)
+                                successful = await this_bot.load_room_smart([args[3]], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
                                     await message.channel.send("Could not find this FC in a room. **Did they finish the first race?**")
                             else:
@@ -1740,7 +1741,7 @@ class TablingCommands:
                                 their_name = their_name.strip()
                                 await updateData( * await LoungeAPIFunctions.getByLoungeNames([their_name]))
                                 FCs = UserDataProcessing.getFCsByLoungeName(their_name)
-                                successful = await this_bot.load_room_smart([FCs], message_id=message_id)
+                                successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
                                     processed_lookup_name = UtilityFunctions.process_name(their_name)
                                     await message.channel.send(f"Could not find {processed_lookup_name} in a room. **Did they finish the first race?**")                      
