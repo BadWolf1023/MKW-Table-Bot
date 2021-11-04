@@ -71,6 +71,10 @@ class ChannelBot(object):
         self.server_id = server_id
         self.channel_id = channel_id
         self.race_size = 4
+        self.event_id = None
+        
+    def get_event_id(self):
+        return self.event_id
     
     def get_room_started_message(self):
         started_war_str = "FFA started" if self.getWar().isFFA() else "War started"
@@ -335,7 +339,7 @@ class ChannelBot(object):
         return True, player_data, room_str, rLID
     
     
-    async def load_room_smart(self, load_me, is_vr_command=False):
+    async def load_room_smart(self, load_me, is_vr_command=False, message_id=None):
         rLIDs = []
         soups = []
         success = False
@@ -353,6 +357,7 @@ class ChannelBot(object):
             
             if temp.is_initialized():
                 self.room = temp
+                self.event_id = message_id
                 self.updateLoungeFinishTime()
                 success = True
                 #Make call to database to add data
@@ -364,6 +369,7 @@ class ChannelBot(object):
             if soups[0] is not None:
                 soups[0].decompose()
             del soups[0]
+        
         return success
             
     
