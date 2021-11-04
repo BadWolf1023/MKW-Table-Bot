@@ -48,13 +48,13 @@ def build_multiple_coniditional_operators(column_names, operators, iterable):
         result.append(" AND ".join(temp_result))
     return '(' + ")\nOR (".join(result) + ')'
 
-"""
-def build_sql_args_list_second_level(iterable):
+
+def build_sql_args_list_comma_separated(iterable):
     result_list = []
     for iterable_lower in iterable:
         result_list.append(f"({', '.join('?'*len(iterable_lower))})")
-    return f"({', '.join(result_list)})"
-"""
+    return f"{', '.join(result_list)}"
+
 
 def build_sql_args_list(iterable):
     return f"({', '.join('?'*len(iterable))})"
@@ -62,14 +62,13 @@ def build_sql_args_list(iterable):
 def build_data_names(data_names):
     return f"({', '.join(data_names)})"
 
-def get_insert_into_place_table_script():
-    return f"""INSERT INTO Place {build_data_names(PLACE_TABLE_NAMES)}
-VALUES{build_sql_args_list(PLACE_TABLE_NAMES)}"""
 
-def get_replace_into_place_table_script():
-    return f"""REPLACE INTO Place {build_data_names(PLACE_TABLE_NAMES)}
-VALUES{build_sql_args_list(PLACE_TABLE_NAMES)}"""
+def update_mii_hex_script():
+    return f"""UPDATE Place
+SET {PLACE_TABLE_NAMES[16]} = ?
+WHERE {PLACE_TABLE_NAMES[0]} = ? AND {PLACE_TABLE_NAMES[1]} = ? AND {PLACE_TABLE_NAMES[16]} IS NULL"""
 
+'''
 def get_insert_into_race_table_script():
     return f"""INSERT INTO Race {build_data_names(RACE_TABLE_NAMES)}
 VALUES{build_sql_args_list(RACE_TABLE_NAMES)}"""
@@ -81,12 +80,42 @@ VALUES{build_sql_args_list(PLAYER_TABLE_NAMES)}"""
 def get_insert_into_track_table_script():
     return f"""INSERT INTO Track {build_data_names(TRACK_TABLE_NAMES)}
 VALUES{build_sql_args_list(TRACK_TABLE_NAMES)}"""
-    
+
+def get_insert_into_place_table_script():
+    return f"""INSERT INTO Place {build_data_names(PLACE_TABLE_NAMES)}
+VALUES{build_sql_args_list(PLACE_TABLE_NAMES)}"""
+'''
+
+def build_insert_missing_races_script(races):
+        return f"""INSERT OR IGNORE INTO Race {build_data_names(RACE_TABLE_NAMES)}
+VALUES{build_sql_args_list_comma_separated(races)}
+RETURNING {RACE_TABLE_NAMES[0]}"""
+
+def build_insert_missing_placement_script(placements):
+    return f"""INSERT OR IGNORE INTO Place {build_data_names(PLACE_TABLE_NAMES)}
+VALUES{build_sql_args_list_comma_separated(placements)}
+RETURNING {PLACE_TABLE_NAMES[0]}, {PLACE_TABLE_NAMES[1]}"""
+
+def build_insert_missing_players_script(players):
+    return f"""INSERT OR IGNORE INTO Player {build_data_names(PLAYER_TABLE_NAMES)}
+VALUES{build_sql_args_list_comma_separated(players)}
+RETURNING {PLAYER_TABLE_NAMES[0]}"""
+
+def build_insert_missing_tracks_script(track_infos):
+    return f"""INSERT OR IGNORE INTO Track {build_data_names(TRACK_TABLE_NAMES)}
+VALUES{build_sql_args_list_comma_separated(track_infos)}
+RETURNING {TRACK_TABLE_NAMES[0]}"""
     
 def surround_script_begin_commit(script):
     return f"""BEGIN;
 {script.rstrip(';')};
 COMMIT;"""
+
+def build_missing_event_ids_race_ids_script(event_id_race_ids):
+    return f"""INSERT OR IGNORE INTO Event_Races {build_data_names(EVENT_RACES_TABLE_NAMES)}
+VALUES{build_sql_args_list_comma_separated(event_id_race_ids)}
+RETURNING *"""
+    
 
 
 

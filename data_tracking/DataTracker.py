@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 import Placement
 import Race
 import Player
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Set
 import UtilityFunctions
 from copy import deepcopy, copy
 import traceback
@@ -179,6 +179,13 @@ class ChannelBotSQLDataValidator(object):
             raise SQLTypeWrong(self.wrong_type_message(race_id, str))
         if not UtilityFunctions.is_race_ID(race_id):
             raise SQLFormatWrong(f"{race_id} is not a formatted like a race ID")
+        
+    def mii_hex_validation(self, mii_hex):
+        if not isinstance(mii_hex, (str, type(None))):
+            raise SQLTypeWrong(self.wrong_type_message(mii_hex, (str, None), multi=True))
+        if isinstance(mii_hex, str):
+            if not UtilityFunctions.is_hex(mii_hex):
+                raise SQLFormatWrong(f"{mii_hex} is not a valid mii hex")
     
     def wrong_type_message(self, data, expected_type, multi=False):
         if multi:
@@ -262,6 +269,24 @@ class ChannelBotSQLDataValidator(object):
             self.race_id_validation(race_id)
             self.fc_validation(fc)
             
+    
+    def event_id_validation(self, event_id):
+        if not isinstance(event_id, int):
+            raise SQLTypeWrong(self.wrong_type_message(event_id, int))
+        if event_id < 1:
+            raise SQLFormatWrong(f"{event_id} is not a formatted like an event id, which should be a number")
+    
+    def validate_event_id_race_ids(self, event_id_race_ids:Set[Tuple]):
+        for event_id, race_id in event_id_race_ids:
+            self.event_id_validation(event_id)
+            self.race_id_validation(race_id)
+            
+    def validate_mii_hex_update(self, race_id_fc_placements:Dict[Tuple, Placement.Placement]):
+        for (race_id, fc), placement in race_id_fc_placements.items():
+            self.race_id_validation(race_id)
+            self.fc_validation(fc)
+            self.mii_hex_validation(placement.getPlayer().get_mii_hex())
+            
             
 
             
@@ -325,149 +350,128 @@ class RoomTrackerSQL(object):
                 placement.is_from_wiimmfi())
     
     
-    def insert_placements_into_database(self, placements, replace_into=False):
-        self.data_validator.validate_placement_data(placements)
-        insert_place_statement = QB.get_replace_into_place_table_script() if replace_into else QB.get_insert_into_place_table_script()
-        all_data = [self.get_placement_as_sql_place_tuple(race_id, p) for (race_id, _), p in placements.items()]
-        with database_connection:
-            result = database_connection.executemany(insert_place_statement, all_data)
-        return all_data
         
     def insert_missing_placements_into_database(self):
-        '''Determines which placements in self.channel_bot's races are not in the Place table in the database yet.
-        Then, it attempts to insert those placements (that are not in the Place table yet) into the Place table.
+        '''Inserts placements in self.channel_bot's races are not yet in the database's Place table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
-        Returns the a list of the inserted placements (as tuples) upon success. (An empty list is returned if no placements were inserted.)'''
-
+        Returns a list of the inserted placements (as 2-tuples: race_id, fc) upon success. (An empty list is returned if no placements were inserted.)'''
+        
         race_id_fc_placements = {(race.get_race_id(), placement.getPlayer().get_FC()):placement for race in self.channel_bot.getRoom().races for placement in race.getPlacements()}
-        if DEBUGGING_SQL:
-            print(f"All race_id, fcs in event: {set(race_id_fc_placements)}")
-        find_race_ids_fcs_statement = QB.get_existing_race_fcs_in_Place_table(race_id_fc_placements)
-        where_statement_args = list(chain.from_iterable((race_id, fc) for race_id, fc in race_id_fc_placements))
-        found_race_id_fcs = set((result[0], result[1]) for result in database_connection.execute(find_race_ids_fcs_statement, where_statement_args))
+        if len(race_id_fc_placements) == 0:
+            return []
         
-        if DEBUGGING_SQL:
-            print(f"Race_id, fcs found in database: {found_race_id_fcs}")
-        missing_race_id_fcs = set(race_id_fc_placements).difference(found_race_id_fcs)
-        if DEBUGGING_SQL:
-            print(f"Missing race id, fcs: {missing_race_id_fcs}")
-        if len(missing_race_id_fcs) > 0:
-            return self.insert_placements_into_database({k:race_id_fc_placements[k] for k in missing_race_id_fcs})
+        self.data_validator.validate_placement_data(race_id_fc_placements)
+        all_data = [self.get_placement_as_sql_place_tuple(race_id, p) for (race_id, _), p in race_id_fc_placements.items()]
+        insert_ignore_script = QB.build_insert_missing_placement_script(all_data)
+        values_args = list(chain.from_iterable(all_data))
+        
+        with database_connection:
+            return list(database_connection.execute(insert_ignore_script, values_args))
         return []
     
-        
-        
-    def insert_players_into_database(self, players:List[Player.Player]):
-        '''First checks if the player for each player is valid. If it isn't, one of the following may be raised: SQLDataBad, SQLTypeWrong, SQLFormatWrong
-        Otherwise, for each player, inserts its data into the Player table in the database.
-        Returns the a list of the inserted Players (as tuples) upon success'''
-        self.data_validator.validate_player_data(players)
-        insert_player_statement = QB.get_insert_into_player_table_script()      
-        all_data = [self.get_player_as_sql_player_tuple(p) for p in players]
-        with database_connection:
-            result = database_connection.executemany(insert_player_statement, all_data)
-        return all_data
-            
+    
     def insert_missing_players_into_database(self):
-        '''Determines which players in all of the races in self.channel_bot are not in the Player table in the database yet.
-        Then, it attempts to insert those players (that are not in the Player table yet) into the Player table.
+        '''Inserts players in all of the races in self.channel_bot.races that are not yet in the database's Player table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
-        Returns a list of the inserted players (as tuples) upon success. (An empty list is returned if no players were inserted.)'''
-        room_fc_placements = self.channel_bot.getRoom().getFCPlacements()
-        find_fcs_statement = QB.get_fcs_in_Player_table(room_fc_placements.keys())
-        if DEBUGGING_SQL:
-            print(f"FCs in room: {set(room_fc_placements)}")
-        found_fcs = set(result[0] for result in database_connection.execute(find_fcs_statement, [k for k in room_fc_placements]))
-        if DEBUGGING_SQL:
-            print(f"FCs found in database: {found_fcs}")
-        missing_fcs = set(room_fc_placements).difference(found_fcs)
-        if DEBUGGING_SQL:
-            print(f"Missing FCs: {missing_fcs}")
-        if len(missing_fcs) > 0:
-            return self.insert_players_into_database([room_fc_placements[fc].getPlayer() for fc in missing_fcs])
+        Returns a list of the inserted player's fcs (as 1-tuples) upon success. (An empty list is returned if no players were inserted.)'''
+        unique_room_players = [placement.getPlayer() for placement in self.channel_bot.getRoom().getFCPlacements().values()]
+        if len(unique_room_players) == 0:
+            return []
+        
+        self.data_validator.validate_player_data(unique_room_players)
+            
+        all_data = [self.get_player_as_sql_player_tuple(p) for p in unique_room_players]
+        insert_ignore_script = QB.build_insert_missing_players_script(all_data)
+        values_args = list(chain.from_iterable(all_data))
+        with database_connection:
+            return list(database_connection.execute(insert_ignore_script, values_args))
         return []
     
-    
-    
-    def insert_races_into_database(self, races:List[Race.Race]):
-        '''First checks if the race information in each race is valid. If it isn't, one of the following may be raised: SQLDataBad, SQLTypeWrong, SQLFormatWrong
-        Otherwise, for each race, inserts its data into the Race table in the database.
-        Returns the a list of the inserted Races (as tuples) upon success'''
-        self.data_validator.validate_races_data(races)
-        insert_race_statement = QB.get_insert_into_race_table_script()
-        all_data = [self.get_race_as_sql_tuple(r) for r in races]
-        with database_connection:
-            result = database_connection.executemany(insert_race_statement, all_data)
-        return all_data
     
     def insert_missing_races_into_database(self):
-        '''Determines which races in self.channel_bot are not in the Race table in the database yet.
-        Then, it attempts to insert those races (that are not in the Race table yet) into the Race table.
+        '''Inserts races in self.channel_bot.races are not yet in the database's Race table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
-        Returns the a list of the inserted races (as tuples) upon success. (An empty list is returned if no races were inserted.)'''
-        race_id_races = {race.get_race_id():race for race in self.channel_bot.getRoom().races}
-        if DEBUGGING_SQL:
-            print(f"All race ids in event: {set(race_id_races)}")
-        find_race_ids_statement = QB.get_existing_race_ids_in_Race_table(race_id_races)
-        found_race_ids = set(result[0] for result in database_connection.execute(find_race_ids_statement, [k for k in race_id_races]))
-        if DEBUGGING_SQL:
-            print(f"Race ids found in database: {found_race_ids}")
-        missing_race_ids = set(race_id_races).difference(found_race_ids)
-        if DEBUGGING_SQL:
-            print(f"Missing race ids: {missing_race_ids}")
-        if len(missing_race_ids) > 0:
-            return self.insert_races_into_database([race_id_races[race_id] for race_id in missing_race_ids])
-        return []
-    
-
-
-    def insert_tracks_into_database(self, races:List[Race.Race]):
-        '''First checks if the track information in each race is valid. If it isn't, one of the following may be raised: SQLDataBad, SQLTypeWrong, SQLFormatWrong
-        Otherwise, for each race (that isn't yet in the Track table), inserts its track into the Track table in the database.
-        Returns the a list of the inserted tracks (as tuples) upon success'''
-        self.data_validator.validate_tracks_data(races)
-        insert_track_statement = QB.get_insert_into_track_table_script()
-        all_data = [self.get_race_as_sql_track_tuple(r) for r in races]
+        Returns a list of the inserted race's race_id's (as 1-tuples) upon success. (An empty list is returned if no races were inserted.)'''
+        unique_races = {race.get_race_id():race for race in self.channel_bot.getRoom().races}.values()
+        if len(unique_races) == 0:
+            return []
+        
+        self.data_validator.validate_races_data(unique_races)
+        all_data = [self.get_race_as_sql_tuple(r) for r in unique_races]
+        insert_ignore_script = QB.build_insert_missing_races_script(all_data)
+        values_args = list(chain.from_iterable(all_data))
         with database_connection:
-            result = database_connection.executemany(insert_track_statement, all_data)
-        return all_data
+            return list(database_connection.execute(insert_ignore_script, values_args))
+        return []
+
+    
     
     def insert_missing_tracks_into_database(self):
-        '''Determines which tracks in self.channel_bot's races are not in the Track table in the database yet.
-        Then, it attempts to insert the tracks that are not in the Track table yet.
+        '''Inserts tracks in self.channel_bot's races are not yet in the database's Track table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
-        Returns the a list of the inserted tracks (as tuples) upon success. (An empty list is returned if no tracks were inserted.)'''
-        track_names = {race.get_track_name():race for race in self.channel_bot.getRoom().races}
-        if DEBUGGING_SQL:
-            print(f"Tracks in room: {set(track_names)}")
-        find_track_names_statement = QB.get_existing_tracks_in_Track_table(track_names)
-        found_track_names = set(result[0] for result in database_connection.execute(find_track_names_statement, [tn for tn in track_names]))
-        if DEBUGGING_SQL:
-            print(f"Track names found in database: {found_track_names}")
-        missing_track_names = set(track_names).difference(found_track_names)
-        if DEBUGGING_SQL:
-            print(f"Missing track names: {missing_track_names}")
-        if len(missing_track_names) > 0:
-            return self.insert_tracks_into_database([track_names[tn] for tn in missing_track_names])
+        Returns the a list of the inserted track names (as 1-tuples) upon success. (An empty list is returned if no tracks were inserted.)'''
+        races_unique_track_names = {race.get_track_name():race for race in self.channel_bot.getRoom().races}.values()
+        if len(races_unique_track_names) == 0:
+            return []
+        
+        self.data_validator.validate_tracks_data(races_unique_track_names)
+        all_data = [self.get_race_as_sql_track_tuple(r) for r in races_unique_track_names]
+        insert_ignore_script = QB.build_insert_missing_tracks_script(all_data)
+        values_args = list(chain.from_iterable(all_data))
+        
+        with database_connection:
+            return list(database_connection.execute(insert_ignore_script, values_args))
+        return []
+        
+        
+    
+    def get_matching_placements_with_missing_hex(self, update_mii_args):
+        '''Given a list of 3-tuples (where the tuple is (race_id, fc, _)), returns existing a list of (race_id, fcs) tuples in Place table whose mii_hex is null.
+        May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong'''
+        missing_mii_data = [(data[0], data[1], None) for data in update_mii_args]
+        if len(missing_mii_data) == 0:
+            return []
+        missing_mii_hexes_statement = QB.get_existing_race_fcs_in_Place_table_with_null_mii_hex(missing_mii_data)
+        values_args = list(chain.from_iterable(missing_mii_data))
+        with database_connection:
+            return list(database_connection.execute(missing_mii_hexes_statement, values_args))
         return []
         
     def update_database_place_miis(self):
-        have_miis_for_placements = {(race.get_race_id(), placement.getPlayer().get_FC(), None):placement for race in self.channel_bot.getRoom().races for placement in race.getPlacements() if placement.getPlayer().get_mii_hex() is not None}
-        if DEBUGGING_SQL:
-            print(f"Have miis for race_id, fcs: {set(have_miis_for_placements)}")
+        '''Updates the mii_hex for placements in Place table for placements in self.channel_bot.race's placements who have a mii_hex if that mii_hex in the Place table is null.
+        May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
+        Returns the a list of the race_id, fc (as 2-tuples) of the placements whose mii_hex's were updated. (An empty list is returned if nothing was updated.)'''
+        have_miis_for_placements = {(race.get_race_id(), placement.getPlayer().get_FC()):placement for race in self.channel_bot.getRoom().races for placement in race.getPlacements() if placement.getPlayer().get_mii_hex() is not None}
         if len(have_miis_for_placements) == 0:
             return []
-        find_race_ids_fcs_statement = QB.get_existing_race_fcs_in_Place_table_with_null_mii_hex(have_miis_for_placements)
-        where_statement_args = list(chain.from_iterable((race_id, fc, x) for race_id, fc, x in have_miis_for_placements))
-        print(where_statement_args)
-        found_race_id_fcs_with_null_miis = set((result[0], result[1]) for result in database_connection.execute(find_race_ids_fcs_statement, where_statement_args))
         
-        if DEBUGGING_SQL:
-            print(f"Race_id, fcs found in database with null miis: {found_race_id_fcs_with_null_miis}")
-
-        if len(found_race_id_fcs_with_null_miis) > 0:
-            return self.insert_placements_into_database({k:have_miis_for_placements[(*k, None)] for k in found_race_id_fcs_with_null_miis}, replace_into=True)
+        self.data_validator.validate_mii_hex_update(have_miis_for_placements)
+        
+        update_mii_script = QB.update_mii_hex_script()
+        update_mii_args = [(race_id, fc, placement.getPlayer().get_mii_hex()) for (race_id, fc), placement in have_miis_for_placements.items()]
+        
+        found_race_id_fcs_with_null_miis = self.get_matching_placements_with_missing_hex(update_mii_args)
+        with database_connection:
+            database_connection.executemany(update_mii_script, update_mii_args)
+        return found_race_id_fcs_with_null_miis
+    
+    
+    def insert_missing_event_ids_race_ids(self):
+        '''Inserts (event_id, race_id) in for each race in self.channel_bot's races that are not yet in the database's Event_Races table.
+        May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
+        Returns the a list of the inserted event_ids, race_ids (as 2-tuples) upon success. (An empty list is returned if nothing was inserted.)'''
+        event_id_race_ids = {(self.channel_bot.get_event_id(), race.get_race_id()) for race in self.channel_bot.getRoom().races} #Note this is a set of tuples, not a dict
+        if len(event_id_race_ids) < 1:
+            return []
+        self.data_validator.validate_event_id_race_ids(event_id_race_ids)
+        
+        insert_ignore_script = QB.build_missing_event_ids_race_ids_script(event_id_race_ids)
+        values_args = list(chain.from_iterable((event_id, race_id) for event_id, race_id in event_id_race_ids))
+        with database_connection:
+            return list(database_connection.execute(insert_ignore_script, values_args))
         return []
+        
+
 class RoomTracker(object):
     
     @staticmethod
@@ -628,12 +632,14 @@ class RoomTracker(object):
         added_races = sql_helper.insert_missing_races_into_database()
         added_placements = sql_helper.insert_missing_placements_into_database()
         added_miis = sql_helper.update_database_place_miis()
+        added_event_ids_race_ids = sql_helper.insert_missing_event_ids_race_ids()
         if DEBUGGING_SQL:
             print(f"Added players: {added_players}")
             print(f"Added tracks: {added_tracks}")
             print(f"Added races: {added_races}")
             print(f"Added placements: {added_placements}")
             print(f"Added miis: {added_miis}")
+            print(f"Added event_id, race_id's: {added_event_ids_race_ids}")
         return
         #sql_helper.
         update_channel_data = True
