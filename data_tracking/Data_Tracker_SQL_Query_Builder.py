@@ -117,7 +117,7 @@ VALUES{build_sql_args_list_comma_separated(event_id_race_ids)}
 RETURNING *"""
 
 def build_event_upsert_script(was_real_update):
-    on_real_update_sql = f" {EVENT_TABLE_NAMES[3]}=(SELECT strftime('%Y-%m-%d %H:%M:%S', 'now')), {EVENT_TABLE_NAMES[4]}={EVENT_TABLE_NAMES[4]} + 1," if was_real_update else ""
+    on_real_update_sql = f" {EVENT_TABLE_NAMES[3]}=(SELECT strftime('%Y-%m-%d %H:%M:%f000+00:00', 'now')), {EVENT_TABLE_NAMES[4]}={EVENT_TABLE_NAMES[4]} + 1," if was_real_update else ""
     return f"""INSERT INTO Event {build_data_names(EVENT_TABLE_NAMES)}
 VALUES {build_sql_args_list(EVENT_TABLE_NAMES)}
 ON CONFLICT ({EVENT_TABLE_NAMES[0]}) DO
