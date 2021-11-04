@@ -72,9 +72,46 @@ class ChannelBot(object):
         self.channel_id = channel_id
         self.race_size = 4
         self.event_id = None
-        
+
+    def get_race_size(self):
+        return self.race_size
+    def get_miis(self) -> Dict[str, Mii.Mii]:
+        return self.miis
+    def get_room(self):
+        return self.room
+    def get_war(self):
+        return self.war
+    def get_prev_command_sw(self):
+        return self.prev_command_sw
+    def get_manual_war_set_up(self):
+        return self.manualWarSetUp
+    def get_last_used(self):
+        return self.last_used
+    def get_lounge_finish_time(self):
+        return self.loungeFinishTime
+    def get_last_wptime(self):
+        return self.lastWPTime
+    def get_room_load_time(self):
+        return self.roomLoadTime
+    def get_save_states(self):
+        return self.save_states
+    def get_populating(self):
+        return self.populating
+    def get_should_send_mii_notification(self):
+        return self.should_send_mii_notification
+    def get_server_id(self):
+        return self.server_id
+    def get_channel_id(self):
+        return self.channel_id
     def get_event_id(self):
         return self.event_id
+    def get_graph(self):
+        return self.graph
+    def get_style(self):
+        return self.style
+    def get_dc_points(self):
+        return self.dc_points
+
     
     def get_room_started_message(self):
         started_war_str = "FFA started" if self.getWar().isFFA() else "War started"
@@ -85,8 +122,7 @@ class ChannelBot(object):
         
     def set_race_size(self, new_race_size:int):
         self.race_size = new_race_size
-    def get_race_size(self):
-        return self.race_size
+
     
     def set_style_and_graph(self, server_id):
         self.graph = ServerFunctions.get_server_graph(server_id)
@@ -169,9 +205,6 @@ class ChannelBot(object):
         time_passed_since_lounge_finish = datetime.now() - self.loungeFinishTime
         cooldown_time = time_passed_since_lounge_finish - common.lounge_inactivity_time_period
         return "Bot will become unlocked " + humanize.naturaltime(cooldown_time)
-
-    def get_miis(self) -> Dict[str, Mii.Mii]:
-        return self.miis
     
     def table_is_set(self):
         return self.room is not None and self.war is not None

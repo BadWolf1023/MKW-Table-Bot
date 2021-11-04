@@ -57,7 +57,11 @@ class Room(object):
         
         self.initialize(rLIDs, roomSoup)
         
-
+    
+    def get_set_up_user_discord_id(self):
+        return self.set_up_user
+    def get_set_up_display_name(self):
+        return self.set_up_user
     
     def initialize(self, rLIDs, roomSoup, mii_dict=None):
         self.rLIDs = rLIDs
@@ -255,7 +259,7 @@ class Room(object):
         if len(regions) != 1:
             return Race.UNKNOWN_REGION
         for region in regions:
-            return regions
+            return region
         
             
             
