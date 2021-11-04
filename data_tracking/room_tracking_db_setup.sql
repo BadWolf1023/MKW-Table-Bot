@@ -70,7 +70,7 @@ CREATE TABLE Event(
     time_added TIMESTAMP NOT NULL,
     last_updated TIMESTAMP NOT NULL,
     number_of_updates INT UNSIGNED NOT NULL,
-    room_type TEXT NOT NULL,
+    region TEXT NOT NULL,
     set_up_user_discord_id INT NULL,
     set_up_user_display_name TEXT NULL,
     PRIMARY KEY(event_id)
@@ -89,13 +89,13 @@ CREATE TABLE Event_Races(
     race_id INT UNSIGNED NOT NULL,
     PRIMARY KEY(event_id, race_id),
     FOREIGN KEY (race_id)
-       REFERENCES Race(race_id)
-          ON UPDATE CASCADE
-           ON DELETE RESTRICT,
+    REFERENCES Race(race_id)
+       ON UPDATE CASCADE
+       ON DELETE RESTRICT,
     FOREIGN KEY (event_id)
-       REFERENCES Event(event_id)
-          ON UPDATE CASCADE
-           ON DELETE RESTRICT
+    REFERENCES Event(event_id)
+       ON UPDATE CASCADE
+       ON DELETE RESTRICT
 );
 
 CREATE TABLE Event_FCs(
