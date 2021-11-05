@@ -117,6 +117,11 @@ def build_missing_event_ids_race_ids_script(event_id_race_ids):
 VALUES{build_sql_args_list_comma_separated(event_id_race_ids)}
 RETURNING *"""
 
+def build_missing_event_id_table_script(event_ids):
+    return f"""INSERT OR IGNORE INTO Event_ID {build_data_names(EVENT_ID_TABLE_NAMES)}
+VALUES{build_sql_args_list_comma_separated(event_ids)}
+RETURNING *"""
+
 def build_event_upsert_script(was_real_update):
     on_real_update_sql = f" {EVENT_TABLE_NAMES[3]}=(SELECT strftime('%Y-%m-%d %H:%M:%f000+00:00', 'now')), {EVENT_TABLE_NAMES[4]}={EVENT_TABLE_NAMES[4]} + 1," if was_real_update else ""
     on_real_update_sql_2 = f"RETURNING {EVENT_TABLE_NAMES[0]}"

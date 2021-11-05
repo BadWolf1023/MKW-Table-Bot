@@ -610,7 +610,7 @@ class RoomTrackerSQL(object):
         
     def insert_missing_event(self, was_real_update=False):
         self.data_validator.validate_event_data(self.channel_bot)
-        event_sql_args = [*self.get_event_as_upsert_sql_place_tuple(self.channel_bot)] #Note this is a set of tuples, not a dict
+        event_sql_args = [*self.get_event_as_upsert_sql_place_tuple(self.channel_bot)]
         if len(event_sql_args) < 1:
             return []
         
@@ -620,8 +620,24 @@ class RoomTrackerSQL(object):
             if was_real_update:
                 return added_updated_event_ids
         return []
+    
+    
+    def add_event_id(self):
+        '''Inserts event_id for self.channel_bot int Event_ID table.
+        May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
+        Returns a list of the inserted event_id (as a 1-tuple) upon success. (An empty list is returned if nothing was inserted.)'''
+        self.data_validator.event_id_validation(self.channel_bot.get_event_id())
+        event_sql_args = [(self.channel_bot.get_event_id(),)]
+        if len(event_sql_args) < 1:
+            return []
         
-
+        upsert_script = QB.build_missing_event_id_table_script(event_sql_args)
+        #print(upsert_script)
+        with database_connection:
+            return list(database_connection.execute(upsert_script, event_sql_args[0]))
+        return []
+    
+    
 class RoomTracker(object):
     
     @staticmethod
@@ -782,18 +798,19 @@ class RoomTracker(object):
         added_races = sql_helper.insert_missing_races_into_database()
         added_placements = sql_helper.insert_missing_placements_into_database()
         added_miis = sql_helper.update_database_place_miis()
-        added_event_ids = sql_helper.insert_missing_event(was_real_update=len(added_races) > 0)
+        added_event_id = sql_helper.add_event_id()
         added_event_ids_race_ids = sql_helper.insert_missing_event_ids_race_ids()
-        
-        
+        added_event_ids = sql_helper.insert_missing_event(was_real_update=(len(added_event_ids_race_ids) > 0))
+
         if DEBUGGING_SQL:
             print(f"Added players: {added_players}")
             print(f"Added tracks: {added_tracks}")
             print(f"Added races: {added_races}")
             print(f"Added placements: {added_placements}")
             print(f"Added miis: {added_miis}")
-            print(f"Added event ids: {added_event_ids}")
+            print(f"Added event id: {added_event_id}")
             print(f"Added event_id, race_id's: {added_event_ids_race_ids}")
+            print(f"Added event ids: {added_event_ids}")
         return
         #sql_helper.
         update_channel_data = True
@@ -869,6 +886,6 @@ def on_exit():
     database_connection.close()
 
 
-if __name__ == '__init__':
+if __name__ == '__main__':
     initialize()
     
