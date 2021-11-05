@@ -167,100 +167,204 @@ class DataRetriever(object):
         filtered_rxxs = DataRetriever.get_filtered_rxxs(rxx_dict, tier, in_last_days)
 """
 class ChannelBotSQLDataValidator(object):
-    
-    def fc_validation(self, fc):
-        if not isinstance(fc, str):
-            raise SQLTypeWrong(self.wrong_type_message(fc, str))
-        if not UtilityFunctions.is_fc(fc):
-            raise SQLFormatWrong(f"{fc} is not a formatted like an FC")
-    
-    def race_id_validation(self, race_id):
-        if not isinstance(race_id, str):
-            raise SQLTypeWrong(self.wrong_type_message(race_id, str))
-        if not UtilityFunctions.is_race_ID(race_id):
-            raise SQLFormatWrong(f"{race_id} is not a formatted like a race ID")
-        
-    def mii_hex_validation(self, mii_hex):
-        if not isinstance(mii_hex, (str, type(None))):
-            raise SQLTypeWrong(self.wrong_type_message(mii_hex, (str, None), multi=True))
-        if isinstance(mii_hex, str):
-            if not UtilityFunctions.is_hex(mii_hex):
-                raise SQLFormatWrong(f"{mii_hex} is not a valid mii hex")
-    
     def wrong_type_message(self, data, expected_type, multi=False):
         if multi:
             return f"{data} of type {type(data)} is not any of the expected types: ({', '.join([(t.__name__ if t is not None else 'None') for t in expected_type])})"
         else:
             return f"{data} of type {type(data)} is not expected type: {expected_type.__name__}"
     
+    def validate_type(self, data, expected_type, can_be_none):
+        if can_be_none:
+            if not isinstance(data, (expected_type, type(None))):
+                raise SQLTypeWrong(self.wrong_type_message(data, (expected_type, None), multi=True))
+        else:
+            if not isinstance(data, expected_type):
+                raise SQLTypeWrong(self.wrong_type_message(data, expected_type))
+    
+    def validate_int(self, data, can_be_none=False):
+        self.validate_type(data, int, can_be_none)
+        
+    def validate_str(self, data, can_be_none=False):
+        self.validate_type(data, str, can_be_none)
+    
+    def validate_float(self, data, can_be_none=False):
+        self.validate_type(data, float, can_be_none)
+    
+    def validate_bool(self, data, can_be_none=False):
+        self.validate_type(data, bool, can_be_none)
+        
+    def is_from_wiimmfi_validation(self, is_from_wiimmfi):
+        self.validate_bool(is_from_wiimmfi)
+        
+    def event_id_validation(self, event_id):
+        self.validate_int(event_id)
+        if event_id < 1:
+            raise SQLFormatWrong(f"{event_id} is not a formatted like an event id, which should be a number")
+    
+    def channel_id_validation(self, channel_id):
+        self.validate_int(channel_id)
+        if channel_id < 1:
+            raise SQLFormatWrong(f"{channel_id} is not a formatted like an channel id, which should be a number")
+    
+    def discord_id_validation(self, discord_id):
+        self.validate_int(discord_id)
+        if discord_id < 1:
+            raise SQLFormatWrong(f"{discord_id} is not a formatted like a discord id, which should be a number")
+        
+    def placement_time_validation(self, time_str):
+        self.validate_str(time_str)
+        if not Placement.is_valid_time_str(time_str):
+            raise SQLFormatWrong(f"{time_str} is not formatted like a valid finishing time")
+        
+    def placement_delta_validation(self, delta):
+        self.validate_float(delta, can_be_none=True)
+        
+    def player_ol_status_validation(self, ol_status):
+        self.validate_str(ol_status, can_be_none=True)
+        
+    def player_position_validation(self, player_pos):
+        self.validate_int(player_pos)
+        if player_pos < 1 and player_pos != -1:
+            raise SQLFormatWrong(f"{player_pos} is not a valid player position")
+        
+    def player_finish_place_validation(self, place):
+        self.validate_int(place)
+        if place < 1:
+            raise SQLFormatWrong(f"{place} is not a valid finishing place")
+    
+    def fc_validation(self, fc):
+        self.validate_str(fc)
+        if not UtilityFunctions.is_fc(fc):
+            raise SQLFormatWrong(f"{fc} is not a formatted like an FC")
+    
+    def race_id_validation(self, race_id):
+        self.validate_str(race_id)
+        if not UtilityFunctions.is_race_ID(race_id):
+            raise SQLFormatWrong(f"{race_id} is not a formatted like a race ID")
+        
+    def mii_hex_validation(self, mii_hex):
+        self.validate_str(mii_hex, can_be_none=True)
+        if isinstance(mii_hex, str):
+            if not UtilityFunctions.is_hex(mii_hex):
+                raise SQLFormatWrong(f"{mii_hex} is not a valid mii hex")
+            
+    def player_id_validation(self, player_id):
+        self.validate_int(player_id)
+        
+    def player_mkwx_url_validation(self, mkwx_url):
+        self.validate_str(mkwx_url)
+    
     def validate_player_data(self, players:List[Player.Player]):
         '''Validates that all the data in players is the correct type and format before going into the database'''
         for player in players:
             self.fc_validation(player.get_FC())
-            if not isinstance(player.get_player_id(), int):
-                raise SQLTypeWrong(self.wrong_type_message(player.get_player_id(), int))
-            if not isinstance(player.get_mkwx_url(), str):
-                raise SQLTypeWrong(self.wrong_type_message(player.get_mkwx_url(), str))
+            self.player_id_validation(player.get_player_id())
+            self.player_mkwx_url_validation(player.get_mkwx_url())
             
+    def track_name_validation(self, track_name, rxx=None):
+        self.validate_str(track_name)
+        if track_name == "None":
+            raise SQLDataBad(f"track_name cannot be an 'None', room rxx: {rxx}")
+    
+    def track_url_validation(self, track_url):
+        self.validate_str(track_url, can_be_none=True)
+        
+    def track_name_no_author_validation(self, track_name_author_stripped, rxx=None):
+        self.validate_str(track_name_author_stripped)
+        if track_name_author_stripped == "None":
+            raise SQLDataBad(f"track_name without author cannot be an 'None', room rxx: {rxx}")
+        
+    def track_lookup_name_validation(self, track_lookup_name, rxx=None):
+        self.validate_str(track_lookup_name)
+        if track_lookup_name == "None" or ' ' in track_lookup_name:
+            raise SQLDataBad(f"{track_lookup_name} is not a valid track lookup name, room rxx: {rxx}")
+        
+    def track_is_ct_validation(self, is_ct):
+        self.validate_bool(is_ct)
+        
     def validate_tracks_data(self, races:List[Race.Race]):
         '''Validates that all the relevant data (regarding track information) in races is the correct type and format before going into the database'''
         for race in races:
             race:Race.Race
-            if not isinstance(race.get_track_name(), str):
-                raise SQLTypeWrong(self.wrong_type_message(race.get_track_name(), str))
-            if race.get_track_name() == "None":
-                raise SQLDataBad(f"track_name cannot be an 'None', room rxx: {race.rxx}")
-            if not isinstance(race.get_track_url(), (str, type(None))):
-                raise SQLTypeWrong(self.wrong_type_message(race.get_track_url(), (str, None), multi=True))
-            
+            self.track_name_validation(race.get_track_name(), rxx=race.rxx)
+            self.track_url_validation(race.get_track_url())
             no_author_name = race.getTrackNameWithoutAuthor()
-            if not isinstance(no_author_name, str):
-                raise SQLTypeWrong(self.wrong_type_message(race.get_track_url(), str))
+            self.track_name_no_author_validation(no_author_name, rxx=race.rxx)
+            self.track_is_ct_validation(race.is_custom_track())
+            self.track_lookup_name_validation(Race.get_track_name_lookup(no_author_name), rxx=race.rxx)   
+    
+    def rxx_validation(self, rxx):
+        self.validate_str(rxx)
+        if not UtilityFunctions.is_rLID(rxx):
+            raise SQLFormatWrong(f"{rxx} is not a formatted like an rxx")
+        
+    def wiimmfi_utc_time_validation(self, wiimmfi_time):
+        self.validate_str(wiimmfi_time)
+        if not UtilityFunctions.is_wiimmfi_utc_time(wiimmfi_time):
+            raise SQLFormatWrong(f"{wiimmfi_time} is not a formatted like the expected Wiimmfi time")
+        
+    def race_number_validation(self, race_number):
+        self.validate_int(race_number)
+        if race_number < 1:
+            raise SQLDataBad(f"{race_number} race number must be greater than 0")
+        
+    def race_room_name_validation(self, room_name):
+        self.validate_str(room_name)
+    
+    def race_room_type_validation(self, room_type):
+        self.validate_str(room_type)
+    
+    def race_cc_validation(self, cc):
+        self.validate_str(cc)
+        
+    def region_validation(self, region):
+        self.validate_str(region)
+        if not Race.is_valid_region(region):
+            raise SQLFormatWrong(f"{region} region is not a valid region (see Race.is_valid_region)")
+    
+    def connection_fails_validation(self, conn_fails):
+        self.validate_float(conn_fails, can_be_none=True)
+        
+    def player_role_validation(self, player_role):
+        self.validate_str(player_role)
+        
+    def player_vr_validation(self, vr):
+        self.validate_int(vr, can_be_none=True)
+        if isinstance(vr, int):
+            if vr < 0:
+                raise SQLFormatWrong(f"{vr} VR cannot be less than 0")
+    
+    def player_character_validation(self, character):
+        self.validate_str(character, can_be_none=True)
+        if isinstance(character, str):
+            if character.strip() == "":
+                raise SQLFormatWrong(f"{character} character for player cannot be an empty string")
+    
+    def player_vehicle_validation(self, vehicle):
+        self.validate_str(vehicle, can_be_none=True)
+        if isinstance(vehicle, str):
+            if vehicle.strip() == "":
+                raise SQLFormatWrong(f"{vehicle} vehicle for player cannot be an empty string")
             
-            if not isinstance(race.is_custom_track(), bool):
-                raise SQLTypeWrong(self.wrong_type_message(race.is_custom_track(), bool))
-            
-            if not isinstance(Race.get_track_name_lookup(no_author_name), str):
-                raise SQLTypeWrong(self.wrong_type_message(Race.get_track_name_lookup(no_author_name), str))
-            
+    def name_validation(self, name):
+        self.validate_str(name, can_be_none=True)
+        if isinstance(name, str):
+            if name.strip() == "":
+                raise SQLFormatWrong(f"{name} name player cannot be an empty string")
         
     def validate_races_data(self, races:List[Race.Race]):
         '''Validates that all the data in races is the correct type and format before going into the database'''
         for race in races:
             race:Race.Race
             self.race_id_validation(race.get_race_id())
-            
-            if not isinstance(race.get_rxx(), str):
-                raise SQLTypeWrong(self.wrong_type_message(race.get_rxx(), str))
-            if not UtilityFunctions.is_rLID(race.get_rxx()):
-                raise SQLFormatWrong(f"{race.get_rxx()} is not a formatted like an rxx")
-            
-            if not isinstance(race.get_match_start_time(), str):
-                raise SQLTypeWrong(self.wrong_type_message(race.get_match_start_time(), str))
-            if not UtilityFunctions.is_wiimmfi_utc_time(race.get_match_start_time()):
-                raise SQLFormatWrong(f"{race.get_match_start_time()} is not a formatted like the expected Wiimmfi time")
-            
-            if not isinstance(race.get_race_number(), int):
-                raise SQLTypeWrong(self.wrong_type_message(race.get_race_number(), int))
-            if race.get_race_number() < 1:
-                raise SQLDataBad(f"{race.get_race_number()} race number must be greater than 0")
-            
-            if not isinstance(race.get_room_name(), str):
-                raise SQLTypeWrong(self.wrong_type_message(race.get_room_name(), int))
-            
-            if not isinstance(race.get_room_type(), str):
-                raise SQLTypeWrong(self.wrong_type_message(race.get_room_type(), str))
-            
-            if not isinstance(race.get_cc(), str):
-                raise SQLTypeWrong(self.wrong_type_message(race.get_cc(), str))
-            
-            if not isinstance(race.get_region(), str):
-                raise SQLTypeWrong(self.wrong_type_message(race.get_region(), str))
-            if not Race.is_valid_region(race.get_region()):
-                raise SQLFormatWrong(f"{race.get_region()} region is not a valid region (see Race.is_valid_region)")
-            
-            if not isinstance(race.is_from_wiimmfi(), bool):
-                raise SQLTypeWrong(self.wrong_type_message(race.is_from_wiimmfi(), bool))
+            self.rxx_validation(race.get_rxx())
+            self.wiimmfi_utc_time_validation(race.get_match_start_time())
+            self.race_number_validation(race.get_race_number())
+            self.race_room_name_validation(race.get_room_name())
+            self.race_room_type_validation(race.get_room_type())
+            self.race_cc_validation(race.get_cc())
+            self.region_validation(race.get_region())            
+            self.is_from_wiimmfi_validation(race.is_from_wiimmfi())
             
         self.validate_tracks_data(races)
             
@@ -268,25 +372,25 @@ class ChannelBotSQLDataValidator(object):
         for (race_id, fc), placement in placements.items():
             self.race_id_validation(race_id)
             self.fc_validation(fc)
+            player = placement.getPlayer()
+            self.fc_validation(player.get_FC())
+            self.player_finish_place_validation(placement.get_place())
+            self.placement_time_validation(placement.get_time_string())
+            self.placement_delta_validation(placement.get_delta())
+            self.player_ol_status_validation(player.get_ol_status())
+            self.player_position_validation(player.get_position())
+            self.region_validation(player.get_region())
+            self.connection_fails_validation(player.get_connection_fails())
+            self.player_role_validation(player.get_role())
+            self.player_vr_validation(player.get_VR())
+            self.player_character_validation(player.get_character())
+            self.player_vehicle_validation(player.get_vehicle())
+            self.name_validation(player.get_discord_name())
+            self.name_validation(player.get_lounge_name())
+            self.mii_hex_validation(player.get_mii_hex())
+            self.is_from_wiimmfi_validation(placement.is_from_wiimmfi())
+                
             
-    
-    def event_id_validation(self, event_id):
-        if not isinstance(event_id, int):
-            raise SQLTypeWrong(self.wrong_type_message(event_id, int))
-        if event_id < 1:
-            raise SQLFormatWrong(f"{event_id} is not a formatted like an event id, which should be a number")
-    
-    def channel_id_validation(self, channel_id):
-        if not isinstance(channel_id, int):
-            raise SQLTypeWrong(self.wrong_type_message(channel_id, int))
-        if channel_id < 1:
-            raise SQLFormatWrong(f"{channel_id} is not a formatted like an channel id, which should be a number")
-    
-    def discord_id_validation(self, discord_id):
-        if not isinstance(discord_id, int):
-            raise SQLTypeWrong(self.wrong_type_message(discord_id, int))
-        if discord_id < 1:
-            raise SQLFormatWrong(f"{discord_id} is not a formatted like a discord id, which should be a number")
         
     
     def validate_event_id_race_ids(self, event_id_race_ids:Set[Tuple]):
@@ -512,7 +616,9 @@ class RoomTrackerSQL(object):
         
         upsert_script = QB.build_event_upsert_script(was_real_update)
         with database_connection:
-            return list(database_connection.execute(upsert_script, event_sql_args))
+            added_updated_event_ids = list(database_connection.execute(upsert_script, event_sql_args))
+            if was_real_update:
+                return added_updated_event_ids
         return []
         
 
