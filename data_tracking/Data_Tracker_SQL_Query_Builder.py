@@ -24,6 +24,11 @@ def get_existing_race_fcs_in_Place_table_with_null_mii_hex(race_id_fcs):
 FROM Place
 WHERE {build_multiple_coniditional_operators([PLACE_TABLE_NAMES[0], PLACE_TABLE_NAMES[1], PLACE_TABLE_NAMES[16]], ['=','=', 'IS'], race_id_fcs)};"""
 
+def get_existing_event_fcs_in_with_null_mii_hex(event_id_fcs):
+    return f"""SELECT {EVENT_FCS_TABLE_NAMES[0]}, {EVENT_FCS_TABLE_NAMES[1]}
+FROM Event_FCs
+WHERE {build_multiple_coniditional_operators([EVENT_FCS_TABLE_NAMES[0], EVENT_FCS_TABLE_NAMES[1], EVENT_FCS_TABLE_NAMES[2]], ['=','=', 'IS'], event_id_fcs)};"""
+
 def get_fcs_in_Player_table(fcs):
     return f"""SELECT {PLAYER_TABLE_NAMES[0]}
 FROM Player
@@ -63,6 +68,11 @@ def build_sql_args_list(iterable):
 def build_data_names(data_names):
     return f"({', '.join(data_names)})"
 
+
+def update_mii_hex_script_event_fcs():
+    return f"""UPDATE Event_FCs
+SET {EVENT_FCS_TABLE_NAMES[2]} = ?
+WHERE {EVENT_FCS_TABLE_NAMES[0]} = ? AND {EVENT_FCS_TABLE_NAMES[1]} = ? AND {EVENT_FCS_TABLE_NAMES[2]} IS NULL"""
 
 def update_mii_hex_script():
     return f"""UPDATE Place
@@ -120,6 +130,11 @@ RETURNING *"""
 def build_missing_event_id_table_script(event_ids):
     return f"""INSERT OR IGNORE INTO Event_ID {build_data_names(EVENT_ID_TABLE_NAMES)}
 VALUES{build_sql_args_list_comma_separated(event_ids)}
+RETURNING *"""
+
+def build_missing_event_fcs_table_script(event_fcs):
+    return f"""INSERT OR IGNORE INTO Event_FCs {build_data_names(EVENT_FCS_TABLE_NAMES)}
+VALUES{build_sql_args_list_comma_separated(event_fcs)}
 RETURNING *"""
 
 def build_event_upsert_script(was_real_update):
