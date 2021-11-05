@@ -64,6 +64,12 @@ CREATE TABLE Player(
     PRIMARY KEY(fc)
 );
 
+CREATE TABLE Event_ID(
+    event_id INT NOT NULL /*This is a unique ID that table bot generates for each war that is started with ?sw. (Okay, Table Bot doesn''t need to generate it actually! Discord messages all have a unique ID and we''ll use those!)*/,
+    PRIMARY KEY(event_id)
+
+);
+
 CREATE TABLE Event(
     event_id INT NOT NULL /*This is a unique ID that table bot generates for each war that is started with ?sw. (Okay, Table Bot doesn''t need to generate it actually! Discord messages all have a unique ID and we''ll use those!)*/,
     channel_id INT NOT NULL,
@@ -73,7 +79,11 @@ CREATE TABLE Event(
     region TEXT NOT NULL,
     set_up_user_discord_id INT NULL,
     set_up_user_display_name TEXT NULL,
-    PRIMARY KEY(event_id)
+    PRIMARY KEY(event_id),
+    FOREIGN KEY (event_id)
+	REFERENCES Event_ID(event_id)
+	ON UPDATE CASCADE
+	ON DELETE RESTRICT
 
 );
 
@@ -93,7 +103,7 @@ CREATE TABLE Event_Races(
        ON UPDATE CASCADE
        ON DELETE RESTRICT,
     FOREIGN KEY (event_id)
-    REFERENCES Event(event_id)
+    REFERENCES Event_ID(event_id)
        ON UPDATE CASCADE
        ON DELETE RESTRICT
 );
@@ -108,7 +118,7 @@ CREATE TABLE Event_FCs(
           ON UPDATE CASCADE
            ON DELETE RESTRICT,
     FOREIGN KEY (event_id)
-       REFERENCES Event(event_id)
+       REFERENCES Event_ID(event_id)
           ON UPDATE CASCADE
            ON DELETE RESTRICT
 );
@@ -135,7 +145,7 @@ CREATE TABLE Event_Structure(
     players_per_team INT NOT NULL,
     PRIMARY KEY(event_id),
     FOREIGN KEY (event_id)
-       REFERENCES Event(event_id)
+       REFERENCES Event_ID(event_id)
           ON UPDATE CASCADE
            ON DELETE RESTRICT
 );
