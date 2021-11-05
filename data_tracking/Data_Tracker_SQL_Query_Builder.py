@@ -10,6 +10,7 @@ PLACE_TABLE_NAMES = ["race_id", "fc", "name", "place", "time", "lag_start", "ol_
 EVENT_RACES_TABLE_NAMES = ["event_id", "race_id"]
 EVENT_FCS_TABLE_NAMES = ["event_id", "fc", "mii_hex"]
 TIER_TABLE_NAMES = ["channel_id", "tier"]
+EVENT_ID_TABLE_NAMES = ["event_id"]
 EVENT_TABLE_NAMES = ["event_id", "channel_id", "time_added", "last_updated", "number_of_updates", "region", "set_up_user_discord_id", "set_up_user_display_name"]
 EVENT_STRUCTURE_TABLE_NAMES = ["channel_id", "name_changes", "removed_races", "placement_history", "forced_room_size", "player_penalties", "team_penalties", "disconnections_on_results", "sub_ins", "teams", "rxx_list", "edits", "ignore_large_times", "missing_player_points", "event_name", "number_of_gps", "player_setup_amount", "number_of_teams", "players_per_team"]
 
@@ -118,11 +119,12 @@ RETURNING *"""
 
 def build_event_upsert_script(was_real_update):
     on_real_update_sql = f" {EVENT_TABLE_NAMES[3]}=(SELECT strftime('%Y-%m-%d %H:%M:%f000+00:00', 'now')), {EVENT_TABLE_NAMES[4]}={EVENT_TABLE_NAMES[4]} + 1," if was_real_update else ""
+    on_real_update_sql_2 = f"RETURNING {EVENT_TABLE_NAMES[0]}"
     return f"""INSERT INTO Event {build_data_names(EVENT_TABLE_NAMES)}
 VALUES {build_sql_args_list(EVENT_TABLE_NAMES)}
 ON CONFLICT ({EVENT_TABLE_NAMES[0]}) DO
 UPDATE SET {EVENT_TABLE_NAMES[1]}=excluded.{EVENT_TABLE_NAMES[1]},{on_real_update_sql} {EVENT_TABLE_NAMES[5]}=excluded.{EVENT_TABLE_NAMES[5]}, {EVENT_TABLE_NAMES[6]}=excluded.{EVENT_TABLE_NAMES[6]}, {EVENT_TABLE_NAMES[7]}=excluded.{EVENT_TABLE_NAMES[7]}
-"""
+{on_real_update_sql_2}"""
 
     
 
