@@ -3,6 +3,7 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
+import UtilityFunctions
 
 vehicle_ratings = {"Mach Bike":10,
                   "Flame Runner":10,
@@ -44,6 +45,10 @@ class Player(object):
         self.pid = int(self.playerPageLink.split("/")[-1].strip('p'))
         self.ol_status = ol_status
         self.positionInRoom = roomPosition
+        if UtilityFunctions.isint(self.positionInRoom):
+            self.positionInRoom = int(self.positionInRoom)
+        else:
+            self.positionInRoom = -1
         self.region = playerRegion
         self.playerConnFails = playerConnFails
         self.role = str(role)

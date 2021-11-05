@@ -6,6 +6,7 @@ Created on Jul 12, 2020
 from UserDataProcessing import lounge_add
 import UtilityFunctions
 import Player
+import re
 
 DEBUGGING = False
 DISCONNECTION_TIME = (999,999,999)
@@ -14,6 +15,10 @@ MINIMUM_DELTA_VALUE = -10
 MAXIMUM_DELTA_VALUE = 10
 
 NO_DELTA_DISPLAY_RANGE = (-.5, .5)
+
+def is_valid_time_str(time_str):
+    return re.match("^([\d]{1,3}:)?[\d]{1,3}\.[\d]{3}$", time_str.strip()) is not None
+    
 
 class Placement:
 

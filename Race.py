@@ -135,7 +135,7 @@ class Race:
         self.track_check()
         self.cc = cc
         self.placements = []
-        self.region = None
+        self.region = UNKNOWN_REGION
         self.is_ct = is_ct
         self.is_wiimmfi_race = is_wiimmfi_race
         
@@ -185,6 +185,8 @@ class Race:
         regionCount = defaultdict(int)
         for placement in self.getPlacements():
             regionCount[placement.getPlayer().region] += 1
+        if len(regionCount) == 0:
+            self.region = UNKNOWN_REGION
         mostCommonRegion = max(regionCount, key=lambda x: regionCount[x])
         self.region = mostCommonRegion
             
