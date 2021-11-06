@@ -62,6 +62,10 @@ class Room(object):
         return self.set_up_user
     def get_set_up_display_name(self):
         return self.set_up_user_display_name
+    def get_dc_statuses(self):
+        return self.dc_on_or_before
+    def get_subs(self):
+        return self.sub_ins
     
     def initialize(self, rLIDs, roomSoup, mii_dict=None):
         self.rLIDs = rLIDs
@@ -92,6 +96,8 @@ class Room(object):
     def is_initialized(self):
         return self.races is not None and self.rLIDs is not None and len(self.rLIDs) > 0
         
+    def get_rxxs(self):
+        return self.rLIDs
     
     def had_positions_changed(self):
         for changes in self.placement_history.values():
@@ -269,7 +275,19 @@ class Room(object):
     
     def getNameChanges(self):
         return self.name_changes
+    
+    def getRemovedRaces(self):
+        return self.removed_races
 
+    def getPlacementHistory(self):
+        return self.placement_history
+    
+    def getForcedRoomSize(self):
+        return self.forcedRoomSize
+        
+    def getPlayerPenalties(self):
+        return self.playerPenalties
+    
     def setNameForFC(self, FC, name):
         self.name_changes[FC] = name
     

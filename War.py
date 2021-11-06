@@ -54,7 +54,15 @@ class War(object):
         self.war_id = message_id
         
 
-        
+    def get_teams(self):  
+        return self.teams
+    def get_player_edits(self):
+        return self.manualEdits
+    def should_ignore_large_times(self):
+        return self.ignoreLargeTimes
+    def get_missing_player_points(self):
+        return self.missingRacePts
+    
         
     def setWarFormat(self, formatting, numberOfTeams):
         if formatting not in self.__formatMapping:
@@ -73,7 +81,12 @@ class War(object):
         self.playersPerTeam = self.__formatMapping[self.formatting]
         if self.numberOfTeams == 2:
             self.teamColors = random.choice(tableColorPairs)
-    
+    def get_players_per_team(self):
+        return self.playersPerTeam
+    def get_number_of_gps(self):
+        return self.numberOfGPs
+    def get_number_of_teams(self):
+        return self.numberOfTeams
     def isFFA(self):
         return self.playersPerTeam == 1
         
@@ -227,7 +240,10 @@ class War(object):
 
     def setWarName(self, warName):
         self.warName = warName
-        
+    
+    def get_manually_set_war_name(self):
+        return self.warName  
+    
     def getWarName(self, numRaces:int):
         if self.teams is None:
             raise TableBotExceptions.WarSetupStillRunning()
