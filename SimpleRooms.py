@@ -209,7 +209,7 @@ def get_race_from_mkwx_bs4_room_header(bs4_room_header:List[str]):
         track = track.replace('Last track:', '').strip()
     #print(f"RoomID: {roomID}, roomType: {roomType}, cc: {cc}, matchTime: {matchTime}, raceNumber: {raceNumber}, track: {track}")
             
-    return Race.Race(matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct=False)
+    return Race.Race(matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct=False, mkwxRaceNumber=raceNumber)
 
     
 

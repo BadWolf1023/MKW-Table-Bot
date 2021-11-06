@@ -120,7 +120,7 @@ class Race:
 
 
 
-    def __init__(self, matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, rxx=None, raceID=None, trackURL=None, placements=None, is_wiimmfi_race=True):
+    def __init__(self, matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, mkwxRaceNumber, rxx=None, raceID=None, trackURL=None, placements=None, is_wiimmfi_race=True):
         self.matchTime = matchTime
         self.matchID = matchID
         self.raceNumber = raceNumber
@@ -138,7 +138,14 @@ class Race:
         self.region = UNKNOWN_REGION
         self.is_ct = is_ct
         self.is_wiimmfi_race = is_wiimmfi_race
-        
+        self.mkwxRaceNumber = mkwxRaceNumber
+        if UtilityFunctions.isint(self.mkwxRaceNumber):
+            self.mkwxRaceNumber = int(self.mkwxRaceNumber)
+        else:
+            self.mkwxRaceNumber
+    
+    def get_mkwx_race_number(self):
+        return self.mkwxRaceNumber
     def get_match_start_time(self):
         return self.matchTime
     def get_match_id(self):
