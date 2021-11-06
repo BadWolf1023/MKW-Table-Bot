@@ -51,7 +51,7 @@ SAKE_HEADERS = {"Host":"mariokartwii.sake.gs.wiimmfi.de",
 
 MII_CACHE = {}
 REQUEST_TIME_OUT_SECONDS = 5
-MII_DEFAULT_CACHE_TIME = timedelta(minutes=7)
+MII_DEFAULT_CACHE_TIME = timedelta(minutes=10)
 MIN_FAILURES_BEFORE_BACKOFF = 3
 BACK_OFF_SECONDS_AMOUNT = 20
 DYNAMIC_CACHER_COOLDOWN = timedelta(hours=2)
