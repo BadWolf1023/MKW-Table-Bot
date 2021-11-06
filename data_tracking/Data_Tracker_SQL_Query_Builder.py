@@ -78,12 +78,12 @@ def build_data_names(data_names):
 def update_mii_hex_script_event_fcs():
     return f"""UPDATE Event_FCs
 SET {EVENT_FCS_TABLE_NAMES[2]} = ?
-WHERE {EVENT_FCS_TABLE_NAMES[0]} = ? AND {EVENT_FCS_TABLE_NAMES[1]} = ? AND {EVENT_FCS_TABLE_NAMES[2]} IS NULL"""
+WHERE {EVENT_FCS_TABLE_NAMES[0]} = ? AND {EVENT_FCS_TABLE_NAMES[1]} = ? AND {EVENT_FCS_TABLE_NAMES[2]} IS NULL;"""
 
 def update_mii_hex_script():
     return f"""UPDATE Place
 SET {PLACE_TABLE_NAMES[16]} = ?
-WHERE {PLACE_TABLE_NAMES[0]} = ? AND {PLACE_TABLE_NAMES[1]} = ? AND {PLACE_TABLE_NAMES[16]} IS NULL"""
+WHERE {PLACE_TABLE_NAMES[0]} = ? AND {PLACE_TABLE_NAMES[1]} = ? AND {PLACE_TABLE_NAMES[16]} IS NULL;"""
 
 '''
 def get_insert_into_race_table_script():
@@ -106,22 +106,22 @@ VALUES{build_sql_args_list(PLACE_TABLE_NAMES)}"""
 def build_insert_missing_races_script(races):
         return f"""INSERT OR IGNORE INTO Race {build_data_names(RACE_TABLE_NAMES)}
 VALUES{build_race_sql_args_list_comma_separated(races)}
-RETURNING {RACE_TABLE_NAMES[0]}"""
+RETURNING {RACE_TABLE_NAMES[0]};"""
 
 def build_insert_missing_placement_script(placements):
     return f"""INSERT OR IGNORE INTO Place {build_data_names(PLACE_TABLE_NAMES)}
 VALUES{build_sql_args_list_comma_separated(placements)}
-RETURNING {PLACE_TABLE_NAMES[0]}, {PLACE_TABLE_NAMES[1]}"""
+RETURNING {PLACE_TABLE_NAMES[0]}, {PLACE_TABLE_NAMES[1]};"""
 
 def build_insert_missing_players_script(players):
     return f"""INSERT OR IGNORE INTO Player {build_data_names(PLAYER_TABLE_NAMES)}
 VALUES{build_sql_args_list_comma_separated(players)}
-RETURNING {PLAYER_TABLE_NAMES[0]}"""
+RETURNING {PLAYER_TABLE_NAMES[0]};"""
 
 def build_insert_missing_tracks_script(track_infos):
     return f"""INSERT OR IGNORE INTO Track {build_data_names(TRACK_TABLE_NAMES)}
 VALUES{build_sql_args_list_comma_separated(track_infos)}
-RETURNING {TRACK_TABLE_NAMES[0]}"""
+RETURNING {TRACK_TABLE_NAMES[0]};"""
     
 def surround_script_begin_commit(script):
     return f"""BEGIN;
@@ -131,17 +131,17 @@ COMMIT;"""
 def build_missing_event_ids_race_ids_script(event_id_race_ids):
     return f"""INSERT OR IGNORE INTO Event_Races {build_data_names(EVENT_RACES_TABLE_NAMES)}
 VALUES{build_sql_args_list_comma_separated(event_id_race_ids)}
-RETURNING *"""
+RETURNING *;"""
 
 def build_missing_event_id_table_script(event_ids):
     return f"""INSERT OR IGNORE INTO Event_ID {build_data_names(EVENT_ID_TABLE_NAMES)}
 VALUES{build_sql_args_list_comma_separated(event_ids)}
-RETURNING *"""
+RETURNING *;"""
 
 def build_missing_event_fcs_table_script(event_fcs):
     return f"""INSERT OR IGNORE INTO Event_FCs {build_data_names(EVENT_FCS_TABLE_NAMES)}
 VALUES{build_sql_args_list_comma_separated(event_fcs)}
-RETURNING *"""
+RETURNING *;"""
 
 
 def build_event_upsert_script(was_real_update):
@@ -151,7 +151,7 @@ def build_event_upsert_script(was_real_update):
 VALUES (?, ?, (SELECT strftime('%Y-%m-%d %H:%M:%f', 'now')), (SELECT strftime('%Y-%m-%d %H:%M:%f', 'now')), ?, ?, ?, ?)
 ON CONFLICT ({EVENT_TABLE_NAMES[0]}) DO
 UPDATE SET {EVENT_TABLE_NAMES[1]}=excluded.{EVENT_TABLE_NAMES[1]},{on_real_update_sql} {EVENT_TABLE_NAMES[5]}=excluded.{EVENT_TABLE_NAMES[5]}, {EVENT_TABLE_NAMES[6]}=excluded.{EVENT_TABLE_NAMES[6]}, {EVENT_TABLE_NAMES[7]}=excluded.{EVENT_TABLE_NAMES[7]}
-{on_real_update_sql_2}"""
+{on_real_update_sql_2};"""
 
 
 def build_excluded_list(name_list):

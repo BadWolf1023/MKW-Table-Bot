@@ -37,7 +37,7 @@ import os
 from data_tracking import Data_Tracker_SQL_Query_Builder as QB
 
 DEBUGGING_DATA_TRACKER = False
-DEBUGGING_SQL = True
+DEBUGGING_SQL = False
 
 import sqlite3
 database_connection:sqlite3.Connection = None
