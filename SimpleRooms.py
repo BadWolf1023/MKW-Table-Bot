@@ -34,6 +34,9 @@ def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
             FCs = []
             FCs.append(str(allRows[0].find("a").string))
             FCs.append(f"{FCs[0]}-guest")
+            playerPageLink = str(allRows[0].find("a")[common.HREF_HTML_NAME])
+            ol_status = ""
+
             
             
             roomPosition, role = ''.join(allRows[1].findAll(text=True)).strip('\u2007').split('.')
@@ -70,9 +73,9 @@ def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
                 playerNames.append('no name')
                 playerNames.append('no name')
             index = 0
-            plyr1 = Player.Player(FC=FCs[index], playerPageLink="", ol_status="", roomPosition=roomPositions[index], playerRegion=regions[index], playerConnFails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], playerName=playerNames[index])
+            plyr1 = Player.Player(FC=FCs[index], playerPageLink=playerPageLink, ol_status=ol_status, roomPosition=roomPositions[index], playerRegion=regions[index], playerConnFails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], playerName=playerNames[index])
             index = 1
-            plyr2 = Player.Player(FC=FCs[index], playerPageLink="", ol_status="", roomPosition=roomPositions[index], playerRegion=regions[index], playerConnFails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], playerName=playerNames[index])
+            plyr2 = Player.Player(FC=FCs[index], playerPageLink=playerPageLink, ol_status=ol_status, roomPosition=roomPositions[index], playerRegion=regions[index], playerConnFails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], playerName=playerNames[index])
             
             placements.append(Placement.Placement(plyr1, -1, times[0]))
             placements.append(Placement.Placement(plyr2, -1, times[1]))
@@ -81,7 +84,8 @@ def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
             
         
             FC = str(allRows[0].find("a").string)
-            
+            playerPageLink = str(allRows[0].find("a")[common.HREF_HTML_NAME])
+            ol_status = ""
             
             roomPosition, role = ''.join(allRows[1].findAll(text=True)).strip('\u2007').split('.')
             roomPosition = roomPosition.strip()
@@ -107,8 +111,8 @@ def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
             
             while len(allRows) > 0:
                 del allRows[0]
-
-            plyr = Player.Player(FC=FC, playerPageLink="", ol_status="", roomPosition=roomPosition, playerRegion=region, playerConnFails=None, role=role, vr=vr, character_vehicle=vehicle_combination, playerName=playerName)
+                
+            plyr = Player.Player(FC=FC, playerPageLink=playerPageLink, ol_status=ol_status, roomPosition=roomPosition, playerRegion=region, playerConnFails=None, role=role, vr=vr, character_vehicle=vehicle_combination, playerName=playerName)
             p = Placement.Placement(plyr, -1, time)
             placements.append(p)
     except Exception as e:
