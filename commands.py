@@ -43,6 +43,7 @@ import os
 from datetime import datetime
 import URLShortener
 import Stats
+from data_tracking import DataTracker
 
 vr_is_on = False
 
@@ -550,7 +551,7 @@ class OtherCommands:
                     mii.clean_up()
                     
     @staticmethod
-    async def wws_command(client, this_bot:TableBot.ChannelBot, message:discord.Message, ww_type=Race.RT_WW_ROOM_TYPE):
+    async def wws_command(client, this_bot:TableBot.ChannelBot, message:discord.Message, ww_type=Race.RT_WW_REGION):
         await mkwx_check(message, "WWs command disabled.")
 
         rlCooldown = this_bot.getRLCooldownSeconds()
@@ -563,13 +564,13 @@ class OtherCommands:
             sr = SimpleRooms.SimpleRooms()
             await sr.populate_rooms_information()
             rooms = []
-            if ww_type == Race.RT_WW_ROOM_TYPE:
+            if ww_type == Race.RT_WW_REGION:
                 rooms = sr.get_RT_WWs()
-            elif ww_type == Race.CTGP_CTWW_ROOM_TYPE:
+            elif ww_type == Race.CTGP_CTWW_REGION:
                 rooms = sr.get_CTGP_WWs()
-            elif ww_type == Race.BATTLE_ROOM_TYPE:
+            elif ww_type == Race.BATTLE_REGION:
                 rooms = sr.get_battle_WWs()
-            elif ww_type == Race.UNKNOWN_ROOM_TYPE:
+            elif ww_type == Race.UNKNOWN_REGION:
                 rooms = sr.get_other_rooms()
             else:
                 rooms = sr.get_private_rooms()
@@ -640,7 +641,7 @@ class OtherCommands:
     
     @staticmethod
     async def vr_command_get_races(rLID:str, temp_bot):
-        successful = await temp_bot.load_room_smart([rLID])
+        successful = await temp_bot.load_room_smart([rLID], is_vr_command=True, message_id=None)
         if not successful:
             return None
         return temp_bot.getRoom().get_races_abbreviated(last_x_races=12)
@@ -1658,6 +1659,8 @@ class TablingCommands:
         await mkwx_check(message, "Start war command disabled.")
         server_id = message.guild.id
         author_id = message.author.id
+        message_id = message.id
+        author_name = message.author.display_name
         if not is_lounge_server or permission_check(message.author) or (len(args) - command.count(" gps=") - command.count(" sui=") - command.count(" psb=")) <= 3:
             if len(args) < 3:
                 #TODO: sui=yes = psb
@@ -1684,7 +1687,7 @@ class TablingCommands:
                         ignoreLargeTimes = ServerFunctions.get_server_large_time_setting(server_id)
                     
                     try:
-                        this_bot.setWar(War.War(warFormat, numTeams, numgps, ignoreLargeTimes=ignoreLargeTimes, displayMiis=useMiis))
+                        this_bot.setWar(War.War(warFormat, numTeams, message.id, numgps, ignoreLargeTimes=ignoreLargeTimes, displayMiis=useMiis))
                     except TableBotExceptions.InvalidWarFormatException:
                         await message.channel.send("War format was incorrect. Valid options: FFA, 1v1, 2v2, 3v3, 4v4, 5v5, 6v6. War not created.")
                         return
@@ -1692,8 +1695,7 @@ class TablingCommands:
                         await message.channel.send("Too many players based on the teams and war format. War not created.")
                         return
                     
-                    this_bot.updateRLCoolDown()
-                    message2 = await message.channel.send("Loading room...")
+                    
                     #This is the background task for getting miis, it will be awaited once everything in ?sw finishes
                     #Case 1: No mention, get FCs for the user - this happens when len(args) = 3
                     #Case 2: Mention, get FCs for the mentioned user, this happens when len(args) > 3 and len(mentions) > 1
@@ -1702,12 +1704,15 @@ class TablingCommands:
                     #Case 5: Lounge name: No mention, len(args) > 3, neither rLID nor FC
                     successful = False
                     discordIDToLoad = None
+                    message2 = None
                     try:
+                        this_bot.updateRLCoolDown()
+                        message2 = await message.channel.send("Loading room...")
                         if len(args) == 3 or (len(args) > 3 and (numGPsPos == 3 or iLTPos == 3 or miisPos == 3)):
                             discordIDToLoad = str(author_id)
                             await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]) )
                             FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-                            successful = await this_bot.load_room_smart([FCs])
+                            successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                             if not successful:
                                 await message.channel.send("Could not find you in a room. **Did you finish the first race?**")
                         elif len(args) > 3:
@@ -1715,16 +1720,16 @@ class TablingCommands:
                                 discordIDToLoad = str(message.raw_mentions[0])
                                 await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
                                 FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-                                successful = await this_bot.load_room_smart([FCs])
+                                successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
                                     lookup_name = UtilityFunctions.process_name(str(message.mentions[0].name))
                                     await message.channel.send(f"Could not find {lookup_name} in a room. **Did they finish the first race?**")                      
                             elif UtilityFunctions.is_rLID(args[3]):
-                                successful = await this_bot.load_room_smart([args[3]])
+                                successful = await this_bot.load_room_smart([args[3]], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
                                     await message.channel.send("Could not find this rxx number. Is the room over 24 hours old?")                                            
                             elif UtilityFunctions.is_fc(args[3]):
-                                successful = await this_bot.load_room_smart([args[3]])
+                                successful = await this_bot.load_room_smart([args[3]], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
                                     await message.channel.send("Could not find this FC in a room. **Did they finish the first race?**")
                             else:
@@ -1736,7 +1741,7 @@ class TablingCommands:
                                 their_name = their_name.strip()
                                 await updateData( * await LoungeAPIFunctions.getByLoungeNames([their_name]))
                                 FCs = UserDataProcessing.getFCsByLoungeName(their_name)
-                                successful = await this_bot.load_room_smart([FCs])
+                                successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
                                     processed_lookup_name = UtilityFunctions.process_name(their_name)
                                     await message.channel.send(f"Could not find {processed_lookup_name} in a room. **Did they finish the first race?**")                      
@@ -1771,8 +1776,8 @@ class TablingCommands:
                     else:
                         this_bot.setWar(None)
                         this_bot.setRoom(None)
-                    
-                    await common.safe_delete(message2)
+                    if message2 is not None:
+                        await common.safe_delete(message2)
         else:
             await message.channel.send(f"You can only load a room for yourself in Lounge. Do this instead: `{server_prefix}{args[0]} {args[1]} {args[2]}`")
      

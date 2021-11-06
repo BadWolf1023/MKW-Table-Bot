@@ -71,6 +71,48 @@ class ChannelBot(object):
         self.server_id = server_id
         self.channel_id = channel_id
         self.race_size = 4
+        self.event_id = None
+        
+
+    def get_race_size(self):
+        return self.race_size
+    def get_miis(self) -> Dict[str, Mii.Mii]:
+        return self.miis
+    def get_room(self):
+        return self.room
+    def get_war(self):
+        return self.war
+    def get_prev_command_sw(self):
+        return self.prev_command_sw
+    def get_manual_war_set_up(self):
+        return self.manualWarSetUp
+    def get_last_used(self):
+        return self.last_used
+    def get_lounge_finish_time(self):
+        return self.loungeFinishTime
+    def get_last_wptime(self):
+        return self.lastWPTime
+    def get_room_load_time(self):
+        return self.roomLoadTime
+    def get_save_states(self):
+        return self.save_states
+    def get_populating(self):
+        return self.populating
+    def get_should_send_mii_notification(self):
+        return self.should_send_mii_notification
+    def get_server_id(self):
+        return self.server_id
+    def get_channel_id(self):
+        return self.channel_id
+    def get_event_id(self):
+        return self.event_id
+    def get_graph(self):
+        return self.graph
+    def get_style(self):
+        return self.style
+    def get_dc_points(self):
+        return self.dc_points
+
     
     def get_room_started_message(self):
         started_war_str = "FFA started" if self.getWar().isFFA() else "War started"
@@ -81,8 +123,7 @@ class ChannelBot(object):
         
     def set_race_size(self, new_race_size:int):
         self.race_size = new_race_size
-    def get_race_size(self):
-        return self.race_size
+
     
     def set_style_and_graph(self, server_id):
         self.graph = ServerFunctions.get_server_graph(server_id)
@@ -159,15 +200,12 @@ class ChannelBot(object):
         
         
     def getBotunlockedInStr(self):
-        if self.room is None or self.room.set_up_user is None or self.room.races is None or len(self.room.races) < 12:
+        if self.room is None or self.room.is_freed or self.room.races is None or len(self.room.races) < 12:
             return None
         
         time_passed_since_lounge_finish = datetime.now() - self.loungeFinishTime
         cooldown_time = time_passed_since_lounge_finish - common.lounge_inactivity_time_period
         return "Bot will become unlocked " + humanize.naturaltime(cooldown_time)
-
-    def get_miis(self) -> Dict[str, Mii.Mii]:
-        return self.miis
     
     def table_is_set(self):
         return self.room is not None and self.war is not None
@@ -201,12 +239,12 @@ class ChannelBot(object):
                     tier = str(DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
                 common.log_error(f"Exception in remove_miis_with_missing_files: {fc} failed to clean up - channel {self.channel_id} {'' if tier is None else 'T'+tier}")
                 pass
-            
+        
     async def populate_miis(self, message_id:str):
         if common.MIIS_ON_TABLE_DISABLED:
             return
         #print("\n\n\n" + str(self.get_miis()))
-        if self.getWar() is not None and self.getWar().displayMiis:
+        if self.getWar() is not None:
             if self.populating:
                 return
             self.populating = True
@@ -232,23 +270,6 @@ class ChannelBot(object):
                                 mii_pull_result.output_table_mii_to_disc()
                                 mii_pull_result.__remove_main_mii_picture__()
                             
-                    """
-                    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                        future_to_fc = {executor.submit(MiiPuller.get_mii_blocking, fc, message_id): fc for fc in missing_fcs }
-                        for future in concurrent.futures.as_completed(future_to_fc):
-                            fc = future_to_fc[future]
-                            try:
-                                mii_pull_result = future.result()
-                            except Exception as exc:
-                                common.log_text(f'{fc} generated an exception: {exc}', common.ERROR_LOGGING_TYPE)
-                            else:
-                                if not isinstance(mii_pull_result, str):
-                                    self.miis[fc] = mii_pull_result
-                                    mii_pull_result.output_table_mii_to_disc()
-                                    mii_pull_result.__remove_main_mii_picture__()
-                                else:
-                                    pass
-                    """
                 for mii in self.miis.values():
                     if mii.lounge_name == "":
                         mii.update_lounge_name()
@@ -265,9 +286,7 @@ class ChannelBot(object):
     async def update_room(self) -> bool:
         if self.room is None:
             return False
-        success = await self.room.update_room()
-        if success:
-            DataTracker.RoomTracker.add_data(self)
+        success = await self.room.update_room(lambda:DataTracker.RoomTracker.add_data(self), is_vr_command=False, mii_dict=self.miis)
         self.updateLoungeFinishTime()
         return success
 
@@ -354,7 +373,7 @@ class ChannelBot(object):
         return True, player_data, room_str, rLID
     
     
-    async def load_room_smart(self, load_me):
+    async def load_room_smart(self, load_me, is_vr_command=False, message_id=None, setup_discord_id=0, setup_display_name=""):
         rLIDs = []
         soups = []
         success = False
@@ -367,19 +386,24 @@ class ChannelBot(object):
                 break
         else:
             roomSoup = WiimmfiSiteFunctions.combineSoups(soups)
-            temp = Room.Room(rLIDs, roomSoup)
+            temp = Room.Room(rLIDs, roomSoup, setup_discord_id, setup_display_name)
             
             
             if temp.is_initialized():
                 self.room = temp
+                self.event_id = message_id
                 self.updateLoungeFinishTime()
-                DataTracker.RoomTracker.add_data(self)
                 success = True
+                #Make call to database to add data
+                if not is_vr_command:
+                    DataTracker.RoomTracker.add_data(self)
+                self.getRoom().apply_tabler_adjustments()
         
         while len(soups) > 0:
             if soups[0] is not None:
                 soups[0].decompose()
             del soups[0]
+        
         return success
             
     
@@ -438,7 +462,7 @@ class ChannelBot(object):
         if self.getRoom() is None or not self.getRoom().is_initialized():
             return True
         
-        if self.room.set_up_user is None:
+        if self.room.is_freed:
             return True
         
         if self.lastWPTime is not None:
@@ -459,9 +483,10 @@ class ChannelBot(object):
         
     def freeLock(self):
         if self.room is not None:
-            self.room.set_up_user = None
-            self.room.set_up_user_display_name = ""
-            self.loungeFinishTime = None
+            self.room.is_freed = True
+            #self.room.set_up_user = None
+            #self.room.set_up_user_display_name = ""
+            #self.loungeFinishTime = None
 
     def isInactive(self):
         curTime = datetime.now()

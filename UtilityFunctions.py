@@ -5,6 +5,7 @@ from typing import List
 import discord
 from pathlib import Path
 import re
+from datetime import datetime, timezone
 
     
         
@@ -181,6 +182,29 @@ async def safe_send_file(message:discord.Message, content):
 hex_chars = "ABCDEFabcdef0123456789" 
 def is_hex(text):
     return all(c in hex_chars for c in text)
+
+def is_wiimmfi_utc_time(race_time:str):
+    race_time = race_time.strip()
+    if race_time.endswith("UTC"):
+        race_time = race_time[:-3]
+    race_time = race_time.strip()
+    try:
+        datetime.strptime(race_time, '%Y-%m-%d %H:%M')
+    except ValueError:
+        return False
+    return re.match("^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$", race_time) is not None
+
+
+def get_wiimmfi_utc_time(race_time:str):
+    """Caller is responsible for calling is_wiimmfi_utc_time first"""
+    race_time = race_time.strip()
+    if race_time.endswith("UTC"):
+        race_time = race_time[:-3]
+    race_time = race_time.strip()
+    return datetime.strptime(race_time, '%Y-%m-%d %H:%M').replace(tzinfo=timezone.utc)
+
+def is_race_ID(raceID):
+    return re.match("^r[0-9]{7}$", raceID) is not None
 
 def is_rLID(roomID):
     return re.match("^r[0-9]{7}$", roomID) is not None

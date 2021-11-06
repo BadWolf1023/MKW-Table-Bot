@@ -4,7 +4,7 @@ Created on Jun 12, 2021
 @author: willg
 '''
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import numpy as np
 import aiohttp
 import TableBotExceptions
@@ -17,7 +17,6 @@ import dill
 
 
 sslcontext = ssl.create_default_context(cafile=certifi.where())
-print(certifi.where())
 
 version = "11.6.2" #GSC Special tables + data tracking restructure
 
@@ -33,7 +32,7 @@ MAX_PREFIX_LENGTH = 3
 #current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = True
+in_testing_server = False
 running_beta = False
 beta_is_real = False
 
@@ -106,6 +105,11 @@ MIIS_PATH = "miis/"
 TABLE_HEADERS_PATH = "table_headers/"
 DATA_PATH = "tablebot_data/"
 LOGGING_PATH = "logging/"
+DATA_TRACKING_PATH = "data_tracking/"
+
+ROOM_DATA_TRACKING_DATABASE_FILE = f"{DATA_PATH}room_data_tracking.db"
+ROOM_DATA_POPULATE_TIER_TABLE_SQL = f"{DATA_TRACKING_PATH}channel_tiers_addition.sql"
+ROOM_DATA_TRACKING_DATABASE_CREATION_SQL = f"{DATA_TRACKING_PATH}room_tracking_db_setup.sql"
 
 LOUNGE_ID_COUNTER_FILE = f"{DATA_PATH}lounge_counter.pkl"
 LOUNGE_TABLE_UPDATES_FILE = f"{DATA_PATH}lounge_table_update_ids.pkl"
@@ -183,7 +187,8 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    TABLE_BOT_PKL_FILE,
                    VR_IS_ON_FILE,
                    ROOM_DATA_TRACKER_FILE,
-                   SHA_TRACK_NAMES_FILE
+                   SHA_TRACK_NAMES_FILE,
+                   ROOM_DATA_TRACKING_DATABASE_FILE
                    }
 
 LEFT_ARROW_EMOTE = '\u25c0'
@@ -424,6 +429,10 @@ async def safe_delete(message):
         await message.delete()
     except discord.errors.NotFound:
         pass
+
+def read_sql_file(file_name):
+    with open(file_name, "r", encoding="utf-8") as f:
+        return f.read()
     
 def dump_pkl(data, file_name, error_message, display_data_on_error=False):
     with open(file_name, "wb") as pickle_out:
@@ -443,3 +452,5 @@ def load_pkl(file_name, error_message, default):
                 print(error_message)
     return default()
     
+def get_utc_time():
+    return datetime.now(timezone.utc)

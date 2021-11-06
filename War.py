@@ -38,7 +38,7 @@ class War(object):
 
     __formatMapping = {u"ffa":1,u"1v1":1, u"2v2":2, u"3v3":3, u"4v4":4, u"5v5":5, u"6v6":6}
 
-    def __init__(self, formatt, numberOfTeams, numberOfGPs=3, missingRacePts=3, ignoreLargeTimes=False, displayMiis=True):
+    def __init__(self, formatt, numberOfTeams, message_id, numberOfGPs=3, missingRacePts=3, ignoreLargeTimes=False, displayMiis=True):
         self.teamColors = None
         self.setWarFormat(formatt, numberOfTeams)
         self.numberOfGPs = numberOfGPs
@@ -51,9 +51,18 @@ class War(object):
         self.forcedRoomSize = {}
         self.teams = None
         self.temporary_tag_data = None
+        self.war_id = message_id
         
 
-        
+    def get_teams(self):  
+        return self.teams
+    def get_player_edits(self):
+        return self.manualEdits
+    def should_ignore_large_times(self):
+        return self.ignoreLargeTimes
+    def get_missing_player_points(self):
+        return self.missingRacePts
+    
         
     def setWarFormat(self, formatting, numberOfTeams):
         if formatting not in self.__formatMapping:
@@ -72,7 +81,12 @@ class War(object):
         self.playersPerTeam = self.__formatMapping[self.formatting]
         if self.numberOfTeams == 2:
             self.teamColors = random.choice(tableColorPairs)
-    
+    def get_players_per_team(self):
+        return self.playersPerTeam
+    def get_number_of_gps(self):
+        return self.numberOfGPs
+    def get_number_of_teams(self):
+        return self.numberOfTeams
     def isFFA(self):
         return self.playersPerTeam == 1
         
@@ -226,7 +240,10 @@ class War(object):
 
     def setWarName(self, warName):
         self.warName = warName
-        
+    
+    def get_manually_set_war_name(self):
+        return self.warName  
+    
     def getWarName(self, numRaces:int):
         if self.teams is None:
             raise TableBotExceptions.WarSetupStillRunning()

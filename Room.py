@@ -35,7 +35,7 @@ class Room(object):
     '''
     classdocs
     '''
-    def __init__(self, rLIDs, roomSoup):
+    def __init__(self, rLIDs, roomSoup, setup_discord_id, setup_display_name):
         self.name_changes = {}
         self.removed_races = []
         
@@ -50,16 +50,24 @@ class Room(object):
         
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
         self.dc_on_or_before = defaultdict(dict)
-        self.set_up_user = None
-        self.set_up_user_display_name = ""
+        self.set_up_user = setup_discord_id
+        self.set_up_user_display_name = setup_display_name
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         self.sub_ins = {}
         
         self.initialize(rLIDs, roomSoup)
-        
-
+        self.is_freed = False
     
-    def initialize(self, rLIDs, roomSoup):
+    def get_set_up_user_discord_id(self):
+        return self.set_up_user
+    def get_set_up_display_name(self):
+        return self.set_up_user_display_name
+    def get_dc_statuses(self):
+        return self.dc_on_or_before
+    def get_subs(self):
+        return self.sub_ins
+    
+    def initialize(self, rLIDs, roomSoup, mii_dict=None):
         self.rLIDs = rLIDs
         
         if roomSoup is None:
@@ -71,7 +79,7 @@ class Room(object):
             
             
 
-        self.races = self.getRacesList(roomSoup)
+        self.races = self.getRacesList(roomSoup, mii_dict)
         
         if len(self.races) > 0:
             self.roomID = self.races[0].roomID
@@ -88,6 +96,8 @@ class Room(object):
     def is_initialized(self):
         return self.races is not None and self.rLIDs is not None and len(self.rLIDs) > 0
         
+    def get_rxxs(self):
+        return self.rLIDs
     
     def had_positions_changed(self):
         for changes in self.placement_history.values():
@@ -200,6 +210,16 @@ class Room(object):
             removed_str += "- " + raceName + " (originally race #" + str(raceInd+1) + ") removed by tabler\n"
         return removed_str
     
+    #Should only call if you know the data for an FC among the placements will be unique
+    def getFCPlacements(self, startrace=1,endrace=None):
+        fcPlacementDict = {}
+        if endrace is None:
+            endrace = len(self.races)
+        for race in self.races[startrace-1:endrace]:
+            for placement in race.getPlacements():
+                fcPlacementDict[placement.getPlayer().get_FC()] = placement
+        return fcPlacementDict
+
     
     def getFCPlayerList(self, startrace=1,endrace=12):
         fcNameDict = {}
@@ -240,12 +260,12 @@ class Room(object):
             return player_list[FC]
         return "no name"
     
-    def get_room_type(self):
-        race_types = set(race.get_room_type() for race in self.getRaces())
-        if len(race_types) != 1:
-            return Race.UNKNOWN_ROOM_TYPE
-        for race_type in race_types:
-            return race_type
+    def get_known_region(self):
+        regions = set(race.get_region() for race in self.getRaces())
+        if len(regions) != 1:
+            return Race.UNKNOWN_REGION
+        for region in regions:
+            return region
         
             
             
@@ -255,7 +275,19 @@ class Room(object):
     
     def getNameChanges(self):
         return self.name_changes
+    
+    def getRemovedRaces(self):
+        return self.removed_races
 
+    def getPlacementHistory(self):
+        return self.placement_history
+    
+    def getForcedRoomSize(self):
+        return self.forcedRoomSize
+        
+    def getPlayerPenalties(self):
+        return self.playerPenalties
+    
     def setNameForFC(self, FC, name):
         self.name_changes[FC] = name
     
@@ -269,7 +301,8 @@ class Room(object):
     def setRaces(self, races):
         self.races = races
         
-    def getRaces(self):
+    def getRaces(self, startRace=1, endRace=None):
+        
         return self.races
     
     def getRXXText(self):
@@ -402,7 +435,7 @@ class Room(object):
             roomPosition = temp[0].strip(".")
             role = temp[1].strip()
         
-        playerRoomType = str(allRows[2].string)
+        playerRegion = str(allRows[2].string)
         playerConnFails = str(allRows[3].string)
         if not isint(playerConnFails) and not isfloat(playerConnFails):
             playerConnFails = None
@@ -416,7 +449,7 @@ class Room(object):
             vr = int(vr)
         
         character_vehicle = None
-        if common.TOOLTIP_NAME in allRows[5]:
+        if allRows[5].has_attr(common.TOOLTIP_NAME):
             character_vehicle = str(allRows[5][common.TOOLTIP_NAME])
         
         
@@ -428,7 +461,7 @@ class Room(object):
         while len(allRows) > 0:
             del allRows[0]
         
-        return FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, delta, time, playerName
+        return FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, delta, time, playerName
     
     def getRaceInfoFromList(self, textList):
         '''Utility Function'''
@@ -478,7 +511,7 @@ class Room(object):
             return "No Track Page"
         
       
-    def getRacesList(self, roomSoup):
+    def getRacesList(self, roomSoup, mii_dict=None):
         #Utility function
         tableLines = roomSoup.find_all("tr")
         
@@ -492,24 +525,27 @@ class Room(object):
                     #_ used to be the racenumber, but mkwx deletes races 24 hours after being played. This leads to rooms getting races removed, and even though
                     #they have race numbers, the number doesn't match where they actually are on the page
                     #This was leading to out of bounds exceptions.
-                    raceTime, matchID, _, roomID, roomType, cc, track, placements, is_ct = self.getRaceInfoFromList(line.findAll(text=True))
+                    raceTime, matchID, mkwxRaceNumber, roomID, roomType, cc, track, placements, is_ct = self.getRaceInfoFromList(line.findAll(text=True))
                     room_rxx = self.getRXXFromHTMLLine(line)
                     race_id = self.getRaceIDFromHTMLLine(line)
                     trackURL = self.getTrackURLFromHTMLLine(line)
                     raceNumber = None
-                    races.insert(0, Race.Race(raceTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, room_rxx, race_id, trackURL))
+                    races.insert(0, Race.Race(raceTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, mkwxRaceNumber, room_rxx, race_id, trackURL))
                     foundRaceHeader = True
+                    
                 else:
-                    FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, delta, time, playerName = self.getPlacementInfo(line)
+                    FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, delta, time, playerName = self.getPlacementInfo(line)
                     if races[0].hasFC(FC):
                         FC = FC + "-2"
-                    plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRoomType, playerConnFails, role, vr, character_vehicle, playerName)
-                    
-                    if plyr.FC in self.name_changes:
-                        plyr.name = self.name_changes[plyr.FC] + " (Tabler Changed)"
+                    mii_hex = None
+                    if mii_dict is not None and FC in mii_dict:
+                        mii_hex = mii_dict[FC].mii_data_hex_str
+                    plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, playerName, mii_hex=mii_hex)
                     p = Placement.Placement(plyr, -1, time, delta)
                     races[0].addPlacement(p)
         
+
+            
         for race in races:
             if DEBUG_RACES:
                 print()
@@ -523,7 +559,6 @@ class Room(object):
                 print(f"Race Track: {race.track}")
                 print(f"Track URL: {race.trackURL}")
                 print(f"Race cc: {race.cc}")
-                print(f"Race Region: {race.region}")
                 print(f"Is CT? {race.is_ct}")
             if DEBUG_PLACEMENTS:
                 for placement in race.getPlacements():
@@ -534,11 +569,11 @@ class Room(object):
                     print(f"\tPlayer ID: {placement.getPlayer().pid}")
                     print(f"\tFinish Time: {placement.get_time_string()}")
                     print(f"\tPlace: {placement.place}")
-                    print(f"\ol_status: {placement.getPlayer().ol_status}")
+                    print(f"\tol_status: {placement.getPlayer().ol_status}")
                     print(f"\tPosition in Room: {placement.getPlayer().positionInRoom}")
-                    print(f"\tPlayer Room Type: {placement.getPlayer().room_type}")
+                    print(f"\tPlayer Region: {placement.getPlayer().region}")
                     print(f"\tPlayer Conn Fails: {placement.getPlayer().playerConnFails}")
-                    print(f"\Role: {placement.getPlayer().role}")
+                    print(f"\tRole: {placement.getPlayer().role}")
                     print(f"\tVR: {placement.getPlayer().vr}")
                     print(f"\tCharacter: {placement.getPlayer().character}")
                     print(f"\tVehicle: {placement.getPlayer().vehicle}")
@@ -546,31 +581,24 @@ class Room(object):
                     print(f"\tLounge name: {placement.getPlayer().lounge_name}")
                     print(f"\tCharacter: {placement.getPlayer().character}")
                     print(f"\tVehicle: {placement.getPlayer().vehicle}")
-                    print(f"\Player Discord name: {placement.getPlayer().discord_name}")
-                    print(f"\Player lounge name: {placement.getPlayer().lounge_name}")
-                    print(f"\Player mii hex: {placement.getPlayer().mii_hex}")
+                    print(f"\tPlayer Discord name: {placement.getPlayer().discord_name}")
+                    print(f"\tPlayer lounge name: {placement.getPlayer().lounge_name}")
+                    print(f"\tPlayer mii hex: {placement.getPlayer().mii_hex}")
 
         #We have a memory leak, and it's not incredibly clear how BS4 objects work and if
         #Python's automatic garbage collection can figure out how to collect
         while len(tableLines) > 0:
             del tableLines[0]
         
-        #First, we number all races
-        for raceNum, race in enumerate(races, 1):
-            race.raceNumber = raceNum
-        
-        #Next, we remove races
-        for removed_race_ind, _ in self.removed_races:
-            self.__remove_race__(removed_race_ind, races)
-            
-        #Next, we need to renumber the races
-        for raceNum, race in enumerate(races, 1):
-            race.raceNumber = raceNum
-        
-        #Next, we apply quick edits
-        for race_number, race in enumerate(races, 1):
-            if race_number in self.placement_history:
-                race.applyPlacementChanges(self.placement_history[race_number])
+
+        seen_race_id_numbering = defaultdict(lambda:[{}, 0])
+        for race in races:
+            race:Race.Race
+            rxx_numbering = seen_race_id_numbering[race.get_rxx()]
+            if race.get_race_id() not in rxx_numbering:
+                rxx_numbering[1] += 1
+                rxx_numbering[0][race.get_race_id()] = rxx_numbering[1]
+            race.set_race_number(rxx_numbering[0][race.get_race_id()])
         
         return races
     
@@ -580,7 +608,7 @@ class Room(object):
     def getNumberOfGPS(self):
         return int((len(self.races)-1)/4)+1
     
-    async def update_room(self):
+    async def update_room(self, database_call, is_vr_command, mii_dict=None):
         if self.is_initialized():
             soups = []
             rLIDs = []
@@ -594,7 +622,12 @@ class Room(object):
             
             to_return = False
             if tempSoup is not None:
-                self.initialize(rLIDs, tempSoup)
+                self.initialize(rLIDs, tempSoup, mii_dict)
+                
+                #Make call to database to add data
+                if not is_vr_command:
+                    database_call()
+                self.apply_tabler_adjustments()
                 tempSoup.decompose()
                 del tempSoup
                 to_return = True
@@ -604,6 +637,32 @@ class Room(object):
                 del soups[0]
             return to_return
         return False
+    
+    def apply_tabler_adjustments(self):
+        #First, we number all races
+        for raceNum, race in enumerate(self.races, 1):
+            race.raceNumber = raceNum
+            
+        #Next, apply name changes
+        for FC, name_change in self.name_changes.items():
+            for race in self.races:
+                for placement in race.getPlacements():
+                    if placement.getPlayer().get_FC() == FC:
+                        placement.getPlayer().set_name(f"{name_change} (Tabler Changed)")
+        
+        #Next, we remove races
+        for removed_race_ind, _ in self.removed_races:
+            self.__remove_race__(removed_race_ind, self.races)
+        
+            
+        #Next, we need to renumber the races
+        for raceNum, race in enumerate(self.races, 1):
+            race.raceNumber = raceNum
+        
+        #Next, we apply quick edits
+        for race_number, race in enumerate(self.races, 1):
+            if race_number in self.placement_history:
+                race.applyPlacementChanges(self.placement_history[race_number])
         
     def getRacesPlayed(self):
         return [r.track for r in self.races]
@@ -656,7 +715,7 @@ class Room(object):
             
     
     def canModifyTable(self, discord_id:int):
-        if self.getSetupUser() is None or self.getSetupUser() == discord_id:
+        if self.is_freed or self.getSetupUser() == discord_id:
             return True
         discord_ids = [data[0] for data in self.getRoomFCDiscordIDs().values()]
         return str(discord_id) in discord_ids
@@ -673,6 +732,7 @@ class Room(object):
         return self.set_up_user
     
     def setSetupUser(self, setupUser, displayName:str):
+        self.freed = False
         self.set_up_user = setupUser
         self.set_up_user_display_name = displayName
     

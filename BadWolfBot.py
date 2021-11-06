@@ -224,11 +224,10 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     if command not in needPermissionCommands:
         return True
     
-    if this_bot is None or this_bot.getRoom() is None or not this_bot.getRoom().is_initialized() or this_bot.getRoom().getSetupUser() is None:
+    if this_bot is None or this_bot.getRoom() is None or not this_bot.getRoom().is_initialized() or not this_bot.getRoom().is_freed:
         return True
 
     #At this point, we know the command's server is Lounge, it's not staff, and a room has been loaded
-    #Check if the user was the setUpuser
     return this_bot.getRoom().canModifyTable(message_author.id)
 
     
@@ -298,7 +297,7 @@ async def send_bad_wolf_fact(message:discord.Message):
 async def send_lounge_locked_message(message, this_bot):
     to_send = "The bot is locked to players in this room only: **"
     if this_bot.getRoom() is not None:
-        if this_bot.getRoom().getSetupUser() is not None:
+        if not this_bot.getRoom().is_freed:
             room_lounge_names = this_bot.getRoom().get_loungenames_can_modify_table()
             to_send += ", ".join(room_lounge_names)
             to_send += "**."
@@ -654,13 +653,13 @@ async def on_message(message: discord.Message):
                     await commands.OtherCommands.vr_command(this_bot, message, args, command, createEmptyTableBot()) #create a new one so it won't interfere with any room they might have loaded (like a table)
             
             elif args[0] in WORLDWIDE_TERMS:
-                await commands.OtherCommands.wws_command(client, this_bot, message, ww_type=Race.RT_WW_ROOM_TYPE)
+                await commands.OtherCommands.wws_command(client, this_bot, message, ww_type=Race.RT_WW_REGION)
             
             elif args[0] in CTWW_TERMS:
-                await commands.OtherCommands.wws_command(client, this_bot, message, ww_type=Race.CTGP_CTWW_ROOM_TYPE)  
+                await commands.OtherCommands.wws_command(client, this_bot, message, ww_type=Race.CTGP_CTWW_REGION)  
             
             elif args[0] in BATTLES_TERMS:
-                await commands.OtherCommands.wws_command(client, this_bot, message, ww_type=Race.BATTLE_ROOM_TYPE)
+                await commands.OtherCommands.wws_command(client, this_bot, message, ww_type=Race.BATTLE_REGION)
             
             elif args[0] in MERGE_ROOM_TERMS:
                 await commands.TablingCommands.merge_room_command(message, this_bot, args, server_prefix, is_lounge_server)
@@ -894,9 +893,9 @@ def load_CTGP_region_pickle():
     if os.path.exists(common.CTGP_REGION_FILE):
         with open(common.CTGP_REGION_FILE, "rb") as pickle_in:
             try:
-                Race.CTGP_CTWW_ROOM_TYPE = p.load(pickle_in)
+                Race.CTGP_CTWW_REGION = p.load(pickle_in)
             except:
-                print(f"Could not read in the CTGP_REGION for ?ctww command. Current region is: {Race.CTGP_CTWW_ROOM_TYPE}") 
+                print(f"Could not read in the CTGP_REGION for ?ctww command. Current region is: {Race.CTGP_CTWW_REGION}") 
 
       
 def pickle_lounge_updates():
@@ -935,7 +934,7 @@ def pickle_tablebots():
 def pickle_CTGP_region():
     with open(common.CTGP_REGION_FILE, "wb+") as pickle_out:
         try:
-            p.dump(Race.CTGP_CTWW_ROOM_TYPE, pickle_out)
+            p.dump(Race.CTGP_CTWW_REGION, pickle_out)
             return
         except:
             print("Could not dump pickle for CTGP region for ?ctww. Exception occurred.")

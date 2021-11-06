@@ -34,6 +34,9 @@ def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
             FCs = []
             FCs.append(str(allRows[0].find("a").string))
             FCs.append(f"{FCs[0]}-guest")
+            playerPageLink = str(allRows[0].find("a")[common.HREF_HTML_NAME])
+            ol_status = ""
+
             
             
             roomPosition, role = ''.join(allRows[1].findAll(text=True)).strip('\u2007').split('.')
@@ -47,14 +50,14 @@ def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
             roomPositions = [roomPosition, roomPosition]
             roles = [role, role]
             
-            room_type = allRows[3].string.strip()
-            room_types = [room_type, room_type]
+            region = allRows[3].string.strip()
+            regions = [region, region]
             
             vrs = [allRows[5].string.strip(), 5000]
             
             
             vehicle_combinations = [None, None]
-            if common.TOOLTIP_NAME in allRows[6].attrs:
+            if allRows[6].has_attr(common.TOOLTIP_NAME):
                 vehicle_combination = allRows[6][common.TOOLTIP_NAME]
                 if '<br>' in vehicle_combination:
                     combo1, combo2 = vehicle_combination.split('<br>')
@@ -70,9 +73,9 @@ def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
                 playerNames.append('no name')
                 playerNames.append('no name')
             index = 0
-            plyr1 = Player.Player(FC=FCs[index], playerPageLink="", ol_status="", roomPosition=roomPositions[index], playerRoomType=room_types[index], playerConnFails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], playerName=playerNames[index])
+            plyr1 = Player.Player(FC=FCs[index], playerPageLink=playerPageLink, ol_status=ol_status, roomPosition=roomPositions[index], playerRegion=regions[index], playerConnFails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], playerName=playerNames[index])
             index = 1
-            plyr2 = Player.Player(FC=FCs[index], playerPageLink="", ol_status="", roomPosition=roomPositions[index], playerRoomType=room_types[index], playerConnFails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], playerName=playerNames[index])
+            plyr2 = Player.Player(FC=FCs[index], playerPageLink=playerPageLink, ol_status=ol_status, roomPosition=roomPositions[index], playerRegion=regions[index], playerConnFails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], playerName=playerNames[index])
             
             placements.append(Placement.Placement(plyr1, -1, times[0]))
             placements.append(Placement.Placement(plyr2, -1, times[1]))
@@ -81,13 +84,14 @@ def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
             
         
             FC = str(allRows[0].find("a").string)
-            
+            playerPageLink = str(allRows[0].find("a")[common.HREF_HTML_NAME])
+            ol_status = ""
             
             roomPosition, role = ''.join(allRows[1].findAll(text=True)).strip('\u2007').split('.')
             roomPosition = roomPosition.strip()
             role = role.strip().lower()
                 
-            room_type = allRows[3].string.strip()
+            region = allRows[3].string.strip()
             
             
             #TODO: Handle VR?
@@ -107,8 +111,8 @@ def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
             
             while len(allRows) > 0:
                 del allRows[0]
-
-            plyr = Player.Player(FC=FC, playerPageLink="", ol_status="", roomPosition=roomPosition, playerRoomType=room_type, playerConnFails=None, role=role, vr=vr, character_vehicle=vehicle_combination, playerName=playerName)
+                
+            plyr = Player.Player(FC=FC, playerPageLink=playerPageLink, ol_status=ol_status, roomPosition=roomPosition, playerRegion=region, playerConnFails=None, role=role, vr=vr, character_vehicle=vehicle_combination, playerName=playerName)
             p = Placement.Placement(plyr, -1, time)
             placements.append(p)
     except Exception as e:
@@ -209,7 +213,7 @@ def get_race_from_mkwx_bs4_room_header(bs4_room_header:List[str]):
         track = track.replace('Last track:', '').strip()
     #print(f"RoomID: {roomID}, roomType: {roomType}, cc: {cc}, matchTime: {matchTime}, raceNumber: {raceNumber}, track: {track}")
             
-    return Race.Race(matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct=False)
+    return Race.Race(matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct=False, mkwxRaceNumber=raceNumber)
 
     
 
@@ -250,8 +254,8 @@ class SimpleRooms(object):
             total_players += num_players
             if total_players != len(cur_room.placements):
                 print(total_players, len(cur_room.placements))
-                print("Mismatch of placements and number of players, check code for bugs. Line #258 in SimpleRooms.py")
-        cur_room.setRegionFromPlacements()
+                print("Mismatch of placements and number of players, check code for bugs. Line #253 in SimpleRooms.py")
+        cur_room.update_region()
         self.rooms.append(cur_room)
 
             
@@ -276,7 +280,7 @@ class SimpleRooms(object):
         return sorted([room for room in self.rooms if room.isPrivateRoom()], key=lambda r:r.getRoomRating(), reverse=True)
     
     def get_other_rooms(self):
-        return sorted([room for room in self.rooms if room.isUnknownRoomType()], key=lambda r:r.getRoomRating(), reverse=True)
+        return sorted([room for room in self.rooms if room.isUnknownRegion()], key=lambda r:r.getRoomRating(), reverse=True)
     
     @staticmethod
     def get_embed_text_for_race(races:List[Race.Race], pageNumber):
