@@ -14,7 +14,7 @@ import miirender
 import common
 from datetime import timedelta, datetime
 
-
+from xml.dom.minidom import parse, parseString
 
 wiimmfi_sake = 'http://mariokartwii.sake.gs.wiimmfi.de/SakeStorageServer/StorageServer.asmx'
 NO_MII_ERROR_MESSAGE = "No user could be found."
@@ -130,7 +130,7 @@ async def get_mii_data(fc:str):
     pid, _ = wiifc(fix_fc_text(fc), b'RMCJ')
     return await get_mii_data_from_pid(pid)
 
-async def get_mii(fc:str, message_id:str, picture_width=512):
+async def get_miis(fc:str, message_id:str, picture_width=512):
     reset_dynamic_cacher_if_needed()
     mii_bytes, mii_hex_str, should_use_cache = get_mii_data_if_cached(fc)
     if not should_use_cache:
@@ -185,3 +185,11 @@ def get_mii_blocking(fc:str, message_id:str, picture_width=512):
             return MII_DOWNLOAD_FAILURE_ERROR_MESSAGE
         return Mii.Mii(mii_bytes, mii_hex_str, folder_path, file_name, fc)
 """
+if __name__ == "__main__":
+    while True:
+        next_mii_data = input("Enter next wiimmfi sake data: ")
+        try:
+            temp = miirender.format_mii_data(binascii.hexlify(base64.b64decode(next_mii_data)))
+            print(temp)
+        except Exception as e:
+            print(e)

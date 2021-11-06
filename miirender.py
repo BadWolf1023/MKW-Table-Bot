@@ -134,3 +134,11 @@ def download_mii_blocking(original_mii_data, file_name, picture_width=512):
     mii_url = get_mii_url(mii_data, picture_width)
     success = download_image_blocking(mii_url, file_name)
     return success if success else None
+
+if __name__ == "__main__":
+    while True:
+        next_mii_data = input("Enter next mii hex: ")
+        try:
+            print(format_mii_data(next_mii_data))
+        except Exception as e:
+            print(e)
