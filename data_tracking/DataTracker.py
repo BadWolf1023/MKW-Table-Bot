@@ -18,8 +18,9 @@ from copy import deepcopy, copy
 import traceback
 from itertools import chain
 from numpy import place
-#import itertools
-#from contextlib import closing
+import json
+import time
+
 
 """SELECT
     Race.track_name,
@@ -49,7 +50,6 @@ class SQLFormatWrong(SQLDataBad):
     pass
 
 #dict of channel IDs to tier numbers
-
 RT_NAME = "rt"
 CT_NAME = "ct"
 RXX_LOCKER_NAME = "rxx_locker"
@@ -166,6 +166,7 @@ class DataRetriever(object):
         rxx_dict = room_data[CT_NAME] if is_ct else room_data[RT_NAME]
         filtered_rxxs = DataRetriever.get_filtered_rxxs(rxx_dict, tier, in_last_days)
 """
+
 class ChannelBotSQLDataValidator(object):
     def wrong_type_message(self, data, expected_type, multi=False):
         if multi:
@@ -427,6 +428,11 @@ class ChannelBotSQLDataValidator(object):
             self.event_id_validation(event_id)
             self.fc_validation(fc)
             
+    def validate_event_structure_data(self, event_structure_tuple):
+        pass
+            
+    
+            
 
             
 
@@ -440,7 +446,6 @@ class RoomTrackerSQL(object):
         '''Converts a given table bot race into a tuple that is ready to be inserted into the Race SQL table'''
         return (race.get_race_id(),
                 race.get_rxx(),
-                common.get_utc_time(),
                 UtilityFunctions.get_wiimmfi_utc_time(race.get_match_start_time()),
                 race.get_race_number(),
                 race.get_room_name(),
@@ -599,9 +604,10 @@ class RoomTrackerSQL(object):
         self.data_validator.validate_placement_mii_hex_update(have_miis_for_placements)
         
         update_mii_script = QB.update_mii_hex_script()
-        update_mii_args = [(race_id, fc, placement.getPlayer().get_mii_hex()) for (race_id, fc), placement in have_miis_for_placements.items()]
+        update_mii_args = [(placement.getPlayer().get_mii_hex(), race_id, fc) for (race_id, fc), placement in have_miis_for_placements.items()]
         
         found_race_id_fcs_with_null_miis = self.get_matching_placements_with_missing_hex(update_mii_args)
+
         with database_connection:
             database_connection.executemany(update_mii_script, update_mii_args)
         return found_race_id_fcs_with_null_miis
@@ -626,8 +632,6 @@ class RoomTrackerSQL(object):
         '''Converts a given table bot a tuple that is ready to be inserted into the Event SQL table'''
         return (channel_bot.get_event_id(),
                 channel_bot.get_channel_id(),
-                common.get_utc_time(),
-                common.get_utc_time(),
                 0,
                 channel_bot.getRoom().get_known_region(),
                 channel_bot.getRoom().get_set_up_user_discord_id(),
@@ -680,55 +684,58 @@ class RoomTrackerSQL(object):
         '''Updates the mii_hex for fcs for the event in Event_FCs table if the mii is null in Event_FCs and if we have a non-null mii
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns the a list of the event_id, fc (as 2-tuples) of the fcs in the event whose mii_hex's were updated. (An empty list is returned if nothing was updated.)'''
-        have_miis_for_event = {(self.channel_bot.get_event_id(), fc, mii.mii_data_hex_str) for fc, mii in self.channel_bot.get_miis().items()}
+        have_miis_for_event = list({(self.channel_bot.get_event_id(), fc, mii.mii_data_hex_str) for fc, mii in self.channel_bot.get_miis().items()})
         if len(have_miis_for_event) == 0:
             return []
         
         self.data_validator.validate_event_mii_hex_update(have_miis_for_event)
         
         update_mii_script = QB.update_mii_hex_script_event_fcs()
-        update_mii_args = list(have_miis_for_event)
-        
-        found_event_id_fcs_with_null_miis = self.get_matching_event_fcs_with_missing_hex(update_mii_args)
+        update_mii_args = [(mii_hex, event_id, fc) for (event_id, fc, mii_hex) in have_miis_for_event]
+
+        found_event_id_fcs_with_null_miis = self.get_matching_event_fcs_with_missing_hex(have_miis_for_event)
         with database_connection:
             database_connection.executemany(update_mii_script, update_mii_args)
         return found_event_id_fcs_with_null_miis
     
+    def get_event_structure_tuple(self):
+        return (self.channel_bot.get_event_id(),
+                json.dumps(self.channel_bot.getRoom().getNameChanges()),
+                json.dumps(self.channel_bot.getRoom().getRemovedRaces()),
+                json.dumps(self.channel_bot.getRoom().getPlacementHistory()),
+                json.dumps(self.channel_bot.getRoom().getForcedRoomSize()),
+                json.dumps(self.channel_bot.getRoom().getPlayerPenalties()),
+                json.dumps(self.channel_bot.getWar().getTeamPenalities()),
+                json.dumps(self.channel_bot.getRoom().get_dc_statuses()),
+                json.dumps(self.channel_bot.getRoom().get_subs()),
+                json.dumps(self.channel_bot.getWar().get_teams()),
+                json.dumps(self.channel_bot.getRoom().get_rxxs()),
+                json.dumps(self.channel_bot.getWar().get_player_edits()),
+                self.channel_bot.getWar().should_ignore_large_times(),
+                self.channel_bot.getWar().get_missing_player_points(),
+                self.channel_bot.getWar().get_manually_set_war_name(),
+                self.channel_bot.getWar().get_number_of_gps(),
+                self.channel_bot.getWar().get_num_players(),
+                self.channel_bot.getWar().get_number_of_teams(),
+                self.channel_bot.getWar().get_players_per_team())
+        
+    def dump_event_structure_data(self):
+        event_structure_tuple = self.get_event_structure_tuple()
+        if len(event_structure_tuple) == 0:
+            return []
+        
+        self.data_validator.validate_event_structure_data(event_structure_tuple)
+        upsert_script = QB.build_event_structure_script()
+        #values_args = list(chain.from_iterable(upsert_script))
+        with database_connection:
+            return list(database_connection.execute(upsert_script, event_structure_tuple))
+        return []
+    
     
 class RoomTracker(object):
-    
-    @staticmethod
-    def new_channel_data(channel_id):
-        lounge_tier = None
-        if channel_id in RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
-            lounge_tier = RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[channel_id]
-        if channel_id in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
-            lounge_tier = CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[channel_id]
-        #channelid, first command time, last command time, total room updates sent, tier
-        return [channel_id, datetime.now(), datetime.now(), 0, lounge_tier]
-    
-    @staticmethod
-    def check_create_channel_data(rxx, rxx_dict, channel_bot):
-        if rxx not in rxx_dict:
-            rxx_dict[rxx] = {}
-        if channel_bot.channel_id not in rxx_dict[rxx]:
-            rxx_dict[rxx][channel_bot.channel_id] = [RoomTracker.new_channel_data(channel_bot.channel_id), RoomTracker.create_event(channel_bot)]
-            return False
-        return True
-        
-    
-    @staticmethod
-    def update_channel_meta_data(channel_bot, channel_data_info):
-        channel_meta_data, event = channel_data_info
-        roomRaceIDs = set(r.get_race_id() for r in channel_bot.getRoom().getRaces())
-        eventRaceIDs = set(r.id for r in event.races)
-        if not (len(roomRaceIDs.difference(eventRaceIDs)) == 0 or roomRaceIDs.issubset(eventRaceIDs)): #The room added a race
-            channel_meta_data[2] = datetime.now()
-            channel_meta_data[3] += 1
         
     @staticmethod
     def add_everything_to_database(channel_bot):
-        races:List[Race.Race] = channel_bot.getRoom().getRaces()
         sql_helper = RoomTrackerSQL(channel_bot)
         added_players = sql_helper.insert_missing_players_into_database()
         added_tracks = sql_helper.insert_missing_tracks_into_database()
@@ -740,6 +747,7 @@ class RoomTracker(object):
         added_event_ids = sql_helper.insert_missing_event(was_real_update=(len(added_event_ids_race_ids) > 0))
         added_event_fcs = sql_helper.insert_missing_event_fcs_and_miis()
         added_event_fcs_miis = sql_helper.update_missing_miis_in_event_fcs()
+        event_structure_data_dump_event_id = sql_helper.dump_event_structure_data()
 
         if DEBUGGING_SQL:
             print(f"Added players: {added_players}")
@@ -752,41 +760,26 @@ class RoomTracker(object):
             print(f"Added event ids: {added_event_ids}")
             print(f"Added event_id, fc's: {added_event_fcs}")
             print(f"Added miis for event fcs: {added_event_fcs_miis}")
-        return
-        #sql_helper.
-        update_channel_data = True
-        update_event_data = True
-        for race in races:
-            if race.get_rxx() is None or not UtilityFunctions.is_rLID(race.get_rxx()):
-                common.log_error(f"No rxx for this race: {race}")
-                continue
-            rxx_dict = room_data[CT_NAME] if race.is_custom_track() else room_data[RT_NAME]
-            update_event_data = RoomTracker.check_create_channel_data(race.get_rxx(), rxx_dict, channel_bot)
-            if update_channel_data:
-                update_channel_data = False
-                RoomTracker.update_channel_meta_data(channel_bot, rxx_dict[race.get_rxx()][channel_bot.channel_id])
-            if update_event_data:
-                update_event_data = False
-                RoomTracker.update_event_data(channel_bot, rxx_dict[race.get_rxx()][channel_bot.channel_id])
-            
-            success_code = RoomTracker.add_race(rxx_dict[race.get_rxx()][channel_bot.channel_id], race)
-            if success_code == FATAL_ERROR:
-                return FATAL_ERROR
-        return DATA_DUMP_SUCCESS
+            print(f"Event ids updated for event structure: {event_structure_data_dump_event_id}")
     
     
     @staticmethod
     def add_data(channel_bot):
         if channel_bot.getRoom().is_initialized():
+            t0 = time.perf_counter()
+
+            
             #Make a deep copy to avoid asyncio switching current task to a tabler command and modifying our data in the middle of us validating it or adding it
             deepcopied_channel_bot = deepcopy(channel_bot)
             if deepcopied_channel_bot.getRoom().is_initialized(): #This check might seem unnecessary, but we'll leave it in case we convert things to asyncio that aren't currently asynchronous (making it necessary)
                 try:
-                    success_code = RoomTracker.add_everything_to_database(deepcopied_channel_bot)
+                    RoomTracker.add_everything_to_database(deepcopied_channel_bot)
                 except:
                     common.log_traceback(traceback)
-                    raise
-                        
+            t1 = time.perf_counter()
+            if DEBUGGING_SQL:
+                print(f"Total time taken to add everything to SQL DB: {round((t1-t0), 5)}s")
+                       
 
 def load_room_data():
     if not os.path.exists(common.ROOM_DATA_TRACKING_DATABASE_FILE):
