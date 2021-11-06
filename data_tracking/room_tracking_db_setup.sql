@@ -138,7 +138,7 @@ CREATE TABLE Event_Structure(
     edits JSON NOT NULL,
     ignore_large_times TINYINT(1) NOT NULL,
     missing_player_points INT NOT NULL,
-    event_name TEXT NOT NULL,
+    event_name TEXT NULL,
     number_of_gps INT NOT NULL,
     player_setup_amount INT NOT NULL,
     number_of_teams INT NOT NULL,
