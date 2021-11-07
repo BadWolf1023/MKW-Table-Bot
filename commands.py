@@ -44,6 +44,7 @@ from datetime import datetime
 import URLShortener
 import Stats
 from data_tracking import DataTracker
+from test.test_iterlen import NoneLengthHint
 
 vr_is_on = False
 
@@ -540,10 +541,17 @@ class OtherCommands:
                 lookup_name = UtilityFunctions.process_name(' '.join(old_command.split()[1:]))
                 await message.channel.send(f"No FC found for {lookup_name}, so cannot find the mii. Try again later.")                      
         else:
-            mii = await MiiPuller.get_mii(FC, str(message.id))
-            if isinstance(mii, str):
-                await message.channel.send(mii)
+            mii_dict = await MiiPuller.get_miis([FC], str(message.id))
+            if isinstance(mii_dict, str):
+                await message.channel.send(mii_dict)
+            elif mii_dict is None or (isinstance(mii_dict, dict) and FC not in mii_dict):
+                await message.channel.send("There was a problem trying to get the mii. Try again later.")
             else:
+                mii = mii_dict[FC]
+                if isinstance(mii, str):
+                    await message.channel.send(str)
+                if isinstance(mii, type(None)):
+                    await message.channel.send("There was a problem trying to get the mii. Try again later.")
                 try:
                     file, embed = mii.get_mii_embed()
                     await message.channel.send(file=file, embed=embed)

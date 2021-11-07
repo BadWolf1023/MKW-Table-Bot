@@ -255,9 +255,7 @@ class ChannelBot(object):
                     all_fcs_in_room = self.getRoom().getFCs()
                                         
                     if all_fcs_in_room != self.miis.keys():
-                        print("Populating miis...")
                         all_missing_fcs = [fc for fc in self.getRoom().getFCs() if fc not in self.miis]
-                        print(f"Missing FCs: {all_missing_fcs}")
                         result = await MiiPuller.get_miis(all_missing_fcs, self.get_event_id())
                         if not isinstance(result, (str, type(None))):
                             for fc, mii_pull_result in result.items():

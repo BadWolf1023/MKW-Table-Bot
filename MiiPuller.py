@@ -214,13 +214,14 @@ async def get_mii_data_for_fcs(fcs:Set[str]):
     result = {}
     for pid in mii_datas:
         if pid in pids_mapping:
-            temp = binascii.hexlify(base64.b64decode(mii_datas[pid]))
-            result[pids_mapping[pid]] = (temp, str(temp)[2:-1])
+            mii_data_hex = base64.b64decode(mii_datas[pid])
+            temp = binascii.hexlify(mii_data_hex)
+            result[pids_mapping[pid]] = (mii_data_hex, str(temp)[2:-1])
     return result
 
 def get_mii_file_names(fc, message_id):
     cache_file_name = fc + ".png"
-    real_file_name = message_id + "_" + cache_file_name
+    real_file_name = str(message_id) + "_" + cache_file_name
     mii_cache_folder_path = common.MIIS_CACHE_PATH
     folder_path = common.MIIS_PATH
     cache_download_path = mii_cache_folder_path + cache_file_name
