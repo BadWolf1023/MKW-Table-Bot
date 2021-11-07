@@ -1753,7 +1753,7 @@ class TablingCommands:
                         this_bot.freeLock()
                         this_bot.getRoom().setSetupUser(author_id,  message.author.display_name)
                         if this_bot.getWar() is not None:
-                            asyncio.create_task(this_bot.populate_miis(str(message.id)))
+                            asyncio.create_task(this_bot.populate_miis())
                             players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numgps*4).items())
                             await updateData(* await LoungeAPIFunctions.getByFCs([fc for fc, _ in players]))
                             tags_player_fcs = TagAIShell.determineTags(players, this_bot.getWar().playersPerTeam)
@@ -2010,7 +2010,7 @@ class TablingCommands:
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)                   
         else:
-            asyncio.create_task(this_bot.populate_miis(str(message.id)))
+            asyncio.create_task(this_bot.populate_miis())
             should_send_notification = this_bot.shouldSendNoticiation()
             wpCooldown = this_bot.getWPCooldownSeconds()
             if wpCooldown > 0:

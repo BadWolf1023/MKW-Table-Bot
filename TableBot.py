@@ -240,7 +240,7 @@ class ChannelBot(object):
                 common.log_error(f"Exception in remove_miis_with_missing_files: {fc} failed to clean up - channel {self.channel_id} {'' if tier is None else 'T'+tier}")
                 pass
         
-    async def populate_miis(self, message_id:str):
+    async def populate_miis(self):
         if common.MIIS_ON_TABLE_DISABLED:
             return
         #print("\n\n\n" + str(self.get_miis()))
@@ -249,32 +249,29 @@ class ChannelBot(object):
                 return
             self.populating = True
             #print("Start:", datetime.now())
-            if self.getRoom() is not None:
-                self.remove_miis_with_missing_files()
-                all_fcs_in_room = self.getRoom().getFCs()
-                
-                OBTAINED_MIIS = self.miis.keys()
-                
-                if all_fcs_in_room != self.miis.keys():
-                    #print("Populating miis...")
-                    max_concurrent = 6
-                    all_missing_fcs = [fc for fc in self.getRoom().getFCs() if fc not in self.miis]
-                    #print(f"Missing FCs: {all_missing_fcs}")
-                    missing_fc_chunks = [all_missing_fcs[i:i+max_concurrent] for i in range(len(all_missing_fcs))[::max_concurrent]]
-                    for missing_fc_chunk in missing_fc_chunks:
-                        future_to_fc = {MiiPuller.get_mii(fc, message_id):fc for fc in missing_fc_chunk}
-                        results = await asyncio.gather(*future_to_fc)
-                        for fc, mii_pull_result in zip(missing_fc_chunk, results):
-                            if not isinstance(mii_pull_result, str):
-                                self.miis[fc] = mii_pull_result
-                                mii_pull_result.output_table_mii_to_disc()
-                                mii_pull_result.__remove_main_mii_picture__()
-                            
-                for mii in self.miis.values():
-                    if mii.lounge_name == "":
-                        mii.update_lounge_name()
-            #print("End:", datetime.now())
-            self.populating = False
+            try:
+                if self.getRoom() is not None:
+                    self.remove_miis_with_missing_files()
+                    all_fcs_in_room = self.getRoom().getFCs()
+                                        
+                    if all_fcs_in_room != self.miis.keys():
+                        print("Populating miis...")
+                        all_missing_fcs = [fc for fc in self.getRoom().getFCs() if fc not in self.miis]
+                        print(f"Missing FCs: {all_missing_fcs}")
+                        result = await MiiPuller.get_miis(all_missing_fcs, self.get_event_id())
+                        if not isinstance(result, (str, type(None))):
+                            for fc, mii_pull_result in result.items():
+                                if not isinstance(mii_pull_result, (str, type(None))):
+                                    self.miis[fc] = mii_pull_result
+                                    mii_pull_result.output_table_mii_to_disc()
+                                    mii_pull_result.__remove_main_mii_picture__()
+                                
+                    for mii in self.miis.values():
+                        if mii.lounge_name == "":
+                            mii.update_lounge_name()
+            finally:
+                #print("End:", datetime.now())
+                self.populating = False
             
         
     def updateLoungeFinishTime(self):
