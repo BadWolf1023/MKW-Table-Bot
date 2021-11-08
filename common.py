@@ -32,7 +32,7 @@ MAX_PREFIX_LENGTH = 3
 #current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = False
+in_testing_server = True
 running_beta = False
 beta_is_real = False
 
@@ -102,6 +102,7 @@ FONT_PATH = "fonts/"
 HELP_PATH = "help/"
 TABLING_HELP_PATH = f"{HELP_PATH}tabling/"
 MIIS_PATH = "miis/"
+MIIS_CACHE_PATH = f"{MIIS_PATH}mii_cache/"
 TABLE_HEADERS_PATH = "table_headers/"
 DATA_PATH = "tablebot_data/"
 LOGGING_PATH = "logging/"

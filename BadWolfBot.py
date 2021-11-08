@@ -334,6 +334,7 @@ def create_folders():
     Path(common.LOGGING_PATH).mkdir(parents=True, exist_ok=True)
     Path(common.TABLE_HEADERS_PATH).mkdir(parents=True, exist_ok=True)
     Path(common.DATA_PATH).mkdir(parents=True, exist_ok=True)
+    Path(common.MIIS_CACHE_PATH).mkdir(parents=True, exist_ok=True)
 
 #Bring in the bot key and LoungeAPI key
 def private_data_init():
