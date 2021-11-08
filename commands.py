@@ -44,7 +44,6 @@ from datetime import datetime
 import URLShortener
 import Stats
 from data_tracking import DataTracker
-from test.test_iterlen import NoneLengthHint
 
 vr_is_on = False
 
