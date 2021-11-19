@@ -74,7 +74,7 @@ CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag',
 CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize"}
 EARLY_DC_TERMS = {'earlydc'}
 DEPRECATED_QUICK_EDIT_TERMS = {'quickedit', 'qe'}
-QUICK_EDIT_TERMS = DEPRECATED_QUICK_EDIT_TERMS | {"changeplace", "changeposition"}
+QUICK_EDIT_TERMS = DEPRECATED_QUICK_EDIT_TERMS | {"changeplace", "changeposition", "cp"}
 
 TABLE_THEME_TERMS = {'style', 'theme', 'tablestyle', 'tabletheme'}
 GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
@@ -107,6 +107,10 @@ VERIFY_ROOM_TERMS = {"vr", "verifyroom"}
 STATS_TERMS = {"stats", "stat"}
 INVITE_TERMS = {"invite"}
 LOG_TERMS = {"log"}
+
+#Player/Meta commands (also stateless)
+POPULAR_TRACKS_TERMS = {"populartracks", "populartrack", "pt", "pts", "toptrack", "toptracks", "hottrack", "hottracks"}
+UNPOPULAR_TRACKS_TERMS = {"unpopulartracks", "unpopulartrack", "upt", "upts", "worsttrack", "worsttracks", "unhottrack", "unhottracks", "coldtrack", "coldtracks"}
 
 #Informative, getting started/tutorial commands
 QUICK_START_TERMS = {"quickstart"}
@@ -697,6 +701,12 @@ async def on_message(message: discord.Message):
 
             elif args[0] in DISPLAY_GP_SIZE_TERMS:
                 await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)
+                
+            elif args[0] in POPULAR_TRACKS_TERMS:
+                await command.StatisticCommands.popular_tracks_command(message, args, server_prefix, command)
+            
+            elif args[0] in UNPOPULAR_TRACKS_TERMS:
+                await command.StatisticCommands.unpopular_tracks_command(message, args, server_prefix, command)
             
             else:
                 await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  
