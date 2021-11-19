@@ -362,6 +362,43 @@ class BotAdminCommands:
         await message.channel.send(f"Turned !vr/?vr {'on' if on else 'off'}.")
 
 
+"""================ Statistic Commands =================="""
+class StatisticCommands:
+    """This class houses all the commands relating to getting data for the meta and players"""
+    """
+    @staticmethod
+    def is_bot_admin_check(author, failure_message):
+        if not common.is_bot_admin(author):
+            raise TableBotExceptions.NotBotAdmin(failure_message)
+        return True
+    """
+    @staticmethod
+    async def popular_tracks_command(message:discord.Message, args:List[str], server_prefix:str, command:str):
+        pass
+    
+        """
+        BotAdminCommands.is_bot_admin_check(message.author, "cannot blacklist user")
+        
+        if len(args) < 2:
+            await message.channel.send(f"Give a Discord ID to blacklist. If you do not specify a reason for blacklisting a user, the given discord ID will be **removed** from the blacklist. To blacklist a discord ID, give a reason. `?{args[0]} <discordID> (reason)`")
+            return
+        
+        if len(args) == 2:
+            if UserDataProcessing.add_Blacklisted_user(args[1], ""):
+                await message.channel.send("Removed blacklist for " + command.split()[1])
+            else:
+                await message.channel.send("Blacklist failed.")
+            return
+    
+        if UserDataProcessing.add_Blacklisted_user(args[1], " ".join(command.split()[2:])):
+            await message.channel.send("Blacklisted " + args[1])
+        else:
+            await message.channel.send("Blacklist failed.") 
+        """
+          
+    @staticmethod
+    async def unpopular_tracks_command(message:discord.Message, args:List[str], server_prefix:str, command:str):
+        pass
 
 
 
