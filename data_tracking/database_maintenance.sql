@@ -60,7 +60,7 @@ UPDATE Race
 SET track_name = "Fishdom Island"
 WHERE Race.track_name = "2d5d297545c80e0d5e714c8e8b0d0aa6e3db1cbc";
 
-DELETE FROM Track WHERE track.track_name = "8c9a6275d7dc12d5644e7261bf4fff42597c0b1a";
+DELETE FROM Track WHERE track.track_name = "2d5d297545c80e0d5e714c8e8b0d0aa6e3db1cbc";
 
 
 COMMIT;
