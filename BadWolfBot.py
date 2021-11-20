@@ -581,8 +581,6 @@ async def on_message(message: discord.Message):
                 size_str += "Lounge submission tracking size (KiB): " + str(get_size(lounge_submissions)//1024)
                 print(f"get_size: FC_DiscordID:")
                 size_str += "\nFC_DiscordID (KiB): " + str(get_size(UserDataProcessing.FC_DiscordID)//1024)
-                print(f"get_size: Data tracking room data (KiB):")
-                size_str += "Data tracking room data (KiB): " + str(get_size(DataTracker.room_data)//1024)
                 print(f"get_size: discordID_Lounges:")
                 size_str += "\ndiscordID_Lounges (KiB): " + str(get_size(UserDataProcessing.discordID_Lounges)//1024)
                 print(f"get_size: discordID_Flags (KiB):")
@@ -703,10 +701,10 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
             elif args[0] in POPULAR_TRACKS_TERMS:
-                await command.StatisticCommands.popular_tracks_command(message, args, server_prefix, command)
+                await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, command)
             
             elif args[0] in UNPOPULAR_TRACKS_TERMS:
-                await command.StatisticCommands.unpopular_tracks_command(message, args, server_prefix, command)
+                await commands.StatisticCommands.unpopular_tracks_command(message, args, server_prefix, command)
             
             else:
                 await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  
