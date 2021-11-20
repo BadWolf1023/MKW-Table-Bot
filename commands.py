@@ -372,6 +372,10 @@ class StatisticCommands:
     ct_number_tracks = 25
     
     @staticmethod
+    def filter_out_bad_tracks(track_data:list) -> list:
+        return [r for r in track_data if (len(r[0]) > 0 and not UtilityFunctions.is_hex(r[0]))]
+    
+    @staticmethod
     def validate_rts_cts_arg(arg):
         valid_rt_options = {"rt", "rts", "regular", "regulars", "regulartrack", "regulartracks"}
         valid_ct_options = {"ct", "cts", "custom", "customs", "customtrack", "customtracks"}
@@ -456,7 +460,7 @@ class StatisticCommands:
     
     @staticmethod
     async def format_tracks_played_result(result:list, is_ct:bool, is_top_tracks:bool, tier:int, number_of_days:int) -> str:
-        result = [r for r in result if len(r[0]) > 0]
+        result = StatisticCommands.filter_out_bad_tracks(result)
         total_races_played = sum(track_data[2] for track_data in result)
         number_tracks = StatisticCommands.ct_number_tracks if is_ct else StatisticCommands.rt_number_tracks
         
