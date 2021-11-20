@@ -620,7 +620,8 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, is_lounge_server, command)
                 
             elif args[0] in LOG_TERMS:
-                await commands.OtherCommands.log_feedback_command(message, args, command)
+                await message.channel.send("This command has been removed. You can report a bug in Bad Wolf's server if necessary using the invite code: K937DqM")
+                #await commands.OtherCommands.log_feedback_command(message, args, command)
             
             elif args[0] in GET_LOGS_TERMS:
                 await commands.BadWolfCommands.get_logs_command(message)
