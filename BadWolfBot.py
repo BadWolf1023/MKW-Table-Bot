@@ -52,7 +52,7 @@ TEMPORARY_VR_CATEGORIES = [LOUNGE_COMP_DISC_ID, LOUNGE_ECHELONS_CAT_ID, LOUNGE_E
 real_bot_key = None
 beta_bot_key = None
 testing_bot_key = None
-bot_invite_link = "https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=116800&scope=bot"
+bot_invite_picture = "https://media.discordapp.net/attachments/781249043623182406/911592069636685884/unknown.png"
 
 
 #These commands modify the table
@@ -484,7 +484,7 @@ async def on_message(message: discord.Message):
                 await message.channel.send(file=discord.File(common.BADWOLF_PICTURE_FILE))    
             
             elif args[0] in INVITE_TERMS:
-                await message.channel.send(bot_invite_link)              
+                await message.channel.send(bot_invite_picture)              
             
                 
             elif args[0] in RACE_RESULTS_TERMS:
