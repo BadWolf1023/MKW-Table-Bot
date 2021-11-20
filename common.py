@@ -32,7 +32,7 @@ MAX_PREFIX_LENGTH = 3
 #current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = True
+in_testing_server = False
 running_beta = False
 beta_is_real = False
 
@@ -74,7 +74,7 @@ LIMITED_CHANNEL_IDS = LIMITED_DONT_INCLUDE_IN_COUNT
 LIMITED_SERVER_IDS = None
 BETA_CATEGORY_IDS = {744842611998588928, 740659739611889765, 895999567894556672}
 
-current_notification = f"MKW Table Bot is **officially** back and won't be blocked by Cloudflare anymore!"
+current_notification = ""
 
 
 #TableBot variables, for ChannelBots
