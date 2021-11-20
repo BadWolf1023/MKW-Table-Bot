@@ -213,7 +213,7 @@ class SQL_Search_Queury_Builder(object):
         {tier_filter_clause}
         {days_filter_clause}
     GROUP BY
-        Race.track_name
+        Track.fixed_track_name
     ORDER BY
         3 DESC, 1 ASC;"""
     
