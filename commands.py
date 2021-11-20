@@ -365,40 +365,149 @@ class BotAdminCommands:
 """================ Statistic Commands =================="""
 class StatisticCommands:
     """This class houses all the commands relating to getting data for the meta and players"""
-    """
-    @staticmethod
-    def is_bot_admin_check(author, failure_message):
-        if not common.is_bot_admin(author):
-            raise TableBotExceptions.NotBotAdmin(failure_message)
-        return True
-    """
-    @staticmethod
-    async def popular_tracks_command(message:discord.Message, args:List[str], server_prefix:str, command:str):
-        pass
+
+    valid_rt_tiers = ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
+    valid_ct_tiers = ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
+    number_tracks = 15
     
-        """
-        BotAdminCommands.is_bot_admin_check(message.author, "cannot blacklist user")
+    @staticmethod
+    def validate_rts_cts_arg(arg):
+        valid_rt_options = {"rt", "rts", "regular", "regulars", "regulartrack", "regulartracks"}
+        valid_ct_options = {"ct", "cts", "custom", "customs", "customtrack", "customtracks"}
+        is_ct = None
+        if arg.lower() in valid_rt_options:
+            is_ct = False
+        elif arg.lower() in valid_ct_options:
+            is_ct = True
         
+        if is_ct is None:
+            return None, f"{UtilityFunctions.process_name(arg)} is not a valid option. Put in **rt** or **ct**."
+        return is_ct, None
+    
+    @staticmethod
+    def validate_tier_arg(arg, is_ct):
+        original_arg = arg
+        rt_ct_error_string = "CT" if is_ct else "RT"
+        arg = arg.lower()
+
+        tier = None
+        if not is_ct and arg in StatisticCommands.valid_rt_tiers:
+            tier = int(arg.strip("t"))
+        elif is_ct and arg in StatisticCommands.valid_ct_tiers:
+            tier = int(arg.strip("t"))
+        
+        if tier is None:
+            return None, f"{UtilityFunctions.process_name(original_arg)} is not a valid {rt_ct_error_string} tier. Valid options for {rt_ct_error_string} tier are: {', '.join(StatisticCommands.valid_ct_tiers) if is_ct else ', '.join(StatisticCommands.valid_rt_tiers)}"
+        return tier, None
+    
+    @staticmethod
+    def validate_days_arg(arg):
+        original_arg = arg
+        arg = arg.lower()
+        days = None
+        if UtilityFunctions.isint(arg):
+            days = int(arg)
+            if days < 1:
+                None, f"{UtilityFunctions.process_name(original_arg)} was given as the number of days, but it must be 1 or more"
+            else:
+                return days, None
+        return None, f"{UtilityFunctions.process_name(original_arg)} must be the number of days"
+    
+    @staticmethod
+    def validate_tracks_args(command:str):
+        args = command.split()
         if len(args) < 2:
-            await message.channel.send(f"Give a Discord ID to blacklist. If you do not specify a reason for blacklisting a user, the given discord ID will be **removed** from the blacklist. To blacklist a discord ID, give a reason. `?{args[0]} <discordID> (reason)`")
-            return
+            return None, None, None, "Please specify for **rts** or **cts**."
+        
+        is_ct, error_message = StatisticCommands.validate_rts_cts_arg(args[1])
+        if is_ct is None:
+            return None, None, None, error_message
         
         if len(args) == 2:
-            if UserDataProcessing.add_Blacklisted_user(args[1], ""):
-                await message.channel.send("Removed blacklist for " + command.split()[1])
-            else:
-                await message.channel.send("Blacklist failed.")
-            return
+            return is_ct, None, None, None
+        
+        if len(args) == 3:
+            tier, tier_error_message = StatisticCommands.validate_tier_arg(args[2], is_ct)
+            days = None
+            if tier is None:
+                days, _ = StatisticCommands.validate_days_arg(args[2])
+            
+            if tier is None and days is None:
+                return is_ct, None, None, f"{UtilityFunctions.process_name(args[2])} is not a tier nor is it a number of days."
+        
+            if tier is not None:
+                return is_ct, tier, None, None
+            if days is not None:
+                return is_ct, None, days, None
+        
+        if len(args) > 3: #They specified a tier and a days filter
+            tier, tier_error_message = StatisticCommands.validate_tier_arg(args[2], is_ct)
+            if tier is None:
+                return is_ct, None, None, tier_error_message
+            days, days_error_message = StatisticCommands.validate_days_arg(args[3])
+            if days is None:
+                return is_ct, tier, None, days_error_message
+            return is_ct, tier, days, None
+        
+        raise TableBotExceptions.UnreachableCode()
+            
+            
     
-        if UserDataProcessing.add_Blacklisted_user(args[1], " ".join(command.split()[2:])):
-            await message.channel.send("Blacklisted " + args[1])
-        else:
-            await message.channel.send("Blacklist failed.") 
-        """
+    @staticmethod
+    async def format_tracks_played_result(result:list, is_ct:bool, is_top_tracks:bool, tier:int, number_of_days:int) -> str:
+        result = [r for r in result if len(r[0]) > 0]
+        total_races_played = sum(track_data[2] for track_data in result)
+        
+        tracks_played_str = '{:>2}  {:<25} | {:<12} | {:<1}\n'.format("#", "Track Name", "Times Played", "Percentage of Times Played")
+        for list_num, (track_full_name, track_fixed_name, times_played) in (enumerate(result[:StatisticCommands.number_tracks], 1) if is_top_tracks else enumerate(list(reversed(result))[:StatisticCommands.number_tracks], 1)):
+            proportion_played = round((times_played / total_races_played)*100, 2)
+            if not is_ct and track_fixed_name.startswith("Wii "):
+                track_fixed_name = track_fixed_name[4:]
+            tracks_played_str += "{:>3} {:<25} | {:<12} | {:<1}%\n".format(str(list_num)+".", track_fixed_name, times_played, proportion_played)
+        
+        message_title = str(StatisticCommands.number_tracks) + (" Most Played" if is_top_tracks else " Least Played") + (" Custom Tracks" if is_ct else " Regular Tracks")
+        if tier is not None:
+            message_title += f" in Tier {tier}"
+        if number_of_days is not None:
+            message_title += f" in the Last {number_of_days} Day{'' if number_of_days == 1 else 's'}"
+        return f"**{message_title}**\n```{tracks_played_str}```"
+    
+    @staticmethod
+    async def popular_tracks_command(message:discord.Message, args:List[str], server_prefix:str, command:str):
+        error_message = f"""Here are 3 examples of how to use this command:
+Most played CTs of all time: `{server_prefix}populartracks ct`
+Most played RTs in the past week: `{server_prefix}populartracks rt 7`
+Most played CTs in tier 4 during the last 5 days: `{server_prefix}populartracks rt t4 5`"""
+
+        is_ct, tier, number_of_days, specific_error = StatisticCommands.validate_tracks_args(command)
+        
+        if specific_error is not None:
+            full_error_message = f"**Error:** {specific_error}\n\n{error_message}"
+            await message.channel.send(full_error_message)
+            return
+        
+        tracks_played = DataTracker.DataRetriever.get_tracks_played_count(is_ct, tier, number_of_days)
+        tracks_played_message_str = await StatisticCommands.format_tracks_played_result(tracks_played, is_ct, is_top_tracks=True, tier=tier, number_of_days=number_of_days)
+        await message.channel.send(tracks_played_message_str)
+
           
     @staticmethod
     async def unpopular_tracks_command(message:discord.Message, args:List[str], server_prefix:str, command:str):
-        pass
+        error_message = f"""Here are 3 examples of how to use this command:
+Least played CTs of all time: `{server_prefix}unpopulartracks ct`
+Least played RTs in the past week: `{server_prefix}unpopulartracks rt 7`
+Least played CTs in tier 4 during the last 5 days: `{server_prefix}unpopulartracks rt t4 5`"""
+
+        is_ct, tier, number_of_days, specific_error = StatisticCommands.validate_tracks_args(command)
+        
+        if specific_error is not None:
+            full_error_message = f"**Error:** {specific_error}\n\n{error_message}"
+            await message.channel.send(full_error_message)
+            return
+        
+        tracks_played = DataTracker.DataRetriever.get_tracks_played_count(is_ct, tier, number_of_days)
+        tracks_played_message_str = await StatisticCommands.format_tracks_played_result(tracks_played, is_ct, is_top_tracks=False, tier=tier, number_of_days=number_of_days)
+        await message.channel.send(tracks_played_message_str)
 
 
 
