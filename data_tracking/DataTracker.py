@@ -22,17 +22,7 @@ import json
 import time
 
 
-"""SELECT
-    Race.track_name,
-    COUNT(Race.race_id) as times_played
-FROM
-    Race LEFT JOIN Track ON Race.track_name = Track.track_name
-WHERE
-    Track.is_ct == 1
-GROUP BY
-    Race.track_name
-ORDER BY
-    2 DESC, 1 ASC;"""
+
 import os
 from data_tracking import Data_Tracker_SQL_Query_Builder as QB
 
@@ -95,77 +85,18 @@ for k,v in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
     
 TABLE_BOT_CHANNEL_TIER_MAPPINGS = {RT_NAME:RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS, CT_NAME:CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS}
 
-room_data = {RT_NAME:{},
-             CT_NAME:{},
-             RXX_LOCKER_NAME:{}
-             }
-ALREADY_ADDED_ERROR = 11
-FATAL_ERROR = 12
-RACE_ADD_SUCCESS = 10
-DATA_DUMP_SUCCESS = 9
-#Need rxx -> [channel_id:channel_data:default_dict, room_data]
 
 
-def get_start_time(channel_data):
-    return channel_data[1]
-def get_last_updated(channel_data):
-    return channel_data[2]
-def get_room_update_count(channel_data):
-    return channel_data[3]
-def get_tier(channel_data):
-    return channel_data[4]
-
-def tier_matches(tier, channel_data):
-    if tier is None:
-        return True
-    return tier == get_tier(channel_data)
-"""
 class DataRetriever(object):
     #TODO: Finish method
-    @staticmethod
-    def choose_best_event_data(channel_id_events:Dict[int, List], prefer_tier=False, require_private_room=True) -> Tuple[List, Event]:
-        '''Takes a dictionary with channel ids mapping to event data and returns the channel data and event that is most likely to be legitimate and accurate'''
-        LEIGITMATE_ROOM_UPDATE_COUNT = 3
-        cur_best = None
-        #Filter by private rooms only if required
-        filtered_events = filter(channel_id_events.values(), lambda event_data: (not require_private_room or all(race.roomType == Race.PRIVATE_ROOM_REGION for race in event_data[1].races)))
-        for channel_data, event in filtered_events:
-            if prefer_tier and get_tier(channel_data) is None:
-                continue
-            if get_room_update_count(channel_data) < LEIGITMATE_ROOM_UPDATE_COUNT:
-                continue
-            if cur_best is None:
-                cur_best = (channel_data, event)
-                continue
-        
-        #choose best out of the ones that didn't have a tier
-            
-            
-        return cur_best
-            
     
     @staticmethod
-    def get_filtered_events(rxx_dict, tier=None, in_last_days=None):
-        time_cutoff = (datetime.now() - timedelta(days=in_last_days)) if in_last_days else datetime.min
-        results = []
-        for rxx in rxx_dict:
-            best_data = DataRetriever.choose_best_event_data(rxx_dict[rxx], prefer_tier=(tier is None))
-            if best_data is None:
-                continue
-            channel_data, event = best_data
-            if tier_matches(tier, channel_data) and time_cutoff < get_start_time(channel_data):
-                results.append(event)
-        return results
-    @staticmethod
-    def get_popular_characters(is_ct=False, tier=None, in_last_days=None, starting_position=None):
-        pass
-    
-    @staticmethod
-    def get_popular_tracks(is_ct=False, tier=None, in_last_days=None):
-        track_count = defaultdict(int)
-        rxx_dict = room_data[CT_NAME] if is_ct else room_data[RT_NAME]
-        filtered_rxxs = DataRetriever.get_filtered_rxxs(rxx_dict, tier, in_last_days)
-"""
+    def get_tracks_played_count(is_ct=False, tier=None, in_last_days=None):
+        tracks_query = QB.SQL_Search_Queury_Builder.get_tracks_query(is_ct, tier, in_last_days)
+        with database_connection:
+            return list(database_connection.execute(tracks_query))
+        return []
+
 
 class ChannelBotSQLDataValidator(object):
     def wrong_type_message(self, data, expected_type, multi=False):
@@ -806,11 +737,17 @@ def ensure_foreign_keys_on():
     cur = database_connection.cursor()
     cur.executescript("""PRAGMA foreign_keys = ON;""")
     
+def database_maintenance():
+    cur = database_connection.cursor()
+    populate_tier_table_script = common.read_sql_file(common.ROOM_DATA_TRACKING_DATABASE_MAINTENANCE_SQL)
+    cur.executescript(populate_tier_table_script)
+    
 def initialize():
     load_room_data()
     start_database()
     ensure_foreign_keys_on()
     populate_tier_table()
+    database_maintenance()
 
 def save_data():
     pass

@@ -43,6 +43,9 @@ class NotLoungeServer(WrongServer):
     pass
 
 
+#Coding errors
+class UnreachableCode(Exception):
+    pass
 
 class BlacklistedUser(NotAuthorized):
     pass

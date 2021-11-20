@@ -74,7 +74,7 @@ CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag',
 CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize"}
 EARLY_DC_TERMS = {'earlydc'}
 DEPRECATED_QUICK_EDIT_TERMS = {'quickedit', 'qe'}
-QUICK_EDIT_TERMS = DEPRECATED_QUICK_EDIT_TERMS | {"changeplace", "changeposition"}
+QUICK_EDIT_TERMS = DEPRECATED_QUICK_EDIT_TERMS | {"changeplace", "changeposition", "cp"}
 
 TABLE_THEME_TERMS = {'style', 'theme', 'tablestyle', 'tabletheme'}
 GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
@@ -107,6 +107,10 @@ VERIFY_ROOM_TERMS = {"vr", "verifyroom"}
 STATS_TERMS = {"stats", "stat"}
 INVITE_TERMS = {"invite"}
 LOG_TERMS = {"log"}
+
+#Player/Meta commands (also stateless)
+POPULAR_TRACKS_TERMS = {"populartracks", "populartrack", "pt", "pts", "toptrack", "toptracks", "hottrack", "hottracks"}
+UNPOPULAR_TRACKS_TERMS = {"unpopulartracks", "unpopulartrack", "upt", "upts", "worsttrack", "worsttracks", "unhottrack", "unhottracks", "coldtrack", "coldtracks"}
 
 #Informative, getting started/tutorial commands
 QUICK_START_TERMS = {"quickstart"}
@@ -577,8 +581,6 @@ async def on_message(message: discord.Message):
                 size_str += "Lounge submission tracking size (KiB): " + str(get_size(lounge_submissions)//1024)
                 print(f"get_size: FC_DiscordID:")
                 size_str += "\nFC_DiscordID (KiB): " + str(get_size(UserDataProcessing.FC_DiscordID)//1024)
-                print(f"get_size: Data tracking room data (KiB):")
-                size_str += "Data tracking room data (KiB): " + str(get_size(DataTracker.room_data)//1024)
                 print(f"get_size: discordID_Lounges:")
                 size_str += "\ndiscordID_Lounges (KiB): " + str(get_size(UserDataProcessing.discordID_Lounges)//1024)
                 print(f"get_size: discordID_Flags (KiB):")
@@ -618,7 +620,8 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, is_lounge_server, command)
                 
             elif args[0] in LOG_TERMS:
-                await commands.OtherCommands.log_feedback_command(message, args, command)
+                await message.channel.send("This command has been removed. You can report a bug in Bad Wolf's server if necessary using the invite code: K937DqM")
+                #await commands.OtherCommands.log_feedback_command(message, args, command)
             
             elif args[0] in GET_LOGS_TERMS:
                 await commands.BadWolfCommands.get_logs_command(message)
@@ -697,6 +700,12 @@ async def on_message(message: discord.Message):
 
             elif args[0] in DISPLAY_GP_SIZE_TERMS:
                 await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)
+                
+            elif args[0] in POPULAR_TRACKS_TERMS and message.channel.category_id in common.BETA_CATEGORY_IDS:
+                await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, command)
+            
+            elif args[0] in UNPOPULAR_TRACKS_TERMS and message.channel.category_id in common.BETA_CATEGORY_IDS:
+                await commands.StatisticCommands.unpopular_tracks_command(message, args, server_prefix, command)
             
             else:
                 await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  
