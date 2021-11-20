@@ -167,6 +167,58 @@ RETURNING {EVENT_STRUCTURE_TABLE_NAMES[0]}"""
     
 
 
+class SQL_Search_Queury_Builder(object):
+    @staticmethod
+    def get_sql_tier_filter(tier, is_ct):
+        return f"""Race.race_id in (SELECT DISTINCT Race.race_id
+                FROM Race
+                WHERE Race.rxx in (
+                                SELECT DISTINCT Race.rxx
+                                FROM Tier JOIN Event USING(channel_id) /*Immediately discard events without a tier*/
+                                    JOIN Event_Races USING(event_id) /*All events with a tier allowed, allow duplicate events*/
+                                    JOIN Race USING(race_id)
+                                    JOIN Track USING(track_name)
+                                WHERE
+                                Tier.tier = {tier} /*Only get events with the desired tier*/
+                                AND Event.region = "priv"
+                                AND Tier.is_ct = {1 if is_ct else 0}
+                                AND Track.is_ct = {1 if is_ct else 0}
+                                AND ROUND((JULIANDAY(Event.last_updated) - JULIANDAY(Event.time_added)) * 86400) > 600 /*10 minutes is 600 seconds*/
+                                AND Event.number_of_updates > 2 /*Events should have at least 3 room updates, otherwise the table was likely not created during the event*/
+                                )
+)"""
+    
+    @staticmethod
+    def get_sql_days_filter(days):
+        return f"Race.time_added > date('now','-{days} days')"
+        
+    @staticmethod
+    def get_tracks_query(is_ct, tier, last_x_days):
+        tier_filter_clause = ""
+        days_filter_clause = ""
+        if tier is not None:
+            tier_filter_clause = "AND " + SQL_Search_Queury_Builder.get_sql_tier_filter(tier, is_ct)
+        if last_x_days is not None:
+            days_filter_clause = "AND " + SQL_Search_Queury_Builder.get_sql_days_filter(last_x_days)
+            
+        return f"""SELECT
+        Race.track_name,
+        Track.fixed_track_name,
+        COUNT(Race.race_id) as times_played
+    FROM
+        Race LEFT JOIN Track ON Race.track_name = Track.track_name
+    WHERE
+        Track.is_ct = {1 if is_ct else 0}
+        AND Race.region = "priv"
+        {tier_filter_clause}
+        {days_filter_clause}
+    GROUP BY
+        Race.track_name
+    ORDER BY
+        3 DESC, 1 ASC;"""
+    
 
 
 #print(get_fcs_not_in_Player_table([1, 2, 3]))
+
+
