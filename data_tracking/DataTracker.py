@@ -737,11 +737,17 @@ def ensure_foreign_keys_on():
     cur = database_connection.cursor()
     cur.executescript("""PRAGMA foreign_keys = ON;""")
     
+def database_maintenance():
+    cur = database_connection.cursor()
+    populate_tier_table_script = common.read_sql_file(common.ROOM_DATA_TRACKING_DATABASE_MAINTENANCE_SQL)
+    cur.executescript(populate_tier_table_script)
+    
 def initialize():
     load_room_data()
     start_database()
     ensure_foreign_keys_on()
     populate_tier_table()
+    database_maintenance()
 
 def save_data():
     pass

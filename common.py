@@ -111,6 +111,7 @@ DATA_TRACKING_PATH = "data_tracking/"
 ROOM_DATA_TRACKING_DATABASE_FILE = f"{DATA_PATH}room_data_tracking.db"
 ROOM_DATA_POPULATE_TIER_TABLE_SQL = f"{DATA_TRACKING_PATH}channel_tiers_addition.sql"
 ROOM_DATA_TRACKING_DATABASE_CREATION_SQL = f"{DATA_TRACKING_PATH}room_tracking_db_setup.sql"
+ROOM_DATA_TRACKING_DATABASE_MAINTENANCE_SQL = f"{DATA_TRACKING_PATH}database_maintenance.sql"
 
 LOUNGE_ID_COUNTER_FILE = f"{DATA_PATH}lounge_counter.pkl"
 LOUNGE_TABLE_UPDATES_FILE = f"{DATA_PATH}lounge_table_update_ids.pkl"
