@@ -368,7 +368,8 @@ class StatisticCommands:
 
     valid_rt_tiers = ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
     valid_ct_tiers = ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
-    number_tracks = 15
+    rt_number_tracks = 15
+    ct_number_tracks = 25
     
     @staticmethod
     def validate_rts_cts_arg(arg):
@@ -457,15 +458,16 @@ class StatisticCommands:
     async def format_tracks_played_result(result:list, is_ct:bool, is_top_tracks:bool, tier:int, number_of_days:int) -> str:
         result = [r for r in result if len(r[0]) > 0]
         total_races_played = sum(track_data[2] for track_data in result)
+        number_tracks = StatisticCommands.ct_number_tracks if is_ct else StatisticCommands.rt_number_tracks
         
-        tracks_played_str = '{:>2}  {:<25} | {:<12} | {:<1}\n'.format("#", "Track Name", "Times Played", "Percentage of Times Played")
-        for list_num, (track_full_name, track_fixed_name, times_played) in (enumerate(result[:StatisticCommands.number_tracks], 1) if is_top_tracks else enumerate(list(reversed(result))[:StatisticCommands.number_tracks], 1)):
+        tracks_played_str = '{:>2}  {:<25} | {:<12} | {:<1}\n'.format("#", "Track Name", "Times Played", "Track Played Percentage")
+        for list_num, (track_full_name, track_fixed_name, times_played) in (enumerate(result[:number_tracks], 1) if is_top_tracks else enumerate(list(reversed(result))[:number_tracks], 1)):
             proportion_played = round((times_played / total_races_played)*100, 2)
             if not is_ct and track_fixed_name.startswith("Wii "):
                 track_fixed_name = track_fixed_name[4:]
-            tracks_played_str += "{:>3} {:<25} | {:<12} | {:<1}%\n".format(str(list_num)+".", track_fixed_name, times_played, proportion_played)
+            tracks_played_str += "{:>3} {:<25} | {:<12} | {:<.2f}%\n".format(str(list_num)+".", track_fixed_name, times_played, proportion_played)
         
-        message_title = str(StatisticCommands.number_tracks) + (" Most Played" if is_top_tracks else " Least Played") + (" Custom Tracks" if is_ct else " Regular Tracks")
+        message_title = str(number_tracks) + (" Most Played" if is_top_tracks else " Least Played") + (" Custom Tracks" if is_ct else " Regular Tracks")
         if tier is not None:
             message_title += f" in Tier {tier}"
         if number_of_days is not None:
