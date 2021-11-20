@@ -72,6 +72,7 @@ OTHER_SERVER_CHANNEL_IDS = {747290182096650332,#RT T5, RT T4, RT T3, RT T2, RT T
                        } 
 LIMITED_CHANNEL_IDS = LIMITED_DONT_INCLUDE_IN_COUNT
 LIMITED_SERVER_IDS = None
+BETA_CATEGORY_IDS = {744842611998588928, 740659739611889765, 895999567894556672}
 
 current_notification = f"MKW Table Bot is **officially** back and won't be blocked by Cloudflare anymore!"
 
@@ -281,6 +282,7 @@ def author_is_table_bot_support_plus(message_author):
 
 def main_lounge_can_report_table(message_author):
     return author_is_reporter_plus(message_author) or message_author.id == BAD_WOLF_ID
+
 
 
 LoungeUpdateChannels = namedtuple('LoungeUpdateChannels', ['updater_channel_id_primary', 'updater_link_primary', 'preview_link_primary', 'type_text_primary',
