@@ -1548,7 +1548,6 @@ class TablingCommands:
         await message.channel.send('"' + UtilityFunctions.process_name(str(on_or_before)) + '" needs to be either "on" or "before". Do ' + server_prefix + "dcs for an example on how to use this command.")
 
 
-
     @staticmethod
     async def player_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set():
@@ -1568,25 +1567,19 @@ class TablingCommands:
         playerNum = args[1]
         amount = args[2]
         players = this_bot.getRoom().get_sorted_player_list()
-        if not playerNum.isnumeric():
-            pass
-        else:
-            playerNum = int(playerNum)
-        if not amount.isnumeric():
-            if len(amount) > 0 and amount[0] == '-':
-                if amount[1:].isnumeric():
-                    amount = int(amount[1:]) * -1
-        else:
-            amount = int(amount)
+        playerNum, playerErrorMessage = getPlayerIndexInRoom(args[1], this_bot.getRoom(), server_prefix, "pen")
+        
+        if amount.lstrip("-").isnumeric() and amount.count("-") <= 1:
+            amount = int(amount.lstrip("-")) * -1
             
-        if not isinstance(playerNum, int) or not isinstance(amount, int):
-            await message.channel.send(f"Both player number and the penalty amount must be numbers. {example_help(server_prefix, args[0])}")
-        elif playerNum < 1 or playerNum > len(players):
-            await message.channel.send(f"The player number must be on this list (between 1 and {len(players)}). {example_help(server_prefix, args[0])}")
-        else:
-            this_bot.add_save_state(message.content)
-            this_bot.getRoom().addPlayerPenalty(players[playerNum-1][0], amount)
-            await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty."))
+        if not isinstance(amount, int):
+            return await message.channel.send(f"The penalty amount must be a number. {example_help(server_prefix, args[0])}")
+        elif playerNum is None:
+            return await message.channel.send(playerErrorMessage)
+        
+        this_bot.add_save_state(message.content)
+        this_bot.getRoom().addPlayerPenalty(players[playerNum-1][0], amount)
+        await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty."))
     
     @staticmethod    
     async def substitue_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
