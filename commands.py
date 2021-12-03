@@ -2078,6 +2078,17 @@ class TablingCommands:
         await message.channel.send(f"The following command has been undone: {UtilityFunctions.process_name(undone_command)}\nRun {server_prefix}wp to make sure table bot is fully refreshed.")
     
     @staticmethod
+    async def redo_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
+        if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
+            return await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+        
+        redone_command = this_bot.restore_last_redo_state()
+        if redone_command is False:
+            return await message.channel.send("There is nothing to redo.")
+        
+        await message.channel.send(f"The following command has been redone: {UtilityFunctions.process_name(redone_command)}\nRun {server_prefix}wp to make sure table bot is fully refreshed.")
+
+    @staticmethod
     async def early_dc_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool): 
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)

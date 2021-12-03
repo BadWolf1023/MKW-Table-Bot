@@ -59,6 +59,7 @@ bot_invite_picture = "https://media.discordapp.net/attachments/78124904362318240
 RESET_TERMS = {"reset", "restart", "cancel", "quit", "stop", "clear"}
 START_WAR_TERMS = {"startwar", "sw", "starttable"}
 UNDO_TERMS = {"undo", "undocommand", "reverse"}
+REDO_TERMS = {"redo", "redocommand"}
 
 #These commands also modify the table, but can be undone using the ?undo command
 REMOVE_RACE_TERMS = {"removerace"}
@@ -651,6 +652,9 @@ async def on_message(message: discord.Message):
                     
             elif args[0] in UNDO_TERMS:
                 await commands.TablingCommands.undo_command(message, this_bot, server_prefix, is_lounge_server)
+            
+            elif args[0] in REDO_TERMS:
+                await commands.TablingCommands.redo_command(message, this_bot, server_prefix, is_lounge_server)
             
             elif args[0] in VERIFY_ROOM_TERMS:
                 if commands.vr_is_on:

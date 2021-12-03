@@ -60,6 +60,7 @@ class ChannelBot(object):
         self.lastWPTime = None
         self.roomLoadTime = None
         self.save_states = []
+        self.redo_save_states = []
         self.miis: Dict[str, Mii.Mii] = {}
         
         
@@ -96,6 +97,8 @@ class ChannelBot(object):
         return self.roomLoadTime
     def get_save_states(self):
         return self.save_states
+    def get_redo_states(self):
+        return self.redo_save_states
     def get_populating(self):
         return self.populating
     def get_should_send_mii_notification(self):
@@ -496,14 +499,12 @@ class ChannelBot(object):
         save_state["race_size"] = self.race_size
         save_state["style"] = self.style
         return (command, save_state)
-        
-        
-        
-        
     
     def add_save_state(self, command="Unknown Command", save_state=None):
         if save_state is None:
             command, save_state = self.get_save_state(command)
+        
+        self.redo_save_states.clear()
         self.save_states.append((command, save_state))
     
     #Function that removes the last save state - does not restore it
@@ -512,13 +513,35 @@ class ChannelBot(object):
             return False
         command, _ = self.save_states.pop()
         return command
+    
+    def remove_last_redo_state(self):
+        if len(self.redo_save_states)==0:
+            return False
         
+        command = self.save_states.pop()[0]
+        return command
         
     def restore_last_save_state(self):
         if len(self.save_states) < 1:
             return False
         
         command, save_state = self.save_states.pop()
+        self.redo_save_states.append((command, save_state))
+        self.getRoom().restore_save_state(save_state["Room"])
+        self.getWar().restore_save_state(save_state["War"])
+        self.graph = save_state["graph"]
+        self.style = save_state["style"]
+        self.race_size = save_state["race_size"]
+        return command
+    
+    def restore_last_redo_state(self):
+        if len(self.redo_save_states) == 0:
+            return False
+        
+        complete_state = self.redo_save_states.pop()
+        self.save_states.append(complete_state)
+
+        command, save_state = complete_state
         self.getRoom().restore_save_state(save_state["Room"])
         self.getWar().restore_save_state(save_state["War"])
         self.graph = save_state["graph"]
@@ -538,6 +561,7 @@ class ChannelBot(object):
         #self.lastWPTime = None
         #self.roomLoadTime = None
         self.save_states = []
+        self.redo_save_states = []
         self.miis = {}
         self.populating = False
         self.should_send_mii_notification = True
