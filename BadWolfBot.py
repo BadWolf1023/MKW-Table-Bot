@@ -701,10 +701,10 @@ async def on_message(message: discord.Message):
             elif args[0] in DISPLAY_GP_SIZE_TERMS:
                 await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
-            elif args[0] in POPULAR_TRACKS_TERMS and message.channel.category_id in common.BETA_CATEGORY_IDS:
+            elif args[0] in POPULAR_TRACKS_TERMS:
                 await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, command)
             
-            elif args[0] in UNPOPULAR_TRACKS_TERMS and message.channel.category_id in common.BETA_CATEGORY_IDS:
+            elif args[0] in UNPOPULAR_TRACKS_TERMS:
                 await commands.StatisticCommands.unpopular_tracks_command(message, args, server_prefix, command)
             
             else:
