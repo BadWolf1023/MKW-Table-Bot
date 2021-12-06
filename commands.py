@@ -476,7 +476,7 @@ class StatisticCommands:
             message_title += f" in Tier {tier}"
         if number_of_days is not None:
             message_title += f" in the Last {number_of_days} Day{'' if number_of_days == 1 else 's'}"
-        return f"**{message_title}**\n```{tracks_played_str}```"
+        return f"**{message_title}**\n```\n{tracks_played_str}```"
     
     @staticmethod
     async def popular_tracks_command(message:discord.Message, args:List[str], server_prefix:str, command:str):
