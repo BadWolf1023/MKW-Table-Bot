@@ -92,12 +92,16 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
         if raceNum in curRoom.forcedRoomSize:
             mkwxNumRacers = curRoom.forcedRoomSize[raceNum]
             
+        if mkwxNumRacers > 12:
+            mkwxNumRacers = 12
+            
         for placement in race.getPlacements():
             placement_score = 0
-            if server_id in alternate_Matrices:
-                placement_score = alternate_Matrices[server_id][mkwxNumRacers-1][placement.place-1]
-            else:
-                placement_score = scoreMatrix[mkwxNumRacers-1][placement.place-1]
+            if placement.place <= 12: #Only get people's score if their place is less than 12
+                if server_id in alternate_Matrices:
+                    placement_score = alternate_Matrices[server_id][mkwxNumRacers-1][placement.place-1]
+                else:
+                    placement_score = scoreMatrix[mkwxNumRacers-1][placement.place-1]
             
             fc_score[placement.player.FC].append( placement_score )
     #Fille awkward sized arrays with 0
