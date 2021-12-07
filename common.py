@@ -25,6 +25,7 @@ MIIS_ON_TABLE_DISABLED = False
 ON_WINDOWS = os.name == 'nt'
 HREF_HTML_NAME = 'href' if ON_WINDOWS else 'data-href'
 TOOLTIP_NAME = "data-tooltip" if ON_WINDOWS else "title"
+SAVED_ROOMS_DIR = "testing_rooms/windows/" if ON_WINDOWS else "testing_rooms/linux/"
 
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
