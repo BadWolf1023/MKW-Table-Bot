@@ -259,7 +259,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             if to_add >= 0:
                 FC_table_str[fc][0] += "|" + str(to_add)
             else:
-                FC_table_str[fc][0] += "-" + str(to_add)
+                FC_table_str[fc][0] += str(to_add)
             
 
     #build table string
