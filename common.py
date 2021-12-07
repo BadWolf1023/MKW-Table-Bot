@@ -18,7 +18,7 @@ import dill
 
 sslcontext = ssl.create_default_context(cafile=certifi.where())
 
-version = "11.7.0" #popular tracks commands
+version = "12.0.0" #Final release from Bad Wolf, stablizing various things and releasing beta commands
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
@@ -29,6 +29,8 @@ SAVED_ROOMS_DIR = "testing_rooms/windows/" if ON_WINDOWS else "testing_rooms/lin
 
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
+
+INVITE_LINK = "https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=274878031936&scope=bot"
 
 #current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
