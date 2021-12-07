@@ -254,12 +254,13 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     
     for fc, amount in room.getPlayerPenalities().items():
         if fc in FC_table_str:
-            if amount < 0:
-                FC_table_str[fc][0] += "+" + str(amount)
-                FC_table_str[fc][1] += amount
+            amount = amount * -1
+            FC_table_str[fc][1] += amount
+            if amount <= 0:
+                FC_table_str[fc][0] += "|" + str(amount)
             else:
                 FC_table_str[fc][0] += "-" + str(amount)
-                FC_table_str[fc][1] -= amount
+            
 
     #build table string
     numRaces = min( (len(room.races), war.getNumberOfGPS()*4) )

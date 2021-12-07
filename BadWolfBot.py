@@ -627,10 +627,10 @@ async def on_message(message: discord.Message):
                 await commands.BadWolfCommands.get_logs_command(message)
             
             elif args[0] in ADD_SHA_TERMS:
-                await commands.BadWolfCommands.add_sha_track(message, args, command)
+                await commands.BotAdminCommands.add_sha_track(message, args, command)
                 
             elif args[0] in REMOVE_SHA_TERMS:
-                await commands.BadWolfCommands.remove_sha_track(message, args)
+                await commands.BotAdminCommands.remove_sha_track(message, args)
                 
             elif args[0] in {"aidata"} and (common.is_bad_wolf(message.author) or message.author.id == 267395889423712258):
                 if os.path.exists(TagAIShell.AI_Results_file_name):
