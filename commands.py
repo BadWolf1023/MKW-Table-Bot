@@ -1571,8 +1571,8 @@ class TablingCommands:
         players = this_bot.getRoom().get_sorted_player_list()
         playerNum, playerErrorMessage = getPlayerIndexInRoom(args[1], this_bot.getRoom(), server_prefix, "pen")
         
-        if amount.lstrip("-").isnumeric() and amount.count("-") <= 1:
-            amount = int(amount.lstrip("-")) * -1
+        if UtilityFunctions.isint(amount):
+            amount = int(amount)
             
         if not isinstance(amount, int):
             return await message.channel.send(f"The penalty amount must be a number. {example_help(server_prefix, args[0])}")
