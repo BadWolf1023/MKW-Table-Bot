@@ -92,12 +92,16 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
         if raceNum in curRoom.forcedRoomSize:
             mkwxNumRacers = curRoom.forcedRoomSize[raceNum]
             
+        if mkwxNumRacers > 12:
+            mkwxNumRacers = 12
+            
         for placement in race.getPlacements():
             placement_score = 0
-            if server_id in alternate_Matrices:
-                placement_score = alternate_Matrices[server_id][mkwxNumRacers-1][placement.place-1]
-            else:
-                placement_score = scoreMatrix[mkwxNumRacers-1][placement.place-1]
+            if placement.place <= 12: #Only get people's score if their place is less than 12
+                if server_id in alternate_Matrices:
+                    placement_score = alternate_Matrices[server_id][mkwxNumRacers-1][placement.place-1]
+                else:
+                    placement_score = scoreMatrix[mkwxNumRacers-1][placement.place-1]
             
             fc_score[placement.player.FC].append( placement_score )
     #Fille awkward sized arrays with 0
@@ -250,11 +254,13 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     
     for fc, amount in room.getPlayerPenalities().items():
         if fc in FC_table_str:
-            if amount < 0:
-                pass
+            to_add = amount * -1
+            FC_table_str[fc][1] += to_add
+            if to_add >= 0:
+                FC_table_str[fc][0] += "|" + str(to_add)
             else:
-                FC_table_str[fc][0] += "-" + str(amount)
-                FC_table_str[fc][1] -= amount
+                FC_table_str[fc][0] += str(to_add)
+            
 
     #build table string
     numRaces = min( (len(room.races), war.getNumberOfGPS()*4) )

@@ -134,37 +134,6 @@ class BadWolfCommands:
             await message.channel.send(file=discord.File(common.MESSAGE_LOGGING_FILE))
         if os.path.exists(common.FULL_MESSAGE_LOGGING_FILE):
             await message.channel.send(file=discord.File(common.FULL_MESSAGE_LOGGING_FILE))
-
-    @staticmethod
-    async def add_sha_track(message:discord.Message, args:List[str], command):
-        BadWolfCommands.is_badwolf_check(message.author, "cannot add sha track")
-        if len(args) < 3:
-            await message.channel.send("Requires 2 args `SHA, track_name`")
-            return
-        if not UtilityFunctions.is_hex(args[1]):
-            await message.channel.send(f"The given track is not an SHA: {args[1]}")
-            return
-        given_track_name = " ".join(command.split()[2:])
-        if args[1] in Race.sha_track_name_mappings:
-            await message.channel.send(f"The given track is already in SHA mappings with the following name: {args[1]}\nOverwriting...")
-        Race.sha_track_name_mappings[args[1]] = given_track_name
-        await message.channel.send(f"Added: {args[1]} -> {given_track_name}")
-    
-    @staticmethod
-    async def remove_sha_track(message:discord.Message, args:List[str]):
-        BadWolfCommands.is_badwolf_check(message.author, "cannot remove sha track")
-        if len(args) != 2:
-            await message.channel.send("Requires 1 args `SHA`")
-            return
-        if not UtilityFunctions.is_hex(args[1]):
-            await message.channel.send(f"The given track is not an SHA: {args[1]}")
-            return
-        if args[1] not in Race.sha_track_name_mappings:
-            await message.channel.send(f"The given track is not in SHA mappings. Current mappings: {'  |  '.join([str(k)+' : '+str(v) for k,v in Race.sha_track_name_mappings.items()])}")
-            return
-        given_track_name = Race.sha_track_name_mappings[args[1]]
-        del Race.sha_track_name_mappings[args[1]]
-        await message.channel.send(f"Removed: {args[1]} -> {given_track_name}")
         
         
     #Adds or removes a discord ID to/from the bot admins
@@ -263,6 +232,37 @@ class BotAdminCommands:
     """There is no point to this class, other than for organization purposes.
     This class contains the commands that only Bot Admins can do"""
     
+    @staticmethod
+    async def add_sha_track(message:discord.Message, args:List[str], command):
+        BotAdminCommands.is_bot_admin_check(message.author, "cannot add sha track")
+        if len(args) < 3:
+            await message.channel.send("Requires 2 args `SHA, track_name`")
+            return
+        if not UtilityFunctions.is_hex(args[1]):
+            await message.channel.send(f"The given track is not an SHA: {args[1]}")
+            return
+        given_track_name = " ".join(command.split()[2:])
+        if args[1] in Race.sha_track_name_mappings:
+            await message.channel.send(f"The given track is already in SHA mappings with the following name: {args[1]}\nOverwriting...")
+        Race.sha_track_name_mappings[args[1]] = given_track_name
+        await message.channel.send(f"Added: {args[1]} -> {given_track_name}")
+    
+    @staticmethod
+    async def remove_sha_track(message:discord.Message, args:List[str]):
+        BotAdminCommands.is_bot_admin_check(message.author, "cannot remove sha track")
+        if len(args) != 2:
+            await message.channel.send("Requires 1 args `SHA`")
+            return
+        if not UtilityFunctions.is_hex(args[1]):
+            await message.channel.send(f"The given track is not an SHA: {args[1]}")
+            return
+        if args[1] not in Race.sha_track_name_mappings:
+            await message.channel.send(f"The given track is not in SHA mappings. Current mappings: {'  |  '.join([str(k)+' : '+str(v) for k,v in Race.sha_track_name_mappings.items()])}")
+            return
+        given_track_name = Race.sha_track_name_mappings[args[1]]
+        del Race.sha_track_name_mappings[args[1]]
+        await message.channel.send(f"Removed: {args[1]} -> {given_track_name}")
+        
     @staticmethod
     def is_bot_admin_check(author, failure_message):
         if not common.is_bot_admin(author):
@@ -372,8 +372,10 @@ class StatisticCommands:
     ct_number_tracks = 25
     
     @staticmethod
-    def filter_out_bad_tracks(track_data:list) -> list:
-        return [r for r in track_data if (len(r[0]) > 0 and not UtilityFunctions.is_hex(r[0]))]
+    def filter_out_bad_tracks(track_data:list, is_top_tracks=True) -> list:
+        if not is_top_tracks:
+            return [r for r in track_data if (len(r[0]) > 0 and not UtilityFunctions.is_hex(r[0]))]
+        return track_data
     
     @staticmethod
     def validate_rts_cts_arg(arg):
@@ -460,7 +462,7 @@ class StatisticCommands:
     
     @staticmethod
     async def format_tracks_played_result(result:list, is_ct:bool, is_top_tracks:bool, tier:int, number_of_days:int) -> str:
-        result = StatisticCommands.filter_out_bad_tracks(result)
+        result = StatisticCommands.filter_out_bad_tracks(result, is_top_tracks)
         total_races_played = sum(track_data[2] for track_data in result)
         number_tracks = StatisticCommands.ct_number_tracks if is_ct else StatisticCommands.rt_number_tracks
         
@@ -476,7 +478,7 @@ class StatisticCommands:
             message_title += f" in Tier {tier}"
         if number_of_days is not None:
             message_title += f" in the Last {number_of_days} Day{'' if number_of_days == 1 else 's'}"
-        return f"**{message_title}**\n```{tracks_played_str}```"
+        return f"**{message_title}**\n```\n{tracks_played_str}```"
     
     @staticmethod
     async def popular_tracks_command(message:discord.Message, args:List[str], server_prefix:str, command:str):
@@ -1569,8 +1571,8 @@ class TablingCommands:
         players = this_bot.getRoom().get_sorted_player_list()
         playerNum, playerErrorMessage = getPlayerIndexInRoom(args[1], this_bot.getRoom(), server_prefix, "pen")
         
-        if amount.lstrip("-").isnumeric() and amount.count("-") <= 1:
-            amount = int(amount.lstrip("-")) * -1
+        if UtilityFunctions.isint(amount):
+            amount = int(amount)
             
         if not isinstance(amount, int):
             return await message.channel.send(f"The penalty amount must be a number. {example_help(server_prefix, args[0])}")

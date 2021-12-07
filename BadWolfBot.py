@@ -485,7 +485,7 @@ async def on_message(message: discord.Message):
                 await message.channel.send(file=discord.File(common.BADWOLF_PICTURE_FILE))    
             
             elif args[0] in INVITE_TERMS:
-                await message.channel.send(bot_invite_picture)              
+                await message.channel.send(f"**If you're on a mobile device, you'll need to use this link to invite the bot:** {common.INVITE_LINK}\n\nIf you're on a computer, refer to the picture below: {bot_invite_picture}")              
             
                 
             elif args[0] in RACE_RESULTS_TERMS:
@@ -628,10 +628,10 @@ async def on_message(message: discord.Message):
                 await commands.BadWolfCommands.get_logs_command(message)
             
             elif args[0] in ADD_SHA_TERMS:
-                await commands.BadWolfCommands.add_sha_track(message, args, command)
+                await commands.BotAdminCommands.add_sha_track(message, args, command)
                 
             elif args[0] in REMOVE_SHA_TERMS:
-                await commands.BadWolfCommands.remove_sha_track(message, args)
+                await commands.BotAdminCommands.remove_sha_track(message, args)
                 
             elif args[0] in {"aidata"} and (common.is_bad_wolf(message.author) or message.author.id == 267395889423712258):
                 if os.path.exists(TagAIShell.AI_Results_file_name):
@@ -705,10 +705,10 @@ async def on_message(message: discord.Message):
             elif args[0] in DISPLAY_GP_SIZE_TERMS:
                 await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
-            elif args[0] in POPULAR_TRACKS_TERMS and message.channel.category_id in common.BETA_CATEGORY_IDS:
+            elif args[0] in POPULAR_TRACKS_TERMS:
                 await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, command)
             
-            elif args[0] in UNPOPULAR_TRACKS_TERMS and message.channel.category_id in common.BETA_CATEGORY_IDS:
+            elif args[0] in UNPOPULAR_TRACKS_TERMS:
                 await commands.StatisticCommands.unpopular_tracks_command(message, args, server_prefix, command)
             
             else:
