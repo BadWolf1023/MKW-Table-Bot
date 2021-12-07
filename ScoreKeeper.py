@@ -255,7 +255,8 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     for fc, amount in room.getPlayerPenalities().items():
         if fc in FC_table_str:
             if amount < 0:
-                pass
+                FC_table_str[fc][0] += "+" + str(amount)
+                FC_table_str[fc][1] += amount
             else:
                 FC_table_str[fc][0] += "-" + str(amount)
                 FC_table_str[fc][1] -= amount
