@@ -484,7 +484,7 @@ async def on_message(message: discord.Message):
                 await message.channel.send(file=discord.File(common.BADWOLF_PICTURE_FILE))    
             
             elif args[0] in INVITE_TERMS:
-                await message.channel.send(f"{bot_invite_picture}\n\n **OR use this link: {common.INVITE_LINK}")              
+                await message.channel.send(f"**If you're on a mobile device, you'll need to use this link to invite the bot:** {common.INVITE_LINK}\n\nIf you're on a computer, refer to the picture below: {bot_invite_picture}")              
             
                 
             elif args[0] in RACE_RESULTS_TERMS:
