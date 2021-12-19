@@ -2534,7 +2534,7 @@ def get_max_specified_race(args):
     
     args = args[1:]
 
-    if args[0].isnumeric(): # if the first argument is numeric, then assume that they want to specify a max race
+    if args[0].isnumeric(): # if the first argument is numeric, then assume that it is to specify a max race
         return int(args[0])
 
     for flag in valid_max_race_flags:
