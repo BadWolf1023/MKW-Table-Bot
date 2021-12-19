@@ -240,7 +240,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
 
             GP_scores[fc] = gp_amount
     
-    #
+    #after GP scores have been determined, if up_to_race has been set, set all races after `up_to_race` to 0 pts
     if up_to_race and up_to_race>0:
         gp_start = int(up_to_race/4)
         first_gp_index_start = up_to_race%4
