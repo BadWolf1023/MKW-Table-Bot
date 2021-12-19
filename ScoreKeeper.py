@@ -159,7 +159,7 @@ def resizeGPsInto(GPs, new_size_GP):
     
     
 
-def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False, step=None):
+def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False, step=None, up_to_race=None):
     war = channel_bot.getWar()
     room = channel_bot.getRoom()
     if step is None:
@@ -239,6 +239,17 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
                         gp_amount[gp_race_num-1] = subout_old_score
 
             GP_scores[fc] = gp_amount
+    
+    #
+    if up_to_race and up_to_race>0:
+        gp_start = int(up_to_race/4)
+        first_gp_index_start = up_to_race%4
+
+        for indx, gp_scores in enumerate(GPs[gp_start:]):
+            race_start = first_gp_index_start if indx==0 else 0
+            for _, player_scores in gp_scores.items():
+                player_scores[race_start:] = [0] * (4-race_start)
+            
             
     resizedGPs = GPs if step == 4 else resizeGPsInto(GPs, step)
     for GPnum, GP_scores in enumerate(resizedGPs, 1):

@@ -447,7 +447,7 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
             
             elif args[0] in TABLE_TEXT_TERMS:
-                await commands.TablingCommands.table_text_command(message, this_bot, server_prefix, is_lounge_server)
+                await commands.TablingCommands.table_text_command(message, this_bot, args, server_prefix, is_lounge_server)
             elif args[0] in WAR_PICTURE_TERMS:
                 await commands.TablingCommands.war_picture_command(message, this_bot, args, server_prefix, is_lounge_server)
                   

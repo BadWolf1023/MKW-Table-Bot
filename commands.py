@@ -2221,7 +2221,10 @@ class TablingCommands:
                         step = 1
                     if len(args) > 1 and args[1] in {'gsc'}:
                         output_gsc_table = True
-                    table_text, table_sorted_data = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=use_lounge_otherwise_mii, use_miis=usemiis, lounge_replace=lounge_replace, server_id=server_id, missingRacePts=this_bot.dc_points, step=step)
+                    
+                    up_to = get_max_specified_race(args)
+                    
+                    table_text, table_sorted_data = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=use_lounge_otherwise_mii, use_miis=usemiis, lounge_replace=lounge_replace, server_id=server_id, missingRacePts=this_bot.dc_points, step=step, up_to_race=up_to)
                     if output_gsc_table:
                         table_text = SK.format_sorted_data_for_gsc(table_sorted_data, this_bot.getWar().teamPenalties)
                     table_text_with_style_and_graph = table_text + this_bot.get_lorenzi_style_and_graph(prepend_newline=True)
@@ -2259,7 +2262,7 @@ class TablingCommands:
                             embed.set_author(name=this_bot.getWar().getWarName(numRaces), icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                             embed.set_image(url="attachment://" + table_image_path)
                             
-                            temp = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), lounge_replace)
+                            temp = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), lounge_replace, up_to_race=up_to)
                             error_message = "\n\nMore errors occurred. Embed only allows so many errors to display."
                             if len(temp) + len(error_message) >= 2048:
                                 temp = temp[:2048-len(error_message)] + error_message
@@ -2273,14 +2276,15 @@ class TablingCommands:
                             os.remove(table_image_path)
     
     @staticmethod
-    async def table_text_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
+    async def table_text_command(message:discord.Message, this_bot:ChannelBot, args: List[str], server_prefix:str, is_lounge_server:bool):
         server_id = message.guild.id
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
         else:
+            up_to = get_max_specified_race(args)
             try:
-                table_text, _ = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, server_id=server_id, missingRacePts=this_bot.dc_points, discord_escape=True)
+                table_text, _ = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, server_id=server_id, missingRacePts=this_bot.dc_points, discord_escape=True, up_to_race=up_to)
                 await message.channel.send(table_text)
             except AttributeError:
                 await message.channel.send("Table Bot has a bug, and this mkwx room triggered it. I cannot tally your scores.")
@@ -2520,6 +2524,29 @@ def getUseLoungeNames(args, default_use=True):
                     return default_use, False
     return default_use, False
 
+valid_max_race_flags = {'upto=', 'max=', 'maxrace='}
+def get_max_specified_race(args):
+    '''
+    Checks if the user included a maximum race specification and returns it if they did.
+    '''
+    if len(args) < 2:
+        return None
+    
+    args = args[1:]
+
+    if args[0].isnumeric(): # if the first argument is numeric, then assume that they want to specify a max race
+        return int(args[0])
+
+    for flag in valid_max_race_flags:
+        for arg in args[::-1]:
+            arg = arg.strip().lower()
+            start = arg.find('=')+1
+            max_race = arg[start:]
+            if arg.startswith(flag) and len(arg)>len(flag) and max_race.isnumeric():
+                return int(max_race)
+    
+    return None
+
 
 async def send_table_theme_list(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot, server_prefix:str, server_wide=False):
     server_wide_or_table_str = "default theme used for tables in this server" if server_wide else 'theme for this table'
@@ -2578,4 +2605,3 @@ def load_vr_is_on():
                 
 def example_help(server_prefix:str, original_command:str):
     return f"Do {server_prefix}{original_command} for an example on how to use this command."
-                
