@@ -45,14 +45,17 @@ lockout_timelimit = timedelta(minutes=5)
 wiimmfi_url = 'https://wiimmfi.de'
 mkwxURL = 'https://wiimmfi.de/stats/mkwx'
 submkwxURL = f"{mkwxURL}/list/"
-special_test_cases = {f"{submkwxURL}r0000000":("Special room: Room has times with high deltas and a race with times that are the same as another race's times", f"{common.SAVED_ROOMS_DIR}SameTimeHighDelta.html"),
+special_test_cases = {
+f"{submkwxURL}r0000000":("Special room: Room has times with high deltas and a race with times that are the same as another race's times", f"{common.SAVED_ROOMS_DIR}SameTimeHighDelta.html"),
 f"{submkwxURL}r0000001":("Table Bot Challenge Room One", f"{common.SAVED_ROOMS_DIR}TableBotTestOne.html"),
 f"{submkwxURL}r0000002":("Table Bot Challenge Room Two", f"{common.SAVED_ROOMS_DIR}TableBotTestTwo.html"),
 f"{submkwxURL}r0000003":("Table Bot Remove Race Test w/ quickedit", f"{common.SAVED_ROOMS_DIR}removerace_one.html"),
 f"{submkwxURL}r0000004":("Table Bot Remove Race Test w/ quickedit, 2nd room to merge", f"{common.SAVED_ROOMS_DIR}removerace_two.html"),
 f"{submkwxURL}r0000005":("Clean room with no errors.", f"{common.SAVED_ROOMS_DIR}clean_room.html"),
 f"{submkwxURL}r0000006":("Tag in brackets.", f"{common.SAVED_ROOMS_DIR}tag_in_brackets.html"),
-f"{submkwxURL}r0000007":("Room with an unknown track name (SHA name).", f"{common.SAVED_ROOMS_DIR}unknown_track.html")}
+f"{submkwxURL}r0000007":("Room with an unknown track name (SHA name).", f"{common.SAVED_ROOMS_DIR}unknown_track.html"),
+f"{submkwxURL}r0000007":("Room with email protected tags", f"{common.SAVED_ROOMS_DIR}email_protected.html")
+}
 
 
 
@@ -304,8 +307,24 @@ async def __fetch__(session, url, use_long_cache_time=False):
         if to_return is None:
             raise TableBotExceptions.WiimmfiSiteFailure("Could not pull information from mkwx.")
         return to_return
-        
 
+# https://github.com/jslirola/cloudflare-email-decoder/blob/master/ced/lib/processing.py
+def decode_email(encodedString):
+    r = int(encodedString[:2], 16)
+    return ''.join([chr(int(encodedString[i:i + 2], 16) ^ r) for i in range(2, len(encodedString), 2)])
+
+
+def replace_content(text):
+    emailregex = 'data-cfemail=\"([^\"]+)\"'
+    tagregex = r'<a [^>]*="\/cdn-cgi\/l\/email-protection"[^>]*>([^<]+)<\/a>'
+
+    out = []
+    for line in text.split("\n"):
+        m = re.search(emailregex, line)
+        if m:
+            line = re.sub(tagregex, decode_email(m.group(1)), line)
+        out.append(line)
+    return "\n".join(out)
 
 async def getRoomHTML(roomLink):
     
@@ -314,23 +333,25 @@ async def getRoomHTML(roomLink):
         fp = codecs.open(local_file_path, "r", "utf-8")
         html_data = fp.read()
         fp.close()
-        return html_data   
+        return replace_content(html_data)
         
     async with aiohttp.ClientSession() as session:
         temp = await threaded_fetch(session, roomLink, use_long_cache_time=True)
-        return temp
+        return replace_content(temp)
 
 
 async def __getMKWXSoupCall__():
     async with aiohttp.ClientSession() as session:
         mkwxHTML = await threaded_fetch(session, mkwxURL, use_long_cache_time=False)
-        return BeautifulSoup(mkwxHTML, "html.parser")
-
+        return BeautifulSoup(replace_content(mkwxHTML), "html.parser")
 
 async def getMKWXSoup():
+    if common.STUB_MKWX:
+        fp = codecs.open(common.STUB_MKWX_FILE_NAME, "r", "utf-8")
+        html_data = fp.read()
+        fp.close()
+        return BeautifulSoup(replace_content(html_data), "html.parser")
     return await __getMKWXSoupCall__()
-
-
 
 async def getrLIDSoup(rLID):
     roomHTML = await getRoomHTML(submkwxURL + rLID)

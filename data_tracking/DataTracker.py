@@ -6,6 +6,7 @@ Created on Oct 21, 2021
 This module helps track and store data from Wiimmfi.
 
 '''
+import UserDataProcessing
 import common
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -92,11 +93,31 @@ class DataRetriever(object):
     
     @staticmethod
     def get_tracks_played_count(is_ct=False, tier=None, in_last_days=None):
-        tracks_query = QB.SQL_Search_Queury_Builder.get_tracks_query(is_ct, tier, in_last_days)
+        tracks_query = QB.SQL_Search_Query_Builder.get_tracks_played_query(is_ct, tier, in_last_days)
         with database_connection:
             return list(database_connection.execute(tracks_query))
         return []
 
+    @staticmethod
+    def get_best_tracks(fcs, is_ct=False, tier=None, in_last_days=None, sort_asc=False, min_count = 1):
+        tracks_query = QB.SQL_Search_Query_Builder.get_best_tracks(fcs, is_ct, tier, in_last_days, min_count)
+        result = list(database_connection.execute(tracks_query))
+
+        if sort_asc:
+            return list(reversed(result))
+        return result
+
+    @staticmethod
+    def get_top_players(track, tier=None, in_last_days=None, min_count=1):
+        tracks_query = QB.SQL_Search_Query_Builder.get_top_players_query(tier, in_last_days, min_count)
+        result = database_connection.execute(tracks_query, [track])
+
+        return list(result)
+
+    @staticmethod
+    def get_track_list():
+        return list(database_connection.execute(
+            "SELECT track_name, url, fixed_track_name, is_ct, track_name_lookup FROM Track"))
 
 class ChannelBotSQLDataValidator(object):
     def wrong_type_message(self, data, expected_type, multi=False):
@@ -384,7 +405,9 @@ class RoomTrackerSQL(object):
                 race.get_room_type(),
                 race.get_cc(),
                 race.get_region(),
-                race.is_from_wiimmfi())
+                race.is_from_wiimmfi(),
+                race.numRacers()
+                )
     
     def get_race_as_sql_track_tuple(self, race):
         '''Converts a given table bot race into a tuple that is ready to be inserted into the Track SQL table'''
@@ -409,7 +432,7 @@ class RoomTrackerSQL(object):
                 player.get_FC(),
                 player.get_name(),
                 placement.get_place(),
-                placement.get_time_string(),
+                placement.get_time_seconds(),
                 placement.get_delta(),
                 player.get_ol_status(),
                 player.get_position(),
@@ -733,6 +756,46 @@ def populate_tier_table():
     populate_tier_table_script = common.read_sql_file(common.ROOM_DATA_POPULATE_TIER_TABLE_SQL)
     cur.executescript(populate_tier_table_script)
 
+def populate_score_matrix_table():
+    cur = database_connection.cursor()
+    rows = []
+
+    for room_size in range(0,12):
+        for place in range(0,12):
+            rows.append((room_size+1, place+1, common.SCORE_MATRIX[room_size][place]))
+
+    cur.executescript("DELETE FROM Score_Matrix;")
+    cur.executemany("INSERT INTO Score_Matrix VALUES (?, ?, ?)", rows)
+    database_connection.commit()
+
+def populate_player_fcs_table():
+    cur = database_connection.cursor()
+    rows = []
+
+    fc_map = UserDataProcessing.FC_DiscordID
+    if len(fc_map) == 0:
+        return
+
+    for fc in fc_map:
+        discord_id = fc_map[fc][0]
+        rows.append((fc, discord_id))
+
+    start = time.time()
+    cur.executescript("DELETE FROM Player_FCs;")
+    cur.executemany("insert into Player_FCs values (?, ?)", rows)
+    print(f'FC table population finished in {time.time()-start} seconds')
+    database_connection.commit()
+
+def add_player_fcs(fc_map):
+    rows = []
+    for fc in fc_map:
+        discord_id = fc_map[fc][0]
+        rows.append((fc, discord_id))
+
+    cur = database_connection.cursor()
+    cur.executemany("INSERT OR REPLACE INTO Player_FCs VALUES(?, ?)", rows)
+    database_connection.commit()
+
 def ensure_foreign_keys_on():
     cur = database_connection.cursor()
     cur.executescript("""PRAGMA foreign_keys = ON;""")
@@ -747,6 +810,8 @@ def initialize():
     start_database()
     ensure_foreign_keys_on()
     populate_tier_table()
+    populate_score_matrix_table()
+    populate_player_fcs_table()
     database_maintenance()
 
 def save_data():
@@ -758,5 +823,6 @@ def on_exit():
 
 
 if __name__ == '__main__':
+    os.chdir("..")
     initialize()
     

@@ -21,7 +21,7 @@ VALID_REGIONS = {CTGP_CTWW_REGION, BATTLE_REGION, RT_WW_REGION, PRIVATE_ROOM_REG
 def is_valid_region(region:str):
     return region in VALID_REGIONS or region.startswith("vs_")
 
-
+# https://tinyurl.com/mkwdictionary
 track_name_abbreviation_mappings = {
     #Mushroom Cup
     "Wii Luigi Circuit (Nintendo)": ("LC", "ルイサ"),
@@ -31,7 +31,7 @@ track_name_abbreviation_mappings = {
     #Flower Cup
     "Wii Mario Circuit (Nintendo)":("MC", "マリサ"),
     "Wii Coconut Mall (Nintendo)": ("CM", "ココモ"),
-    "Wii DK Summit (Nintendo)":("DKS", "スノボ"),
+    "Wii DK Summit (Nintendo)":(["DKS", "DKSC"], "スノボ"),
     "Wii Wario's Gold Mine (Nintendo)":("WGM", "鉱山"),
     #Star Cup
     "Wii Daisy Circuit (Nintendo)": ("DC", "デイサ"),
@@ -40,29 +40,29 @@ track_name_abbreviation_mappings = {
     "Wii Grumble Volcano (Nintendo)": ("GV", "火山"),
     #Special Cup
     "Wii Dry Dry Ruins (Nintendo)": ("DDR", "遺跡"),
-    "Wii Moonview Highway (Nintendo)": ("MvH", "ムンリ"),
+    "Wii Moonview Highway (Nintendo)": (["MvH", "MH"], "ムンリ"),
     "Wii Bowser's Castle (Nintendo)": "BCWii",
     "Wii Rainbow Road (Nintendo)": ("RR", "虹"),
     #Shell Cup
     "GCN Peach Beach (Nintendo)": ("rPB", "ピーチビーチ"),
     "DS Yoshi Falls (Nintendo)": ("rYF", "ヨシフォ"),
-    "SNES Ghost Valley 2 (Nintendo)": ("GV2", "沼"),
+    "SNES Ghost Valley 2 (Nintendo)": (["GV2", "rGV2"], "沼"),
     "N64 Mario Raceway (Nintendo)": ("rMR", "64マリサ"),
     #Banana Cup
     "N64 Sherbet Land (Nintendo)": ("rSL", "シャベラン"),
     "GBA Shy Guy Beach (Nintendo)": ("SGB", "兵浜"),
-    "DS Delfino Square (Nintendo)": ("rDS", "モンテ"),
+    "DS Delfino Square (Nintendo)": (["rDS", "DSDS"], "モンテ"),
     "GCN Waluigi Stadium (Nintendo)": ("rWS", "ワルスタ"),
     #Leaf Cup
     "DS Desert Hills (Nintendo)": ("rDH", "さばく"),
     "GBA Bowser Castle 3 (Nintendo)": "BC3",
-    "N64 DK's Jungle Parkway (Nintendo)": ("rJP", "ジャンパ"),
-    "GCN Mario Circuit (Nintendo)": ("GCN MC", "GCマリサ"),
+    "N64 DK's Jungle Parkway (Nintendo)": (["rJP","rDKJP", "DKJP", "JP"], "ジャンパ"),
+    "GCN Mario Circuit (Nintendo)": (["GCN MC", "rMC"], "GCマリサ"),
     #Lightning Cup
     "SNES Mario Circuit 3 (Nintendo)": ("MC3", "SFCマリサ"),
     "DS Peach Gardens (Nintendo)": ("rPG", "ピチガ"),
     "GCN DK Mountain (Nintendo)": ("DKM", "山"),
-    "N64 Bowser's Castle (Nintendo)": ("BC64", "64BC")
+    "N64 Bowser's Castle (Nintendo)": (["BC64", "rBC"], "64BC")
     }
 
 sha_track_name_mappings = {"9f09ddb05bc5c7b04bb7aa120f6d0f21774143eb":"Waluigi's Motocross (v1.9)"}
@@ -345,6 +345,8 @@ class Race:
         if self.track in track_name_abbreviation_mappings:
             track_mapping = track_name_abbreviation_mappings[self.track]
             if isinstance(track_mapping, tuple):
+                if isinstance(track_mapping[0], list):
+                    return track_mapping[0][0] + " (" + track_mapping[1] + ")"
                 return track_mapping[0] + " (" + track_mapping[1] + ")"
             else:
                 return track_mapping

@@ -4,7 +4,7 @@ CREATE TABLE Place(
     fc TEXT NOT NULL,
     name TEXT NOT NULL,
     place INT NOT NULL,
-    time TIME NULL,
+    time DOUBLE(8, 3) NULL,
     lag_start DOUBLE(8, 2) NULL,
     ol_status TEXT NOT NULL,
     room_position INT NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE Place(
     lounge_name TEXT NULL,
     mii_hex TEXT NULL,
     is_wiimmfi_place TINYINT(1) NOT NULL,
-    PRIMARY KEY(fc, race_id)
+    PRIMARY KEY(fc, race_id),
     FOREIGN KEY (race_id)
        REFERENCES Race(race_id)
           ON UPDATE CASCADE
@@ -41,6 +41,7 @@ CREATE TABLE Race(
     cc TEXT NOT NULL,
     region TEXT NULL,
     is_wiimmfi_race TINYINT(1) NOT NULL,
+    num_players INT NOT NULL,
     PRIMARY KEY(race_id),
     FOREIGN KEY (track_name)
        REFERENCES Track(track_name)
@@ -149,4 +150,18 @@ CREATE TABLE Event_Structure(
           ON UPDATE CASCADE
            ON DELETE RESTRICT
 );
+
+CREATE TABLE Score_Matrix(
+    size INT,
+    place INT,
+    pts INT,
+    PRIMARY KEY (size, place)
+);
+
+CREATE TABLE Player_FCs(
+    fc TEXT NOT NULL,
+    discord_id INT,
+    PRIMARY KEY(fc)
+);
+
 COMMIT;

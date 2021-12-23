@@ -1,5 +1,6 @@
 .project
 .pydevproject
+.idea
 tablebot_data/bad_wolf_facts.pkl
 tablebot_data/blacklisted_users.txt
 tablebot_data/blacklisted_words.txt
@@ -30,4 +31,7 @@ room_data_tracking.db
 data_tracking/room_data_tracking.db
 */room_data_tracking.db
 team_formats.pkl
+
+miis/mii_cache/*
+logging/*
 

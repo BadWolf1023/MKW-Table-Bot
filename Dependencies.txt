@@ -6,3 +6,4 @@ pip install psutil
 pip install kaitaistruct
 pip install -U matplotlib
 pip install bitstring
+pip install tabulate

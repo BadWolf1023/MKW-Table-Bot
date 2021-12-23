@@ -4,7 +4,7 @@ Created on Oct 29, 2021
 @author: willg
 '''
 PLAYER_TABLE_NAMES = ["fc", "pid", "player_url"]
-RACE_TABLE_NAMES = ["race_id", "rxx", "time_added", "match_time", "race_number", "room_name", "track_name", "room_type", "cc", "region", "is_wiimmfi_race"]
+RACE_TABLE_NAMES = ["race_id", "rxx", "time_added", "match_time", "race_number", "room_name", "track_name", "room_type", "cc", "region", "is_wiimmfi_race", "num_players"]
 TRACK_TABLE_NAMES = ["track_name", "url", "fixed_track_name", "is_ct", "track_name_lookup"]
 PLACE_TABLE_NAMES = ["race_id", "fc", "name", "place", "time", "lag_start", "ol_status", "room_position", "region", "connection_fails", "role", "vr", "character", "vehicle", "discord_name", "lounge_name", "mii_hex", "is_wiimmfi_place"]
 EVENT_RACES_TABLE_NAMES = ["event_id", "race_id"]
@@ -167,7 +167,7 @@ RETURNING {EVENT_STRUCTURE_TABLE_NAMES[0]}"""
     
 
 
-class SQL_Search_Queury_Builder(object):
+class SQL_Search_Query_Builder(object):
     @staticmethod
     def get_sql_tier_filter(tier, is_ct):
         return f"""Race.race_id in (SELECT DISTINCT Race.race_id
@@ -183,23 +183,29 @@ class SQL_Search_Queury_Builder(object):
                                 AND Event.region = "priv"
                                 AND Tier.is_ct = {1 if is_ct else 0}
                                 AND Track.is_ct = {1 if is_ct else 0}
-                                AND ROUND((JULIANDAY(Event.last_updated) - JULIANDAY(Event.time_added)) * 86400) > 600 /*10 minutes is 600 seconds*/
-                                AND Event.number_of_updates > 2 /*Events should have at least 3 room updates, otherwise the table was likely not created during the event*/
+                                {SQL_Search_Query_Builder.get_event_valid_filter()}
                                 )
 )"""
-    
+
     @staticmethod
     def get_sql_days_filter(days):
         return f"Race.time_added > date('now','-{days} days')"
-        
+
     @staticmethod
-    def get_tracks_query(is_ct, tier, last_x_days):
+    def get_event_valid_filter():
+        return """
+            AND ROUND((JULIANDAY(Event.last_updated) - JULIANDAY(Event.time_added)) * 86400) > 600 /*10 minutes is 600 seconds*/
+            AND Event.number_of_updates > 2 /*Events should have at least 3 room updates, otherwise the table was likely not created during the event*/
+            """
+
+    @staticmethod
+    def get_tracks_played_query(is_ct, tier, last_x_days):
         tier_filter_clause = ""
         days_filter_clause = ""
         if tier is not None:
-            tier_filter_clause = "AND " + SQL_Search_Queury_Builder.get_sql_tier_filter(tier, is_ct)
+            tier_filter_clause = "AND " + SQL_Search_Query_Builder.get_sql_tier_filter(tier, is_ct)
         if last_x_days is not None:
-            days_filter_clause = "AND " + SQL_Search_Queury_Builder.get_sql_days_filter(last_x_days)
+            days_filter_clause = "AND " + SQL_Search_Query_Builder.get_sql_days_filter(last_x_days)
             
         return f"""SELECT
         Race.track_name,
@@ -216,9 +222,86 @@ class SQL_Search_Queury_Builder(object):
         Track.fixed_track_name
     ORDER BY
         3 DESC, 1 ASC;"""
-    
 
+    @staticmethod
+    def get_best_tracks(fcs, is_ct, tier, last_x_days, min_count):
+        tier_filter_clause = ""
+        days_filter_clause = ""
+        if tier is not None:
+            tier_filter_clause = f"AND tier = {tier}"
+        if last_x_days is not None:
+            days_filter_clause = "AND " + SQL_Search_Query_Builder.get_sql_days_filter(last_x_days)
 
+        fc_filter = '(' + ','.join([f'\'{fc}\'' for fc in fcs]) + ')'
+
+        return f"""
+        SELECT
+               Track.fixed_track_name,
+               avg(pts) as avg_pts,
+               avg(Place.place) as avg_place,
+               count(*) as count
+        FROM Place
+        JOIN Race ON Place.race_id = Race.race_id
+        JOIN Event_Races ER ON Race.race_id = ER.race_id
+        JOIN Event ON ER.event_id = Event.event_id
+        LEFT OUTER JOIN Tier ON Event.channel_id = Tier.channel_id
+        JOIN Track on Race.track_name = Track.track_name
+        JOIN Score_Matrix on (Place.place = Score_Matrix.place AND Race.num_players=Score_Matrix.size)
+        
+        WHERE time < 6*60
+            AND Race.track_name != ''
+            AND Place.fc in {fc_filter}
+            AND Track.is_ct = {1 if is_ct else 0}
+            {tier_filter_clause}
+            {days_filter_clause}
+            {SQL_Search_Query_Builder.get_event_valid_filter()}
+            
+        
+        GROUP BY Track.fixed_track_name
+        HAVING count(*) >= {min_count}
+        ORDER BY avg_pts DESC
+        """
+
+    @staticmethod
+    def get_top_players_query(tier, last_x_days, min_count):
+        tier_filter_clause = ""
+        days_filter_clause = ""
+        if tier is not None:
+            tier_filter_clause = f"AND tier = {tier}"
+        if last_x_days is not None:
+            days_filter_clause = "AND " + SQL_Search_Query_Builder.get_sql_days_filter(last_x_days)
+
+        return f"""
+                SELECT
+                   discord_id,
+                   avg(pts) as avg_pts,
+                   avg(Place.place) as avg_place,
+                   avg(time) as avg_finish,
+                   count(*) as count
+                FROM Place
+                JOIN Race ON Place.race_id = Race.race_id
+                JOIN Event_Races ER ON Race.race_id = ER.race_id
+                JOIN Event ON ER.event_id = Event.event_id
+                JOIN Event_Structure on Event.event_id = Event_Structure.event_id
+                JOIN Tier ON Event.channel_id = Tier.channel_id
+                JOIN Track on Race.track_name = Track.track_name
+                JOIN Score_Matrix on (Place.place = Score_Matrix.place AND Race.num_players=Score_Matrix.size)
+                JOIN Player_FCs on Place.fc = Player_FCs.fc
+                
+                WHERE time < 6*60
+                    AND Track.track_name = ?
+                    AND (players_per_team * number_of_teams) == 12
+                    {tier_filter_clause}
+                    {days_filter_clause}
+                    {SQL_Search_Query_Builder.get_event_valid_filter()}
+                
+                GROUP BY discord_id
+                HAVING count(*) >= {min_count}
+                ORDER BY avg_pts DESC
+                LIMIT 100
+                """
+
+# [print(x) for x in SQL_Search_Query_Builder.get_top_players_query(1, None, None)]
 #print(get_fcs_not_in_Player_table([1, 2, 3]))
 
 

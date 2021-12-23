@@ -3,7 +3,7 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
-from UserDataProcessing import lounge_add
+import UserDataProcessing
 import UtilityFunctions
 import Player
 import re
@@ -114,9 +114,16 @@ class Placement:
         elif len(milliseconds) == 2:
             milliseconds = "0" + milliseconds
         return minutes + ":" + seconds + "." + milliseconds
+
+    def get_time_seconds(self):
+        minutes = self.time[0]
+        seconds = self.time[1]
+        milliseconds = self.time[2]
+
+        return minutes*60+seconds+milliseconds/1000
     
     def __str__(self):
-        to_return = f"{self.place}. {UtilityFunctions.process_name(self.player.name + lounge_add(self.player.FC))} - "
+        to_return = f"{self.place}. {UtilityFunctions.process_name(self.player.name + UserDataProcessing.lounge_add(self.player.FC))} - "
         if self.is_disconnected():
             to_return += "DISCONNECTED"
         else:
