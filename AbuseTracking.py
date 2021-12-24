@@ -16,6 +16,7 @@ blacklisted_command_count = defaultdict(int)
 
 BOT_ABUSE_REPORT_CHANNEL = None
 CLOUDFLARE_REPORT_CHANNEL = None
+WHITELIST = 366774710186278914
 
 WARN_MESSAGES_PER_SECOND_RATE = .45
 BAN_RATE_MESSAGES_PER_SECOND = .48
@@ -48,8 +49,8 @@ def is_hitting_ban_rate(author_id):
 
 
 async def abuse_track_check(message:discord.Message):
-    
     author_id = message.author.id
+    if author_id == WHITELIST: return
     bot_abuse_tracking[author_id][0] += 1
     bot_abuse_tracking[author_id][1].append(message.content)
     bot_abuse_tracking[author_id][2].append(datetime.now())

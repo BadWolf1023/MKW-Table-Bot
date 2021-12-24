@@ -7,3 +7,5 @@ Traceback (most recent call last):
   File "C:\Users\willg\AppData\Local\Programs\Python\Python38-32\lib\encodings\cp1252.py", line 23, in decode
     return codecs.charmap_decode(input,self.errors,decoding_table)[0]
 UnicodeDecodeError: 'charmap' codec can't decode byte 0x8f in position 1411: character maps to <undefined>
+
+ kj
