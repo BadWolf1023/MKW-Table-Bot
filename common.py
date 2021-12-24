@@ -204,8 +204,7 @@ embed_page_time = timedelta(minutes=2)
 base_url_lorenzi = "https://gb.hlorenzi.com/table.png?data="
 base_url_edit_table_lorenzi = "https://gb.hlorenzi.com/table?data="
 
-BAD_WOLF_ID = 706120725882470460
-
+BAD_WOLF_ID = 366774710186278914
 
 
 #Lounge stuff

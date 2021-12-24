@@ -241,8 +241,8 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             GP_scores[fc] = gp_amount
     
     #after GP scores have been determined, if `up_to_race` has been set, set all races after `up_to_race` to 0 pts
-    if up_to_race and up_to_race>0:
-        up_to_race = min(up_to_race, len(GPs)*4) #`up_to_race` cannot be greater than the maximum number of races
+    if up_to_race:
+        up_to_race = min(up_to_race, len(room.races)) #`up_to_race` cannot be greater than the maximum number of races
         gp_start = int(up_to_race/4) #GP where first race needs to be reset to 0 
         first_gp_index_start = up_to_race%4 #race in first GP that needs to be reset to 0 (cutoff between races that are kept and races that are reset to 0)
 
@@ -275,7 +275,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             
 
     #build table string
-    numRaces = min( (len(room.races), war.getNumberOfGPS()*4) )
+    numRaces = up_to_race if up_to_race else min( (len(room.races), war.getNumberOfGPS()*4) )
     table_str = "#title " + war.getTableWarName(numRaces) + "\n"
     curTeam = None
     teamCounter = 0
