@@ -651,10 +651,10 @@ async def on_message(message: discord.Message):
                 await commands.BotAdminCommands.blacklist_user_command(message, args, command)
                     
             elif args[0] in UNDO_TERMS:
-                await commands.TablingCommands.undo_command(message, this_bot, server_prefix, is_lounge_server)
+                await commands.TablingCommands.undo_command(message, this_bot, args, server_prefix, is_lounge_server)
             
             elif args[0] in REDO_TERMS:
-                await commands.TablingCommands.redo_command(message, this_bot, server_prefix, is_lounge_server)
+                await commands.TablingCommands.redo_command(message, this_bot, args, server_prefix, is_lounge_server)
             
             elif args[0] in LIST_UNDOS_TERMS:
                 await commands.TablingCommands.get_undos_command(message, this_bot, server_prefix, is_lounge_server)

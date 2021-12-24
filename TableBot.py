@@ -546,13 +546,16 @@ class ChannelBot(object):
         return ret
         
     #restores previous state (?undo)
-    def restore_last_save_state(self):
+    def restore_last_save_state(self, do_all=False):
         if len(self.save_states) < 1 or self.state_pointer < 0:
             return False
 
         if self.state_pointer+1 == len(self.save_states):
             self.add_save_state(command=None) #save the current state before reverting to the previous state if it hasn't been saved yet
             self.state_pointer-=1
+        
+        if do_all:
+            self.state_pointer = 0
         
         command, save_state = self.save_states[self.state_pointer]
         self.state_pointer-=1
@@ -566,15 +569,17 @@ class ChannelBot(object):
         return command
     
     #restores to the following state (?redo)
-    def restore_last_redo_state(self):
-
-        if len(self.save_states) <1 or self.state_pointer+1 >= len(self.save_states):
+    def restore_last_redo_state(self, do_all=False):
+        if len(self.save_states) <1 or self.state_pointer+2 >= len(self.save_states):
             return False
-        
-        if self.state_pointer+1 < len(self.save_states):
-            self.state_pointer+=1
-        command, save_state = self.save_states[self.state_pointer][0], self.save_states[self.state_pointer+1][1]
+        print(self.state_pointer, len(self.save_states))
+        if do_all:
+            self.state_pointer=len(self.save_states)-2
+        else:
+            if self.state_pointer+2 < len(self.save_states):
+                self.state_pointer+=1
 
+        command, save_state = self.save_states[self.state_pointer][0], self.save_states[self.state_pointer+1][1]
         
         self.getRoom().restore_save_state(save_state["Room"])
         self.getWar().restore_save_state(save_state["War"])

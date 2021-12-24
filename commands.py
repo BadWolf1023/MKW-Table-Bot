@@ -2084,28 +2084,32 @@ class TablingCommands:
         await message.channel.send(redo_list)
 
     @staticmethod
-    async def undo_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):   
+    async def undo_command(message:discord.Message, this_bot:ChannelBot, args: List[str], server_prefix:str, is_lounge_server:bool):   
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
+        
+        do_all = True if (len(args)>1 and args[1].strip().lower() == "all") else False
     
-        undone_command = this_bot.restore_last_save_state()
+        undone_command = this_bot.restore_last_save_state(do_all=do_all)
         if undone_command is False:
             await message.channel.send("No commands to undo.")
             return
-        
-        await message.channel.send(f"The following command has been undone: {UtilityFunctions.process_name(undone_command)}\nRun {server_prefix}wp to make sure table bot is fully refreshed.")
+        mes = "All possible commands have been undone." if do_all else f"The following command has been undone: {UtilityFunctions.process_name(undone_command)}"
+        await message.channel.send(f"{mes}\nRun {server_prefix}wp to make sure table bot is fully refreshed.")
     
     @staticmethod
-    async def redo_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
+    async def redo_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             return await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         
-        redone_command = this_bot.restore_last_redo_state()
+        do_all = True if (len(args)>1 and args[1].strip().lower() == "all") else False
+        redone_command = this_bot.restore_last_redo_state(do_all=do_all)
         if redone_command is False:
             return await message.channel.send("No commands to redo.")
         
-        await message.channel.send(f"The following command has been redone: {UtilityFunctions.process_name(redone_command)}\nRun {server_prefix}wp to make sure table bot is fully refreshed.")
+        mes = "All possible commands have been redone." if do_all else f"The following command has been redone: {UtilityFunctions.process_name(redone_command)}"
+        await message.channel.send(f"{mes}\nRun {server_prefix}wp to make sure table bot is fully refreshed.")
 
     @staticmethod
     async def early_dc_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool): 
@@ -2219,7 +2223,7 @@ class TablingCommands:
                                             str(len(this_bot.getRoom().getRaces())) +\
                                             f" races{f' (showing {up_to} races)' if include_up_to_str else ''}. Last race: " +\
                                             str(this_bot.getRoom().races[-1].getTrackNameWithoutAuthor()) +\
-                                            " (last shown: " + str(this_bot.getRoom().races[up_to-1].getTrackNameWithoutAuthor()) + ")"
+                                            ((" (last shown: " + str(this_bot.getRoom().races[up_to-1].getTrackNameWithoutAuthor()) + ")") if up_to else "")
                                             )
                                         )
 
