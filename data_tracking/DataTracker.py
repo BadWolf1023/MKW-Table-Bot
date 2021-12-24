@@ -111,7 +111,6 @@ class DataRetriever(object):
     def get_top_players(track, tier=None, in_last_days=None, min_count=1):
         tracks_query = QB.SQL_Search_Query_Builder.get_top_players_query(tier, in_last_days, min_count)
         result = database_connection.execute(tracks_query, [track])
-
         return list(result)
 
     @staticmethod
@@ -396,6 +395,7 @@ class RoomTrackerSQL(object):
     
     def get_race_as_sql_tuple(self, race:Race.Race):
         '''Converts a given table bot race into a tuple that is ready to be inserted into the Race SQL table'''
+        times = [x.get_time_seconds() for x in race.getPlacements() if not (x.is_bogus_time() or x.is_disconnected())]
         return (race.get_race_id(),
                 race.get_rxx(),
                 UtilityFunctions.get_wiimmfi_utc_time(race.get_match_start_time()),
@@ -406,7 +406,10 @@ class RoomTrackerSQL(object):
                 race.get_cc(),
                 race.get_region(),
                 race.is_from_wiimmfi(),
-                race.numRacers()
+                race.numRacers(),
+                min(times),
+                max(times),
+                sum(times)/len(times)
                 )
     
     def get_race_as_sql_track_tuple(self, race):

@@ -622,19 +622,22 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             await message.channel.send("No race data was found.")
             return
 
-        best_tracks = [list(t) for t in best_tracks]
+        best_tracks = StatisticCommands.filter_out_bad_tracks([list(t) for t in best_tracks])
         for i, track in enumerate(best_tracks,1):
             if not is_ct and track[0].startswith("Wii "):
                 track[0] = track[0][4:]
             track[0] = f'{i}. {track[0]}'
 
-        headers = ['+ Track Name', 'Avg Pts', 'Avg Place', "# Plays"]
+            secs = track[3]
+            track[3] = f'{secs:.2f}s'
+
+        headers = ['+ Track Name', 'Avg Pts', 'Avg Place', 'Avg Delta', "# Plays"]
 
         tracks_per_page = StatisticCommands.ct_number_tracks if is_ct else StatisticCommands.rt_number_tracks
         num_pages = len(best_tracks)/tracks_per_page
 
         def get_page_callback(page):
-            table =  tabulate(best_tracks[page*tracks_per_page:(page+1)*tracks_per_page], headers, tablefmt="simple",floatfmt=".2f")
+            table =  tabulate(best_tracks[page*tracks_per_page:(page+1)*tracks_per_page], headers, tablefmt="simple",floatfmt=".2f",colalign=["left"], stralign="right")
 
             message_title = f'{"Worst" if sort_asc else "Best"} {"CTs" if is_ct else "RTs"} for {lounge_name}'
             if tier is not None:
@@ -676,9 +679,9 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             player[0] = f'{i}. {player[0]}'
 
             secs = player[3]
-            player[3] = f'{int(secs // 60)}:{round(secs % 60):02}'
+            player[3] = f'{secs:.2f}s'
 
-        headers = ['+ Player', 'Avg Pts', 'Avg Place', 'Avg Finish', "# Plays"]
+        headers = ['+ Player', 'Avg Pts', 'Avg Place', 'Avg Delta', "# Plays"]
 
         players_per_page = StatisticCommands.leaderboard_players_per_page
         num_pages = len(top_players) / players_per_page

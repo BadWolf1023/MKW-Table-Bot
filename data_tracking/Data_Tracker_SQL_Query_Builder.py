@@ -4,7 +4,7 @@ Created on Oct 29, 2021
 @author: willg
 '''
 PLAYER_TABLE_NAMES = ["fc", "pid", "player_url"]
-RACE_TABLE_NAMES = ["race_id", "rxx", "time_added", "match_time", "race_number", "room_name", "track_name", "room_type", "cc", "region", "is_wiimmfi_race", "num_players"]
+RACE_TABLE_NAMES = ["race_id", "rxx", "time_added", "match_time", "race_number", "room_name", "track_name", "room_type", "cc", "region", "is_wiimmfi_race", "num_players", "first_place_time", "last_place_time", "avg_time"]
 TRACK_TABLE_NAMES = ["track_name", "url", "fixed_track_name", "is_ct", "track_name_lookup"]
 PLACE_TABLE_NAMES = ["race_id", "fc", "name", "place", "time", "lag_start", "ol_status", "room_position", "region", "connection_fails", "role", "vr", "character", "vehicle", "discord_name", "lounge_name", "mii_hex", "is_wiimmfi_place"]
 EVENT_RACES_TABLE_NAMES = ["event_id", "race_id"]
@@ -180,7 +180,6 @@ class SQL_Search_Query_Builder(object):
                                     JOIN Track USING(track_name)
                                 WHERE
                                 Tier.tier = {tier} /*Only get events with the desired tier*/
-                                AND Event.region = "priv"
                                 AND Tier.is_ct = {1 if is_ct else 0}
                                 AND Track.is_ct = {1 if is_ct else 0}
                                 {SQL_Search_Query_Builder.get_event_valid_filter()}
@@ -196,6 +195,7 @@ class SQL_Search_Query_Builder(object):
         return """
             AND ROUND((JULIANDAY(Event.last_updated) - JULIANDAY(Event.time_added)) * 86400) > 600 /*10 minutes is 600 seconds*/
             AND Event.number_of_updates > 2 /*Events should have at least 3 room updates, otherwise the table was likely not created during the event*/
+            AND Event.region = 'priv'
             """
 
     @staticmethod
@@ -228,38 +228,46 @@ class SQL_Search_Query_Builder(object):
         tier_filter_clause = ""
         days_filter_clause = ""
         if tier is not None:
-            tier_filter_clause = f"AND tier = {tier}"
+            tier_filter_clause = f"""
+            AND Place.race_id IN (
+                SELECT DISTINCT Race.race_id
+                FROM Race
+                         JOIN Event_Races ER ON Race.race_id = ER.race_id
+                         JOIN Event ON ER.event_id = Event.event_id
+                         JOIN Tier ON Event.channel_id = Tier.channel_id
+                         JOIN Track ON Race.track_name = Track.track_name
+            
+                WHERE Race.track_name != ''
+                    AND tier = {tier}
+                    {SQL_Search_Query_Builder.get_event_valid_filter()}
+            )
+            """
+
         if last_x_days is not None:
             days_filter_clause = "AND " + SQL_Search_Query_Builder.get_sql_days_filter(last_x_days)
 
+        #fcs = ['1509-2420-6937']
         fc_filter = '(' + ','.join([f'\'{fc}\'' for fc in fcs]) + ')'
 
         return f"""
-        SELECT
-               Track.fixed_track_name,
-               avg(pts) as avg_pts,
-               avg(Place.place) as avg_place,
-               count(*) as count
-        FROM Place
-        JOIN Race ON Place.race_id = Race.race_id
-        JOIN Event_Races ER ON Race.race_id = ER.race_id
-        JOIN Event ON ER.event_id = Event.event_id
-        LEFT OUTER JOIN Tier ON Event.channel_id = Tier.channel_id
-        JOIN Track on Race.track_name = Track.track_name
-        JOIN Score_Matrix on (Place.place = Score_Matrix.place AND Race.num_players=Score_Matrix.size)
-        
-        WHERE time < 6*60
-            AND Race.track_name != ''
-            AND Place.fc in {fc_filter}
-            AND Track.is_ct = {1 if is_ct else 0}
-            {tier_filter_clause}
-            {days_filter_clause}
-            {SQL_Search_Query_Builder.get_event_valid_filter()}
-            
-        
-        GROUP BY Track.fixed_track_name
-        HAVING count(*) >= {min_count}
-        ORDER BY avg_pts DESC
+            SELECT Track.fixed_track_name,
+                   AVG(pts)         AS avg_pts,
+                   AVG(Place.place) AS avg_place,
+                   AVG(time-Race.first_place_time) AS avg_delta,
+                   COUNT(*)         AS count
+            FROM Place
+                     JOIN Race ON Place.race_id = Race.race_id
+                     JOIN Score_Matrix
+                          ON (Place.place = Score_Matrix.place AND num_players = Score_Matrix.size)
+                     JOIN Track ON Race.track_name = Track.track_name
+            WHERE Track.is_ct = {1 if is_ct else 0}
+                AND Place.fc in {fc_filter}
+                AND time < 6 * 60
+                {days_filter_clause}
+                {tier_filter_clause}
+            GROUP BY Track.fixed_track_name
+            HAVING COUNT(*) >= {min_count}
+            ORDER BY avg_pts DESC
         """
 
     @staticmethod
@@ -272,36 +280,42 @@ class SQL_Search_Query_Builder(object):
             days_filter_clause = "AND " + SQL_Search_Query_Builder.get_sql_days_filter(last_x_days)
 
         return f"""
-                SELECT
-                   discord_id,
-                   avg(pts) as avg_pts,
-                   avg(Place.place) as avg_place,
-                   avg(time) as avg_finish,
-                   count(*) as count
-                FROM Place
-                JOIN Race ON Place.race_id = Race.race_id
-                JOIN Event_Races ER ON Race.race_id = ER.race_id
-                JOIN Event ON ER.event_id = Event.event_id
-                JOIN Event_Structure on Event.event_id = Event_Structure.event_id
-                JOIN Tier ON Event.channel_id = Tier.channel_id
-                JOIN Track on Race.track_name = Track.track_name
-                JOIN Score_Matrix on (Place.place = Score_Matrix.place AND Race.num_players=Score_Matrix.size)
-                JOIN Player_FCs on Place.fc = Player_FCs.fc
-                
-                WHERE time < 6*60
-                    AND Track.track_name = ?
-                    AND (players_per_team * number_of_teams) == 12
-                    {tier_filter_clause}
-                    {days_filter_clause}
-                    {SQL_Search_Query_Builder.get_event_valid_filter()}
-                
-                GROUP BY discord_id
-                HAVING count(*) >= {min_count}
-                ORDER BY avg_pts DESC
-                LIMIT 100
-                """
+        SELECT
+               discord_id,
+               AVG(pts)         AS avg_pts,
+               AVG(Place.place) AS avg_place,
+               AVG(time-Race.first_place_time) AS avg_delta,
+               COUNT(*) AS count
+        FROM Place
+                 JOIN Race ON Place.race_id = Race.race_id
+                 JOIN Score_Matrix
+                      ON (Place.place = Score_Matrix.place AND num_players = Score_Matrix.size)
+                 JOIN Player_FCs ON Place.fc = Player_FCs.fc
+                 JOIN Track ON Race.track_name = Track.track_name
+        WHERE Place.race_id IN (
+            SELECT DISTINCT Race.race_id
+            FROM Race
+                     JOIN Event_Races ER ON Race.race_id = ER.race_id
+                     JOIN Event ON ER.event_id = Event.event_id
+                     JOIN Tier ON Event.channel_id = Tier.channel_id
+            JOIN Event_Structure on Event.event_id = Event_Structure.event_id
+        
+            WHERE (players_per_team * number_of_teams) == 12
+                {tier_filter_clause}
+                {SQL_Search_Query_Builder.get_event_valid_filter()}
+        )
+            AND Track.track_name = ?
+            AND time < 6 * 60
+            AND Track.is_ct = 0
+            
+        {days_filter_clause}
+        GROUP BY discord_id
+        
+        HAVING COUNT(*) >= {min_count}
+        ORDER BY avg_pts DESC
+        LIMIT 100
+        """
 
-# [print(x) for x in SQL_Search_Query_Builder.get_top_players_query(1, None, None)]
 #print(get_fcs_not_in_Player_table([1, 2, 3]))
 
 

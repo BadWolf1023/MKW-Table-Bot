@@ -1,39 +1,61 @@
-PRAGMA foreign_keys=off;
+PRAGMA foreign_keys= OFF;
 
-DROP TABLE IF EXISTS  Race2;
-create table Race2
+DROP TABLE IF EXISTS Race2;
+CREATE TABLE Race2
 (
-	race_id2 INT UNSIGNED not null
-		primary key,
-	rxx TEXT not null,
-	time_added TIMESTAMP not null,
-	match_time TEXT not null,
-	race_number INT not null,
-	room_name TEXT not null,
-	track_name TEXT not null
-		references Track
-			on update cascade on delete restrict,
-	room_type TEXT not null,
-	cc TEXT not null,
-	region TEXT,
-	is_wiimmfi_race TINYINT(1) not null,
-	num_players int
+    race_id          INT UNSIGNED NOT NULL
+        PRIMARY KEY,
+    rxx              TEXT         NOT NULL,
+    time_added       TIMESTAMP    NOT NULL,
+    match_time       TEXT         NOT NULL,
+    race_number      INT          NOT NULL,
+    room_name        TEXT         NOT NULL,
+    track_name       TEXT         NOT NULL
+        REFERENCES Track
+            ON UPDATE CASCADE ON DELETE RESTRICT,
+    room_type        TEXT         NOT NULL,
+    cc               TEXT         NOT NULL,
+    region           TEXT,
+    is_wiimmfi_race  TINYINT(1)   NOT NULL,
+    num_players      int,
+    first_place_time DOUBLE(8, 3),
+    last_place_time  DOUBLE(8, 3),
+    avg_time         DOUBLE(8, 3)
 );
 
 DROP VIEW IF EXISTS room_sizes;
-CREATE VIEW room_sizes AS
-    SELECT Place.race_id, count(*) as num_players
-    from Place
-    group by Place.race_id;
 
-insert into Race2(race_id2, rxx, time_added, match_time, race_number, room_name, track_name, room_type, cc, region, is_wiimmfi_race, num_players)
-select Race.race_id, rxx, time_added, match_time, race_number, room_name, track_name, room_type, cc, region, is_wiimmfi_race, num_players
-from Race
-join room_sizes on Race.race_id = room_sizes.race_id
+CREATE VIEW room_sizes AS
+SELECT race_id,
+       COUNT(*)                               AS num_players,
+       MIN(time) FILTER (WHERE time < 6 * 60) AS first_place_time,
+       MAX(time) FILTER (WHERE time < 6 * 60) AS last_place_time,
+       AVG(time) FILTER (WHERE time < 6 * 60) AS avg_time
+FROM Place
+GROUP BY race_id;
+
+INSERT INTO Race2(race_id, rxx, time_added, match_time, race_number, room_name, track_name, room_type, cc, region,
+                  is_wiimmfi_race, num_players, first_place_time, last_place_time, avg_time)
+SELECT Race.race_id,
+       rxx,
+       time_added,
+       match_time,
+       race_number,
+       room_name,
+       track_name,
+       room_type,
+       cc,
+       region,
+       is_wiimmfi_race,
+       num_players,
+       room_sizes.first_place_time,
+       room_sizes.last_place_time,
+       room_sizes.avg_time
+FROM Race
+         JOIN room_sizes ON Race.race_id = room_sizes.race_id
 ;
 
-drop table Race;
-alter table Race2 rename to Race;
-ALTER TABLE Race
-RENAME COLUMN race_id2 TO race_id;
-PRAGMA foreign_keys=on;
+DROP TABLE Race;
+ALTER TABLE Race2 RENAME TO Race;
+
+PRAGMA foreign_keys= ON;

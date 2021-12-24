@@ -42,6 +42,9 @@ CREATE TABLE Race(
     region TEXT NULL,
     is_wiimmfi_race TINYINT(1) NOT NULL,
     num_players INT NOT NULL,
+    first_place_time DOUBLE(8, 3),
+    last_place_time  DOUBLE(8, 3),
+    avg_time         DOUBLE(8, 3),
     PRIMARY KEY(race_id),
     FOREIGN KEY (track_name)
        REFERENCES Track(track_name)
