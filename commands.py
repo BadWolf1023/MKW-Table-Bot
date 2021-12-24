@@ -2214,10 +2214,15 @@ class TablingCommands:
                     up_to = get_max_specified_race(args)
                     include_up_to_str = up_to and up_to<len(this_bot.getRoom().getRaces())
 
-                    await message2.edit(content=str("Room updated. Room has finished " + \
-                                                    str(len(this_bot.getRoom().getRaces())) +\
-                                                    f" races{f' (showing {up_to} races)' if include_up_to_str else ''}. Last race: " +\
-                                                    str(this_bot.getRoom().races[-1].getTrackNameWithoutAuthor())))
+                    await message2.edit(content=str(
+                                            "Room updated. Room has finished " + \
+                                            str(len(this_bot.getRoom().getRaces())) +\
+                                            f" races{f' (showing {up_to} races)' if include_up_to_str else ''}. Last race: " +\
+                                            str(this_bot.getRoom().races[-1].getTrackNameWithoutAuthor()) +\
+                                            " (last shown: " + str(this_bot.getRoom().races[up_to-1].getTrackNameWithoutAuthor()) + ")"
+                                            )
+                                        )
+
                     message3 = await message.channel.send("Getting table...")
                     usemiis, miiArgRequested, _ = getUseMiis(args)
                     uselounge, loungeArgRequested = getUseLoungeNames(args)

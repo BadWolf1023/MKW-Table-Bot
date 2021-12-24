@@ -507,13 +507,13 @@ class ChannelBot(object):
         
         self.save_states = self.save_states[:self.state_pointer+1] #clear all "redo" states
         self.save_states.append((command, save_state)) #append new state
-        self.state_pointer += 1 #increment state pointer
+        self.state_pointer += 1 #increment state pointer (state pointer always points to previous save state)
 
     #Function that removes the last save state - does not restore it
     def remove_last_save_state(self):
-        if len(self.save_states) < 1 or self.state_pointer-1 < 0:
+        if len(self.save_states) < 1 or self.state_pointer < 0:
             return False
-        command, _ = self.save_states.pop(self.state_pointer-1)
+        command, _ = self.save_states.pop(self.state_pointer)
         return command
     
     #removes last "redo"
@@ -536,7 +536,7 @@ class ChannelBot(object):
     
     def get_redo_list(self):
         ret = "Redoable commands:"
-        redos = self.save_states[self.state_pointer:-1]
+        redos = self.save_states[self.state_pointer+1:-1]
         if len(redos)==0:
             return "No commands to redo."
 
@@ -550,10 +550,12 @@ class ChannelBot(object):
         if len(self.save_states) < 1 or self.state_pointer < 0:
             return False
 
-        self.add_save_state(command=None) #save the current state before reverting to the previous state
-
-        self.state_pointer-=1
+        if self.state_pointer+1 == len(self.save_states):
+            self.add_save_state(command=None) #save the current state before reverting to the previous state if it hasn't been saved yet
+            self.state_pointer-=1
+        
         command, save_state = self.save_states[self.state_pointer]
+        self.state_pointer-=1
 
         
         self.getRoom().restore_save_state(save_state["Room"])
@@ -568,9 +570,10 @@ class ChannelBot(object):
 
         if len(self.save_states) <1 or self.state_pointer+1 >= len(self.save_states):
             return False
-
+        
+        if self.state_pointer+1 < len(self.save_states):
+            self.state_pointer+=1
         command, save_state = self.save_states[self.state_pointer][0], self.save_states[self.state_pointer+1][1]
-        self.state_pointer+=1
 
         
         self.getRoom().restore_save_state(save_state["Room"])
