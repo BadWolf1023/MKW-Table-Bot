@@ -2559,12 +2559,6 @@ def get_max_specified_race(args):
     
     args = args[1:]
 
-    if UtilityFunctions.isint(args[0]) and int(args[0]) > 0: # if either the first or second argument is numeric, then assume that it is to specify a max race
-        return int(args[0])
-    
-    if len(args)>1 and UtilityFunctions.isint(args[1]) and int(args[1]) > 0:
-        return int(args[1])
-
     for flag in valid_max_race_flags:
         for arg in args[::-1]:
             arg = arg.strip().lower()
@@ -2572,6 +2566,13 @@ def get_max_specified_race(args):
             max_race = arg[start:]
             if arg.startswith(flag) and len(arg)>len(flag) and UtilityFunctions.isint(max_race) and int(max_race)>0:
                 return int(max_race)
+
+    if UtilityFunctions.isint(args[0]) and int(args[0]) > 0: # if either the first or second argument is numeric, then assume that it is to specify a max race
+        return int(args[0])
+    
+    if len(args)>1 and UtilityFunctions.isint(args[1]) and int(args[1]) > 0:
+        return int(args[1])
+
     
     return None
 

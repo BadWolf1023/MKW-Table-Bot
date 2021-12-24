@@ -204,7 +204,8 @@ embed_page_time = timedelta(minutes=2)
 base_url_lorenzi = "https://gb.hlorenzi.com/table.png?data="
 base_url_edit_table_lorenzi = "https://gb.hlorenzi.com/table?data="
 
-BAD_WOLF_ID = 366774710186278914
+BAD_WOLF_ID = 706120725882470460 
+CW_ID = 366774710186278914
 
 
 #Lounge stuff
@@ -227,6 +228,7 @@ BAD_WOLF_SERVER_STAFF_ROLES = set([BAD_WOLF_SERVER_TESTER_ID, BAD_WOLF_SERVER_AD
 BAD_WOLF_SERVER_NORMAL_TESTING_ONE_CHANNEL_ID = 861453709305315349
 BAD_WOLF_SERVER_NORMAL_TESTING_TWO_CHANNEL_ID = 863234379718721546
 BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID = 863238405269749760
+
 
 #Rather than using the builtin set declaration {}, I did an iterable because BadWolfBot.py kept giving an error in Eclipse, even though everything ran fine - this seems to have suppressed the error which was giving me major OCD
 mkw_lounge_staff_roles = set([387347888935534593, #Boss
@@ -264,7 +266,6 @@ AUTO_BAN_THRESHOLD = 18
 
 
 COMMAND_TRIGGER_CHARS = set(c for c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-
 
 
 def author_has_id_in(message_author, role_ids):
@@ -324,7 +325,7 @@ lounge_channel_mappings = {MKW_LOUNGE_SERVER_ID:LoungeUpdateChannels(
 
 
 def is_bad_wolf(author):
-    return author.id == BAD_WOLF_ID
+    return author.id in { BAD_WOLF_ID, CW_ID }
 
 def is_bot_admin(author):
     return str(author.id) in botAdmins or is_bad_wolf(author)
