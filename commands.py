@@ -2095,8 +2095,8 @@ class TablingCommands:
         if undone_command is False:
             await message.channel.send("No commands to undo.")
             return
-        mes = "All possible commands have been undone." if do_all else f"The following command has been undone: {UtilityFunctions.process_name(undone_command)}"
-        await message.channel.send(f"{mes}\nRun {server_prefix}wp to make sure table bot is fully refreshed.")
+        mes = "All possible commands have been undone." if do_all else f"The following command has been undone: `{UtilityFunctions.process_name(undone_command)}`"
+        await message.channel.send(f"{mes}\nRun `{server_prefix}wp` to make sure table bot is fully refreshed.")
     
     @staticmethod
     async def redo_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool):
@@ -2108,8 +2108,8 @@ class TablingCommands:
         if redone_command is False:
             return await message.channel.send("No commands to redo.")
         
-        mes = "All possible commands have been redone." if do_all else f"The following command has been redone: {UtilityFunctions.process_name(redone_command)}"
-        await message.channel.send(f"{mes}\nRun {server_prefix}wp to make sure table bot is fully refreshed.")
+        mes = "All possible commands have been redone." if do_all else f"The following command has been redone: `{UtilityFunctions.process_name(redone_command)}`"
+        await message.channel.send(f"{mes}\nRun `{server_prefix}wp` to make sure table bot is fully refreshed.")
 
     @staticmethod
     async def early_dc_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool): 

@@ -530,7 +530,7 @@ class ChannelBot(object):
             return "No commands to undo."
         
         for i, (command, _) in enumerate(undos[::-1]):
-            ret+=f"\n   {i+1}. {command}"
+            ret+=f"\n   {i+1}. `{command}`"
         
         return ret
     
@@ -541,7 +541,7 @@ class ChannelBot(object):
             return "No commands to redo."
 
         for i, (command, _) in enumerate(redos):
-            ret+=f"\n   {i+1}. {command}"
+            ret+=f"\n   {i+1}. `{command}`"
         
         return ret
         
@@ -572,7 +572,7 @@ class ChannelBot(object):
     def restore_last_redo_state(self, do_all=False):
         if len(self.save_states) <1 or self.state_pointer+2 >= len(self.save_states):
             return False
-        print(self.state_pointer, len(self.save_states))
+            
         if do_all:
             self.state_pointer=len(self.save_states)-2
         else:
