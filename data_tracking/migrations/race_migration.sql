@@ -1,3 +1,5 @@
+PRAGMA foreign_keys=off;
+
 DROP TABLE IF EXISTS  Race2;
 create table Race2
 (
@@ -32,3 +34,6 @@ join room_sizes on Race.race_id = room_sizes.race_id
 
 drop table Race;
 alter table Race2 rename to Race;
+ALTER TABLE Race
+RENAME COLUMN race_id2 TO race_id;
+PRAGMA foreign_keys=on;
