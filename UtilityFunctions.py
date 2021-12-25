@@ -163,7 +163,10 @@ def chunk_join(str_items:List[str], limit=2047, separator="\n"):
         else:
             to_return[-1] = to_return[-1] + separator + item
     return to_return
-        
+
+def string_chunks(string, n):
+    for i in range(0, len(string), n):
+        yield string[i: i+n]
     
 async def safe_send_file(message:discord.Message, content):
     file_name = str(message.id) + ".txt"

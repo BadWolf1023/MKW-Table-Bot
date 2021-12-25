@@ -1279,6 +1279,13 @@ class ServerDefaultCommands:
         return True
     
     @staticmethod
+    async def show_settings_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str):
+        server_id = message.guild.id
+        server_name = message.guild.name
+        await message.channel.send(ServerFunctions.get_server_settings(server_name, server_id))
+
+
+    @staticmethod
     async def large_time_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
         if not common.running_beta or common.beta_is_real:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change server default for hiding large times on tables")

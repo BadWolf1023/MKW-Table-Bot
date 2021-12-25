@@ -136,6 +136,7 @@ LOUNGE_PENDING_TABLE_SUBMISSION_TERMS = {"pending", "pendingsubmission", "pendin
 LOUNGE_WHO_IS_TERMS = {"whois"}
 
 #Server administrator commands only
+SERVER_SETTINGS_TERMS = {'settings', 'serversettings', 'sets', 'serversets'}
 SET_PREFIX_TERMS = {"setprefix"}
 SERVER_DEFAULT_TABLE_THEME_TERMS = {'defaulttheme', 'defaultservertheme', 'serverstyle', 'servertheme', 'servertablestyle', 'servertabletheme'}
 SERVER_DEFAULT_GRAPH_TERMS = {'defaultgraph', 'defaultservergraph', 'servergraph', 'servertablegraph', 'servergraphtheme'}
@@ -707,6 +708,9 @@ async def on_message(message: discord.Message):
            
             elif args[0] in SERVER_DEFAULT_LARGE_TIME_TERMS:
                 await commands.ServerDefaultCommands.large_time_setting_command(message, this_bot, args, server_prefix)
+            
+            elif args[0] in SERVER_SETTINGS_TERMS:
+                await commands.ServerDefaultCommands.show_settings_command(message, this_bot, server_prefix)
 
             elif args[0] in DISPLAY_GP_SIZE_TERMS:
                 await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)
