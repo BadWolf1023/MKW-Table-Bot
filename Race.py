@@ -118,8 +118,6 @@ class Race:
     classdocs
     '''
 
-
-
     def __init__(self, matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, mkwxRaceNumber, rxx=None, raceID=None, trackURL=None, placements=None, is_wiimmfi_race=True):
         self.matchTime = matchTime
         self.matchID = matchID

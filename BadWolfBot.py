@@ -21,6 +21,7 @@ from data_tracking import DataTracker
 #External library imports for this file
 import discord
 from discord.ext import tasks
+from discord.ext import commands as ext_commands
 import traceback
 import sys
 import atexit
@@ -36,10 +37,8 @@ import os
 import asyncio
 
 
-
 finished_on_ready = False
-
-
+ALLOW_SLASH_COMMANDS = True #whether the bot should register its slash commands (since there is no reason to use slash commands until April 2022)
 
 CT_WAR_LOUNGE_ECHELONS_CAT_ID = 851666104228249652
 WAR_LOUNGE_ECHELONS_CAT_ID = 751956338912788559
@@ -85,8 +84,6 @@ GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
 DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
 
 
-
-
 #Commands that require a war to be started, but don't modify the war/room/table in any way
 TABLE_TEXT_TERMS = {"tt", "tabletext"}
 WAR_PICTURE_TERMS = {"wp", "warpicture", "wo", "w;", "w["}
@@ -96,6 +93,7 @@ RXX_TERMS = {"rxx", "rlid"}
 ALL_PLAYERS_TERMS = {"allplayers", "ap"}
 FCS_TERMS = {"fcs"}
 CURRENT_ROOM_TERMS = {"currentroom"}
+TRANSFER_TABLE_TERMS = {"transfer", "copy", "copytable", "transfertable", "movetable", "move"}
 
 
 #General commands that do not require a war to be started (stateless commands)
@@ -212,7 +210,18 @@ bad_wolf_facts = []
 def createEmptyTableBot(server_id=None, channel_id=None):
     return TableBot.ChannelBot(server_id=server_id, channel_id=channel_id)
 
-client = discord.Client()
+
+def prefix_callable(bot, msg: discord.Message) -> str: 
+    prefix = common.default_prefix
+    if msg.guild is not None: 
+        prefix = ServerFunctions.get_server_prefix(msg.guild.id)
+    
+    return ext_commands.when_mentioned_or(prefix)(bot, msg)
+
+client = ext_commands.Bot(command_prefix=prefix_callable, case_insensitive=True, help_command=None)
+EXTENSIONS = ['cogs.slash_commands']
+for ext in EXTENSIONS:
+    client.load_extension(ext)
 
 
 def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bot:TableBot.ChannelBot, command:str):
@@ -430,7 +439,7 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.manual_war_setup(message, this_bot, command)
             
             elif this_bot.prev_command_sw:
-                await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix)
+                await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix, is_lounge_server)
             
             elif args[0] in GARBAGE_COLLECT_TERMS:
                 commands.BadWolfCommands.garbage_collect_command(message)
@@ -499,8 +508,11 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.substitue_player_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
             elif args[0] in CURRENT_ROOM_TERMS:
-                await commands.TablingCommands.current_room_command(message, this_bot, server_prefix, is_lounge_server
-                                                    )
+                await commands.TablingCommands.current_room_command(message, this_bot, server_prefix, is_lounge_server)
+            
+            elif args[0] in TRANSFER_TABLE_TERMS:
+                await commands.TablingCommands.transfer_table_command(message, this_bot, args, server_prefix, is_lounge_server, table_bots, client)
+                                                    
             elif args[0] in ADD_FLAG_EXCEPTION_TERMS:
                 await commands.BotAdminCommands.add_flag_exception_command(message, args, user_flag_exceptions)
                     
@@ -535,7 +547,7 @@ async def on_message(message: discord.Message):
             elif args[0] in QUICK_EDIT_TERMS:
                 if args[0] in DEPRECATED_QUICK_EDIT_TERMS:
                     await message.channel.send(f"**NOTE: The command `{server_prefix}{args[0]}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")                      
-                await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge_server, command)
+                await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge_server)
             
             elif args[0] in CHANGE_PLAYER_TAG_TERMS:
                 await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge_server, command)
@@ -722,10 +734,11 @@ async def on_message(message: discord.Message):
                 await commands.StatisticCommands.unpopular_tracks_command(message, args, server_prefix, command)
             
             else:
+                # await client.process_commands()
                 await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  
                 
 
-    except discord.errors.Forbidden:
+    except discord.Forbidden:
         lounge_submissions.clear_user_cooldown(message.author)
         await common.safe_send(message, "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work.")
     except TableBotExceptions.BlacklistedUser:
@@ -751,7 +764,7 @@ async def on_message(message: discord.Message):
         await common.safe_send(message, f"Use this command in the appropriate updater channel: {wrong_updater_channel_exception}")
     except TableBotExceptions.WarSetupStillRunning:
         await common.safe_send(message, f"I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
-    except discord.errors.DiscordServerError:
+    except discord.DiscordServerError:
         await common.safe_send(message, "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
     except aiohttp.client_exceptions.ClientOSError:
         await common.safe_send(message, "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
@@ -822,7 +835,90 @@ async def on_ready():
         
     finished_on_ready = True
     
-    
+
+#TODO: implement `on_application_command_error`
+@client.event
+async def on_command_error(ctx: ext_commands.Context, error):
+    message = ctx.message
+    server_prefix = ctx.prefix
+
+    if isinstance(error, ext_commands.CommandNotFound):
+        await common.safe_send(message, f"Not a valid command. For more help, do the command: `{server_prefix}help`")
+
+    elif isinstance(error, discord.Forbidden) or isinstance(error, ext_commands.BotMissingPermissions):
+            lounge_submissions.clear_user_cooldown(message.author)
+            await common.safe_send(message, "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work.")
+
+    elif isinstance(error, discord.DiscordServerError):
+            await common.safe_send(message, "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
+         
+    elif "original" in error.__dict__: #not a discord.ext error
+        err = error.original
+
+        if isinstance(err, TableBotExceptions.BlacklistedUser):
+            log_command_sent(message)
+        elif isinstance(err, TableBotExceptions.WarnedUser):
+            log_command_sent(message)
+        elif isinstance(err, TableBotExceptions.NotBadWolf):
+            await common.safe_send(message, f"You are not Bad Wolf: {err}")
+        elif isinstance(err, TableBotExceptions.NotLoungeStaff):
+            await common.safe_send(message, f"Not a valid command. For more help, do the command: {server_prefix}help")
+        elif isinstance(err, TableBotExceptions.NotBotAdmin):
+            await common.safe_send(message, f"You are not a bot admin: {err}")
+        elif isinstance(err, TableBotExceptions.NotServerAdministrator):
+            await common.safe_send(message, f"You are not a server administrator: {err}")
+        elif isinstance(err, TableBotExceptions.NotStaff):
+            await common.safe_send(message, f"You are not staff in this server: {err}")
+        elif isinstance(err, TableBotExceptions.WrongServer):
+            if common.running_beta:
+                await common.safe_send(message, f"{err}: **I am not <@735782213118853180>. Use <@735782213118853180> in <#389521626645004302> to submit your table.**")
+            else:
+                await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  
+        elif isinstance(err, TableBotExceptions.WrongUpdaterChannel):
+            await common.safe_send(message, f"Use this command in the appropriate updater channel: {err}")
+        elif isinstance(err, TableBotExceptions.WarSetupStillRunning):
+            await common.safe_send(message, f"I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
+        elif isinstance(err, aiohttp.client_exceptions.ClientOSError):
+            await common.safe_send(message, "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
+            raise
+        elif isinstance(err, TableBotExceptions.RequestedRecently):
+            logging_info = log_command_sent(message, extra_text="Error info: Room requested recently, but the original request failed.")
+            await common.safe_send(message, f"Your room was requested recently, perhaps by another person, but their request failed. To avoid hitting the website, I've denied your command. Try again after {common.wp_cooldown_seconds} seconds.")         
+            await send_to_503_channel(logging_info)
+        elif isinstance(err, TableBotExceptions.NoAvailableBrowsers):
+            logging_info = log_command_sent(message, extra_text="**Error info:** No available browsers.")
+            await common.safe_send(message, "I don't have the resources to process your command. Table Bot usage might be high at this time. Try again in a minute.")
+            await send_to_503_channel(logging_info)
+        elif isinstance(err, TableBotExceptions.MKWXCloudflareBlock):
+            logging_info = log_command_sent(message, extra_text="**Error info:** Cloudflare blocked this command.")
+            await common.safe_send(message, "Cloudflare blocked me, so I am currently trying to solve their captcha. If this is the first time you've seen this message in a while, DO try again in a few seconds, as I may have solved their captcha by then.\n\n**However**, if you get this error 5 times in a row without success, it means I cannot solve their captcha and you SHOULD NOT KEEP RUNNING THIS COMMAND. If you get this error 5 times in a row and continue to run commands, you risk being permanently banned from Table Bot.")         
+            await send_to_503_channel(logging_info)
+            await AbuseTracking.CLOUDFLARE_REPORT_CHANNEL.send(f"Cloudflare blocked this command: Server Name: {message.guild} - User: **{message.author}** - User ID: {message.author.id} - Nickname: {message.author.display_name} - Command: {message.content}\nIf this person repeatedly does this over the course 20 minutes or less, blacklist them.")
+        elif isinstance(err, TableBotExceptions.URLLocked):
+            logging_info = log_command_sent(message, extra_text="Error info: Minor race condition for this command, URL Locked.")
+            await common.safe_send(message, f"This room is locked at this time. This isn't your fault. Cloudflare on mkwx has complicated things. Please wait {WiimmfiSiteFunctions.lockout_timelimit.total_seconds()} seconds before trying again.")         
+            await send_to_503_channel(logging_info)
+        elif isinstance(err, TableBotExceptions.CacheRaceCondition):
+            log_command_sent(message, extra_text="Error info: Race condition for this command.")
+            await common.safe_send(message, f"Something weird happened. This isn't your fault. Cloudflare on mkwx has complicated things. Go ahead and run your command again after {common.wp_cooldown_seconds} seconds.")         
+            await send_to_503_channel(logging_info)
+        elif isinstance(err, TableBotExceptions.WiimmfiSiteFailure):
+            logging_info = log_command_sent(message, extra_text="Error info: MKWX inaccessible, other error.")
+            await common.safe_send(message, "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")    
+            await send_to_503_channel(logging_info)
+        elif isinstance(err, TableBotExceptions.CommandDisabled):
+            await common.safe_send(message, "MKW Table Bot cannot access the website. Wiimm has neglected this situation. There is no path forward unless Wiimm whitelists Table Bot. I suggest you go to <https://forum.wii-homebrew.com>, go to 'User Introductions', and create a post about it.")
+
+        else:
+            common.log_traceback(traceback)
+            lounge_submissions.clear_user_cooldown(message.author)
+            await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please use {server_prefix}log to tell me what happened. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
+            raise err
+    else:
+        common.log_traceback(traceback)
+        lounge_submissions.clear_user_cooldown(message.author)
+        await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please use {server_prefix}log to tell me what happened. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
+        raise error
     
 #Rotates the bot's status every 30 seconds with various information
 @tasks.loop(seconds=30)
@@ -1079,6 +1175,7 @@ signal.signal(signal.SIGINT, handler)
 atexit.register(on_exit)
 
 initialize()
+
 if common.in_testing_server:
     client.run(testing_bot_key)
 elif common.running_beta:
@@ -1086,4 +1183,3 @@ elif common.running_beta:
 else:
     client.run(real_bot_key)
     
-

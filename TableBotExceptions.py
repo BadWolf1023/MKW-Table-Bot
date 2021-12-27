@@ -62,6 +62,9 @@ class InvalidWarFormatException(WarSetupFailure):
 class InvalidNumberOfPlayersException(WarSetupFailure):
     pass
 
+class InvalidNumPlayersInputException(WarSetupFailure):
+    pass
+
 class WarSetupStillRunning(WarSetupFailure):
     pass
 

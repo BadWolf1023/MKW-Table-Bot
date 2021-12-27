@@ -393,7 +393,7 @@ async def download_image(image_url, image_path):
 async def safe_send_missing_permissions(message:discord.Message, delete_after=None):
     try:
         await message.channel.send("I'm missing permissions. Contact your admins.", delete_after=delete_after)
-    except discord.errors.Forbidden: #We can't send messages
+    except discord.Forbidden: #We can't send messages
         pass
     
 async def safe_send_file(message:discord.Message, content):
@@ -406,7 +406,7 @@ async def safe_send_file(message:discord.Message, content):
     txt_file = discord.File(file_path, filename=file_name)
     try:
         await message.channel.send(content="My message was too long, so I've attached it as a txt file instead.", file=txt_file)
-    except discord.errors.Forbidden:
+    except discord.Forbidden:
         safe_send_missing_permissions(message)
     finally:
         if os.path.exists(file_path):
@@ -421,7 +421,7 @@ async def safe_send(message:discord.Message, content=None, embed=None, delete_af
 
     try:
         await message.channel.send(content=content, embed=embed, delete_after=delete_after)
-    except discord.errors.Forbidden: #Missing permissions
+    except discord.Forbidden: #Missing permissions
         await safe_send_missing_permissions(message, delete_after=10)
 
   
@@ -434,7 +434,7 @@ def run_async_function_no_loop(function_to_call):
 async def safe_delete(message):
     try:
         await message.delete()
-    except discord.errors.NotFound:
+    except discord.NotFound:
         pass
 
 def read_sql_file(file_name):

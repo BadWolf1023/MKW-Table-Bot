@@ -64,6 +64,7 @@ class ChannelBot(object):
         self.state_pointer = -1
         self.miis: Dict[str, Mii.Mii] = {}
         
+        self.resolved_errors = []
         
         self.populating = False
         
@@ -116,8 +117,22 @@ class ChannelBot(object):
         return self.style
     def get_dc_points(self):
         return self.dc_points
-
     
+    def get_resolved_errors(self):
+        return self.resolved_errors
+    
+    def player_to_dc_num(self, player):
+        GPs = self.getWar().getNumberOfGPS()
+        dc_list = self.getRoom().get_dc_list_players(GPs)
+
+        return dc_list.index(player)+1
+    
+    def player_to_num(self, player):
+        players = self.getRoom().get_sorted_player_list_string()
+        players = [player[0] for player in players]
+
+        return players.index(player)+1
+
     def get_room_started_message(self):
         started_war_str = "FFA started" if self.getWar().isFFA() else "War started"
         if self.getWar().ignoreLargeTimes:
@@ -601,6 +616,7 @@ class ChannelBot(object):
         #self.roomLoadTime = None
         self.save_states = []
         self.state_pointer = -1
+        self.resolved_errors = []
         self.miis = {}
         self.populating = False
         self.should_send_mii_notification = True

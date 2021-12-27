@@ -24,7 +24,7 @@ import MogiUpdate
 import Lounge
 import TableBotExceptions
 import common
-
+import Components
 
 
 #Other library imports, other people codes
@@ -46,8 +46,6 @@ import Stats
 from data_tracking import DataTracker
 
 vr_is_on = False
-
-
 
 async def sendRoomWarNotLoaded(message: discord.Message, serverPrefix:str, is_lounge=False):
     if is_lounge:
@@ -1411,7 +1409,8 @@ class TablingCommands:
         channel_id = message.channel.id
         if server_id in table_bots and channel_id in table_bots[server_id]:
             table_bots[server_id][channel_id].destroy()
-        del(table_bots[server_id][channel_id])
+            del(table_bots[server_id][channel_id])
+
         await message.channel.send("Reset successful.")
     
     @staticmethod
@@ -1493,7 +1492,7 @@ class TablingCommands:
     
     
     @staticmethod
-    async def disconnections_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+    async def disconnections_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False):
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -1546,13 +1545,15 @@ class TablingCommands:
         if on_or_before in ["on", "during", "midrace", "results", "onresults"]:
             this_bot.add_save_state(message.content)
             this_bot.getRoom().dc_on_or_before[race][player_fc] = 'on'
-            await message.channel.send("Saved: " + player_name + ' was on results for race #' + str(race))                    
-            return
+            mes = "Saved: " + player_name + ' was on results for race #' + str(race)       
+            if not dont_send: await message.channel.send(mes)             
+            return mes
         if on_or_before in ["before", "prior", "beforerace", "notonresults", "noresults", "off"]:
             this_bot.add_save_state(message.content)
             this_bot.getRoom().dc_on_or_before[race][player_fc] = 'before'
-            await message.channel.send("Saved: " + player_name + ' was not on results for race #' + str(race))                    
-            return
+            mes = "Saved: " + player_name + ' was not on results for race #' + str(race)
+            if not dont_send: await message.channel.send(mes)                  
+            return mes
         
         await message.channel.send('"' + UtilityFunctions.process_name(str(on_or_before)) + '" needs to be either "on" or "before". Do ' + server_prefix + "dcs for an example on how to use this command.")
 
@@ -1855,6 +1856,8 @@ class TablingCommands:
                     except TableBotExceptions.InvalidNumberOfPlayersException:
                         await message.channel.send("Too many players based on the teams and war format. War not created.")
                         return
+                    except TableBotExceptions.InvalidNumPlayersInputException:
+                        return await message.channel.send("Invalid number of players. The number of players must be an integer.")
                     
                     
                     #This is the background task for getting miis, it will be awaited once everything in ?sw finishes
@@ -1922,7 +1925,8 @@ class TablingCommands:
 
                             if not this_bot.getWar().is_ffa():
                                 to_send = f"{this_bot.getWar().get_tags_str()}\n***Is this correct?** Respond `{server_prefix}yes` or `{server_prefix}no`*"
-                                await message.channel.send(to_send)
+                                view = Components.ConfirmView(this_bot, server_prefix, is_lounge_server)
+                                await message.channel.send(to_send, view=view)
                                 this_bot.prev_command_sw = True
 
                             else:
@@ -1950,7 +1954,7 @@ class TablingCommands:
     
     
     @staticmethod                  
-    async def after_start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
+    async def after_start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server: bool):
         if args[0].lower().strip() not in ['yes', 'no', 'y', 'n']:
             #this_bot.setWar(None)
             await message.channel.send(f"Respond `{server_prefix}yes` or `{server_prefix}no`. Were the teams I sent correct?")   
@@ -1977,7 +1981,8 @@ class TablingCommands:
             await message.channel.send(f'''Respond "{server_prefix}no" when asked ***Is this correct?*** - the number of players in the room doesn't match your war format and teams. Trying to still start war, but teams will be incorrect.''')
             
         this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
-        await message.channel.send(this_bot.get_room_started_message())
+        view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+        await message.channel.send(this_bot.get_room_started_message(), view=view)
 
     @staticmethod                  
     async def merge_room_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2119,7 +2124,7 @@ class TablingCommands:
         await message.channel.send(f"{mes}\nRun `{server_prefix}wp` to make sure table bot is fully refreshed.")
 
     @staticmethod
-    async def early_dc_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool): 
+    async def early_dc_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False): 
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -2148,10 +2153,12 @@ class TablingCommands:
         
         this_bot.add_save_state(message.content)
         this_bot.getRoom().forceRoomSize(raceNum, roomSize)
-        await message.channel.send("Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + ".")      
+        mes = "Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + "."
+        if dont_send: return mes
+        await message.channel.send(mes)
     
     @staticmethod
-    async def change_room_size_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+    async def change_room_size_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False):
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
@@ -2177,7 +2184,9 @@ class TablingCommands:
         else:
             this_bot.add_save_state(message.content)
             this_bot.getRoom().forceRoomSize(raceNum, roomSize)
-            await message.channel.send("Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + ".")      
+            mes = "Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + "."
+            if not dont_send: await message.channel.send(mes)
+            return mes 
     
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2230,7 +2239,7 @@ class TablingCommands:
                                             str(len(this_bot.getRoom().getRaces())) +\
                                             f" races{f' (showing {up_to} races)' if include_up_to_str else ''}. Last race: " +\
                                             str(this_bot.getRoom().races[-1].getTrackNameWithoutAuthor()) +\
-                                            ((" (last shown: " + str(this_bot.getRoom().races[up_to-1].getTrackNameWithoutAuthor()) + ")") if up_to else "")
+                                            ((" (last shown: " + str(this_bot.getRoom().races[up_to-1].getTrackNameWithoutAuthor()) + ")") if include_up_to_str else "")
                                             )
                                         )
 
@@ -2298,15 +2307,33 @@ class TablingCommands:
                             embed.set_author(name=this_bot.getWar().getWarName(numRaces), icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                             embed.set_image(url="attachment://" + table_image_path)
                             
-                            temp = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), lounge_replace, up_to_race=up_to)
+                            temp, error_types = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), this_bot.get_resolved_errors(), lounge_replace, up_to_race=up_to)
+                            
                             error_message = "\n\nMore errors occurred. Embed only allows so many errors to display."
                             if len(temp) + len(error_message) >= 2048:
                                 temp = temp[:2048-len(error_message)] + error_message
                             embed.set_footer(text=temp)
                             await message.channel.send(file=file, embed=embed)
                             await common.safe_delete(message3)
+
                             if should_send_notification and common.current_notification != "":
                                 await message.channel.send(common.current_notification.replace("{SERVER_PREFIX}", server_prefix))
+                            
+                            if error_types:
+                                indx = 0
+                                for race, errors in list(error_types.items()):
+                                    for error in errors:
+                                        error['race'] = race
+                                        view = Components.SuggestionView(error, this_bot, server_prefix, is_lounge_server, indx)
+                                        try:
+                                            players = ' / '.join(error['player_names']) if 'player_names' in error else error['player_name']
+                                            info_str = f" - {players}"
+                                        except KeyError:
+                                            info_str = ""
+                                        await message.channel.send(f'**Race #{race}{info_str}**', view=view)
+                                        indx+=1
+                            pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+                            await message.channel.send(content='\u200b', view=pic_view)
                     finally:
                         if os.path.exists(table_image_path):
                             os.remove(table_image_path)
@@ -2417,7 +2444,7 @@ class TablingCommands:
             await message.channel.send(f"Each section of the table will now be {new_size} races.")
     
     @staticmethod
-    async def quick_edit_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
+    async def quick_edit_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False):
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
@@ -2426,7 +2453,8 @@ class TablingCommands:
                 to_send += "\n**To change the placement of the 8th player on the list for the 7th race to 4th place, do:** *" + server_prefix + "changeplace 8 7 4*"
                 await message.channel.send(to_send)
             elif len(args) == 4:
-                playerNum = command.split()[1].strip()
+                # playerNum = command.split()[1].strip()
+                playerNum = args[1].strip()
                 raceNum = args[2]
                 placement = args[3]
                 players = this_bot.getRoom().get_sorted_player_list()
@@ -2467,7 +2495,9 @@ class TablingCommands:
                                 this_bot.add_save_state(message.content)
                                 #TODO: This needs to call change placement on ROOM, not Race
                                 this_bot.getRoom().changePlacement(raceNum, playerFC, placement)
-                                await message.channel.send("Changed " + UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " place to " + str(placement) + " for race #" + str(raceNum) + "."))
+                                mes = "Changed " + UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " place to " + str(placement) + " for race #" + str(raceNum) + ".")
+                                if not dont_send: await message.channel.send(mes)
+                                return mes
                             else:
                                 await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " is not in race #" + str(raceNum)))           
                                 
@@ -2483,6 +2513,69 @@ class TablingCommands:
             await updateData(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs()))
             await message.channel.send(this_bot.getRoom().races[-1].getPlayersByPlaceInRoomString())
 
+    @staticmethod
+    async def transfer_table_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool, table_bots, client):
+        if not this_bot.table_is_set():
+            return await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+        
+        if len(args) == 1: #send usage
+            return await message.channel.send(f"Usage: `{server_prefix}transfer [channelID] (guildID)`\nYou don't need to include the `guildID` if the channel you are transferring to is in this server, otherwise you must include it.")
+        
+        
+        if len(args)==2: #transfer within server
+            channel = args[1]
+            try:
+                channel_id = int(channel.lstrip('<#').rstrip('>'))
+            except:
+                return await message.channel.send("Invalid channel.")
+            
+            if channel_id == message.channel.id:
+                return await message.channel.send("You can't transfer the table to the same channel.")
+
+            channel = message.guild.get_channel(channel_id)
+            if not channel:
+                return await message.channel.send("The channel you provided could not be found.")
+
+            if is_lounge_server and not common.author_is_lounge_staff(message.author):
+                return await message.channel.send("You don't have permission to transfer a table within the lounge server.")
+            
+            copied_instance = copy.deepcopy(this_bot)
+            table_bots[message.guild.id][channel_id] = copied_instance
+          
+            await message.channel.send(f"Table has been transferred to <#{channel_id}>. This channel's table will remain running.")
+            await channel.send(f"Table from <#{message.channel.id}> has been transferred here.")
+            return
+        
+        try:
+            channel_id = int(args[1].lstrip('<#').rstrip('>'))
+        except:
+            return await message.channel.send("Invalid channel.")
+        try:
+            server_id = int(args[2])
+        except:
+            return await message.channel.send("Invalid server ID. Use the `Copy ID` function to get a server's ID.")
+
+        if server_id == common.MKW_LOUNGE_SERVER_ID and not common.author_is_lounge_staff(message.author):
+            return await message.channel.send("You don't have permission to transfer a table to the lounge server.")
+
+        guild = client.get_guild(server_id)
+        if not guild:
+            return await message.channel.send("The server you provided could not be found. *Am I added to the server you are trying to transfer to?*.")
+
+        channel = guild.get_channel(channel_id)
+        if not channel:
+            return await message.channel.send("The channel you provided could not be found.")
+        
+        if channel_id == message.channel.id:
+            return await message.channel.send("You can't transfer the table to the same channel.")
+        
+        copied_instance = copy.deepcopy(this_bot)
+        if server_id not in table_bots:
+            table_bots[server_id] = {}
+        table_bots[server_id][channel_id] = copied_instance
+
+        await message.channel.send(f"Table has been transferred to <#{channel_id}> in {guild.name}. This channel's table will remain running.")
+        await channel.send(f"Table from <#{message.channel.id}> in {message.guild.name} has been transferred here.")
 
 
 

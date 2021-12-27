@@ -6,6 +6,7 @@ Created on Jul 13, 2020
 
 import ErrorChecker
 from _collections import defaultdict
+from itertools import chain
 import random
 import TableBotExceptions
 import UtilityFunctions
@@ -71,7 +72,7 @@ class War(object):
         try: 
             int(numberOfTeams)
         except ValueError:
-            raise TableBotExceptions.InvalidNumberOfPlayersException()
+            raise TableBotExceptions.InvalidNumPlayersInputException()
         
         if self.__formatMapping[formatting.lower().strip()] * int(numberOfTeams) > 12:
             raise TableBotExceptions.InvalidNumberOfPlayersException()
@@ -199,14 +200,27 @@ class War(object):
     def get_num_players(self):
         return self.numberOfTeams*self.playersPerTeam
             
+    def clear_resolved_errors(self, errors, resolved):
+        flattened_errors = list(chain.from_iterable(list(errors.values())))
 
-    def get_war_errors_string_2(self, room, replaceLounge=True, up_to_race=None):
-        errors = ErrorChecker.get_war_errors_players(self, room, replaceLounge, ignoreLargeTimes=self.ignoreLargeTimes)
+        indx = len(flattened_errors)-1
+        for _, values in list(errors.items())[::-1]:
+            for err in range(len(values)-1, -1, -1):
+                if indx in resolved: values.pop(err)
+                indx-=1
+
+
+    def get_war_errors_string_2(self, room, resolved_errors, replaceLounge=True, up_to_race=None):
+        error_types = defaultdict(list)
+
+        errors = ErrorChecker.get_war_errors_players(self, room, error_types, replaceLounge, ignoreLargeTimes=self.ignoreLargeTimes)
         if errors is None:
-            return "Room not loaded."
+            return "Room not loaded.", None
+
+        self.clear_resolved_errors(error_types, resolved_errors)
         
-        errors_no_large_times = ErrorChecker.get_war_errors_players(self, room, replaceLounge, ignoreLargeTimes=True)
-        errors_large_times = ErrorChecker.get_war_errors_players(self, room, replaceLounge, ignoreLargeTimes=False)
+        errors_no_large_times = ErrorChecker.get_war_errors_players(self, room, defaultdict(list), replaceLounge, ignoreLargeTimes=True)
+        errors_large_times = ErrorChecker.get_war_errors_players(self, room, defaultdict(list), replaceLounge, ignoreLargeTimes=False)
         num_errors_no_large_times = sum( [ len(raceErrors) for raceErrors in errors_no_large_times.values()])
         num_errors_large_times = sum( [ len(raceErrors) for raceErrors in errors_large_times.values()])
         build_string = "Errors that might affect the table:\n"
@@ -222,7 +236,7 @@ class War(object):
             errors = {k: v for (k, v) in errors.items() if k<=up_to_race}
 
         elif len(errors) == 0 and len(removedRaceString) == 0:
-            return "Room had no errors. Table should be correct."
+            return "Room had no errors. Table should be correct.", None
         
 
         for raceNum, error_messages in sorted(errors.items(), key=lambda x:x[0]):
@@ -233,11 +247,10 @@ class War(object):
             
             for error_message in error_messages:
                 build_string += "\t- " + error_message + "\n"
-        return build_string
+        return build_string, error_types
     
     def get_all_war_errors_players(self, room, lounge_replace=True):
-        return ErrorChecker.get_war_errors_players(self, room, lounge_replace, ignoreLargeTimes=False)
-    
+        return ErrorChecker.get_war_errors_players(self, room, defaultdict(list), lounge_replace, ignoreLargeTimes=False)
 
     def setWarName(self, warName):
         self.warName = warName

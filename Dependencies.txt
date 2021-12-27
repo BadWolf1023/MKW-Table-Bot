@@ -1,4 +1,4 @@
-discord.py
+py-cord
 opencv-python
 beautifulsoup4
 humanize

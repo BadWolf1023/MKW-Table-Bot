@@ -15,6 +15,7 @@ import UtilityFunctions
 import TagAIShell
 from copy import copy, deepcopy
 from UtilityFunctions import isint, isfloat
+from itertools import chain
 
 DEBUG_RACES = False
 DEBUG_PLACEMENTS = False
@@ -364,6 +365,17 @@ class Room(object):
             missingPlayersOnRace.sort()
         return missingPlayers
     
+    def get_dc_list_players(self, numGPs=3):
+        '''
+        get a sorted list of the DCs (same order as DCListString) for use by Discord Buttons
+        '''
+        missingPlayersByRace = self.getMissingOnRace(numGPs)
+        for missing_players in missingPlayersByRace:
+            missing_players.sort()
+
+        dc_list = list(chain.from_iterable(missingPlayersByRace))
+        dc_list = [player[0] for player in dc_list]
+        return dc_list
     
     def getDCListString(self, numberOfGPs=3, replace_lounge=True):
         missingPlayersByRace = self.getMissingOnRace(numberOfGPs)
@@ -453,7 +465,7 @@ class Room(object):
             character_vehicle = str(allRows[5][common.TOOLTIP_NAME])
         
         
-        delta = str(allRows[7].string) #Not true delta, but significant delta (above .5)
+        delta = str(allRows[7].string).strip() #Not true delta, but significant delta (above .5)
         
         time = str(allRows[8].string)
         
