@@ -17,6 +17,8 @@ tablebot_data/private.txt
 tablebot_data/stats.txt
 tablebot_data/tablebots.pkl
 tablebot_data/vr_is_on.pkl
+tablebot_data/*
+
 *.pyc
 .settings/org.eclipse.core.resources.prefs
 
@@ -32,7 +34,15 @@ data_tracking/*.db
 */room_data_tracking.db
 team_formats.pkl
 
+
 miis/mii_cache/*
 logging/*
 /tablebot_data/*.db
 /*.db
+miis/*
+
+!*/description.txt
+!*/BadWolf.jpg
+
+logging/full_logging.txt
+

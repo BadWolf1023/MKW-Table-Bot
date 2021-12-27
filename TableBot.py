@@ -18,6 +18,7 @@ import ServerFunctions
 import asyncio
 from data_tracking import DataTracker
 import UtilityFunctions
+import copy
 
 
 lorenzi_style_key = "#style"
@@ -60,7 +61,7 @@ class ChannelBot(object):
         self.lastWPTime = None
         self.roomLoadTime = None
         self.save_states = []
-        self.redo_save_states = []
+        self.state_pointer = -1
         self.miis: Dict[str, Mii.Mii] = {}
         
         
@@ -506,29 +507,62 @@ class ChannelBot(object):
         if save_state is None:
             command, save_state = self.get_save_state(command)
         
-        self.redo_save_states.clear()
-        self.save_states.append((command, save_state))
-    
+        self.save_states = self.save_states[:self.state_pointer+1] #clear all "redo" states
+        self.save_states.append((command, save_state)) #append new state
+        self.state_pointer += 1 #increment state pointer (state pointer always points to previous save state)
+
     #Function that removes the last save state - does not restore it
     def remove_last_save_state(self):
-        if len(self.save_states) < 1:
+        if len(self.save_states) < 1 or self.state_pointer < 0:
             return False
-        command, _ = self.save_states.pop()
+        command, _ = self.save_states.pop(self.state_pointer)
         return command
     
+    #removes last "redo"
     def remove_last_redo_state(self):
-        if len(self.redo_save_states)==0:
+        if len(self.save_states) <1 or self.state_pointer+1 >= len(self.save_states):
             return False
         
-        command = self.save_states.pop()[0]
-        return command
+        return self.save_states.pop(self.state_pointer+1)[0]
+    
+    def get_undo_list(self):
+        ret = "Undoable commands:"
+        undos = self.save_states[:self.state_pointer+1]
+        if len(undos)==0:
+            return "No commands to undo."
         
-    def restore_last_save_state(self):
-        if len(self.save_states) < 1:
+        for i, (command, _) in enumerate(undos[::-1]):
+            ret+=f"\n   {i+1}. `{command}`"
+        
+        return ret
+    
+    def get_redo_list(self):
+        ret = "Redoable commands:"
+        redos = self.save_states[self.state_pointer+1:-1]
+        if len(redos)==0:
+            return "No commands to redo."
+
+        for i, (command, _) in enumerate(redos):
+            ret+=f"\n   {i+1}. `{command}`"
+        
+        return ret
+        
+    #restores previous state (?undo)
+    def restore_last_save_state(self, do_all=False):
+        if len(self.save_states) < 1 or self.state_pointer < 0:
             return False
+
+        if self.state_pointer+1 == len(self.save_states):
+            self.add_save_state(command=None) #save the current state before reverting to the previous state if it hasn't been saved yet
+            self.state_pointer-=1
         
-        command, save_state = self.save_states.pop()
-        self.redo_save_states.append((command, save_state))
+        if do_all:
+            self.state_pointer = 0
+        
+        command, save_state = self.save_states[self.state_pointer]
+        self.state_pointer-=1
+
+        
         self.getRoom().restore_save_state(save_state["Room"])
         self.getWar().restore_save_state(save_state["War"])
         self.graph = save_state["graph"]
@@ -536,14 +570,19 @@ class ChannelBot(object):
         self.race_size = save_state["race_size"]
         return command
     
-    def restore_last_redo_state(self):
-        if len(self.redo_save_states) == 0:
+    #restores to the following state (?redo)
+    def restore_last_redo_state(self, do_all=False):
+        if len(self.save_states) <1 or self.state_pointer+2 >= len(self.save_states):
             return False
-        
-        complete_state = self.redo_save_states.pop()
-        self.save_states.append(complete_state)
+            
+        if do_all:
+            self.state_pointer=len(self.save_states)-2
+        else:
+            if self.state_pointer+2 < len(self.save_states):
+                self.state_pointer+=1
 
-        command, save_state = complete_state
+        command, save_state = self.save_states[self.state_pointer][0], self.save_states[self.state_pointer+1][1]
+        
         self.getRoom().restore_save_state(save_state["Room"])
         self.getWar().restore_save_state(save_state["War"])
         self.graph = save_state["graph"]
@@ -563,7 +602,7 @@ class ChannelBot(object):
         #self.lastWPTime = None
         #self.roomLoadTime = None
         self.save_states = []
-        self.redo_save_states = []
+        self.state_pointer = -1
         self.miis = {}
         self.populating = False
         self.should_send_mii_notification = True
@@ -579,4 +618,3 @@ class ChannelBot(object):
         self.clean_up()
         self.populating = False
         
-            

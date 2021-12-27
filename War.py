@@ -200,7 +200,7 @@ class War(object):
         return self.numberOfTeams*self.playersPerTeam
             
 
-    def get_war_errors_string_2(self, room, replaceLounge=True):
+    def get_war_errors_string_2(self, room, replaceLounge=True, up_to_race=None):
         errors = ErrorChecker.get_war_errors_players(self, room, replaceLounge, ignoreLargeTimes=self.ignoreLargeTimes)
         if errors is None:
             return "Room not loaded."
@@ -218,12 +218,13 @@ class War(object):
             build_string += "- Large times occurred, but are being ignored. Table could be incorrect.\n"
         
 
-        
+        if up_to_race and up_to_race>0: # only show errors up to specified race if it was provided
+            errors = {k: v for (k, v) in errors.items() if k<=up_to_race}
+
         elif len(errors) == 0 and len(removedRaceString) == 0:
             return "Room had no errors. Table should be correct."
         
-        
-            
+
         for raceNum, error_messages in sorted(errors.items(), key=lambda x:x[0]):
             if raceNum > len(room.races):
                 build_string += "   Race #" + str(raceNum) + ":\n"
