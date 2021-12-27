@@ -367,11 +367,10 @@ def initialize():
     private_data_init()
     Race.initialize()
     UserDataProcessing.initialize()
-    DataTracker.initialize()
+    asyncio.run(DataTracker.initialize())
     ServerFunctions.initialize()
     UtilityFunctions.initialize()
     TagAIShell.initialize()
-
 
 @client.event
 async def on_message(message: discord.Message):

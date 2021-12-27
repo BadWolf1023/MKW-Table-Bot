@@ -7,3 +7,4 @@ pip install kaitaistruct
 pip install -U matplotlib
 pip install bitstring
 pip install tabulate
+pip install aiosqlite

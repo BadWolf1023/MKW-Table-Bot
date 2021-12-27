@@ -377,7 +377,8 @@ class StatisticCommands:
     rt_min_count = 1
     ct_min_count = 2
 
-    min_leaderboard_count = 10
+    min_leaderboard_count_rt = 10
+    min_leaderboard_count_ct = 5
     leaderboard_players_per_page = 15
 
     @staticmethod
@@ -525,7 +526,7 @@ class StatisticCommands:
         return f"**{message_title}**\n```\n{tracks_played_str}```"
 
     @staticmethod
-    def get_track_name(track_lookup):
+    async def get_track_name(track_lookup):
         for track_name, value in Race.track_name_abbreviation_mappings.items():
             try:
                 if isinstance(value, tuple):
@@ -536,18 +537,18 @@ class StatisticCommands:
                     abbrevs = [value]
                 abbrevs = [x.lower() for x in abbrevs]
                 if track_lookup in abbrevs:
-                    return track_name, track_name.replace("(Nintendo)", "").replace("Wii", "")
+                    return track_name, track_name.replace("(Nintendo)", "").replace("Wii", ""), False
             except:
                 pass
 
-        track_list = DataTracker.DataRetriever.get_track_list()
+        track_list = await DataTracker.DataRetriever.get_track_list()
         for (track_name, url, fixed_track_name, is_ct, track_name_lookup) in track_list:
             if not is_ct:
                 if track_lookup in track_name_lookup:
-                    return track_name, fixed_track_name
+                    return track_name, fixed_track_name, False
 
         latest_version = -1
-        latest_track = None
+        latest_track = [None, None, None]
         for (track_name, url, fixed_track_name, is_ct, track_name_lookup) in track_list:
             if track_lookup in track_name_lookup:
                 try:
@@ -556,9 +557,9 @@ class StatisticCommands:
                     v = 0
                 if v > latest_version:
                     latest_version = v
-                    latest_track = [track_name, fixed_track_name]
+                    latest_track = [track_name, fixed_track_name, True]
 
-        if "(" in latest_track[0]:
+        if latest_track[0] and "(" in latest_track[0]:
             latest_track[1] = latest_track[0][:latest_track[0].index("(")].strip()
 
         return latest_track
@@ -577,7 +578,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             await message.channel.send(full_error_message)
             return
 
-        tracks_played = DataTracker.DataRetriever.get_tracks_played_count(is_ct, tier, number_of_days)
+        tracks_played = await DataTracker.DataRetriever.get_tracks_played_count(is_ct, tier, number_of_days)
         number_tracks = StatisticCommands.ct_number_tracks if is_ct else StatisticCommands.rt_number_tracks
         total_races_played = sum(track_data[2] for track_data in tracks_played)
 
@@ -616,10 +617,16 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         lounge_name = UserDataProcessing.get_lounge(discordIDToLoad)
 
         min_count = StatisticCommands.ct_min_count if is_ct else StatisticCommands.rt_min_count
-        best_tracks = DataTracker.DataRetriever.get_best_tracks(fcs, is_ct, tier, number_of_days, sort_asc, min_count)
+        best_tracks = await DataTracker.DataRetriever.get_best_tracks(fcs, is_ct, tier, number_of_days, sort_asc, min_count)
+
+        filter_descriptor = ""
+        if tier is not None:
+            filter_descriptor += f" in Tier {tier}"
+        if number_of_days is not None:
+            filter_descriptor += f" in the Last {number_of_days} Day{'' if number_of_days == 1 else 's'}"
 
         if len(best_tracks) == 0:
-            await message.channel.send("No race data was found.")
+            await message.channel.send(f"No data was found for {lounge_name}{filter_descriptor.lower()}.")
             return
 
         best_tracks = StatisticCommands.filter_out_bad_tracks([list(t) for t in best_tracks])
@@ -640,10 +647,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             table =  tabulate(best_tracks[page*tracks_per_page:(page+1)*tracks_per_page], headers, tablefmt="simple",floatfmt=".2f",colalign=["left"], stralign="right")
 
             message_title = f'{"Worst" if sort_asc else "Best"} {"CTs" if is_ct else "RTs"} for {lounge_name}'
-            if tier is not None:
-                message_title += f" in Tier {tier}"
-            if number_of_days is not None:
-                message_title += f" in the Last {number_of_days} Day{'' if number_of_days == 1 else 's'}"
+            message_title += filter_descriptor
             message_title += f' (Page {page+1}/{int(math.ceil(num_pages))})'
 
             return f'```diff\n- {message_title}\n\n{table}```'
@@ -664,13 +668,24 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             await message.channel.send(full_error_message)
             return
 
-        track_name, fixed_track_name = StatisticCommands.get_track_name(track_lookup_name.lower().replace(" ", ""))
+        track_name, fixed_track_name, is_ct = await StatisticCommands.get_track_name(track_lookup_name.lower().replace(" ", ""))
+        if not track_name:
+            await message.channel.send(f"No track named `{UtilityFunctions.process_name(track_lookup_name)}` found. \n\n" + error_message)
+            return
         fixed_track_name = fixed_track_name.replace("Wii", "").strip()
 
-        top_players = DataTracker.DataRetriever.get_top_players(track_name, tier, number_of_days, StatisticCommands.min_leaderboard_count)
+        min_leaderboard_count = StatisticCommands.min_leaderboard_count_ct if is_ct else StatisticCommands.min_leaderboard_count_rt
+
+        top_players = await DataTracker.DataRetriever.get_top_players(track_name, tier, number_of_days, min_leaderboard_count)
+        filter_descriptor = ""
+        if tier is not None:
+            filter_descriptor += f" in Tier {tier}"
+        if number_of_days is not None:
+            filter_descriptor += f" in the Last {number_of_days} Day{'' if number_of_days == 1 else 's'}"
+
         if len(top_players) == 0:
-            track_name = UtilityFunctions.process_name(fixed_track_name or track_lookup_name)
-            await message.channel.send(f"No race data was found for track `{track_name}`\n\n" + error_message)
+            await message.channel.send(f"No qualifying players were found for track `{fixed_track_name}`{filter_descriptor.lower()} "
+                                       f"(minimum {min_leaderboard_count} races played).\n\n" + error_message)
             return
 
         top_players = [list(t) for t in top_players]
@@ -691,10 +706,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
                              headers, tablefmt="simple", floatfmt=".2f", colalign=["left"], stralign="right")
 
             message_title = f"Top Lounge {fixed_track_name} Players"
-            if tier is not None:
-                message_title += f" in Tier {tier}"
-            if number_of_days is not None:
-                message_title += f" in the Last {number_of_days} Day{'' if number_of_days == 1 else 's'}"
+            message_title += filter_descriptor
             message_title += f' (Page {page + 1}/{int(math.ceil(num_pages))})'
 
             return f'```diff\n- {message_title}\n\n{table}```'

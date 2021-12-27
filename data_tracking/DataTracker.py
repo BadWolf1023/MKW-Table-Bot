@@ -6,32 +6,29 @@ Created on Oct 21, 2021
 This module helps track and store data from Wiimmfi.
 
 '''
-import UserDataProcessing
-import common
-from collections import defaultdict
-from datetime import datetime, timedelta
-import Placement
-import Race
-import Player
-from typing import List, Dict, Tuple, Set
-import UtilityFunctions
-from copy import deepcopy, copy
-import traceback
-from itertools import chain
-from numpy import place
 import json
-import time
-
-
-
 import os
+import time
+import traceback
+from collections import defaultdict
+from copy import deepcopy
+from itertools import chain
+from typing import List, Dict, Tuple, Set
+
+import aiosqlite
+
+import Placement
+import Player
+import Race
+import UserDataProcessing
+import UtilityFunctions
+import common
 from data_tracking import Data_Tracker_SQL_Query_Builder as QB
 
 DEBUGGING_DATA_TRACKER = False
 DEBUGGING_SQL = False
 
-import sqlite3
-database_connection:sqlite3.Connection = None
+db_connection:aiosqlite.Connection = None
 
 class SQLDataBad(Exception):
     pass
@@ -86,37 +83,51 @@ for k,v in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
     
 TABLE_BOT_CHANNEL_TIER_MAPPINGS = {RT_NAME:RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS, CT_NAME:CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS}
 
+# aiosqlite.Cursor is a async generator (not a regular generator) so list(cursor) does not work
+class ConnectionWrapper():
+    def __init__(self, connection):
+        self.con: aiosqlite.Connection = connection
 
+    async def execute(self, *args):
+        cursor = await self.con.execute(*args)
+        return await cursor.fetchall()
+
+    async def executemany(self, *args):
+        cursor = await self.con.executemany(*args)
+        return await cursor.fetchall()
+
+    async def executescript(self, *args):
+        cursor = await self.con.executescript(*args)
+        return await cursor.fetchall()
+
+    def __getattr__(self, attr):
+        return self.con.__getattribute__(attr)
 
 class DataRetriever(object):
     #TODO: Finish method
-    
     @staticmethod
-    def get_tracks_played_count(is_ct=False, tier=None, in_last_days=None):
+    async def get_tracks_played_count(is_ct=False, tier=None, in_last_days=None):
         tracks_query = QB.SQL_Search_Query_Builder.get_tracks_played_query(is_ct, tier, in_last_days)
-        with database_connection:
-            return list(database_connection.execute(tracks_query))
-        return []
+        return await db_connection.execute(tracks_query)
 
     @staticmethod
-    def get_best_tracks(fcs, is_ct=False, tier=None, in_last_days=None, sort_asc=False, min_count = 1):
+    async def get_best_tracks(fcs, is_ct=False, tier=None, in_last_days=None, sort_asc=False, min_count = 1):
         tracks_query = QB.SQL_Search_Query_Builder.get_best_tracks(fcs, is_ct, tier, in_last_days, min_count)
-        result = list(database_connection.execute(tracks_query))
-
+        result = await db_connection.execute(tracks_query)
         if sort_asc:
             return list(reversed(result))
         return result
 
     @staticmethod
-    def get_top_players(track, tier=None, in_last_days=None, min_count=1):
+    async def get_top_players(track, tier=None, in_last_days=None, min_count=1):
+        #await db_connection.execute("WITH RECURSIVE cnt(x) AS (SELECT 1 UNION ALL SELECT x+1 FROM cnt lIMIT 20000000) SELECT avg(x) FROM cnt;")
         tracks_query = QB.SQL_Search_Query_Builder.get_top_players_query(tier, in_last_days, min_count)
-        result = database_connection.execute(tracks_query, [track])
-        return list(result)
+        return await db_connection.execute(tracks_query, [track])
 
     @staticmethod
-    def get_track_list():
-        return list(database_connection.execute(
-            "SELECT track_name, url, fixed_track_name, is_ct, track_name_lookup FROM Track"))
+    async def get_track_list():
+        return await db_connection.execute("SELECT track_name, url, fixed_track_name, is_ct, track_name_lookup "
+                                           "FROM Track")
 
 class ChannelBotSQLDataValidator(object):
     def wrong_type_message(self, data, expected_type, multi=False):
@@ -381,11 +392,6 @@ class ChannelBotSQLDataValidator(object):
             
     def validate_event_structure_data(self, event_structure_tuple):
         pass
-            
-    
-            
-
-            
 
 class RoomTrackerSQL(object):
     def __init__(self, channel_bot):
@@ -452,7 +458,7 @@ class RoomTrackerSQL(object):
     
     
         
-    def insert_missing_placements_into_database(self):
+    async def insert_missing_placements_into_database(self):
         '''Inserts placements in self.channel_bot's races are not yet in the database's Place table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted placements (as 2-tuples: race_id, fc) upon success. (An empty list is returned if no placements were inserted.)'''
@@ -466,12 +472,9 @@ class RoomTrackerSQL(object):
         insert_ignore_script = QB.build_insert_missing_placement_script(all_data)
         values_args = list(chain.from_iterable(all_data))
         
-        with database_connection:
-            return list(database_connection.execute(insert_ignore_script, values_args))
-        return []
+        return await db_connection.execute(insert_ignore_script, values_args)
     
-    
-    def insert_missing_players_into_database(self):
+    async def insert_missing_players_into_database(self):
         '''Inserts players in all of the races in self.channel_bot.races that are not yet in the database's Player table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted player's fcs (as 1-tuples) upon success. (An empty list is returned if no players were inserted.)'''
@@ -484,12 +487,9 @@ class RoomTrackerSQL(object):
         all_data = [self.get_player_as_sql_player_tuple(p) for p in unique_room_players]
         insert_ignore_script = QB.build_insert_missing_players_script(all_data)
         values_args = list(chain.from_iterable(all_data))
-        with database_connection:
-            return list(database_connection.execute(insert_ignore_script, values_args))
-        return []
+        return await db_connection.execute(insert_ignore_script, values_args)
     
-    
-    def insert_missing_races_into_database(self):
+    async def insert_missing_races_into_database(self):
         '''Inserts races in self.channel_bot.races are not yet in the database's Race table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted race's race_id's (as 1-tuples) upon success. (An empty list is returned if no races were inserted.)'''
@@ -501,13 +501,9 @@ class RoomTrackerSQL(object):
         all_data = [self.get_race_as_sql_tuple(r) for r in unique_races]
         insert_ignore_script = QB.build_insert_missing_races_script(all_data)
         values_args = list(chain.from_iterable(all_data))
-        with database_connection:
-            return list(database_connection.execute(insert_ignore_script, values_args))
-        return []
-
+        return await db_connection.execute(insert_ignore_script, values_args)
     
-    
-    def insert_missing_tracks_into_database(self):
+    async def insert_missing_tracks_into_database(self):
         '''Inserts tracks in self.channel_bot's races are not yet in the database's Track table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns the a list of the inserted track names (as 1-tuples) upon success. (An empty list is returned if no tracks were inserted.)'''
@@ -520,13 +516,9 @@ class RoomTrackerSQL(object):
         insert_ignore_script = QB.build_insert_missing_tracks_script(all_data)
         values_args = list(chain.from_iterable(all_data))
         
-        with database_connection:
-            return list(database_connection.execute(insert_ignore_script, values_args))
-        return []
-        
-        
+        return await db_connection.execute(insert_ignore_script, values_args)
     
-    def get_matching_placements_with_missing_hex(self, update_mii_args):
+    async def get_matching_placements_with_missing_hex(self, update_mii_args):
         '''Given a list of 3-tuples (where the tuple is (race_id, fc, _)), returns existing a list of (race_id, fcs) tuples in Place table whose mii_hex is null.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong'''
         missing_mii_data = [(data[0], data[1], None) for data in update_mii_args]
@@ -534,11 +526,9 @@ class RoomTrackerSQL(object):
             return []
         missing_mii_hexes_statement = QB.get_existing_race_fcs_in_Place_table_with_null_mii_hex(missing_mii_data)
         values_args = list(chain.from_iterable(missing_mii_data))
-        with database_connection:
-            return list(database_connection.execute(missing_mii_hexes_statement, values_args))
-        return []
+        return await db_connection.execute(missing_mii_hexes_statement, values_args)
     
-    def get_matching_event_fcs_with_missing_hex(self, update_mii_args):
+    async def get_matching_event_fcs_with_missing_hex(self, update_mii_args):
         '''Given a list of 3-tuples (where the tuple is (event_id, fc, _)), returns existing a list of (event_id, fcs) tuples in Event_FCs table whose mii_hex is null.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong'''
         missing_mii_data = [(data[0], data[1], None) for data in update_mii_args]
@@ -546,11 +536,9 @@ class RoomTrackerSQL(object):
             return []
         missing_mii_hexes_statement = QB.get_existing_event_fcs_in_with_null_mii_hex(missing_mii_data)
         values_args = list(chain.from_iterable(missing_mii_data))
-        with database_connection:
-            return list(database_connection.execute(missing_mii_hexes_statement, values_args))
-        return []
+        return await db_connection.execute(missing_mii_hexes_statement, values_args)
         
-    def update_database_place_miis(self):
+    async def update_database_place_miis(self):
         '''Updates the mii_hex for placements in Place table for placements in self.channel_bot.race's placements who have a mii_hex if that mii_hex in the Place table is null.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns the a list of the race_id, fc (as 2-tuples) of the placements whose mii_hex's were updated. (An empty list is returned if nothing was updated.)'''
@@ -563,14 +551,13 @@ class RoomTrackerSQL(object):
         update_mii_script = QB.update_mii_hex_script()
         update_mii_args = [(placement.getPlayer().get_mii_hex(), race_id, fc) for (race_id, fc), placement in have_miis_for_placements.items()]
         
-        found_race_id_fcs_with_null_miis = self.get_matching_placements_with_missing_hex(update_mii_args)
+        found_race_id_fcs_with_null_miis = await self.get_matching_placements_with_missing_hex(update_mii_args)
 
-        with database_connection:
-            database_connection.executemany(update_mii_script, update_mii_args)
+        await db_connection.executemany(update_mii_script, update_mii_args)
         return found_race_id_fcs_with_null_miis
     
     
-    def insert_missing_event_ids_race_ids(self):
+    async def insert_missing_event_ids_race_ids(self):
         '''Inserts (event_id, race_id) in for each race in self.channel_bot's races that are not yet in the database's Event_Races table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns the a list of the inserted event_ids, race_ids (as 2-tuples) upon success. (An empty list is returned if nothing was inserted.)'''
@@ -581,10 +568,8 @@ class RoomTrackerSQL(object):
         
         insert_ignore_script = QB.build_missing_event_ids_race_ids_script(event_id_race_ids)
         values_args = list(chain.from_iterable((event_id, race_id) for event_id, race_id in event_id_race_ids))
-        with database_connection:
-            return list(database_connection.execute(insert_ignore_script, values_args))
-        return []
-    
+        return await db_connection.execute(insert_ignore_script, values_args)
+
     def get_event_as_upsert_sql_place_tuple(self, channel_bot):
         '''Converts a given table bot a tuple that is ready to be inserted into the Event SQL table'''
         return (channel_bot.get_event_id(),
@@ -594,21 +579,21 @@ class RoomTrackerSQL(object):
                 channel_bot.getRoom().get_set_up_user_discord_id(),
                 channel_bot.getRoom().get_set_up_display_name())
         
-    def insert_missing_event(self, was_real_update=False):
+    async def insert_missing_event(self, was_real_update=False):
         self.data_validator.validate_event_data(self.channel_bot)
         event_sql_args = [*self.get_event_as_upsert_sql_place_tuple(self.channel_bot)]
         if len(event_sql_args) < 1:
             return []
         
         upsert_script = QB.build_event_upsert_script(was_real_update)
-        with database_connection:
-            added_updated_event_ids = list(database_connection.execute(upsert_script, event_sql_args))
-            if was_real_update:
-                return added_updated_event_ids
+
+        added_updated_event_ids = await db_connection.execute(upsert_script, event_sql_args)
+        if was_real_update:
+            return added_updated_event_ids
         return []
     
     
-    def add_event_id(self):
+    async def add_event_id(self):
         '''Inserts event_id for self.channel_bot int Event_ID table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted event_id (as a 1-tuple) upon success. (An empty list is returned if nothing was inserted.)'''
@@ -618,11 +603,9 @@ class RoomTrackerSQL(object):
             return []
         
         upsert_script = QB.build_missing_event_id_table_script(event_sql_args)
-        with database_connection:
-            return list(database_connection.execute(upsert_script, event_sql_args[0]))
-        return []
+        return await db_connection.execute(upsert_script, event_sql_args[0])
     
-    def insert_missing_event_fcs_and_miis(self):
+    async def insert_missing_event_fcs_and_miis(self):
         '''Inserts event_id, fcs in self.channel_bot's races are not yet in the database's Event_FCS table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted placements (as 2-tuples: race_id, fc) upon success. (An empty list is returned if no placements were inserted.)'''
@@ -633,11 +616,9 @@ class RoomTrackerSQL(object):
         self.data_validator.validate_event_fc_data(event_id_fcs)
         insert_ignore_script = QB.build_missing_event_fcs_table_script(event_id_fcs)
         values_args = list(chain.from_iterable(event_id_fcs))
-        with database_connection:
-            return list(database_connection.execute(insert_ignore_script, values_args))
-        return []
+        return await db_connection.execute(insert_ignore_script, values_args)
     
-    def update_missing_miis_in_event_fcs(self):
+    async def update_missing_miis_in_event_fcs(self):
         '''Updates the mii_hex for fcs for the event in Event_FCs table if the mii is null in Event_FCs and if we have a non-null mii
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns the a list of the event_id, fc (as 2-tuples) of the fcs in the event whose mii_hex's were updated. (An empty list is returned if nothing was updated.)'''
@@ -650,9 +631,8 @@ class RoomTrackerSQL(object):
         update_mii_script = QB.update_mii_hex_script_event_fcs()
         update_mii_args = [(mii_hex, event_id, fc) for (event_id, fc, mii_hex) in have_miis_for_event]
 
-        found_event_id_fcs_with_null_miis = self.get_matching_event_fcs_with_missing_hex(have_miis_for_event)
-        with database_connection:
-            database_connection.executemany(update_mii_script, update_mii_args)
+        found_event_id_fcs_with_null_miis = await self.get_matching_event_fcs_with_missing_hex(have_miis_for_event)
+        await db_connection.executemany(update_mii_script, update_mii_args)
         return found_event_id_fcs_with_null_miis
     
     def get_event_structure_tuple(self):
@@ -676,7 +656,7 @@ class RoomTrackerSQL(object):
                 self.channel_bot.getWar().get_number_of_teams(),
                 self.channel_bot.getWar().get_players_per_team())
         
-    def dump_event_structure_data(self):
+    async def dump_event_structure_data(self):
         event_structure_tuple = self.get_event_structure_tuple()
         if len(event_structure_tuple) == 0:
             return []
@@ -684,27 +664,24 @@ class RoomTrackerSQL(object):
         self.data_validator.validate_event_structure_data(event_structure_tuple)
         upsert_script = QB.build_event_structure_script()
         #values_args = list(chain.from_iterable(upsert_script))
-        with database_connection:
-            return list(database_connection.execute(upsert_script, event_structure_tuple))
-        return []
-    
+        return await db_connection.execute(upsert_script, event_structure_tuple)
     
 class RoomTracker(object):
         
     @staticmethod
-    def add_everything_to_database(channel_bot):
+    async def add_everything_to_database(channel_bot):
         sql_helper = RoomTrackerSQL(channel_bot)
-        added_players = sql_helper.insert_missing_players_into_database()
-        added_tracks = sql_helper.insert_missing_tracks_into_database()
-        added_races = sql_helper.insert_missing_races_into_database()
-        added_placements = sql_helper.insert_missing_placements_into_database()
-        added_miis = sql_helper.update_database_place_miis()
-        added_event_id = sql_helper.add_event_id()
-        added_event_ids_race_ids = sql_helper.insert_missing_event_ids_race_ids()
-        added_event_ids = sql_helper.insert_missing_event(was_real_update=(len(added_event_ids_race_ids) > 0))
-        added_event_fcs = sql_helper.insert_missing_event_fcs_and_miis()
-        added_event_fcs_miis = sql_helper.update_missing_miis_in_event_fcs()
-        event_structure_data_dump_event_id = sql_helper.dump_event_structure_data()
+        added_players = await sql_helper.insert_missing_players_into_database()
+        added_tracks = await sql_helper.insert_missing_tracks_into_database()
+        added_races = await sql_helper.insert_missing_races_into_database()
+        added_placements = await sql_helper.insert_missing_placements_into_database()
+        added_miis = await sql_helper.update_database_place_miis()
+        added_event_id = await sql_helper.add_event_id()
+        added_event_ids_race_ids = await sql_helper.insert_missing_event_ids_race_ids()
+        added_event_ids = await sql_helper.insert_missing_event(was_real_update=(len(added_event_ids_race_ids) > 0))
+        added_event_fcs = await sql_helper.insert_missing_event_fcs_and_miis()
+        added_event_fcs_miis = await sql_helper.update_missing_miis_in_event_fcs()
+        event_structure_data_dump_event_id = await sql_helper.dump_event_structure_data()
 
         if DEBUGGING_SQL:
             print(f"Added players: {added_players}")
@@ -721,7 +698,7 @@ class RoomTracker(object):
     
     
     @staticmethod
-    def add_data(channel_bot):
+    async def add_data(channel_bot):
         if channel_bot.getRoom().is_initialized():
             t0 = time.perf_counter()
 
@@ -730,13 +707,12 @@ class RoomTracker(object):
             deepcopied_channel_bot = deepcopy(channel_bot)
             if deepcopied_channel_bot.getRoom().is_initialized(): #This check might seem unnecessary, but we'll leave it in case we convert things to asyncio that aren't currently asynchronous (making it necessary)
                 try:
-                    RoomTracker.add_everything_to_database(deepcopied_channel_bot)
+                    await RoomTracker.add_everything_to_database(deepcopied_channel_bot)
                 except:
                     common.log_traceback(traceback)
             t1 = time.perf_counter()
             if DEBUGGING_SQL:
                 print(f"Total time taken to add everything to SQL DB: {round((t1-t0), 5)}s")
-                       
 
 def load_room_data():
     if not os.path.exists(common.ROOM_DATA_TRACKING_DATABASE_FILE):
@@ -749,30 +725,25 @@ def load_room_data():
             print("Warning: Failed to create database")
             raise
 
+async def start_database():
+    global db_connection
+    db_connection = ConnectionWrapper(await aiosqlite.connect(common.ROOM_DATA_TRACKING_DATABASE_FILE,isolation_level=None))
 
-def start_database():
-    global database_connection
-    database_connection = sqlite3.connect(common.ROOM_DATA_TRACKING_DATABASE_FILE)
-
-def populate_tier_table():
-    cur = database_connection.cursor()
+async def populate_tier_table():
     populate_tier_table_script = common.read_sql_file(common.ROOM_DATA_POPULATE_TIER_TABLE_SQL)
-    cur.executescript(populate_tier_table_script)
+    await db_connection.executescript(populate_tier_table_script)
 
-def populate_score_matrix_table():
-    cur = database_connection.cursor()
+async def populate_score_matrix_table():
     rows = []
 
     for room_size in range(0,12):
         for place in range(0,12):
             rows.append((room_size+1, place+1, common.SCORE_MATRIX[room_size][place]))
 
-    cur.executescript("DELETE FROM Score_Matrix;")
-    cur.executemany("INSERT INTO Score_Matrix VALUES (?, ?, ?)", rows)
-    database_connection.commit()
+    await db_connection.executescript("DELETE FROM Score_Matrix;")
+    await db_connection.executemany("INSERT INTO Score_Matrix VALUES (?, ?, ?)", rows)
 
-def populate_player_fcs_table():
-    cur = database_connection.cursor()
+async def populate_player_fcs_table():
     rows = []
 
     fc_map = UserDataProcessing.FC_DiscordID
@@ -784,46 +755,41 @@ def populate_player_fcs_table():
         rows.append((fc, discord_id))
 
     start = time.time()
-    cur.executescript("DELETE FROM Player_FCs;")
-    cur.executemany("insert into Player_FCs values (?, ?)", rows)
+    await db_connection.execute("DELETE FROM Player_FCs;")
+    await db_connection.executemany("insert into Player_FCs values (?, ?)", rows)
     print(f'FC table population finished in {time.time()-start} seconds')
-    database_connection.commit()
 
-def add_player_fcs(fc_map):
+async def add_player_fcs(fc_map):
     rows = []
     for fc in fc_map:
         discord_id = fc_map[fc][0]
         rows.append((fc, discord_id))
 
-    cur = database_connection.cursor()
-    cur.executemany("INSERT OR REPLACE INTO Player_FCs VALUES(?, ?)", rows)
-    database_connection.commit()
+    await db_connection.executemany("INSERT OR REPLACE INTO Player_FCs VALUES(?, ?)", rows)
 
-def ensure_foreign_keys_on():
-    cur = database_connection.cursor()
-    cur.executescript("""PRAGMA foreign_keys = ON;""")
+async def ensure_foreign_keys_on():
+    await db_connection.executescript("""PRAGMA foreign_keys = ON;""")
     
-def database_maintenance():
-    cur = database_connection.cursor()
-    populate_tier_table_script = common.read_sql_file(common.ROOM_DATA_TRACKING_DATABASE_MAINTENANCE_SQL)
-    cur.executescript(populate_tier_table_script)
-    
-def initialize():
+async def database_maintenance():
+    maintenance_script = common.read_sql_file(common.ROOM_DATA_TRACKING_DATABASE_MAINTENANCE_SQL)
+    await db_connection.executescript(maintenance_script)
+
+async def initialize():
     load_room_data()
-    start_database()
-    ensure_foreign_keys_on()
-    populate_tier_table()
-    populate_score_matrix_table()
-    populate_player_fcs_table()
-    database_maintenance()
+    await start_database()
+    await ensure_foreign_keys_on()
+    await populate_tier_table()
+    await populate_score_matrix_table()
+    await populate_player_fcs_table()
+    await database_maintenance()
 
 def save_data():
     pass
-    
+
+# Unused
 def on_exit():
     save_data()
-    database_connection.close()
-
+    db_connection.close()
 
 if __name__ == '__main__':
     os.chdir("..")

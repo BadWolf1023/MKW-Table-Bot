@@ -230,14 +230,13 @@ class SQL_Search_Query_Builder(object):
         if tier is not None:
             tier_filter_clause = f"""
             AND Place.race_id IN (
-                SELECT DISTINCT Race.race_id
-                FROM Race
-                         JOIN Event_Races ER ON Race.race_id = ER.race_id
-                         JOIN Event ON ER.event_id = Event.event_id
+                SELECT race_id
+                FROM Event_Races
+                         JOIN Event ON Event_Races.event_id = Event.event_id
                          JOIN Tier ON Event.channel_id = Tier.channel_id
-                         JOIN Track ON Race.track_name = Track.track_name
-            
-                WHERE Race.track_name != ''
+                         JOIN Event_Structure ON Event.event_id = Event_Structure.event_id
+                    
+                    WHERE (players_per_team * number_of_teams) == 12
                     AND tier = {tier}
                     {SQL_Search_Query_Builder.get_event_valid_filter()}
             )
@@ -261,6 +260,7 @@ class SQL_Search_Query_Builder(object):
                           ON (Place.place = Score_Matrix.place AND num_players = Score_Matrix.size)
                      JOIN Track ON Race.track_name = Track.track_name
             WHERE Track.is_ct = {1 if is_ct else 0}
+                AND Race.track_name != ''
                 AND Place.fc in {fc_filter}
                 AND time < 6 * 60
                 {days_filter_clause}
@@ -291,22 +291,22 @@ class SQL_Search_Query_Builder(object):
                  JOIN Score_Matrix
                       ON (Place.place = Score_Matrix.place AND num_players = Score_Matrix.size)
                  JOIN Player_FCs ON Place.fc = Player_FCs.fc
-                 JOIN Track ON Race.track_name = Track.track_name
+                 
         WHERE Place.race_id IN (
-            SELECT DISTINCT Race.race_id
+            SELECT Race.race_id
             FROM Race
-                     JOIN Event_Races ER ON Race.race_id = ER.race_id
-                     JOIN Event ON ER.event_id = Event.event_id
-                     JOIN Tier ON Event.channel_id = Tier.channel_id
-            JOIN Event_Structure on Event.event_id = Event_Structure.event_id
+                    JOIN Event_Races ER ON Race.race_id = ER.race_id
+                    JOIN Event ON ER.event_id = Event.event_id
+                    JOIN Tier ON Event.channel_id = Tier.channel_id
+                    JOIN Track ON Race.track_name = Track.track_name
+                    JOIN Event_Structure on Event.event_id = Event_Structure.event_id
         
             WHERE (players_per_team * number_of_teams) == 12
+                AND Track.track_name = ?
                 {tier_filter_clause}
                 {SQL_Search_Query_Builder.get_event_valid_filter()}
         )
-            AND Track.track_name = ?
             AND time < 6 * 60
-            AND Track.is_ct = 0
             
         {days_filter_clause}
         GROUP BY discord_id
