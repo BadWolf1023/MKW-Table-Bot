@@ -7,6 +7,7 @@ from typing import List
 import os
 import common
 import AbuseTracking
+import UtilityFunctions
 
 main_help_file_list = ['main_help.txt']
 tabling_help_file_list = ['tabling_help_1.txt', 'tabling_help_2.txt']
@@ -104,7 +105,10 @@ async def send_help(message, is_lounge_server, args:List[str], prefix=common.def
                 help_text = f.read()
                 if len(help_text) > 1:
                     help_text = help_text.replace("{SERVER_PREFIX}", prefix)
-                    await message.channel.send(help_text)
+                    help_text_chunks = list(UtilityFunctions.string_chunks(help_text, 2000))
+
+                    for chunk in help_text_chunks:
+                        await message.channel.send(chunk)
                 else:
                     break
                     

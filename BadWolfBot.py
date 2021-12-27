@@ -60,6 +60,9 @@ RESET_TERMS = {"reset", "restart", "cancel", "quit", "stop", "clear"}
 START_WAR_TERMS = {"startwar", "sw", "starttable"}
 UNDO_TERMS = {"undo", "undocommand", "reverse"}
 REDO_TERMS = {"redo", "redocommand"}
+LIST_UNDOS_TERMS = {"undos", "getundos", "toundo"}
+LIST_REDOS_TERMS = {"redos", "getredos", "toredo"}
+
 
 #These commands also modify the table, but can be undone using the ?undo command
 REMOVE_RACE_TERMS = {"removerace"}
@@ -133,6 +136,7 @@ LOUNGE_PENDING_TABLE_SUBMISSION_TERMS = {"pending", "pendingsubmission", "pendin
 LOUNGE_WHO_IS_TERMS = {"whois"}
 
 #Server administrator commands only
+SERVER_SETTINGS_TERMS = {'settings', 'serversettings', 'sets', 'serversets'}
 SET_PREFIX_TERMS = {"setprefix"}
 SERVER_DEFAULT_TABLE_THEME_TERMS = {'defaulttheme', 'defaultservertheme', 'serverstyle', 'servertheme', 'servertablestyle', 'servertabletheme'}
 SERVER_DEFAULT_GRAPH_TERMS = {'defaultgraph', 'defaultservergraph', 'servergraph', 'servertablegraph', 'servergraphtheme'}
@@ -166,7 +170,7 @@ GET_LOGS_TERMS = {"getlog", "getlogs", "logs"}
 ADD_SHA_TERMS = {"addsha", "sha"}
 REMOVE_SHA_TERMS = {"removesha", "delsha"}
 
-needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS
+needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REDO_TERMS | LIST_REDOS_TERMS | LIST_UNDOS_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS
 
 ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS
 
@@ -209,9 +213,6 @@ def createEmptyTableBot(server_id=None, channel_id=None):
     return TableBot.ChannelBot(server_id=server_id, channel_id=channel_id)
 
 client = discord.Client()
-
-
-
 
 
 def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bot:TableBot.ChannelBot, command:str):
@@ -447,7 +448,7 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
             
             elif args[0] in TABLE_TEXT_TERMS:
-                await commands.TablingCommands.table_text_command(message, this_bot, server_prefix, is_lounge_server)
+                await commands.TablingCommands.table_text_command(message, this_bot, args, server_prefix, is_lounge_server)
             elif args[0] in WAR_PICTURE_TERMS:
                 await commands.TablingCommands.war_picture_command(message, this_bot, args, server_prefix, is_lounge_server)
                   
@@ -651,10 +652,16 @@ async def on_message(message: discord.Message):
                 await commands.BotAdminCommands.blacklist_user_command(message, args, command)
                     
             elif args[0] in UNDO_TERMS:
-                await commands.TablingCommands.undo_command(message, this_bot, server_prefix, is_lounge_server)
+                await commands.TablingCommands.undo_command(message, this_bot, args, server_prefix, is_lounge_server)
             
             elif args[0] in REDO_TERMS:
-                await commands.TablingCommands.redo_command(message, this_bot, server_prefix, is_lounge_server)
+                await commands.TablingCommands.redo_command(message, this_bot, args, server_prefix, is_lounge_server)
+            
+            elif args[0] in LIST_UNDOS_TERMS:
+                await commands.TablingCommands.get_undos_command(message, this_bot, server_prefix, is_lounge_server)
+            
+            elif args[0] in LIST_REDOS_TERMS:
+                await commands.TablingCommands.get_redos_command(message, this_bot, server_prefix, is_lounge_server)
             
             elif args[0] in VERIFY_ROOM_TERMS:
                 if commands.vr_is_on:
@@ -701,6 +708,9 @@ async def on_message(message: discord.Message):
            
             elif args[0] in SERVER_DEFAULT_LARGE_TIME_TERMS:
                 await commands.ServerDefaultCommands.large_time_setting_command(message, this_bot, args, server_prefix)
+            
+            elif args[0] in SERVER_SETTINGS_TERMS:
+                await commands.ServerDefaultCommands.show_settings_command(message, this_bot, server_prefix)
 
             elif args[0] in DISPLAY_GP_SIZE_TERMS:
                 await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)

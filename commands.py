@@ -1279,6 +1279,13 @@ class ServerDefaultCommands:
         return True
     
     @staticmethod
+    async def show_settings_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str):
+        server_id = message.guild.id
+        server_name = message.guild.name
+        await message.channel.send(ServerFunctions.get_server_settings(server_name, server_id))
+
+
+    @staticmethod
     async def large_time_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
         if not common.running_beta or common.beta_is_real:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change server default for hiding large times on tables")
@@ -2065,30 +2072,51 @@ class TablingCommands:
             this_bot.add_save_state(message.content)
             this_bot.getWar().setWarName(old_command[len(server_prefix)+len("setwarname"):].strip())
             await message.channel.send("War name set!")  
-            
     @staticmethod
-    async def undo_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):   
+    async def get_undos_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
-    
-        undone_command = this_bot.restore_last_save_state()
-        if undone_command is False:
-            await message.channel.send("There is nothing to undo.")
+        
+        undo_list = this_bot.get_undo_list()
+        await message.channel.send(undo_list)
+
+    @staticmethod
+    async def get_redos_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
+        if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
+            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
         
-        await message.channel.send(f"The following command has been undone: {UtilityFunctions.process_name(undone_command)}\nRun {server_prefix}wp to make sure table bot is fully refreshed.")
+        redo_list = this_bot.get_redo_list()
+        await message.channel.send(redo_list)
+
+    @staticmethod
+    async def undo_command(message:discord.Message, this_bot:ChannelBot, args: List[str], server_prefix:str, is_lounge_server:bool):   
+        if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
+            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            return
+        
+        do_all = True if (len(args)>1 and args[1].strip().lower() == "all") else False
+    
+        undone_command = this_bot.restore_last_save_state(do_all=do_all)
+        if undone_command is False:
+            await message.channel.send("No commands to undo.")
+            return
+        mes = "All possible commands have been undone." if do_all else f"The following command has been undone: `{UtilityFunctions.process_name(undone_command)}`"
+        await message.channel.send(f"{mes}\nRun `{server_prefix}wp` to make sure table bot is fully refreshed.")
     
     @staticmethod
-    async def redo_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
+    async def redo_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             return await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         
-        redone_command = this_bot.restore_last_redo_state()
+        do_all = True if (len(args)>1 and args[1].strip().lower() == "all") else False
+        redone_command = this_bot.restore_last_redo_state(do_all=do_all)
         if redone_command is False:
-            return await message.channel.send("There is nothing to redo.")
+            return await message.channel.send("No commands to redo.")
         
-        await message.channel.send(f"The following command has been redone: {UtilityFunctions.process_name(redone_command)}\nRun {server_prefix}wp to make sure table bot is fully refreshed.")
+        mes = "All possible commands have been redone." if do_all else f"The following command has been redone: `{UtilityFunctions.process_name(redone_command)}`"
+        await message.channel.send(f"{mes}\nRun `{server_prefix}wp` to make sure table bot is fully refreshed.")
 
     @staticmethod
     async def early_dc_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool): 
@@ -2194,10 +2222,18 @@ class TablingCommands:
                 if not updated:
                     await message2.edit(content="Room not updated. Please do " + server_prefix + "sw to load a different room.")
                 else:
-                    await message2.edit(content=str("Room updated. Room has finished " + \
-                                                    str(len(this_bot.getRoom().getRaces())) +\
-                                                    " races. Last race: " +\
-                                                    str(this_bot.getRoom().races[-1].getTrackNameWithoutAuthor())))
+                    up_to = get_max_specified_race(args)
+                    include_up_to_str = up_to and up_to<len(this_bot.getRoom().getRaces())
+
+                    await message2.edit(content=str(
+                                            "Room updated. Room has finished " + \
+                                            str(len(this_bot.getRoom().getRaces())) +\
+                                            f" races{f' (showing {up_to} races)' if include_up_to_str else ''}. Last race: " +\
+                                            str(this_bot.getRoom().races[-1].getTrackNameWithoutAuthor()) +\
+                                            ((" (last shown: " + str(this_bot.getRoom().races[up_to-1].getTrackNameWithoutAuthor()) + ")") if up_to else "")
+                                            )
+                                        )
+
                     message3 = await message.channel.send("Getting table...")
                     usemiis, miiArgRequested, _ = getUseMiis(args)
                     uselounge, loungeArgRequested = getUseLoungeNames(args)
@@ -2217,11 +2253,12 @@ class TablingCommands:
                     
                     step = this_bot.get_race_size()
                     output_gsc_table = False
-                    if len(args) > 1 and args[1] in {'byrace', 'race'}:
+                    if len(args) > 1 and args[1] in {'byrace', 'race'} or (len(args)>2 and args[2] in {'byrace', 'race'}):
                         step = 1
                     if len(args) > 1 and args[1] in {'gsc'}:
                         output_gsc_table = True
-                    table_text, table_sorted_data = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=use_lounge_otherwise_mii, use_miis=usemiis, lounge_replace=lounge_replace, server_id=server_id, missingRacePts=this_bot.dc_points, step=step)
+                                        
+                    table_text, table_sorted_data = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=use_lounge_otherwise_mii, use_miis=usemiis, lounge_replace=lounge_replace, server_id=server_id, missingRacePts=this_bot.dc_points, step=step, up_to_race=up_to)
                     if output_gsc_table:
                         table_text = SK.format_sorted_data_for_gsc(table_sorted_data, this_bot.getWar().teamPenalties)
                     table_text_with_style_and_graph = table_text + this_bot.get_lorenzi_style_and_graph(prepend_newline=True)
@@ -2256,10 +2293,12 @@ class TablingCommands:
                             numRaces = 0
                             if this_bot.getRoom() is not None and this_bot.getRoom().races is not None:
                                 numRaces = min( (len(this_bot.getRoom().races), this_bot.getRoom().getNumberOfGPS()*4) )
+                            if up_to is not None:
+                                numRaces = up_to
                             embed.set_author(name=this_bot.getWar().getWarName(numRaces), icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                             embed.set_image(url="attachment://" + table_image_path)
                             
-                            temp = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), lounge_replace)
+                            temp = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), lounge_replace, up_to_race=up_to)
                             error_message = "\n\nMore errors occurred. Embed only allows so many errors to display."
                             if len(temp) + len(error_message) >= 2048:
                                 temp = temp[:2048-len(error_message)] + error_message
@@ -2273,14 +2312,15 @@ class TablingCommands:
                             os.remove(table_image_path)
     
     @staticmethod
-    async def table_text_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
+    async def table_text_command(message:discord.Message, this_bot:ChannelBot, args: List[str], server_prefix:str, is_lounge_server:bool):
         server_id = message.guild.id
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
         else:
+            up_to = get_max_specified_race(args)
             try:
-                table_text, _ = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, server_id=server_id, missingRacePts=this_bot.dc_points, discord_escape=True)
+                table_text, _ = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, server_id=server_id, missingRacePts=this_bot.dc_points, discord_escape=True, up_to_race=up_to)
                 await message.channel.send(table_text)
             except AttributeError:
                 await message.channel.send("Table Bot has a bug, and this mkwx room triggered it. I cannot tally your scores.")
@@ -2520,6 +2560,33 @@ def getUseLoungeNames(args, default_use=True):
                     return default_use, False
     return default_use, False
 
+valid_max_race_flags = {'upto=', 'max=', 'maxrace='}
+def get_max_specified_race(args):
+    '''
+    Checks if the user included a maximum race specification and returns it if they did.
+    '''
+    if len(args) < 2:
+        return None
+    
+    args = args[1:]
+
+    for flag in valid_max_race_flags:
+        for arg in args[::-1]:
+            arg = arg.strip().lower()
+            start = arg.find('=')+1
+            max_race = arg[start:]
+            if arg.startswith(flag) and len(arg)>len(flag) and UtilityFunctions.isint(max_race) and int(max_race)>0:
+                return int(max_race)
+
+    if UtilityFunctions.isint(args[0]) and int(args[0]) > 0: # if either the first or second argument is numeric, then assume that it is to specify a max race
+        return int(args[0])
+    
+    if len(args)>1 and UtilityFunctions.isint(args[1]) and int(args[1]) > 0:
+        return int(args[1])
+
+    
+    return None
+
 
 async def send_table_theme_list(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot, server_prefix:str, server_wide=False):
     server_wide_or_table_str = "default theme used for tables in this server" if server_wide else 'theme for this table'
@@ -2578,4 +2645,3 @@ def load_vr_is_on():
                 
 def example_help(server_prefix:str, original_command:str):
     return f"Do {server_prefix}{original_command} for an example on how to use this command."
-                

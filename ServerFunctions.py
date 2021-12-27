@@ -23,7 +23,6 @@ server_large_times = {}
 
 bool_map = {"1":True, "2":False}
 
-
     
 def get_server_table_theme(server_id, default_table_theme=default_table_theme):
     server_id = str(server_id).strip()
@@ -55,7 +54,22 @@ def get_server_prefix(server_id, default_prefix=common.default_prefix):
         return default_prefix
     return server_prefixes[server_id]
 
+def get_server_settings(server_name, server_id):
+    setting_list = [
+        (get_server_prefix, "Prefix"),
+        (get_server_graph, "Default Graph"),
+        (get_server_table_theme, "Default Theme"),
+        (get_server_mii_setting, "Default Mii Setting"),
+        (get_server_large_time_setting, "Default Suppress Large Times")
+    ]
 
+    spaces = max([len(k[1]) for k in setting_list])+1
+    build_str = f"asciidoc\n== [ {server_name} ] server settings =="
+    for get_setting, setting_name in setting_list:
+        setting = get_setting(server_id)
+        build_str+=f"\n{setting_name}{' '*(spaces-len(setting_name))}:: {setting}"
+
+    return f"```{build_str}```"
 
 def remove_server_setting(server_id, file_name, corresponding_dict):
     server_id = str(server_id).strip()
