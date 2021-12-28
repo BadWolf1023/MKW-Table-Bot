@@ -24,8 +24,7 @@ import MogiUpdate
 import Lounge
 import TableBotExceptions
 import common
-
-
+from data_tracking import DataTracker
 
 #Other library imports, other people codes
 import math
@@ -45,7 +44,7 @@ import os
 from datetime import datetime
 import URLShortener
 import Stats
-from data_tracking import DataTracker
+import re
 
 vr_is_on = False
 
@@ -603,6 +602,11 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 - Your {adjective} RTs in the past week: `{server_prefix}{args[0]} rt 7`
 - Your {adjective} RTs in Tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t4 5`"""
 
+        min_count = 0
+        if m := re.search('^(min|min_count|min_races|min_plays)=(\d+)$', args[-1]):
+            min_count = int(m.group(2))
+            command = command.replace(m.group(0), '')
+
         is_ct, tier, number_of_days, specific_error = StatisticCommands.validate_tracks_args(command)
 
         if specific_error is not None:
@@ -616,7 +620,8 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         fcs = UserDataProcessing.get_all_fcs(discordIDToLoad)
         lounge_name = UserDataProcessing.get_lounge(discordIDToLoad)
 
-        min_count = StatisticCommands.ct_min_count if is_ct else StatisticCommands.rt_min_count
+        if not min_count:
+            min_count = StatisticCommands.ct_min_count if is_ct else StatisticCommands.rt_min_count
         best_tracks = await DataTracker.DataRetriever.get_best_tracks(fcs, is_ct, tier, number_of_days, sort_asc, min_count)
 
         filter_descriptor = ""
@@ -648,7 +653,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
             message_title = f'{"Worst" if sort_asc else "Best"} {"CTs" if is_ct else "RTs"} for {lounge_name}'
             message_title += filter_descriptor
-            message_title += f' (Page {page+1}/{int(math.ceil(num_pages))})'
+            message_title += f' [Min {min_count} Plays] (Page {page+1}/{int(math.ceil(num_pages))})'
 
             return f'```diff\n- {message_title}\n\n{table}```'
 
@@ -662,6 +667,11 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 - Top Bowser's Castle 3 players in Tier 5 during the last week: `{server_prefix}topplayers bc3 t5 7`
 """
 
+        min_leaderboard_count = 0
+        if m := re.search('^(min|min_count|min_races|min_plays)=(\d+)$', args[-1]):
+            min_leaderboard_count = int(m.group(2))
+            args = args[:-1]
+
         track_lookup_name, tier, number_of_days, specific_error = StatisticCommands.validate_track_name_args(args[1:])
         if specific_error is not None:
             full_error_message = f"**Error:** {specific_error}\n\n{error_message}"
@@ -674,12 +684,13 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             return
         fixed_track_name = fixed_track_name.replace("Wii", "").strip()
 
-        min_leaderboard_count = StatisticCommands.min_leaderboard_count_ct if is_ct else StatisticCommands.min_leaderboard_count_rt
+        if not min_leaderboard_count:
+            min_leaderboard_count = StatisticCommands.min_leaderboard_count_ct if is_ct else StatisticCommands.min_leaderboard_count_rt
 
         top_players = await DataTracker.DataRetriever.get_top_players(track_name, tier, number_of_days, min_leaderboard_count)
         filter_descriptor = ""
         if tier is not None:
-            filter_descriptor += f" in Tier {tier}"
+            filter_descriptor += f" in T{tier}"
         if number_of_days is not None:
             filter_descriptor += f" in the Last {number_of_days} Day{'' if number_of_days == 1 else 's'}"
 
@@ -707,7 +718,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
             message_title = f"Top Lounge {fixed_track_name} Players"
             message_title += filter_descriptor
-            message_title += f' (Page {page + 1}/{int(math.ceil(num_pages))})'
+            message_title += f' [Min {min_leaderboard_count} Plays] (Page {page + 1}/{int(math.ceil(num_pages))})'
 
             return f'```diff\n- {message_title}\n\n{table}```'
 

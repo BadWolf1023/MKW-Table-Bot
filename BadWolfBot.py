@@ -106,7 +106,7 @@ SET_FLAG_TERMS = {"setflag", "sf"}
 MII_TERMS = {"mii"}
 WORLDWIDE_TERMS = {"wws", "ww", "rtww", "rtwws", "worldwide", "worldwides"}
 CTWW_TERMS = {"ctgpww", "ctgpwws", "ctwws", "ctww", "ctww", "ctwws", "ctworldwide", "ctworldwides", "customtrackworldwide", "customtrackworldwides"}
-BATTLES_TERMS = {"bts", "battle", "battles", "btww", "btwws", "battleww", "battlewws", "battleworldwide", "battleworldwides"}
+BATTLES_TERMS = {"battle", "battles", "btww", "btwws", "battleww", "battlewws", "battleworldwide", "battleworldwides"}
 VERIFY_ROOM_TERMS = {"vr", "verifyroom"}
 STATS_TERMS = {"stats", "stat"}
 INVITE_TERMS = {"invite"}
@@ -115,8 +115,8 @@ LOG_TERMS = {"log"}
 #Player/Meta commands (also stateless)
 POPULAR_TRACKS_TERMS = {"populartracks", "populartrack", "pt", "pts", "hottrack", "hottracks"}
 UNPOPULAR_TRACKS_TERMS = {"unpopulartracks", "unpopulartrack", "upt", "upts", "unhottrack", "unhottracks", "coldtrack", "coldtracks"}
-BEST_TRACK_TERMS = {"besttrack", "besttracks", "toptrack", "toptracks"}
-WORST_TRACK_TERMS = {"worsttrack", "worsttracks"}
+BEST_TRACK_TERMS = {"besttrack", "besttracks", "bt", "bts", "toptrack", "toptracks"}
+WORST_TRACK_TERMS = {"worsttrack", "worsttracks", "wt"}
 TOP_PLAYERS_TERMS = {"topplayers", "topplayer", "tp"}
 
 #Informative, getting started/tutorial commands
