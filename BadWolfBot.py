@@ -787,7 +787,7 @@ async def on_message(message: discord.Message):
         await common.safe_send(message, f"This room is locked at this time. This isn't your fault. Cloudflare on mkwx has complicated things. Please wait {WiimmfiSiteFunctions.lockout_timelimit.total_seconds()} seconds before trying again.")         
         await send_to_503_channel(logging_info)
     except TableBotExceptions.CacheRaceCondition:
-        log_command_sent(message, extra_text="Error info: Race condition for this command.")
+        logging_info = log_command_sent(message, extra_text="Error info: Race condition for this command.")
         await common.safe_send(message, f"Something weird happened. This isn't your fault. Cloudflare on mkwx has complicated things. Go ahead and run your command again after {common.wp_cooldown_seconds} seconds.")         
         await send_to_503_channel(logging_info)
     except TableBotExceptions.WiimmfiSiteFailure:

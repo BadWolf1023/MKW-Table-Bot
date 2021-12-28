@@ -5,7 +5,7 @@ Created on Jul 13, 2020
 '''
 
 import ErrorChecker
-from _collections import defaultdict
+from collections import defaultdict
 from itertools import chain
 import random
 import TableBotExceptions
@@ -202,6 +202,9 @@ class War(object):
             
     def clear_resolved_errors(self, errors, resolved):
         flattened_errors = list(chain.from_iterable(list(errors.values())))
+        for ind, e in enumerate(flattened_errors):
+            if 'id' not in e:
+                e['id'] = ind
 
         indx = len(flattened_errors)-1
         for _, values in list(errors.items())[::-1]:

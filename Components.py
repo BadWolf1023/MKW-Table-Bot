@@ -1,5 +1,6 @@
 import discord
 import commands
+import InteractionUtils
 
 class ConfirmButton(discord.ui.Button['ConfirmView']):
     def __init__(self, cat):
@@ -73,7 +74,7 @@ class PictureButton(discord.ui.Button['PictureView']):
         
         # self.view.stop()
 
-        msg = create_proxy_msg(interaction, ['wp'])
+        msg = InteractionUtils.create_proxy_msg(interaction, ['wp'])
         await interaction.response.edit_message(view=self.view) # view=none? but maybe it's good to allow people to click them whenever (since there is a cooldown on ?wp)
         await commands.TablingCommands.war_picture_command(msg, self.view.bot, ['wp'], self.view.prefix, self.view.lounge)
 
@@ -93,13 +94,27 @@ class RejectButton(discord.ui.Button['SuggestionView']):
         super().__init__(style=discord.ButtonStyle.danger, label="Discard Suggestion", row=3)
     
     async def callback(self, interaction: discord.Interaction):
-        for child in self.view.children:
-            child.disabled = True
-        
-        self.view.stop()
-        self.view.bot.resolved_errors.append(self.view.index)
+        self.view.bot.resolved_errors.add(self.view.index)
 
-        await interaction.response.edit_message(content='Suggestion discarded.', view=None)
+        self.view.update_message("Suggestion discarded.")
+
+        if self.view.all_done():
+            # if interaction.response.is_done():
+            #     await interaction.response.edit_message(content='\n' + '\n'.join(self.view.messages), view=None)
+            # else:
+            try:
+                await interaction.response.edit_message(content='\n' + '\n'.join(self.view.messages), view=None)
+            except: 
+                pass
+
+        # if interaction.response.is_done():
+        #     await interaction.response.edit_message(content="\u200b\n" + 'Suggestion discarded.\n\u200b', view=self.view)
+        # else:
+        try:
+            await interaction.response.edit_message(content="\u200b\n" + "Suggestion discarded.\n\u200b", view=self.view)
+        except: 
+            pass
+        
 
 class SuggestionButton(discord.ui.Button['SuggestionView']):
     def __init__(self, error, label, confirm=False):
@@ -109,16 +124,11 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
         super().__init__(style=discord.ButtonStyle.primary, label=label, row=2 if confirm else 1, disabled=confirm)
     
     async def callback(self, interaction: discord.Interaction):
-        for child in self.view.children:
-            child.disabled = True
-        
-        self.view.stop()
-
         this_bot = self.view.bot
         server_prefix = self.view.prefix
 
         args = get_command_args(self.error, self.text if not self.confirm else self.view.selected_values, self.view.bot)
-        message = create_proxy_msg(interaction, args)
+        message = InteractionUtils.create_proxy_msg(interaction, args)
 
         command_mapping = {
             "blank_player": commands.TablingCommands.change_room_size_command,
@@ -128,15 +138,32 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
             "large_time": commands.TablingCommands.quick_edit_command,
             "missing_player": commands.TablingCommands.disconnections_command
         }
-
-        command_mes = await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.lounge, dont_send=True)
         if self.error['type'] == 'tie':
-            try:
-                await interaction.response.send_message(content=command_mes, view=None)
-            except: #if the interaction has already been responded to, will throw error and need to followup instead
-                await interaction.followup.send(command_mes)
+            mes = []
+            for i in range(len(self.error['player_names'])):
+                mes.append(await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.lounge, dont_send=True))
+            command_mes = '\n'.join(mes)
         else:
-            await interaction.response.edit_message(content=command_mes, view=None)
+            command_mes = await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.lounge, dont_send=True)
+
+        self.view.update_message(command_mes)
+
+        if self.view.all_done():
+            # if interaction.response.is_done():
+            #     await interaction.response.edit_message(content='\n'+'\n'.join(self.view.messages), view=None)
+            # else:
+            try:
+                await interaction.response.edit_message(content='\n'+'\n'.join(self.view.messages), view=None)
+            except: 
+                pass
+
+        # if interaction.response.is_done():
+        #     await interaction.response.edit_message(content="\u200b\n" + command_mes+"\n\u200b", view=self.view)
+        # else:
+        try:
+            await interaction.response.edit_message(content="\u200b\n" + command_mes+"\n\u200b", view=self.view)
+        except: 
+            pass
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
     def __init__(self, values, name=None):
@@ -144,10 +171,16 @@ class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
                     [discord.SelectOption(label=str(place)+" "+name,value=place) for place in values] #for 'tie' only
         super().__init__(placeholder=name if name else "Select correct room size", options=options)
     
-    async def callback(interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction):
         self.view.selected_values = interaction.data['values'][0]
         self.view.enable_confirm()
-        await interaction.response.edit_message(view=self.view)
+        # if interaction.response.is_done():
+        #     await interaction.response.edit_message(view=self.view)
+        # else:
+        try:
+            await interaction.response.edit_message(view=self.view)
+        except: 
+            pass
 
 LABEL_BUILDERS = {
     'missing_player': '{} DCed *{}* race {}',
@@ -254,25 +287,3 @@ def get_command_args(error, info, bot):
         args = ['changeplace', str(playerNum), placement]
     
     return args
-
-def create_proxy_msg(interaction, args=None):
-    proxyMsg = discord.Object(id=interaction.id)
-    proxyMsg.channel = interaction.channel
-    proxyMsg.guild = interaction.guild
-    proxyMsg.content = build_msg_content(interaction.data, args)
-    proxyMsg.author = interaction.user
-    proxyMsg.raw_mentions = []
-    for i in proxyMsg.content:
-        if i.startswith('<@') and i.endswith('>'):
-            proxyMsg.raw_mentions.append(i)
-    
-    return proxyMsg
-
-def build_msg_content(data, args = None):
-    if args: return '/' + ' '.join(args)
-
-    args = [data.get('name', '')]
-    raw_args = data.get('options', [])
-    for arg in raw_args: 
-        args.append(str(arg.get('value', '')))
-    return '/' + ' '.join(args)

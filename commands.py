@@ -5,6 +5,7 @@ Created on Jun 26, 2021
 '''
 
 #Bot internal imports - stuff I coded
+import ComponentPaginator
 import WiimmfiSiteFunctions
 import ServerFunctions
 import ImageCombine
@@ -25,7 +26,6 @@ import Lounge
 import TableBotExceptions
 import common
 import Components
-
 
 #Other library imports, other people codes
 from typing import List, Set
@@ -2313,27 +2313,34 @@ class TablingCommands:
                             if len(temp) + len(error_message) >= 2048:
                                 temp = temp[:2048-len(error_message)] + error_message
                             embed.set_footer(text=temp)
-                            await message.channel.send(file=file, embed=embed)
+
+                            pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+                            await message.channel.send(file=file, embed=embed, view=pic_view)
                             await common.safe_delete(message3)
 
                             if should_send_notification and common.current_notification != "":
                                 await message.channel.send(common.current_notification.replace("{SERVER_PREFIX}", server_prefix))
-                            
-                            if error_types:
-                                indx = 0
+
+                            if error_types: error_types = {k: v for k, v in error_types.items() if len(v)!=0}
+                            if error_types and len(error_types)>0:
+                                view_list = list()
+                                page_list = list()
+
                                 for race, errors in list(error_types.items()):
                                     for error in errors:
                                         error['race'] = race
-                                        view = Components.SuggestionView(error, this_bot, server_prefix, is_lounge_server, indx)
+                                        view_list.append(Components.SuggestionView(error, this_bot, server_prefix, is_lounge_server, error['id']))
                                         try:
                                             players = ' / '.join(error['player_names']) if 'player_names' in error else error['player_name']
                                             info_str = f" - {players}"
                                         except KeyError:
                                             info_str = ""
-                                        await message.channel.send(f'**Race #{race}{info_str}**', view=view)
-                                        indx+=1
-                            pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
-                            await message.channel.send(content='\u200b', view=pic_view)
+
+                                        description = error['message']
+                                        page_list.append(f'\u200b\n**Race #{race}{info_str}**\n{description}\n\u200b')
+                                        # await message.channel.send(f'**Race #{race}{info_str}**', view=view)
+                                paginator = ComponentPaginator.SuggestionsPaginator(page_list, view_list)
+                                await paginator.send(message)
                     finally:
                         if os.path.exists(table_image_path):
                             os.remove(table_image_path)

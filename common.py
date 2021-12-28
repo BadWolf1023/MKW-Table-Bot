@@ -20,6 +20,7 @@ sslcontext = ssl.create_default_context(cafile=certifi.where())
 
 version = "12.0.0" #Final release from Bad Wolf, stablizing various things and releasing beta commands
 
+
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
 ON_WINDOWS = os.name == 'nt'
@@ -384,10 +385,6 @@ async def download_image(image_url, image_path):
     except:
         pass
     return False
-
-
-
-
 
 
 async def safe_send_missing_permissions(message:discord.Message, delete_after=None):

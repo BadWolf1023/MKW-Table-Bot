@@ -64,7 +64,7 @@ class ChannelBot(object):
         self.state_pointer = -1
         self.miis: Dict[str, Mii.Mii] = {}
         
-        self.resolved_errors = []
+        self.resolved_errors = set()
         
         self.populating = False
         
@@ -616,7 +616,7 @@ class ChannelBot(object):
         #self.roomLoadTime = None
         self.save_states = []
         self.state_pointer = -1
-        self.resolved_errors = []
+        self.resolved_errors = set()
         self.miis = {}
         self.populating = False
         self.should_send_mii_notification = True
