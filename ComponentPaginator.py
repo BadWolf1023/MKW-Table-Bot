@@ -62,7 +62,7 @@ class SuggestionsPaginator(discord.ui.View):
         self.error = None
         self.lounge = None
         self.index = None
-        self.selected_values = []
+        self.selected_values = None
         self.messages = pages
         self.done = [False]*len(pages)
 

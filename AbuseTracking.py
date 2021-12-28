@@ -70,7 +70,7 @@ async def abuse_track_check(message:discord.Message):
         bot_abuse_tracking[author_id][3] += 1
         should_send_abuse_report = bot_abuse_tracking[author_id][3] == 1
         await message.channel.send(f"{message.author.mention} slow down, you're sending too many commands. To avoid getting banned, wait 5 minutes before sending another command.")
-        if should_send_abuse_report:
+        if should_send_abuse_report and BOT_ABUSE_REPORT_CHANNEL:
             # to_send = f"BAN WARNING:\nDiscord: {str(message.author)}\nDiscord ID: {author_id}\nDisplay name: {message.author.display_name}\nDiscord Server: {message.guild}\nDiscord Server ID: {message.guild.id}\nMessages Sent:"
             # messages_to_send_back = UtilityFunctions.chunk_join([to_send] + messages_sent)
             # for message_to_send in messages_to_send_back:

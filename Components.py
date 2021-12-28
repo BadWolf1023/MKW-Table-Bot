@@ -37,18 +37,21 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
     
             numGPS = this_bot.getWar().numberOfGPs
             players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
+            this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
+
+            view = PictureView(this_bot, server_prefix, self.view.lounge)
                     
             if len(players) != this_bot.getWar().get_num_players():
                 await interaction.response.edit_message(view=self.view)
-                await interaction.followup.send(content=f'''Respond "{server_prefix}no" when asked ***Is this correct?*** - the number of players in the room doesn't match your war format and teams. Trying to still start war, but teams will be incorrect.''')
                 
-            this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
+                return await interaction.followup.send(content=f'''Respond "{server_prefix}no" when asked ***Is this correct?*** - the number of players in the room doesn't match your war format and teams. **Teams might be incorrect.**'''
+                                                + '\n' + this_bot.get_room_started_message(), view=view)
+
             try:
                 await interaction.response.edit_message(view=self.view)
             except:
                 pass 
             
-            view = PictureView(this_bot, server_prefix, self.view.lounge)
             await interaction.followup.send(content=this_bot.get_room_started_message(), view=view)
 
 class ConfirmView(discord.ui.View):
@@ -173,6 +176,8 @@ class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
     
     async def callback(self, interaction: discord.Interaction):
         self.view.selected_values = interaction.data['values'][0]
+        self.placeholder = self.view.selected_values 
+
         self.view.enable_confirm()
         # if interaction.response.is_done():
         #     await interaction.response.edit_message(view=self.view)
@@ -199,7 +204,7 @@ class SuggestionView(discord.ui.View):
         self.error = error
         self.lounge = lounge
         self.index = index
-        self.selected_values = []
+        self.selected_values = None
 
         self.create_row()
     
@@ -263,7 +268,7 @@ def get_command_args(error, info, bot):
     elif err_type == 'gp_missing':
         race = error['race']
         room_size = str(info)
-        args = ['changeroomsize', race, room_size]
+        args = ['changeroomsize', str(race), room_size]
     
     elif err_type == 'blank_player':
         race = error['race']

@@ -1978,7 +1978,7 @@ class TablingCommands:
         players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
                 
         if len(players) != this_bot.getWar().get_num_players():
-            await message.channel.send(f'''Respond "{server_prefix}no" when asked ***Is this correct?*** - the number of players in the room doesn't match your war format and teams. Trying to still start war, but teams will be incorrect.''')
+            await message.channel.send(f'''Respond "{server_prefix}no" when asked ***Is this correct?*** - the number of players in the room doesn't match your war format and teams. **Teams might be incorrect.**''')
             
         this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
         view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
