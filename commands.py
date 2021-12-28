@@ -761,7 +761,7 @@ class OtherCommands:
     
                 try:
                     reaction, user = await client.wait_for('reaction_add', timeout=timeout_seconds, check=check)
-                    await msg.remove_reaction(reaction, user)
+                    # await msg.remove_reaction(reaction, user) #rate limit
 
                     if(str(reaction.emoji) == common.LEFT_ARROW_EMOTE):
                         current_page = (current_page - 1) % (len(rooms))
