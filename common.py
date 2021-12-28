@@ -325,7 +325,7 @@ lounge_channel_mappings = {MKW_LOUNGE_SERVER_ID:LoungeUpdateChannels(
 
 
 def is_bad_wolf(author):
-    return author.id in { BAD_WOLF_ID, CW_ID }
+    return author.id in { BAD_WOLF_ID }
 
 def is_bot_admin(author):
     return str(author.id) in botAdmins or is_bad_wolf(author)

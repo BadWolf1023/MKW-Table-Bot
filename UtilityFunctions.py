@@ -148,6 +148,7 @@ def isint(value):
     except:
         return False
 
+
 #Takes a list of strings and concatenates them until a new concatenation would push it over the limit given
 #Separator is what will separate each concatenation
 def chunk_join(str_items:List[str], limit=2047, separator="\n"):
@@ -164,10 +165,33 @@ def chunk_join(str_items:List[str], limit=2047, separator="\n"):
             to_return[-1] = to_return[-1] + separator + item
     return to_return
 
-def string_chunks(string, n):
+def string_chunks(string: str, n: int):
+    '''
+    Splits a string into a list of strings of len(n)
+    
+    Useful for making sure that messages sent through Discord will not exceed the 2048 character limit (set `n=2048` and loop through the list to send them one by one)
+    '''
     for i in range(0, len(string), n):
         yield string[i: i+n]
+
+def get_max_teams(warFormat:str):
+    warFormat = convert_to_warFormat(warFormat)
+    if warFormat == 'ffa': return 12
+    numTeams = int(warFormat[0])
+
+    return int(12/numTeams)
+
+def convert_to_warFormat(warFormat: str):
+    format_map = {1: 'ffa', 2: '2v2', 3: '3v3', 4: '4v4', 5: '5v5', 6: '6v6'}
+    if warFormat in {'ffa', '2v2', '3v3', '4v4', '5v5', '6v6'}:
+        return warFormat
     
+    try:
+        warFormat = int(warFormat[0])
+        return format_map[warFormat]
+    except:
+        return warFormat
+
 async def safe_send_file(message:discord.Message, content):
     file_name = str(message.id) + ".txt"
     Path('./attachments').mkdir(parents=True, exist_ok=True)

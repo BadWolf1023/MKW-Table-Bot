@@ -156,7 +156,7 @@ def get_war_errors_players(war, room, error_types, lounge_replace=True, ignoreLa
                         init_str = "Room size confirmed as " if room.forcedRoomSize[race.raceNumber] == len(race.placements) else "Room size changed to "
                         race_errors[int(race.raceNumber)].append(init_str + str(room.forcedRoomSize[race.raceNumber]) + " players for this race.")
                     else:
-                        error_types[int(race.raceNumber)].append({'type': 'gp_missing', 'num_missing': numberOfPlayers - race.getNumberOfPlayers(), 'corrected_room_sizes': list(range(war.get_num_players() - race.getNumberOfPlayers(), race.getNumberOfPlayers()+1))})
+                        error_types[int(race.raceNumber)].append({'type': 'gp_missing', 'num_missing': numberOfPlayers - race.getNumberOfPlayers(), 'corrected_room_sizes': list(range(race.getNumberOfPlayers(), war.get_num_players() +1))})
                 
                 elif missingPlayersByRace[int(race.raceNumber)-1] != []:
                     for missingFC, missingName in missingPlayersByRace[int(race.raceNumber)-1]:

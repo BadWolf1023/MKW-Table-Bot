@@ -42,8 +42,12 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
                 await interaction.followup.send(content=f'''Respond "{server_prefix}no" when asked ***Is this correct?*** - the number of players in the room doesn't match your war format and teams. Trying to still start war, but teams will be incorrect.''')
                 
             this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
+            try:
+                await interaction.response.edit_message(view=self.view)
+            except:
+                pass 
+            
             view = PictureView(this_bot, server_prefix, self.view.lounge)
-            await interaction.response.edit_message(view=self.view)
             await interaction.followup.send(content=this_bot.get_room_started_message(), view=view)
 
 class ConfirmView(discord.ui.View):
@@ -138,7 +142,7 @@ class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
     def __init__(self, values, name=None):
         options = [discord.SelectOption(label=str(value)) for value in values] if not name else\
                     [discord.SelectOption(label=str(place)+" "+name,value=place) for place in values] #for 'tie' only
-        super().__init__(placeholder=name if name else "Select room size", options=options)
+        super().__init__(placeholder=name if name else "Select correct room size", options=options)
     
     async def callback(interaction: discord.Interaction):
         self.view.selected_values = interaction.data['values'][0]
@@ -156,7 +160,7 @@ LABEL_BUILDERS = {
 
 class SuggestionView(discord.ui.View):
     def __init__(self, error, bot, prefix, lounge, index):
-        super().__init__(timeout=300)
+        super().__init__(timeout=120)
         self.bot = bot
         self.prefix = prefix
         self.error = error
@@ -175,7 +179,7 @@ class SuggestionView(discord.ui.View):
             if error['num_missing'] == 1:
                 label_builder = LABEL_BUILDERS[(err_type, 1)]
                 error['type'] = (err_type, 1)
-                for insert in ['on', 'before']:
+                for insert in ['during', 'before']:
                     label = label_builder.format(insert, error['race'])
                     self.add_item(SuggestionButton(error, label))
             else:
@@ -189,7 +193,7 @@ class SuggestionView(discord.ui.View):
             self.add_item(SuggestionButton(error, label, confirm=True))
 
         elif err_type == 'missing_player':
-            for insert in ['on', 'before']:
+            for insert in ['during', 'before']:
                 label = label_builder.format(error['player_name'], insert, error['race'])
                 self.add_item(SuggestionButton(error, label))
         
@@ -220,7 +224,7 @@ def get_command_args(error, info, bot):
 
     if err_type == ('gp_missing', 1):
         GP = int((error['race']-1)/4) + 1
-        time = "on" if "DCed *on*" in info else "before"
+        time = "on" if "DCed *during*" in info else "before"
         args = ['earlydc', str(GP), time]
     
     elif err_type == 'gp_missing':
@@ -236,7 +240,7 @@ def get_command_args(error, info, bot):
     elif err_type == 'missing_player':
         playerNum = bot.player_to_dc_num(error['player_fc'])
 
-        time = "on" if "DCed *on*" in info else "before"
+        time = "on" if "DCed *during*" in info else "before"
         args = ['dc', str(playerNum), time]
     
     elif err_type == 'large_time':

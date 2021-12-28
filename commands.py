@@ -1553,7 +1553,7 @@ class TablingCommands:
             this_bot.getRoom().dc_on_or_before[race][player_fc] = 'before'
             mes = "Saved: " + player_name + ' was not on results for race #' + str(race)
             if not dont_send: await message.channel.send(mes)                  
-            return mes
+            return mes 
         
         await message.channel.send('"' + UtilityFunctions.process_name(str(on_or_before)) + '" needs to be either "on" or "before". Do ' + server_prefix + "dcs for an example on how to use this command.")
 
@@ -1835,7 +1835,7 @@ class TablingCommands:
                 else:
                     this_bot.reset(server_id)                    
                     
-                    warFormat = args[1]
+                    warFormat = UtilityFunctions.convert_to_warFormat(args[1])
                     numTeams = args[2]
                     numGPsPos, numgps = getNumGPs(args)
                     iLTPos, ignoreLargeTimes = getSuppressLargeTimes(args)
@@ -2154,7 +2154,7 @@ class TablingCommands:
         this_bot.add_save_state(message.content)
         this_bot.getRoom().forceRoomSize(raceNum, roomSize)
         mes = "Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + "."
-        if dont_send: return mes
+        if dont_send: return mes + " Make sure to give the correct DC points using `?edit`."
         await message.channel.send(mes)
     
     @staticmethod
@@ -2186,7 +2186,7 @@ class TablingCommands:
             this_bot.getRoom().forceRoomSize(raceNum, roomSize)
             mes = "Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + "."
             if not dont_send: await message.channel.send(mes)
-            return mes 
+            return mes + " Make sure to give correct DC points using `?edit`."
     
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2576,7 +2576,6 @@ class TablingCommands:
 
         await message.channel.send(f"Table has been transferred to <#{channel_id}> in {guild.name}. This channel's table will remain running.")
         await channel.send(f"Table from <#{message.channel.id}> in {message.guild.name} has been transferred here.")
-
 
 
 

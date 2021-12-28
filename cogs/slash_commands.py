@@ -39,19 +39,24 @@ class Slash(ext_commands.Cog):
     #     pass
     #TODO: implement
 
-    @slash_command(name='sw',
-    description= 'Load a room and start tabling a war.')
+    @slash_command(name='startwar',
+    description= 'Load a room and start tabling a war.',
+    guild_ids=guilds)
     async def _start_war(
         self,
         ctx,
-        war_format: Option(str, "format"),
-        num_teams: Option(int, 'number of teams'),
+        war_format: Option(str, "format", choices=['FFA', '2v2', '3v3', '4v4', '5v5', '6v6']),
+        num_teams: Option(int, 'number of teams (defaults to correct teams for 12 players)', required=False, default=None),
         room_arg: Option(str, 'LoungeName/LoungeMention/rxx/FC', required=False, default=None),
         gps: Option(int, 'number of GPs', required=False, default=None),
         psb: Option(bool, 'suppress large finish time warnings', required=False, default=None),
         miis: Option(bool, 'show miis on table', required=False, default=None)
     ):
         await on_interaction_check(ctx.interaction)
+
+        if num_teams is None:
+            num_teams = UtilityFunctions.get_max_teams(war_format)
+
         args = ['/'+ctx.interaction.data['name'], war_format, str(num_teams)]
         
         bool_map = {True: 'yes', False: 'no'}
@@ -79,8 +84,9 @@ class Slash(ext_commands.Cog):
         await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
         
     
-    @slash_command(name='wp',
-    description='Display a table picture of the room.')
+    @slash_command(name='warpicture',
+    description='Display a table picture of the room.',
+    guild_ids=guilds)
     async def _war_picture(
         self,
         ctx,
@@ -115,9 +121,10 @@ class Slash(ext_commands.Cog):
         await ctx.respond('\u200b') 
         # await ctx.defer()
         await commands.TablingCommands.war_picture_command(message, this_bot, args, server_prefix, is_lounge_server)
-        
+
     @slash_command(name='reset',
-    description='Reset the table in this channel.')
+    description='Reset the table in this channel.',
+    guild_ids=guilds)
     async def _reset_table(
         self,
         ctx
