@@ -6,7 +6,7 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
     def __init__(self, cat):
         self.cat = cat
         buttonType = discord.ButtonStyle.success if cat=='yes' else discord.ButtonStyle.danger
-        emoji = "Yes" if cat == 'yes' else "No"
+        emoji = "✔" if cat == 'yes' else "✘"
         super().__init__(style=buttonType, label=emoji, row=1)
     
     async def callback(self, interaction: discord.Interaction):
@@ -64,7 +64,7 @@ class ConfirmView(discord.ui.View):
         self.add_item(ConfirmButton('no'))
 
 
-#######################################################
+###########################################################################################
 
 
 class PictureButton(discord.ui.Button['PictureView']):
@@ -72,11 +72,6 @@ class PictureButton(discord.ui.Button['PictureView']):
         super().__init__(style=discord.ButtonStyle.primary, label='Picture')
 
     async def callback(self, interaction: discord.Interaction):
-        # for child in self.view.children:
-        #     child.disabled=True
-        
-        # self.view.stop()
-
         msg = InteractionUtils.create_proxy_msg(interaction, ['wp'])
         await interaction.response.edit_message(view=self.view) # view=none? but maybe it's good to allow people to click them whenever (since there is a cooldown on ?wp)
         await commands.TablingCommands.war_picture_command(msg, self.view.bot, ['wp'], self.view.prefix, self.view.lounge)
@@ -90,7 +85,8 @@ class PictureView(discord.ui.View):
         self.add_item(PictureButton())
 
 
-#############################################################
+###########################################################################################
+
 
 class RejectButton(discord.ui.Button['SuggestionView']):
     def __init__(self):
@@ -99,24 +95,7 @@ class RejectButton(discord.ui.Button['SuggestionView']):
     async def callback(self, interaction: discord.Interaction):
         self.view.bot.resolved_errors.add(self.view.index)
 
-        self.view.update_message("Suggestion discarded.")
-
-        if self.view.all_done():
-            # if interaction.response.is_done():
-            #     await interaction.response.edit_message(content='\n' + '\n'.join(self.view.messages), view=None)
-            # else:
-            try:
-                await interaction.response.edit_message(content='\n' + '\n'.join(self.view.messages), view=None)
-            except: 
-                pass
-
-        # if interaction.response.is_done():
-        #     await interaction.response.edit_message(content="\u200b\n" + 'Suggestion discarded.\n\u200b', view=self.view)
-        # else:
-        try:
-            await interaction.response.edit_message(content="\u200b\n" + "Suggestion discarded.\n\u200b", view=self.view)
-        except: 
-            pass
+        await self.view.update_message("Suggestion discarded.")
         
 
 class SuggestionButton(discord.ui.Button['SuggestionView']):
@@ -149,24 +128,7 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
         else:
             command_mes = await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.lounge, dont_send=True)
 
-        self.view.update_message(command_mes)
-
-        if self.view.all_done():
-            # if interaction.response.is_done():
-            #     await interaction.response.edit_message(content='\n'+'\n'.join(self.view.messages), view=None)
-            # else:
-            try:
-                await interaction.response.edit_message(content='\n'+'\n'.join(self.view.messages), view=None)
-            except: 
-                pass
-
-        # if interaction.response.is_done():
-        #     await interaction.response.edit_message(content="\u200b\n" + command_mes+"\n\u200b", view=self.view)
-        # else:
-        try:
-            await interaction.response.edit_message(content="\u200b\n" + command_mes+"\n\u200b", view=self.view)
-        except: 
-            pass
+        await self.view.update_message(command_mes)
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
     def __init__(self, values, name=None):
@@ -179,9 +141,6 @@ class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
         self.placeholder = self.view.selected_values 
 
         self.view.enable_confirm()
-        # if interaction.response.is_done():
-        #     await interaction.response.edit_message(view=self.view)
-        # else:
         try:
             await interaction.response.edit_message(view=self.view)
         except: 

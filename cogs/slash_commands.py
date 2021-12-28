@@ -37,21 +37,21 @@ class Slash(ext_commands.Cog):
 
     # @ext_commands.Cog.listener()
     # async def on_application_command_error(ctx, error):
-    #     pass
+    #     pas
     #TODO: implement
 
-    @slash_command(name='startwar',
-    description= 'Load a room and start tabling a war.',
+    @slash_command(name='sw',
+    description= 'Load a room and start tabling a war',
     guild_ids=guilds)
     async def _start_war(
         self,
         ctx: discord.ApplicationContext,
-        war_format: Option(str, "format", choices=['FFA', '2v2', '3v3', '4v4', '5v5', '6v6']),
-        num_teams: Option(int, 'number of teams (defaults to correct teams for 12 players)', required=False, default=None),
+        war_format: Option(str, "Format", choices=['FFA', '2v2', '3v3', '4v4', '5v5', '6v6']),
+        num_teams: Option(int, 'Number of teams (defaults to correct teams for 12 players)', required=False, default=None),
         room_arg: Option(str, 'LoungeName/LoungeMention/rxx/FC', required=False, default=None),
-        gps: Option(int, 'number of GPs', required=False, default=None),
-        psb: Option(bool, 'suppress large finish time warnings', required=False, default=None),
-        miis: Option(bool, 'show miis on table', required=False, default=None)
+        gps: Option(int, 'Number of GPs', required=False, default=None),
+        psb: Option(bool, 'Suppress large finish time warnings', required=False, default=None),
+        miis: Option(bool, 'Show miis on table', required=False, default=None)
     ):
         await on_interaction_check(ctx.interaction)
 
@@ -85,8 +85,8 @@ class Slash(ext_commands.Cog):
         await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
         
     
-    @slash_command(name='warpicture',
-    description='Display a table picture of the room.',
+    @slash_command(name='wp',
+    description='Display a table picture of the room',
     guild_ids=guilds)
     async def _war_picture(
         self,
@@ -122,9 +122,176 @@ class Slash(ext_commands.Cog):
         await ctx.respond('\u200b') 
         # await ctx.defer()
         await commands.TablingCommands.war_picture_command(message, this_bot, args, server_prefix, is_lounge_server)
+    
+    @slash_command(name='dc', 
+    description="Confirm a player's DC status for a race",
+    guilds_ids=guilds)
+    async def _dc_config(
+        self,
+        ctx: discord.ApplicationContext,
+        dc_number: Option(int, 'DC number of player who DCed (check /dcs)'),
+        status: Option(str, 'DC status', choices=['during', 'before'])
+    ):
+        await on_interaction_check(ctx.interaction)
+
+    @slash_command(name='edit',
+    description="Edit a player's GP score",
+    guild_ids=guilds)
+    async def _edit_score(
+        self,
+        ctx: discord.ApplicationContext,
+        player: Option(str, 'Player (playerNumber or LoungeName)'),
+        gp: Option(str, "GP to edit"),
+        score: Option(int, "New score")
+    ):
+        await on_interaction_check(ctx.interaction)
+    
+    @slash_command(name='change_position',
+    description="Change a race's positions",
+    guild_ids=guilds)
+    async def _change_position(
+        self,
+        ctx: discord.ApplicationContext,
+        race: Option(int, "Race to change positions for"),
+        player: Option(str, "Player to change positions for (playerNumber or LoungeName)"),
+        position: Option(int, "New position for player")
+    ):
+        await on_interaction_check(ctx.interaction)
+
+    @slash_command(name='pen',
+    description="Give a penalty or a reward to a player",
+    guild_ids=guilds)
+    async def _penalty(
+        self,
+        ctx: discord.ApplicationContext,
+        player: Option(str, 'Player to give a penalty/reward to'),
+        amount: Option(int, "Penalty: positive number; Reward: negative number")
+    ):
+        await on_interaction_check(ctx.interaction)
+
+    @slash_command(name='change_room_size',
+    description="Change the number of players in a race",
+    guild_ids=guilds)
+    async def _change_room_size(
+        self, 
+        ctx: discord.ApplicationContext,
+        race: Option(int, "Race to change room size"),
+        room_size: Option(int, "Corrected room size")
+    ):
+        await on_interaction_check(ctx.interaction)
+
+    @slash_command(name="merge_room",
+    description="Add another room to the table",
+    guild_ids=guilds)
+    async def _merge_room(
+        self,
+        ctx: discord.ApplicationContext,
+        room_arg: Option(str, "rxx of room or LoungeName in room")
+    ):
+        await on_interaction_check(ctx.interaction)
+
+    @slash_command(name="remove_race",
+    description="Remove a race from the table",
+    guild_ids=guilds)
+    async def _remove_race(
+        self,
+        ctx: discord.ApplicationContext,
+        race: Option(int, "Race to remove from table")
+    ):
+        await on_interaction_check(ctx.interaction)
+
+    @slash_command(name="change_name", 
+    description="Change a player's name",
+    guild_ids=guilds)
+    async def _change_name(
+        self,
+        ctx: discord.ApplicationContext,
+        player: Option(str, "playerNumber or LoungeName"),
+        name: Option(str, "New name (put a # at the beginning to remove the player from table)")
+    ):
+        await on_interaction_check(ctx.interaction)
+
+    @slash_command(name="change_tag",
+    description="Change a player's tag",
+    guild_ids=guilds)
+    async def _change_tag(
+        self,
+        ctx: discord.ApplicationContext,
+        player: Option(str, "playerNumber or LoungeName"),
+        tag: Option(str, "Corrected tag")
+    ):
+        await on_interaction_check(ctx.interaction)
+
+    @slash_command(name="early_dc",
+    description="Fix player incorrectly missing from race 1 of GP",
+    guild_ids=guilds)
+    async def _early_dc(
+        self,
+        ctx: discord.ApplicationContext,
+        gp: Option(int, "GP where early DC occurred"),
+        status: Option(str, "DC status", choices=['during', 'before'], required=False, default="during")
+    ):
+        await on_interaction_check(ctx.interaction)
+    
+    @slash_command(name='sub',
+    description="Sub a player in for another",
+    guild_ids=guilds)
+    async def _substitute(
+        self,
+        ctx: discord.ApplicationContext,
+        race: Option(int, "Race when sub occurred"),
+        sub_in: Option(str, "Player subbing in (playerNumber or LoungeName)"),
+        sub_out: Option(str, "Player subbing out (playerNumber or LoungeName)")
+    ):
+        await on_interaction_check(ctx.interaction)
+
+    @slash_command(name='rxx',
+    description="Get the rxx and Wiimmfi link of room",
+    guild_ids=guilds)
+    async def _rxx(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        await on_interaction_check(ctx.interaction)
+
+    @slash_command(name='ap',
+    description="Show a list of all players who have been in the room",
+    guild_ids=guilds)
+    async def _all_players(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        await on_interaction_check(ctx.interaction)
+
+    @slash_command(name='dcs',
+    description="Show a list of all DCs that have occurred",
+    guild_ids=guilds)
+    async def _get_dcs(
+        self, 
+        ctx: discord.ApplicationContext
+    ):
+        await on_interaction_check(ctx.interaction)
+
+    @slash_command(name='races',
+    description="Display a list of all races that have been played",
+    guild_ids=guilds)
+    async def _get_races(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        await on_interaction_check(ctx.interaction)
+
+    @slash_command(name="rr",
+    description="Display a race's results",
+    guild_ids = guilds)
+    async def _race_results(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        await on_interaction_check(ctx.interaction)
 
     @slash_command(name='reset',
-    description='Reset the table in this channel.',
+    description='Reset the table in this channel',
     guild_ids=guilds)
     async def _reset_table(
         self,
@@ -136,6 +303,7 @@ class Slash(ext_commands.Cog):
         await ctx.respond('\u200b')
         # await ctx.defer()
         await commands.TablingCommands.reset_command(message, BWB.table_bots)
+    
 
 
 async def on_interaction_check(interaction):

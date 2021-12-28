@@ -90,7 +90,7 @@ def create_notification_embed(message: discord.Message, messages_sent, ban):
     send_embed.add_field(name='User ID', value=message.author.id)
     send_embed.add_field(name='Discord Server', value=message.guild)
     send_embed.add_field(name='Server ID', value=message.guild.id)
-    send_embed.add_field(name="Triggered Messages", value='\n'.join(messages_sent), inline=False)
+    send_embed.add_field(name="Trigger Messages", value='\n'.join(messages_sent), inline=False)
 
     return send_embed
 

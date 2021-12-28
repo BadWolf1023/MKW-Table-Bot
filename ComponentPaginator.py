@@ -1,5 +1,5 @@
 import discord
-from discord.ext import pages as ext_pages
+# from discord.ext import pages as ext_pages
 
 from discord import abc
 from discord.commands import ApplicationContext
@@ -53,7 +53,7 @@ class SuggestionsPaginator(discord.ui.View):
         author_check=True,
         disable_on_timeout=True,
         custom_view: Optional[discord.ui.View] = None,
-        timeout: Optional[float] = 180.0,
+        timeout: Optional[float] = 60.0,
     ):
         super().__init__(timeout=timeout)
 
@@ -63,7 +63,7 @@ class SuggestionsPaginator(discord.ui.View):
         self.lounge = None
         self.index = None
         self.selected_values = None
-        self.messages = pages
+        self.messages = ['']*len(pages)
         self.done = [False]*len(pages)
 
         self.timeout = timeout
@@ -138,10 +138,16 @@ class SuggestionsPaginator(discord.ui.View):
 
     async def on_timeout(self) -> None:
         """Disables all buttons when the view times out."""
-        if self.disable_on_timeout:
-            for item in self.children:
-                item.disabled = True
-            await self.message.edit(view=self)
+        if not self.disable_on_timeout:
+            return
+            
+        for item in self.children:
+            item.disabled = True
+
+        if self.all_done():
+            await self.message.edit(content=self.message.content, view=None)
+        else:
+            await self.message.edit(content='\u200b\n' + '\n'.join(self.messages),view=None)
 
     async def goto_page(self, interaction: discord.Interaction, page_number=0) -> None:
         """Updates the interaction response message to show the specified page number.
@@ -199,8 +205,9 @@ class SuggestionsPaginator(discord.ui.View):
         button.style = button_style
         return button
     
-    def update_message(self, mes):
+    async def update_message(self, mes):
         self.messages[self.current_page] = mes
+
         for child in self.views[self.current_page].children:
             child.disabled=True
         for child_ind in self.custom_view.children[:-5]:
@@ -208,6 +215,12 @@ class SuggestionsPaginator(discord.ui.View):
             self.children.pop(child_ind)
 
         self.done[self.current_page] = True
+
+        if self.all_done():
+            return await self.message.edit(content='\n'+'\n'.join(self.messages), view=None)
+
+        await self.message.edit(content="\u200b\n" + mes +"\n\u200b", view=self)
+        
     
     def all_done(self):
         return all(self.done)

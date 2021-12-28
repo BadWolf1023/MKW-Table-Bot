@@ -1947,10 +1947,6 @@ class TablingCommands:
             await message.channel.send(f"You can only load a room for yourself in Lounge. Do this instead: `{server_prefix}{args[0]} {args[1]} {args[2]}`")
      
      
-     
-    
-    
-    
     
     
     @staticmethod                  
@@ -2341,6 +2337,7 @@ class TablingCommands:
                                         # await message.channel.send(f'**Race #{race}{info_str}**', view=view)
                                 paginator = ComponentPaginator.SuggestionsPaginator(page_list, view_list)
                                 await paginator.send(message)
+                                
                     finally:
                         if os.path.exists(table_image_path):
                             os.remove(table_image_path)
