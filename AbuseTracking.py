@@ -64,7 +64,7 @@ async def abuse_track_check(message:discord.Message):
         bot_abuse_tracking[author_id][3] += 1
         should_send_abuse_report = bot_abuse_tracking[author_id][3] == 1
         await message.channel.send(f"{message.author.mention} slow down, you're sending too many commands. To avoid getting banned, wait 5 minutes before sending another command.")
-        if should_send_abuse_report:
+        if should_send_abuse_report and BOT_ABUSE_REPORT_CHANNEL:
             embed = create_notification_embed(message, messages_sent, ban=False)
             await BOT_ABUSE_REPORT_CHANNEL.send(embed=embed)
 
