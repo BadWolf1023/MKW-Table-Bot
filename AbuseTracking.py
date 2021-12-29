@@ -10,6 +10,7 @@ import UtilityFunctions
 import TableBotExceptions
 from collections import defaultdict
 from datetime import datetime
+import math
 
 bot_abuse_tracking = defaultdict(lambda: [0, [], [], 0])
 blacklisted_command_count = defaultdict(int)
@@ -48,7 +49,7 @@ def is_hitting_ban_rate(author_id):
 
 async def abuse_track_check(message:discord.Message):
     author_id = message.author.id
-    if author_id == WHITELIST: return
+    # if author_id == WHITELIST: return
     bot_abuse_tracking[author_id][0] += 1
     bot_abuse_tracking[author_id][1].append(message.content)
     bot_abuse_tracking[author_id][2].append(datetime.now())
@@ -80,7 +81,18 @@ def create_notification_embed(message: discord.Message, messages_sent, ban):
     send_embed.add_field(name='User ID', value=message.author.id)
     send_embed.add_field(name='Discord Server', value=message.guild)
     send_embed.add_field(name='Server ID', value=message.guild.id)
-    send_embed.add_field(name="Trigger Messages", value='\n'.join(messages_sent), inline=False)
+
+    chars_before_messages = len(f"{message.author} - WARNED{message.author.mention}{message.author.id}{message.guild}{message.guild.id}")+100
+    allowed_message_chars = 6000-chars_before_messages
+    allowed_iters = math.ceil((allowed_message_chars)/1024)
+    last_len = allowed_message_chars-(allowed_iters*1024)-1
+    messages_sent = '\n'.join(messages_sent)
+
+    message_list = list(UtilityFunctions.string_chunks(messages_sent, 1024))
+    for ind in range(min(allowed_iters, len(message_list))):
+        mes = message_list[ind]
+        val = mes[:last_len] if ind == allowed_iters-1 else mes
+        send_embed.add_field(name="Trigger Messages" if ind==0 else '\u200b', value=val, inline=False)
 
     return send_embed
 
@@ -98,8 +110,8 @@ async def blacklisted_user_check(message:discord.Message, notify_threshold=15):
 def set_bot_abuse_report_channel(client):
     global BOT_ABUSE_REPORT_CHANNEL
     global CLOUDFLARE_REPORT_CHANNEL
-    BOT_ABUSE_REPORT_CHANNEL = client.get_channel(common.BOT_ABUSE_REPORT_CHANNEL_ID)
-    if BOT_ABUSE_REPORT_CHANNEL is None: BOT_ABUSE_REPORT_CHANNEL = client.get_channel(924551533692084264)
+    BOT_ABUSE_REPORT_CHANNEL = client.get_channel(924551533692084264)
+    # BOT_ABUSE_REPORT_CHANNEL = client.get_channel(common.BOT_ABUSE_REPORT_CHANNEL_ID)
     CLOUDFLARE_REPORT_CHANNEL = client.get_channel(common.CLOUD_FLARE_REPORT_CHANNEL_ID)
     
 #Every 120 seconds, checks to see if anyone was "spamming" the bot and notifies a private channel in my server
