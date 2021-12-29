@@ -1,3 +1,5 @@
+/* https://drawsql.app/individual-52/diagrams/mkwx-data */
+
 BEGIN;
 CREATE TABLE Place(
     race_id INT UNSIGNED NOT NULL,
@@ -83,6 +85,7 @@ CREATE TABLE Event(
     region TEXT NOT NULL,
     set_up_user_discord_id INT NULL,
     set_up_user_display_name TEXT NULL,
+    player_setup_amount INT NOT NULL,
     PRIMARY KEY(event_id),
     FOREIGN KEY (event_id)
 	REFERENCES Event_ID(event_id)

@@ -11,7 +11,7 @@ EVENT_RACES_TABLE_NAMES = ["event_id", "race_id"]
 EVENT_FCS_TABLE_NAMES = ["event_id", "fc", "mii_hex"]
 TIER_TABLE_NAMES = ["channel_id", "tier"]
 EVENT_ID_TABLE_NAMES = ["event_id"]
-EVENT_TABLE_NAMES = ["event_id", "channel_id", "time_added", "last_updated", "number_of_updates", "region", "set_up_user_discord_id", "set_up_user_display_name"]
+EVENT_TABLE_NAMES = ["event_id", "channel_id", "time_added", "last_updated", "number_of_updates", "region", "set_up_user_discord_id", "set_up_user_display_name", "player_setup_amount"]
 EVENT_STRUCTURE_TABLE_NAMES = ["event_id", "name_changes", "removed_races", "placement_history", "forced_room_size", "player_penalties", "team_penalties", "disconnections_on_results", "sub_ins", "teams", "rxx_list", "edits", "ignore_large_times", "missing_player_points", "event_name", "number_of_gps", "player_setup_amount", "number_of_teams", "players_per_team"]
 
 def get_existing_race_fcs_in_Place_table(race_id_fcs):
@@ -148,9 +148,9 @@ def build_event_upsert_script(was_real_update):
     on_real_update_sql = f" {EVENT_TABLE_NAMES[3]}=(SELECT strftime('%Y-%m-%d %H:%M:%f', 'now')), {EVENT_TABLE_NAMES[4]}={EVENT_TABLE_NAMES[4]} + 1," if was_real_update else ""
     on_real_update_sql_2 = f"RETURNING {EVENT_TABLE_NAMES[0]}"
     return f"""INSERT INTO Event {build_data_names(EVENT_TABLE_NAMES)}
-VALUES (?, ?, (SELECT strftime('%Y-%m-%d %H:%M:%f', 'now')), (SELECT strftime('%Y-%m-%d %H:%M:%f', 'now')), ?, ?, ?, ?)
+VALUES (?, ?, (SELECT strftime('%Y-%m-%d %H:%M:%f', 'now')), (SELECT strftime('%Y-%m-%d %H:%M:%f', 'now')), ?, ?, ?, ?, ?)
 ON CONFLICT ({EVENT_TABLE_NAMES[0]}) DO
-UPDATE SET {EVENT_TABLE_NAMES[1]}=excluded.{EVENT_TABLE_NAMES[1]},{on_real_update_sql} {EVENT_TABLE_NAMES[5]}=excluded.{EVENT_TABLE_NAMES[5]}, {EVENT_TABLE_NAMES[6]}=excluded.{EVENT_TABLE_NAMES[6]}, {EVENT_TABLE_NAMES[7]}=excluded.{EVENT_TABLE_NAMES[7]}
+UPDATE SET {EVENT_TABLE_NAMES[1]}=excluded.{EVENT_TABLE_NAMES[1]},{on_real_update_sql} {EVENT_TABLE_NAMES[5]}=excluded.{EVENT_TABLE_NAMES[5]}, {EVENT_TABLE_NAMES[6]}=excluded.{EVENT_TABLE_NAMES[6]}, {EVENT_TABLE_NAMES[7]}=excluded.{EVENT_TABLE_NAMES[7]}, {EVENT_TABLE_NAMES[8]}=excluded.{EVENT_TABLE_NAMES[8]}
 {on_real_update_sql_2};"""
 
 
@@ -234,9 +234,8 @@ class SQL_Search_Query_Builder(object):
                 FROM Event_Races
                          JOIN Event ON Event_Races.event_id = Event.event_id
                          JOIN Tier ON Event.channel_id = Tier.channel_id
-                         JOIN Event_Structure ON Event.event_id = Event_Structure.event_id
                     
-                    WHERE (players_per_team * number_of_teams) == 12
+                    WHERE Event.player_setup_amount = 12
                     AND tier = {tier}
                     {SQL_Search_Query_Builder.get_event_valid_filter()}
             )
@@ -299,9 +298,8 @@ class SQL_Search_Query_Builder(object):
                     JOIN Event ON ER.event_id = Event.event_id
                     JOIN Tier ON Event.channel_id = Tier.channel_id
                     JOIN Track ON Race.track_name = Track.track_name
-                    JOIN Event_Structure on Event.event_id = Event_Structure.event_id
         
-            WHERE (players_per_team * number_of_teams) == 12
+            WHERE Event.player_setup_amount = 12
                 AND Track.track_name = ?
                 {tier_filter_clause}
                 {SQL_Search_Query_Builder.get_event_valid_filter()}

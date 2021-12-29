@@ -248,7 +248,6 @@ class ChannelBotSQLDataValidator(object):
     def validate_tracks_data(self, races:List[Race.Race]):
         '''Validates that all the relevant data (regarding track information) in races is the correct type and format before going into the database'''
         for race in races:
-            race:Race.Race
             self.track_name_validation(race.get_track_name(), rxx=race.rxx)
             self.track_url_validation(race.get_track_url())
             no_author_name = race.getTrackNameWithoutAuthor()
@@ -383,6 +382,7 @@ class ChannelBotSQLDataValidator(object):
             raise SQLTypeWrong(self.wrong_type_message(channel_bot.getRoom().get_known_region(), str))
         if not isinstance(channel_bot.getRoom().get_set_up_display_name(), str):
             raise SQLTypeWrong(self.wrong_type_message(channel_bot.getRoom().get_set_up_display_name(), str))
+        self.validate_int(channel_bot.getWar().get_num_players())
             
     
     def validate_event_fc_data(self, event_id_fcs):
@@ -391,6 +391,8 @@ class ChannelBotSQLDataValidator(object):
             self.fc_validation(fc)
             
     def validate_event_structure_data(self, event_structure_tuple):
+        #Warning: this was apparently never completed
+        #TODO: complete validation of event_structure data
         pass
 
 class RoomTrackerSQL(object):
@@ -577,7 +579,9 @@ class RoomTrackerSQL(object):
                 0,
                 channel_bot.getRoom().get_known_region(),
                 channel_bot.getRoom().get_set_up_user_discord_id(),
-                channel_bot.getRoom().get_set_up_display_name())
+                channel_bot.getRoom().get_set_up_display_name(),
+                channel_bot.getWar().get_num_players()
+                )
         
     async def insert_missing_event(self, was_real_update=False):
         self.data_validator.validate_event_data(self.channel_bot)
