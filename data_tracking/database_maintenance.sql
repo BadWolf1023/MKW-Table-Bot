@@ -65,5 +65,4 @@ DELETE FROM Track WHERE track.track_name = "2d5d297545c80e0d5e714c8e8b0d0aa6e3db
 
 COMMIT;
 
-DROP VIEW IF EXISTS room_sizes;
 VACUUM; /*Shrink Database, necessary to keep Database minimal size, especially if the scripts in the migration folder just ran (and doubled the DB size)*/

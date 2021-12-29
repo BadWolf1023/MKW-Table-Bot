@@ -28,3 +28,5 @@ DROP TABLE Event;
 ALTER TABLE Event2 RENAME TO Event;
 
 PRAGMA foreign_keys= ON;
+
+VACUUM;

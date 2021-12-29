@@ -57,5 +57,6 @@ FROM Race
 
 DROP TABLE Race;
 ALTER TABLE Race2 RENAME TO Race;
+DROP VIEW IF EXISTS room_sizes;
 
 PRAGMA foreign_keys= ON;
