@@ -18,7 +18,7 @@ import dill
 
 sslcontext = ssl.create_default_context(cafile=certifi.where())
 
-version = "12.0.0" #Final release from Bad Wolf, stablizing various things and releasing beta commands
+version = "12.0.0" #Final release from Bad Wolf, stabilizing various things and releasing beta commands
 
 
 MII_COMMAND_DISABLED = False
@@ -33,6 +33,21 @@ MAX_PREFIX_LENGTH = 3
 
 INVITE_LINK = "https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=274878031936&scope=bot"
 
+SCORE_MATRIX = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [15, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [15, 8, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [15, 9, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [15, 9, 5, 2, 1, 0, 0, 0, 0, 0, 0, 0],
+    [15, 10, 6, 3, 1, 0, 0, 0, 0, 0, 0, 0],
+    [15, 10, 7, 5, 3, 1, 0, 0, 0, 0, 0, 0],
+    [15, 11, 8, 6, 4, 2, 1, 0, 0, 0, 0, 0],
+    [15, 11, 8, 6, 4, 3, 2, 1, 0, 0, 0, 0],
+    [15, 12, 10, 8, 6, 4, 3, 2, 1, 0, 0, 0],
+    [15, 12, 10, 8, 6, 5, 4, 3, 2, 1, 0, 0],
+    [15, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+    ]
+
 #current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
@@ -43,7 +58,8 @@ beta_is_real = False
 
 DISABLE_MKWX_COMMANDS = False
 LIMIT_MKWX_COMMANDS = False
-
+STUB_MKWX = False
+STUB_MKWX_FILE_NAME = "testing_rooms/mkwx.html"
 
 LIMITED_DONT_INCLUDE_IN_COUNT = {776031312048947230, 826962131592544306, 888089086307475456}#503 server,  testing channel, 503-dup
 BAD_WOLFS_CHANNELS = {747290383297282156, 747290363433320539, 739734266199408651}#BW's server TB1, BW's server TB2,BW's server TB3
@@ -239,7 +255,7 @@ mkw_lounge_staff_roles = set([387347888935534593, #Boss
                               521149807994208295, #HT CT Arb
                               792891432301625364, #LT CT Arb
                               521154917675827221, #Developer Access
-                              740659173695553667]) #Admin in test server
+                              BAD_WOLF_SERVER_ADMIN_ID]) #Admin in test server
 
 reporter_plus_roles = set([393600567781621761, #RT Updater
                               520808645252874240, #CT Updater
@@ -248,7 +264,7 @@ reporter_plus_roles = set([393600567781621761, #RT Updater
                               ]) | mkw_lounge_staff_roles
 
 table_bot_support_plus_roles = reporter_plus_roles | set([748367398905708634])
-                              
+
 
 
 
@@ -266,23 +282,23 @@ WARN_THRESHOLD = 13
 AUTO_BAN_THRESHOLD = 18
 
 
-COMMAND_TRIGGER_CHARS = set(c for c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+COMMAND_TRIGGER_CHARS = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
 
-def author_has_id_in(message_author, role_ids):
+def author_has_role_in(message_author, role_ids):
     for role in message_author.roles:
         if role.id in role_ids:
             return True
     return False
 
 def author_is_lounge_staff(message_author):
-    return author_has_id_in(message_author, mkw_lounge_staff_roles)
+    return author_has_role_in(message_author, mkw_lounge_staff_roles)
 
 def author_is_reporter_plus(message_author):
-    return author_has_id_in(message_author, reporter_plus_roles)
+    return author_has_role_in(message_author, reporter_plus_roles)
 
 def author_is_table_bot_support_plus(message_author):
-    return author_has_id_in(message_author, table_bot_support_plus_roles)
+    return author_has_role_in(message_author, table_bot_support_plus_roles)
 
 def main_lounge_can_report_table(message_author):
     return author_is_reporter_plus(message_author) or message_author.id == BAD_WOLF_ID
@@ -403,8 +419,8 @@ async def safe_send_file(message:discord.Message, content):
     txt_file = discord.File(file_path, filename=file_name)
     try:
         await message.channel.send(content="My message was too long, so I've attached it as a txt file instead.", file=txt_file)
-    except discord.Forbidden:
-        safe_send_missing_permissions(message)
+    except discord.errors.Forbidden:
+        await safe_send_missing_permissions(message)
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)

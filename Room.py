@@ -638,7 +638,7 @@ class Room(object):
                 
                 #Make call to database to add data
                 if not is_vr_command:
-                    database_call()
+                    await database_call()
                 self.apply_tabler_adjustments()
                 tempSoup.decompose()
                 del tempSoup

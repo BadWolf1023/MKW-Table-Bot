@@ -300,7 +300,9 @@ class ChannelBot(object):
     async def update_room(self) -> bool:
         if self.room is None:
             return False
-        success = await self.room.update_room(lambda:DataTracker.RoomTracker.add_data(self), is_vr_command=False, mii_dict=self.miis)
+        async def db_call():
+            await DataTracker.RoomTracker.add_data(self)
+        success = await self.room.update_room(db_call, is_vr_command=False, mii_dict=self.miis)
         self.updateLoungeFinishTime()
         return success
 
@@ -410,7 +412,7 @@ class ChannelBot(object):
                 success = True
                 #Make call to database to add data
                 if not is_vr_command:
-                    DataTracker.RoomTracker.add_data(self)
+                    await DataTracker.RoomTracker.add_data(self)
                 self.getRoom().apply_tabler_adjustments()
         
         while len(soups) > 0:
@@ -632,4 +634,3 @@ class ChannelBot(object):
         self.clean_up()
         self.populating = False
         
-            

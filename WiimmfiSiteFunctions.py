@@ -304,8 +304,24 @@ async def __fetch__(session, url, use_long_cache_time=False):
         if to_return is None:
             raise TableBotExceptions.WiimmfiSiteFailure("Could not pull information from mkwx.")
         return to_return
-        
 
+# https://github.com/jslirola/cloudflare-email-decoder/blob/master/ced/lib/processing.py
+def decode_email(encodedString):
+    r = int(encodedString[:2], 16)
+    return ''.join([chr(int(encodedString[i:i + 2], 16) ^ r) for i in range(2, len(encodedString), 2)])
+
+
+def replace_content(text):
+    emailregex = 'data-cfemail=\"([^\"]+)\"'
+    tagregex = r'<a [^>]*="\/cdn-cgi\/l\/email-protection"[^>]*>([^<]+)<\/a>'
+
+    out = []
+    for line in text.split("\n"):
+        m = re.search(emailregex, line)
+        if m:
+            line = re.sub(tagregex, decode_email(m.group(1)), line)
+        out.append(line)
+    return "\n".join(out)
 
 async def getRoomHTML(roomLink):
     
@@ -314,23 +330,25 @@ async def getRoomHTML(roomLink):
         fp = codecs.open(local_file_path, "r", "utf-8")
         html_data = fp.read()
         fp.close()
-        return html_data   
+        return replace_content(html_data)
         
     async with aiohttp.ClientSession() as session:
         temp = await threaded_fetch(session, roomLink, use_long_cache_time=True)
-        return temp
+        return replace_content(temp)
 
 
 async def __getMKWXSoupCall__():
     async with aiohttp.ClientSession() as session:
         mkwxHTML = await threaded_fetch(session, mkwxURL, use_long_cache_time=False)
-        return BeautifulSoup(mkwxHTML, "html.parser")
-
+        return BeautifulSoup(replace_content(mkwxHTML), "html.parser")
 
 async def getMKWXSoup():
+    if common.STUB_MKWX:
+        fp = codecs.open(common.STUB_MKWX_FILE_NAME, "r", "utf-8")
+        html_data = fp.read()
+        fp.close()
+        return BeautifulSoup(replace_content(html_data), "html.parser")
     return await __getMKWXSoupCall__()
-
-
 
 async def getrLIDSoup(rLID):
     roomHTML = await getRoomHTML(submkwxURL + rLID)
