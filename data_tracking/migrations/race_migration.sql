@@ -47,7 +47,7 @@ SELECT Race.race_id,
        cc,
        region,
        is_wiimmfi_race,
-       num_players,
+       room_sizes.num_players,
        room_sizes.first_place_time,
        room_sizes.last_place_time,
        room_sizes.avg_time
