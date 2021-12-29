@@ -83,6 +83,7 @@ CREATE TABLE Event(
     region TEXT NOT NULL,
     set_up_user_discord_id INT NULL,
     set_up_user_display_name TEXT NULL,
+    player_setup_amount INT NOT NULL,
     PRIMARY KEY(event_id),
     FOREIGN KEY (event_id)
 	REFERENCES Event_ID(event_id)
