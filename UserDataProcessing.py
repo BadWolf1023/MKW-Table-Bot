@@ -4,11 +4,13 @@ Created on Jul 25, 2020
 @author: willg
 '''
 #DN = Discord Name
+import asyncio
 import os
 from typing import Dict, Tuple
 import common
 from datetime import datetime, timedelta
 
+from data_tracking import DataTracker
 
 seperator = "="
 
@@ -335,6 +337,7 @@ def addFCsIDs(to_add: Dict[str,Tuple[str,datetime]]):
     global FC_DiscordID
     FC_DiscordID.update(to_add)
     to_add_fc.update(to_add)
+    asyncio.create_task(DataTracker.add_player_fcs(to_add))
     
 def smartUpdate(id_lounge=None, fc_id=None):
     if id_lounge is not None:

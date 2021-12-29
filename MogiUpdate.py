@@ -139,7 +139,7 @@ def get_tier_and_summary_channel_id(tier:str, is_rt=True):
         if tier in ["t8", "8", "tier8"]:
             return "8", rt_summary_channels["8"]
         
-        if tier in ["queuebot", "queue", "duoqueue", "triqueue", "trioqueue", "squad", "squadqueue"]:
+        if tier in ["queuebot", "queue", "duoqueue", "triqueue", "trioqueue", "squad", "squadqueue", "sq"]:
             return "squadqueue", rt_summary_channels["squadqueue"]
     else:
         if tier in ["t1", "1", "tier1"]:
@@ -156,7 +156,7 @@ def get_tier_and_summary_channel_id(tier:str, is_rt=True):
             return "6", ct_summary_channels["6"]
         if tier in ["t7", "7", "tier7"]:
             return "7", ct_summary_channels["7"]
-        if tier in ["queuebot", "queue", "duoqueue", "triqueue", "trioqueue", "squad", "squadqueue"]:
+        if tier in ["queuebot", "queue", "duoqueue", "triqueue", "trioqueue", "squad", "squadqueue", "sq"]:
             return "squadqueue", ct_summary_channels["squadqueue"]
     return None, None
 
@@ -182,7 +182,7 @@ def createJSON(players, mult=default_multiplier):
 
 #- Global races played will always be the actual number of races played
 # - Individual player races played will be the actual number of races they played as well
-# - Multiplier for each person will be global races played � 12
+# - Multiplier for each person will be global races played ÷ 12
 # - Updater Bot will leave all multipliers alone, even on subs/subbees. Updater Bot will not change any JSON except for the following: Updater Bot must change gain/loss prevention and full gain/loss on JSON appropriately for sub ins and sub outs.
 def create_player_json(player:Tuple[str, int, int, int], races_played=12, sub_in=False, sub_out=False, squadqueue=False):
     player_json = {}
@@ -198,7 +198,7 @@ def create_player_json(player:Tuple[str, int, int, int], races_played=12, sub_in
         player_json["subbed_out"] = True
     
     if races_played != 12: #Default multiplier is 1.0, so if 12 races are played, 1.0 is the right multiplier and we don't need to include it
-        player_json["multiplier"] = round(races_played / 12, 3) #Multiplier for each person will be global races played � 12
+        player_json["multiplier"] = round(races_played / 12, 3) #Multiplier for each person will be global races played ÷ 12
         
     return player_json
 
@@ -333,14 +333,14 @@ def hasNumbers(inputString):
 def remove_flag(name):
     return re.sub(r'\[.*\]',"",name).strip()
 
-#Returns an error code in the second index if it could not determine subs in parans
-def pop_paranthesees(name:str):
-    start_paran = name.find("(")
-    end_paran = name.rfind(")")
-    if start_paran == -1 or end_paran == -1 or start_paran > end_paran:
+#Returns an error code in the second index if it could not determine subs in parens
+def pop_parentheses(name:str):
+    start_paren = name.find("(")
+    end_paren = name.rfind(")")
+    if start_paren == -1 or end_paren == -1 or start_paren > end_paren:
         return name, None
-    new_name = name[:start_paran] + name[end_paran+1:]
-    races_player_str =  name[start_paran+1:end_paran].strip()
+    new_name = name[:start_paren] + name[end_paren+1:]
+    races_player_str =  name[start_paren+1:end_paren].strip()
     
     if races_player_str == '':
         return name, SUB_BAD_STRING
@@ -420,7 +420,7 @@ def getSubScores(name:str, scores, races_played=12):
     subs = []
     
     for player in players:
-        subs.append(pop_paranthesees(player))
+        subs.append(pop_parentheses(player))
         
     #Check to see if an error code (int) is in the 2nd index
     #If it is, just return the player name as normal and their score (will throw an error to
@@ -693,7 +693,6 @@ Wheel4life [at] 25|38|19
 e
 Spock [ca] 17|13|8
 Eimii [jp] 22|15|13"""
-
     test_table_text_3 = """#title 12 races
 A
 Garrett [us_tx] 24|39|37
@@ -717,7 +716,6 @@ Wheel4life [at] 25|38|19
 e
 Spock [ca] 17|13|8
 Eimii [jp] 22|15|13"""
-
     test_table_text_4 = """
 promise 29|29|42
 Garrett [us_tx] 24|39|37
@@ -731,8 +729,8 @@ Axis 49|20|29
 Wheel4life [at] 25|38|19
 Spock [ca] 17|13|8
 Eimii [jp] 22|15|13"""
-    #loop = asyncio.get_event_loop()
-    #loop.run_until_complete(textInputUpdate(test_table_text_3, "1"))
-    #loop.close()
+    # loop = asyncio.get_event_loop()
+    # loop.run_until_complete(textInputUpdate(test_table_text_3, "1"))
+    # loop.close()
     
         

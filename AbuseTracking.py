@@ -3,6 +3,7 @@ Created on Aug 5, 2021
 
 @author: willg
 '''
+
 import discord
 import common
 import UserDataProcessing
@@ -45,8 +46,6 @@ def is_hitting_ban_rate(author_id):
     rate_of_messages = num_messages_sent / total_message_span.total_seconds()
     return rate_of_messages > BAN_RATE_MESSAGES_PER_SECOND
     
-    
-
 
 async def abuse_track_check(message:discord.Message):
     author_id = message.author.id

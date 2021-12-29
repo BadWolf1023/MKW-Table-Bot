@@ -5,7 +5,7 @@ import LoungeAPIFunctions
 import UserDataProcessing
 import TableBot
 import UtilityFunctions
-import Race 
+import Race
 import help_documentation
 import commands
 import Lounge
@@ -104,15 +104,18 @@ SET_FLAG_TERMS = {"setflag", "sf"}
 MII_TERMS = {"mii"}
 WORLDWIDE_TERMS = {"wws", "ww", "rtww", "rtwws", "worldwide", "worldwides"}
 CTWW_TERMS = {"ctgpww", "ctgpwws", "ctwws", "ctww", "ctww", "ctwws", "ctworldwide", "ctworldwides", "customtrackworldwide", "customtrackworldwides"}
-BATTLES_TERMS = {"bts", "battle", "battles", "btww", "btwws", "battleww", "battlewws", "battleworldwide", "battleworldwides"}
+BATTLES_TERMS = {"battle", "battles", "btww", "btwws", "battleww", "battlewws", "battleworldwide", "battleworldwides"}
 VERIFY_ROOM_TERMS = {"vr", "verifyroom"}
 STATS_TERMS = {"stats", "stat"}
 INVITE_TERMS = {"invite"}
 LOG_TERMS = {"log"}
 
 #Player/Meta commands (also stateless)
-POPULAR_TRACKS_TERMS = {"populartracks", "populartrack", "pt", "pts", "toptrack", "toptracks", "hottrack", "hottracks"}
-UNPOPULAR_TRACKS_TERMS = {"unpopulartracks", "unpopulartrack", "upt", "upts", "worsttrack", "worsttracks", "unhottrack", "unhottracks", "coldtrack", "coldtracks"}
+POPULAR_TRACKS_TERMS = {"populartracks", "populartrack", "pt", "pts", "hottrack", "hottracks"}
+UNPOPULAR_TRACKS_TERMS = {"unpopulartracks", "unpopulartrack", "upt", "upts", "unhottrack", "unhottracks", "coldtrack", "coldtracks"}
+BEST_TRACK_TERMS = {"besttrack", "besttracks", "bt", "bts", "toptrack", "toptracks"}
+WORST_TRACK_TERMS = {"worsttrack", "worsttracks", "wt"}
+TOP_PLAYERS_TERMS = {"topplayers", "topplayer", "tp"}
 
 #Informative, getting started/tutorial commands
 QUICK_START_TERMS = {"quickstart"}
@@ -372,13 +375,12 @@ def private_data_init():
 def initialize():
     create_folders()
     private_data_init()
-    DataTracker.initialize()
     Race.initialize()
     UserDataProcessing.initialize()
+    asyncio.run(DataTracker.initialize())
     ServerFunctions.initialize()
     UtilityFunctions.initialize()
     TagAIShell.initialize()
-
 
 @client.event
 async def on_message(message: discord.Message):
@@ -728,11 +730,20 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)
                 
             elif args[0] in POPULAR_TRACKS_TERMS:
-                await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, command)
+                await commands.StatisticCommands.popular_tracks_command(client, message, args, server_prefix, command, is_top_tracks=True)
             
             elif args[0] in UNPOPULAR_TRACKS_TERMS:
-                await commands.StatisticCommands.unpopular_tracks_command(message, args, server_prefix, command)
-            
+                await commands.StatisticCommands.popular_tracks_command(client, message, args, server_prefix, command, is_top_tracks=False)
+
+            elif args[0] in BEST_TRACK_TERMS:
+                await commands.StatisticCommands.player_tracks_command(client, message, args, server_prefix, command, sort_asc=False)
+
+            elif args[0] in WORST_TRACK_TERMS:
+                await commands.StatisticCommands.player_tracks_command(client, message, args, server_prefix, command, sort_asc=True)
+
+            elif args[0] in TOP_PLAYERS_TERMS:
+                await commands.StatisticCommands.top_players_command(client, message, args, server_prefix)
+
             else:
                 # await client.process_commands()
                 await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  
