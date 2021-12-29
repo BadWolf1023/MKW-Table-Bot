@@ -1,3 +1,5 @@
+/* https://drawsql.app/individual-52/diagrams/mkwx-data */
+
 BEGIN;
 CREATE TABLE Place(
     race_id INT UNSIGNED NOT NULL,
