@@ -1,6 +1,31 @@
-/* https://drawsql.app/individual-52/diagrams/mkwx-data */
+/* WARNING WARNING WARNING
+	
+   WARNING WARNING WARNING 
+   WARNING WARNING WARNING 
+   WARNING WARNING WARNING 
+   WARNING WARNING WARNING:
+- BEFORE YOU RUN THIS FILE, CREATE A SAFE BACKUP (a backup created while software has the database open [eg Table Bot or a DB viewing software] is NOT a safe backup)
+- DO NOT RUN THIS FILE UNLESS YOU KNOW EXACTLY WHAT YOU ARE DOING
+- MAKE SURE THE DATABASE SCHEMA IN THIS FILE OF THE TABLES BEING CREATED MATCHES THE SCHEMA OF THE TABLES IN THE DATABASE YOU WILL BE RUNNING IT ON WITH THE EXCEPTION OF THE "ON DELETE" STATEMENTS
+- AFTER RUNNING THIS FILE, AND AFTER YOU DELETE THE MINIMAL INFORMATION FROM THE DATABASE, MAKE SURE YOU READ THE INSTRUCTIONS IN "database_restrict_delete.sql" AND THEN RUN IT
+*/
 
-BEGIN;
+
+
+
+
+
+
+/* WARNING: DID YOU READ THE ABOVE WARNING? YOU RISK PERMANENT DATA LOSS IF YOU ARE NOT READING CAREFULLY. */
+PRAGMA foreign_keys=off;
+
+ALTER TABLE Place RENAME TO _Place_old;
+ALTER TABLE Race RENAME TO _Race_old;
+ALTER TABLE Event RENAME TO _Event_old;
+ALTER TABLE Event_Races RENAME TO _Event_Races_old;
+ALTER TABLE Event_FCs RENAME TO _Event_FCs_old;
+ALTER TABLE Event_Structure RENAME TO _Event_Structure_old;
+
 CREATE TABLE Place(
     race_id INT UNSIGNED NOT NULL,
     fc TEXT NOT NULL,
@@ -28,7 +53,7 @@ CREATE TABLE Place(
     FOREIGN KEY (fc)
        REFERENCES Player(fc)
           ON UPDATE CASCADE
-          ON DELETE RESTRICT
+          ON DELETE CASCADE
 );
 
 CREATE TABLE Race(
@@ -43,37 +68,11 @@ CREATE TABLE Race(
     cc TEXT NOT NULL,
     region TEXT NULL,
     is_wiimmfi_race TINYINT(1) NOT NULL,
-    num_players INT NOT NULL,
-    first_place_time DOUBLE(8, 3),
-    last_place_time  DOUBLE(8, 3),
-    avg_time         DOUBLE(8, 3),
     PRIMARY KEY(race_id),
     FOREIGN KEY (track_name)
        REFERENCES Track(track_name)
           ON UPDATE CASCADE
-           ON DELETE RESTRICT
-);
-
-CREATE TABLE Track(
-    track_name TEXT NOT NULL,
-    url TEXT NULL,
-    fixed_track_name INT NOT NULL,
-    is_ct TINYINT(1) NOT NULL,
-    track_name_lookup TEXT NOT NULL,
-    PRIMARY KEY(track_name)
-);
-
-CREATE TABLE Player(
-    fc TEXT NOT NULL,
-    pid INT UNSIGNED NOT NULL,
-    player_url TEXT NOT NULL,
-    PRIMARY KEY(fc)
-);
-
-CREATE TABLE Event_ID(
-    event_id INT NOT NULL /*This is a unique ID that table bot generates for each war that is started with ?sw. (Okay, Table Bot doesn''t need to generate it actually! Discord messages all have a unique ID and we''ll use those!)*/,
-    PRIMARY KEY(event_id)
-
+           ON DELETE CASCADE
 );
 
 CREATE TABLE Event(
@@ -85,21 +84,14 @@ CREATE TABLE Event(
     region TEXT NOT NULL,
     set_up_user_discord_id INT NULL,
     set_up_user_display_name TEXT NULL,
-    player_setup_amount INT NOT NULL,
     PRIMARY KEY(event_id),
     FOREIGN KEY (event_id)
 	REFERENCES Event_ID(event_id)
 	ON UPDATE CASCADE
-	ON DELETE RESTRICT
+	ON DELETE CASCADE
 
 );
 
-CREATE TABLE Tier(
-    channel_id INT UNSIGNED NOT NULL,
-    tier INT NOT NULL,
-    is_ct TINYINT(1) NOT NULL,
-    PRIMARY KEY(channel_id)
-);
 
 CREATE TABLE Event_Races(
     event_id INT UNSIGNED NOT NULL,
@@ -112,7 +104,7 @@ CREATE TABLE Event_Races(
     FOREIGN KEY (event_id)
     REFERENCES Event_ID(event_id)
        ON UPDATE CASCADE
-       ON DELETE RESTRICT
+       ON DELETE CASCADE
 );
 
 CREATE TABLE Event_FCs(
@@ -127,7 +119,7 @@ CREATE TABLE Event_FCs(
     FOREIGN KEY (event_id)
        REFERENCES Event_ID(event_id)
           ON UPDATE CASCADE
-           ON DELETE RESTRICT
+           ON DELETE CASCADE
 );
 
 CREATE TABLE Event_Structure(
@@ -154,20 +146,27 @@ CREATE TABLE Event_Structure(
     FOREIGN KEY (event_id)
        REFERENCES Event_ID(event_id)
           ON UPDATE CASCADE
-           ON DELETE RESTRICT
+           ON DELETE CASCADE
 );
 
-CREATE TABLE Score_Matrix(
-    size INT,
-    place INT,
-    pts INT,
-    PRIMARY KEY (size, place)
-);
 
-CREATE TABLE Player_FCs(
-    fc TEXT NOT NULL,
-    discord_id INT,
-    PRIMARY KEY(fc)
-);
+INSERT INTO Place SELECT * FROM _Place_old;
+INSERT INTO Race SELECT * FROM _Race_old;
+INSERT INTO Event SELECT * FROM _Event_old;
+INSERT INTO Event_Races SELECT * FROM _Event_Races_old;
+INSERT INTO Event_FCs SELECT * FROM _Event_FCs_old;
+INSERT INTO Event_Structure SELECT * FROM _Event_Structure_old;
+
+DROP TABLE _Place_old;
+DROP TABLE _Race_old;
+DROP TABLE _Event_old;
+DROP TABLE _Event_Races_old;
+DROP TABLE _Event_FCs_old;
+DROP TABLE _Event_Structure_old;
+
 
 COMMIT;
+
+PRAGMA foreign_keys=on;
+
+VACUUM;

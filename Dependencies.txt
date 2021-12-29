@@ -6,4 +6,6 @@ psutil
 kaitaistruct
 matplotlib
 bitstring
+tabulate
+aiosqlite
 lxml
