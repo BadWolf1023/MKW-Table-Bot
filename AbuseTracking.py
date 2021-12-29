@@ -19,8 +19,8 @@ blacklisted_command_count = defaultdict(int)
 BOT_ABUSE_REPORT_CHANNEL = None
 CLOUDFLARE_REPORT_CHANNEL = None
 CW_REPORT_CHANNEL = 924551533692084264
-CW_TESTING = True
-WHITELIST = 366774710186278914
+CW_TESTING = False
+WHITELIST = { 366774710186278914 }
 
 WARN_MESSAGES_PER_SECOND_RATE = .45
 BAN_RATE_MESSAGES_PER_SECOND = .48
@@ -52,11 +52,12 @@ def is_hitting_ban_rate(author_id):
 
 async def abuse_track_check(message:discord.Message):
     author_id = message.author.id
-    # if author_id == WHITELIST: return
+    if author_id in WHITELIST: return
     bot_abuse_tracking[author_id][0] += 1
     bot_abuse_tracking[author_id][1].append(message.content)
     bot_abuse_tracking[author_id][2].append(datetime.now())
     messages_sent = bot_abuse_tracking[author_id][1]
+
     if is_hitting_ban_rate(author_id) and bot_abuse_tracking[author_id][3] >= 2: #certain spam and we already warned them
         UserDataProcessing.add_Blacklisted_user(str(author_id), "Automated ban - you spammed the bot. This hurts users everywhere because it slows down the bot for everyone. You can appeal in 1 week to a bot admin or in Bad Wolf's server - to join the server, use the invite code: K937DqM")
         if BOT_ABUSE_REPORT_CHANNEL is not None:
@@ -64,6 +65,7 @@ async def abuse_track_check(message:discord.Message):
             await BOT_ABUSE_REPORT_CHANNEL.send(embed=embed)
 
         raise TableBotExceptions.BlacklistedUser("blacklisted user")
+
     if is_hitting_warn_rate(author_id): #potential spam, warn them if we haven't already
         bot_abuse_tracking[author_id][3] += 1
         should_send_abuse_report = bot_abuse_tracking[author_id][3] == 1
@@ -85,10 +87,11 @@ def create_notification_embed(message: discord.Message, messages_sent, ban):
     send_embed.add_field(name='Discord Server', value=message.guild)
     send_embed.add_field(name='Server ID', value=message.guild.id)
     
+    #checks to see how many remaining characters are available (embeds have max 6000 characters and fields have 1024 max)
     chars_before_messages = len(f"{message.author} - WARNED{message.author.mention}{message.author.display_name}{message.author.id}{message.guild}{message.guild.id}")+75
     allowed_message_chars = 6000-chars_before_messages
     allowed_iters = math.ceil((allowed_message_chars)/1024)
-    last_len = allowed_message_chars-(allowed_iters*1024)-1
+    last_len = allowed_message_chars-(allowed_iters*1024)
     messages_sent = '\n'.join(messages_sent)
 
     message_list = list(UtilityFunctions.string_chunks(messages_sent, 1024))
