@@ -111,8 +111,7 @@ async def blacklisted_user_check(message:discord.Message, notify_threshold=15):
 def set_bot_abuse_report_channel(client):
     global BOT_ABUSE_REPORT_CHANNEL
     global CLOUDFLARE_REPORT_CHANNEL
-    BOT_ABUSE_REPORT_CHANNEL = client.get_channel(924551533692084264)
-    # BOT_ABUSE_REPORT_CHANNEL = client.get_channel(common.BOT_ABUSE_REPORT_CHANNEL_ID)
+    BOT_ABUSE_REPORT_CHANNEL = client.get_channel(common.BOT_ABUSE_REPORT_CHANNEL_ID)
     CLOUDFLARE_REPORT_CHANNEL = client.get_channel(common.CLOUD_FLARE_REPORT_CHANNEL_ID)
     
 #Every 120 seconds, checks to see if anyone was "spamming" the bot and notifies a private channel in my server
