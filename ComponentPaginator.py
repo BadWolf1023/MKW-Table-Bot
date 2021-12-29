@@ -53,7 +53,7 @@ class SuggestionsPaginator(discord.ui.View):
         author_check=True,
         disable_on_timeout=True,
         custom_view: Optional[discord.ui.View] = None,
-        timeout: Optional[float] = 60.0,
+        timeout: Optional[float] = 120.0,
     ):
         super().__init__(timeout=timeout)
 

@@ -44,7 +44,7 @@ EC_Messages_Alternative = {_SINGLE_BLANK_RACE_TIME: "One blank race time. If no 
                _MULTIPLE_RACES_WITH_SAME_TIMES:"",
                _LARGE_DELTA_OCURRED:""}
 
-ERROR_TYPES = { # ALL SUGGESTIONS WILL BE PLACED ON SEPARATE SECTIONS OF MESSAGE AND WILL HAVE A `REJECT` BUTTON IF THE USER WANTS TO REJECT A SUGGESTED FIX
+SUGGESTION_TYPES = { # ALL SUGGESTIONS WILL BE PLACED ON SEPARATE SECTIONS OF MESSAGE AND WILL HAVE A `REJECT` BUTTON IF THE USER WANTS TO REJECT A SUGGESTED FIX
 
     "gp_missing", #player(s) missing at the start of a GP (button for ?earlydc if only one player is missing, if more select menu to change room size and button to confirm)
     "missing_player", #player is missing from race (2 buttons: 1 to choose DCed on, another to choose DCed before)
@@ -68,7 +68,7 @@ def get_room_errors_players(room, error_types, startrace=None, endrace=None, lou
     
     for raceInd, race in enumerate(room.races[startrace:endrace], startrace):
         errors = []
-        blank_time_counter = 0
+        blank_time_counter = []
         for placement in race.placements:
             if placement.is_disconnected():
                 fc, name = placement.get_fc_and_name()
@@ -77,14 +77,14 @@ def get_room_errors_players(room, error_types, startrace=None, endrace=None, lou
                     # error_types[int(race.raceNumber)].append({'type': 'blank_player', 'player_name': name + lounge_add(fc, lounge_replace), 'player_fc': fc, 'corrected_room_size': len(race.placements)-1})
 
                 errors.append(name + lounge_add(fc, lounge_replace) + " had a blank race time. Disconnected unless mkwx bug. Not giving DC points for this race - use ?changeroomsize if they were not on the results of this race")
-                blank_time_counter += 1
+                blank_time_counter.append((fc, name))
             
             if not ignoreLargeTimes:
                 if placement.is_bogus_time():
                     fc, name = placement.get_fc_and_name()
                     err_mes = name + lounge_add(fc, lounge_replace) + " had large finish time: " + placement.get_time_string() 
                     errors.append(err_mes + " - use ?qe to change their position")
-                    error_types[int(race.raceNumber)].append(({'type': 'large_time', 'player_name': name + lounge_add(fc, lounge_replace), 'player_fc': fc, 'message': err_mes}))
+                    error_types[int(race.raceNumber)].append(({'type': 'large_time', 'player_name': name + lounge_add(fc, lounge_replace), 'player_fc': fc, 'placements': list(range(1, len(race.placements)+1)),'message': err_mes}))
 
         ties = race.getTies()
         if len(ties) > 0:
@@ -101,13 +101,14 @@ def get_room_errors_players(room, error_types, startrace=None, endrace=None, lou
             error_type['message'] = "Ties occurred between " + '  |  '.join(error_type['player_names'])
             error_types[int(race.raceNumber)].append(error_type)
 
-        if blank_time_counter == len(race.placements):
+        if len(blank_time_counter) == len(race.placements):
             errors = [EC_Messages_Alternative[_ENTIRE_ROOM_BLANK_RACE_TIMES]]
         
-        if blank_time_counter > 0:
+        if len(blank_time_counter) > 0:
             # start = len(race.placements) - blank_time_counter
-            error_types[int(race.raceNumber)].append({'type': 'blank_player', 'corrected_room_sizes': list(range(blank_time_counter, len(race.placements)+1)), 
-                                                        'message': "Multiple players had blank race times"})
+            error_types[int(race.raceNumber)].append({'type': 'blank_player', 'corrected_room_sizes': list(range(len(race.placements)-len(blank_time_counter), len(race.placements)+1)), 
+                                                        'player_names': [player[1] for player in blank_time_counter],
+                                                        'message': f"{len(blank_time_counter)} player(s) had blank race times."})
 
             
         #Check if this race's times are the same as any of the previous races times (excluding blank times)
@@ -124,8 +125,8 @@ def get_room_errors_players(room, error_types, startrace=None, endrace=None, lou
             
         if race.raceNumber in room.forcedRoomSize:
             errors.append("Room size changed to " + str(room.forcedRoomSize[race.raceNumber]) + " players for this race.")
-            for indx, err in error_types[int(race.raceNumber)]:
-                if err.type in ['blank_player', 'gp_missing']:
+            for indx, err in enumerate(error_types[int(race.raceNumber)]):
+                if err['type'] in ['blank_player', 'gp_missing']:
                     error_types[int(race.raceNumber)].pop(indx)
         
         if room.placements_changed_for_racenum(race.raceNumber):
@@ -221,7 +222,7 @@ def get_war_errors_players(war, room, error_types, lounge_replace=True, ignoreLa
                 race_errors[GPRaceStart] = []
             race_errors[GPRaceStart].insert(0, "Table has been manually modified for this GP.")
             
-    temp_dict = get_room_errors_players(room, startrace+1, endrace, lounge_replace=lounge_replace, ignoreLargeTimes=ignoreLargeTimes)
+    temp_dict = get_room_errors_players(room, error_types, startrace+1, endrace, lounge_replace=lounge_replace, ignoreLargeTimes=ignoreLargeTimes)
     
     for raceNum, ECs in temp_dict.items():
         if raceNum in race_errors:

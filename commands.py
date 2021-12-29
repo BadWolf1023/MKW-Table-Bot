@@ -2264,12 +2264,12 @@ class TablingCommands:
                             if should_send_notification and common.current_notification != "":
                                 await message.channel.send(common.current_notification.replace("{SERVER_PREFIX}", server_prefix))
 
-                            if error_types: error_types = {k: v for k, v in error_types.items() if len(v)!=0}
+                            # if error_types: error_types = [(k, v) for k, v in error_types.items() if len(v)!=0]
                             if error_types and len(error_types)>0:
                                 view_list = list()
                                 page_list = list()
 
-                                for race, errors in list(error_types.items()):
+                                for race, errors in error_types:
                                     for error in errors:
                                         error['race'] = race
                                         view_list.append(Components.SuggestionView(error, this_bot, server_prefix, is_lounge_server, error['id']))

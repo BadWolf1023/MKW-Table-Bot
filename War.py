@@ -202,15 +202,23 @@ class War(object):
             
     def clear_resolved_errors(self, errors, resolved):
         flattened_errors = list(chain.from_iterable(list(errors.values())))
-        for ind, e in enumerate(flattened_errors):
-            if 'id' not in e:
-                e['id'] = ind
 
-        indx = len(flattened_errors)-1
-        for _, values in list(errors.items())[::-1]:
-            for err in range(len(values)-1, -1, -1):
-                if indx in resolved: values.pop(err)
-                indx-=1
+        errors = [(k,v) for k, v in errors.items() if len(v)>0]
+
+        ind = len(flattened_errors) - 1
+        for race_indx in range(len(errors)-1, -1, -1):
+            race_errors = errors[race_indx][1]
+            for err_indx in range(len(race_errors)-1, -1, -1):
+                err = race_errors[err_indx]
+                if 'id' not in err:
+                    err['id'] = ind
+                    ind-=1
+                if err['id'] in resolved:
+                    race_errors.pop(err_indx)
+            if len(race_errors) == 0: errors.pop(race_indx)
+
+        errors = sorted(errors, key=lambda l: l[0])
+        return errors
 
 
     def get_war_errors_string_2(self, room, resolved_errors, replaceLounge=True, up_to_race=None):
@@ -220,7 +228,7 @@ class War(object):
         if errors is None:
             return "Room not loaded.", None
 
-        self.clear_resolved_errors(error_types, resolved_errors)
+        error_types = self.clear_resolved_errors(error_types, resolved_errors)
         
         errors_no_large_times = ErrorChecker.get_war_errors_players(self, room, defaultdict(list), replaceLounge, ignoreLargeTimes=True)
         errors_large_times = ErrorChecker.get_war_errors_players(self, room, defaultdict(list), replaceLounge, ignoreLargeTimes=False)

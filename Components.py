@@ -131,9 +131,9 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
         await self.view.update_message(command_mes)
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
-    def __init__(self, values, name=None):
-        options = [discord.SelectOption(label=str(value)) for value in values] if not name else\
-                    [discord.SelectOption(label=str(place)+" "+name,value=place) for place in values] #for 'tie' only
+    def __init__(self, values, name=None, tie=False):
+        options = [discord.SelectOption(label=str(value)) for value in values] if not tie else\
+                    [discord.SelectOption(label=str(place)+" "+name, value=str(place)) for place in values] #for 'tie' only
         super().__init__(placeholder=name if name else "Select correct room size", options=options)
     
     async def callback(self, interaction: discord.Interaction):
@@ -196,14 +196,14 @@ class SuggestionView(discord.ui.View):
         
         elif err_type == 'large_time':
             label = label_builder
-            self.add_item(SuggestionSelectMenu(error['placements']))
-            self.add_item(SuggestionButton(error, label, comfirm=True))
+            self.add_item(SuggestionSelectMenu(error['placements'], name="Choose correct position"))
+            self.add_item(SuggestionButton(error, label, confirm=True))
         
         elif err_type == 'tie':
             label = label_builder
             players = error['player_names']
             for p in players:
-                self.add_item(SuggestionSelectMenu(error['placements'], p))
+                self.add_item(SuggestionSelectMenu(error['placements'], name="Corrected position for " + p, tie=True))
             self.add_item(SuggestionButton(error, label, confirm=True))
         
         self.add_item(RejectButton())
