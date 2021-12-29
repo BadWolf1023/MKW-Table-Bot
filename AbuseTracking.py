@@ -18,6 +18,8 @@ blacklisted_command_count = defaultdict(int)
 
 BOT_ABUSE_REPORT_CHANNEL = None
 CLOUDFLARE_REPORT_CHANNEL = None
+CW_REPORT_CHANNEL = 924551533692084264
+CW_TESTING = True
 WHITELIST = 366774710186278914
 
 WARN_MESSAGES_PER_SECOND_RATE = .45
@@ -82,8 +84,8 @@ def create_notification_embed(message: discord.Message, messages_sent, ban):
     send_embed.add_field(name='User ID', value=message.author.id)
     send_embed.add_field(name='Discord Server', value=message.guild)
     send_embed.add_field(name='Server ID', value=message.guild.id)
-
-    chars_before_messages = len(f"{message.author} - WARNED{message.author.mention}{message.author.id}{message.guild}{message.guild.id}")+100
+    
+    chars_before_messages = len(f"{message.author} - WARNED{message.author.mention}{message.author.display_name}{message.author.id}{message.guild}{message.guild.id}")+75
     allowed_message_chars = 6000-chars_before_messages
     allowed_iters = math.ceil((allowed_message_chars)/1024)
     last_len = allowed_message_chars-(allowed_iters*1024)-1
@@ -112,6 +114,7 @@ def set_bot_abuse_report_channel(client):
     global BOT_ABUSE_REPORT_CHANNEL
     global CLOUDFLARE_REPORT_CHANNEL
     BOT_ABUSE_REPORT_CHANNEL = client.get_channel(common.BOT_ABUSE_REPORT_CHANNEL_ID)
+    if CW_TESTING: BOT_ABUSE_REPORT_CHANNEL = client.get_channel(CW_REPORT_CHANNEL)
     CLOUDFLARE_REPORT_CHANNEL = client.get_channel(common.CLOUD_FLARE_REPORT_CHANNEL_ID)
     
 #Every 120 seconds, checks to see if anyone was "spamming" the bot and notifies a private channel in my server
