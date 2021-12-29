@@ -234,9 +234,8 @@ class SQL_Search_Query_Builder(object):
                 FROM Event_Races
                          JOIN Event ON Event_Races.event_id = Event.event_id
                          JOIN Tier ON Event.channel_id = Tier.channel_id
-                         JOIN Event_Structure ON Event.event_id = Event_Structure.event_id
                     
-                    WHERE (players_per_team * number_of_teams) == 12
+                    WHERE Event.player_setup_amount = 12
                     AND tier = {tier}
                     {SQL_Search_Query_Builder.get_event_valid_filter()}
             )
@@ -299,9 +298,8 @@ class SQL_Search_Query_Builder(object):
                     JOIN Event ON ER.event_id = Event.event_id
                     JOIN Tier ON Event.channel_id = Tier.channel_id
                     JOIN Track ON Race.track_name = Track.track_name
-                    JOIN Event_Structure on Event.event_id = Event_Structure.event_id
         
-            WHERE (players_per_team * number_of_teams) == 12
+            WHERE Event.player_setup_amount = 12
                 AND Track.track_name = ?
                 {tier_filter_clause}
                 {SQL_Search_Query_Builder.get_event_valid_filter()}
