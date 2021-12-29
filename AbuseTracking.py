@@ -16,7 +16,7 @@ blacklisted_command_count = defaultdict(int)
 
 BOT_ABUSE_REPORT_CHANNEL = None
 CLOUDFLARE_REPORT_CHANNEL = None
-WHITELIST = 366774710186278914
+WHITELIST = { 366774710186278914 }
 
 WARN_MESSAGES_PER_SECOND_RATE = .45
 BAN_RATE_MESSAGES_PER_SECOND = .48
@@ -50,7 +50,7 @@ def is_hitting_ban_rate(author_id):
 
 async def abuse_track_check(message:discord.Message):
     author_id = message.author.id
-    # if author_id == WHITELIST: return
+    if author_id in WHITELIST: return
     bot_abuse_tracking[author_id][0] += 1
     bot_abuse_tracking[author_id][1].append(message.content)
     bot_abuse_tracking[author_id][2].append(datetime.now())
@@ -58,10 +58,6 @@ async def abuse_track_check(message:discord.Message):
     if is_hitting_ban_rate(author_id) and bot_abuse_tracking[author_id][3] >= 2: #certain spam and we already warned them
         UserDataProcessing.add_Blacklisted_user(str(author_id), "Automated ban - you spammed the bot. This hurts users everywhere because it slows down the bot for everyone. You can appeal in 1 week to a bot admin or in Bad Wolf's server - to join the server, use the invite code: K937DqM")
         if BOT_ABUSE_REPORT_CHANNEL is not None:
-            # to_send = f"AUTOMATIC BAN:\nDiscord: {str(message.author)}\nDiscord ID: {author_id}\nDisplay name: {message.author.display_name}\nDiscord Server: {message.guild}\nDiscord Server ID: {message.guild.id}\nMessages Sent:"
-            # messages_to_send_back = UtilityFunctions.chunk_join([to_send] + messages_sent)
-            # for message_to_send in messages_to_send_back:
-            #     await BOT_ABUSE_REPORT_CHANNEL.send(message_to_send)
             embed = create_notification_embed(message, messages_sent, ban=True)
             await BOT_ABUSE_REPORT_CHANNEL.send(embed=embed)
 
@@ -71,10 +67,6 @@ async def abuse_track_check(message:discord.Message):
         should_send_abuse_report = bot_abuse_tracking[author_id][3] == 1
         await message.channel.send(f"{message.author.mention} slow down, you're sending too many commands. To avoid getting banned, wait 5 minutes before sending another command.")
         if should_send_abuse_report and BOT_ABUSE_REPORT_CHANNEL:
-            # to_send = f"BAN WARNING:\nDiscord: {str(message.author)}\nDiscord ID: {author_id}\nDisplay name: {message.author.display_name}\nDiscord Server: {message.guild}\nDiscord Server ID: {message.guild.id}\nMessages Sent:"
-            # messages_to_send_back = UtilityFunctions.chunk_join([to_send] + messages_sent)
-            # for message_to_send in messages_to_send_back:
-            #     await BOT_ABUSE_REPORT_CHANNEL.send(message_to_send)
             embed = create_notification_embed(message, messages_sent, ban=False)
             await BOT_ABUSE_REPORT_CHANNEL.send(embed=embed)
 

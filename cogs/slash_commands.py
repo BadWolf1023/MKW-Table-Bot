@@ -304,6 +304,34 @@ class Slash(ext_commands.Cog):
         # await ctx.defer()
         await commands.TablingCommands.reset_command(message, BWB.table_bots)
     
+    @slash_command(name="vr",
+    description="Show details of a room",
+    guild_ids=guilds)
+    async def _vr(
+        self,
+        ctx: discord.ApplicationContext,
+        players: Option(str, "Player(s) in the room")
+    ):
+        await on_interaction_check(ctx.interaction)
+    
+    @slash_command(name='ww',
+    description="Show all active RT worldwide rooms",
+    guild_ids=guilds)
+    async def _ww(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        await on_interaction_check(ctx.interaction)
+    
+    @slash_command(name='ctww',
+    description="Show all active CT worldwide rooms",
+    guild_ids=guilds)
+    async def _ctww(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        await on_interaction_check(ctx.interaction)
+    
 
 
 async def on_interaction_check(interaction):

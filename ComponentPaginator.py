@@ -1,5 +1,5 @@
 import discord
-# from discord.ext import pages as ext_pages
+from discord.ext import pages
 
 from discord import abc
 from discord.commands import ApplicationContext
@@ -7,7 +7,7 @@ from discord.ext.commands import Context
 from typing import Optional, List, Union, Dict
 
 
-class PaginatorButton(discord.ui.Button):
+class SuggestionsPaginatorButton(discord.ui.Button):
     """Creates a button used to navigate the paginator.
 
     Parameters
@@ -78,7 +78,7 @@ class SuggestionsPaginator(discord.ui.View):
         self.message: Union[discord.Message, discord.WebhookMessage, None] = None
         self.buttons = {
             "first": {
-                "object": PaginatorButton(
+                "object": SuggestionsPaginatorButton(
                     label="<<",
                     style=discord.ButtonStyle.blurple,
                     emoji=None,
@@ -89,7 +89,7 @@ class SuggestionsPaginator(discord.ui.View):
                 "hidden": True,
             },
             "prev": {
-                "object": PaginatorButton(
+                "object": SuggestionsPaginatorButton(
                     label="<",
                     style=discord.ButtonStyle.green,
                     emoji=None,
@@ -109,7 +109,7 @@ class SuggestionsPaginator(discord.ui.View):
                 "hidden": False,
             },
             "next": {
-                "object": PaginatorButton(
+                "object": SuggestionsPaginatorButton(
                     label=">",
                     style=discord.ButtonStyle.green,
                     emoji=None,
@@ -120,7 +120,7 @@ class SuggestionsPaginator(discord.ui.View):
                 "hidden": True,
             },
             "last": {
-                "object": PaginatorButton(
+                "object": SuggestionsPaginatorButton(
                     label=">>",
                     style=discord.ButtonStyle.blurple,
                     emoji=None,
@@ -140,7 +140,7 @@ class SuggestionsPaginator(discord.ui.View):
         """Disables all buttons when the view times out."""
         if not self.disable_on_timeout:
             return
-            
+
         for item in self.children:
             item.disabled = True
 
@@ -176,7 +176,7 @@ class SuggestionsPaginator(discord.ui.View):
 
     def customize_button(
         self, button_name: str = None, button_label: str = None, button_emoji=None, button_style: discord.ButtonStyle = discord.ButtonStyle.gray
-    ) -> PaginatorButton:
+    ) -> SuggestionsPaginatorButton:
         """Allows you to easily customize the various pagination buttons.
 
         Parameters
@@ -374,4 +374,57 @@ class SuggestionsPaginator(discord.ui.View):
             self.message = msg
         elif isinstance(msg, discord.Interaction):
             self.message = await msg.original_message()
+        return self.message
+
+class MessagePaginator(pages.Paginator):
+    def __init__(self, pages, show_disabled=True, show_indicator=False, timeout=120):
+        super().__init__(pages, show_disabled=show_disabled, show_indicator=show_indicator, timeout=float(timeout))
+    
+    async def send(self, messageable: abc.Messageable, ephemeral: bool = False) -> Union[discord.Message, discord.WebhookMessage]:
+        """Sends a message with the paginated items.
+
+
+        Parameters
+        ------------
+        messageable: :class:`discord.abc.Messageable`
+            The messageable channel to send to.
+        ephemeral: :class:`bool`
+            Choose whether the message is ephemeral or not. Only works with slash commands.
+
+        Returns
+        --------
+        Union[:class:`~discord.Message`, :class:`~discord.WebhookMessage`]
+            The message that was sent with the paginator.
+        """
+        if isinstance(messageable, discord.Message) or hasattr(messageable, 'proxy'):
+            self.user = messageable.author
+            messageable = messageable.channel
+
+        if not isinstance(messageable, abc.Messageable):
+            raise TypeError("messageable should be a subclass of abc.Messageable")
+
+        page = self.pages[0]
+
+        if isinstance(messageable, (ApplicationContext, Context)):
+            self.user = messageable.author
+
+        if isinstance(messageable, ApplicationContext):
+            msg = await messageable.respond(
+                content=page if isinstance(page, str) else None,
+                embed=page if isinstance(page, discord.Embed) else None,
+                view=self,
+                ephemeral=ephemeral,
+            )
+
+        else:
+            msg = await messageable.send(
+                content=page if isinstance(page, str) else None,
+                embed=page if isinstance(page, discord.Embed) else None,
+                view=self,
+            )
+        if isinstance(msg, (discord.WebhookMessage, discord.Message)):
+            self.message = msg
+        elif isinstance(msg, discord.Interaction):
+            self.message = await msg.original_message()
+
         return self.message

@@ -717,6 +717,7 @@ class OtherCommands:
         if rlCooldown > 0:
             delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
             await delete_me.delete(delay=5)
+
         else:
             
             this_bot.updateRLCoolDown()
@@ -733,69 +734,15 @@ class OtherCommands:
                 rooms = sr.get_other_rooms()
             else:
                 rooms = sr.get_private_rooms()
-                
-                
+
+
             if len(rooms) == 0:
                 await message.channel.send(f"There are no {Race.Race.getWWFullName(ww_type)} rooms playing right now.")
                 return
             
-            def check(reaction, user):
-                return user == message.author and str(reaction.emoji) in {common.LEFT_ARROW_EMOTE, common.RIGHT_ARROW_EMOTE}
-        
-            embed_page_start_time = datetime.now()
-            sent_missing_perms_message = False
-            current_page = 0
-            curRoomTxt = SimpleRooms.SimpleRooms.get_embed_text_for_race(rooms, current_page)
-            should_send_error_message = False
-            msg = await message.channel.send(curRoomTxt)
-            await msg.add_reaction(common.LEFT_ARROW_EMOTE)
-            await msg.add_reaction(common.RIGHT_ARROW_EMOTE)
-            while (datetime.now() - embed_page_start_time) < common.embed_page_time:
-    
-                timeout_time_delta = common.embed_page_time - (datetime.now() - embed_page_start_time)
-                timeout_seconds = timeout_time_delta.total_seconds()
-                if timeout_seconds <= 0:
-                    break
-    
-                try:
-                    reaction, user = await client.wait_for('reaction_add', timeout=timeout_seconds, check=check)
-                    if(str(reaction.emoji) == common.LEFT_ARROW_EMOTE):
-                        current_page = (current_page - 1) % (len(rooms))
-                    else:
-                        current_page = (current_page + 1) % (len(rooms))
-    
-                    curRoomTxt = SimpleRooms.SimpleRooms.get_embed_text_for_race(rooms, current_page)                
-    
-                    try:
-                        await msg.edit(content=curRoomTxt)
-                    except discord.errors.Forbidden:
-                        should_send_error_message = True
-                    except discord.errors.NotFound:
-                        break
-                    
-                    if should_send_error_message:
-                        send_missing_permissions(message.channel)
-                        sent_missing_perms_message = True
-                except asyncio.TimeoutError:
-                    break
-                except asyncio.CancelledError:
-                    break
-            
-            try:
-                await msg.clear_reaction(common.LEFT_ARROW_EMOTE)
-                await msg.clear_reaction(common.RIGHT_ARROW_EMOTE)
-            except discord.errors.Forbidden:
-                try:
-                    await msg.remove_reaction(common.LEFT_ARROW_EMOTE, client.user)
-                    await msg.remove_reaction(common.RIGHT_ARROW_EMOTE, client.user)
-                except:
-                    pass
-                if message.guild is not None and not sent_missing_perms_message:
-                    await send_missing_permissions(message.channel)
-            except discord.errors.NotFound:
-                pass
-            except RuntimeError: #Loop got closed, suppress exception
-                pass
+            room_texts = [SimpleRooms.SimpleRooms.get_embed_text_for_race(rooms, page) for page in range(len(rooms))]
+            paginator = ComponentPaginator.MessagePaginator(pages=room_texts, show_disabled=False, timeout=common.embed_page_time.seconds)
+            await paginator.send(message)
     
     
     @staticmethod
@@ -1408,7 +1355,7 @@ class TablingCommands:
         server_id = message.guild.id
         channel_id = message.channel.id
         if server_id in table_bots and channel_id in table_bots[server_id]:
-            table_bots[server_id][channel_id].destroy()
+            table_bots[server_id][channel_id].reset(message.guild.id)
             del(table_bots[server_id][channel_id])
 
         await message.channel.send("Reset successful.")
