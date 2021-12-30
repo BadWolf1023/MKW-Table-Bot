@@ -1,6 +1,5 @@
 '''
 Created on Aug 5, 2021
-
 @author: willg
 '''
 
@@ -11,18 +10,21 @@ import UtilityFunctions
 import TableBotExceptions
 from collections import defaultdict
 from datetime import datetime
+import math
 
 bot_abuse_tracking = defaultdict(lambda: [0, [], [], 0])
 blacklisted_command_count = defaultdict(int)
 
 BOT_ABUSE_REPORT_CHANNEL = None
 CLOUDFLARE_REPORT_CHANNEL = None
+CW_REPORT_CHANNEL = 924551533692084264
+CW_TESTING = False
 WHITELIST = { 366774710186278914 }
 
 WARN_MESSAGES_PER_SECOND_RATE = .45
 BAN_RATE_MESSAGES_PER_SECOND = .48
 MIN_MESSAGES_NEEDED_BEFORE_WARN = 6
-MIN_MESSAGES_NEEDED_BEFORE_BAN = 9
+MIN_MESSAGES_NEEDED_BEFORE_BAN = 8
 
 def is_hitting_warn_rate(author_id):
     num_messages_sent = len(bot_abuse_tracking[author_id][1])
@@ -54,6 +56,7 @@ async def abuse_track_check(message:discord.Message):
     bot_abuse_tracking[author_id][1].append(message.content)
     bot_abuse_tracking[author_id][2].append(datetime.now())
     messages_sent = bot_abuse_tracking[author_id][1]
+
     if is_hitting_ban_rate(author_id) and bot_abuse_tracking[author_id][3] >= 2: #certain spam and we already warned them
         UserDataProcessing.add_Blacklisted_user(str(author_id), "Automated ban - you spammed the bot. This hurts users everywhere because it slows down the bot for everyone. You can appeal in 1 week to a bot admin or in Bad Wolf's server - to join the server, use the invite code: K937DqM")
         if BOT_ABUSE_REPORT_CHANNEL is not None:
@@ -61,6 +64,7 @@ async def abuse_track_check(message:discord.Message):
             await BOT_ABUSE_REPORT_CHANNEL.send(embed=embed)
 
         raise TableBotExceptions.BlacklistedUser("blacklisted user")
+
     if is_hitting_warn_rate(author_id): #potential spam, warn them if we haven't already
         bot_abuse_tracking[author_id][3] += 1
         should_send_abuse_report = bot_abuse_tracking[author_id][3] == 1
@@ -81,7 +85,19 @@ def create_notification_embed(message: discord.Message, messages_sent, ban):
     send_embed.add_field(name='User ID', value=message.author.id)
     send_embed.add_field(name='Discord Server', value=message.guild)
     send_embed.add_field(name='Server ID', value=message.guild.id)
-    send_embed.add_field(name="Trigger Messages", value='\n'.join(messages_sent), inline=False)
+    
+    #checks to see how many remaining characters are available (embeds have max 6000 characters and fields have 1024 max)
+    chars_before_messages = len(f"{message.author} - WARNED{message.author.mention}{message.author.display_name}{message.author.id}{message.guild}{message.guild.id}")+75
+    allowed_message_chars = 6000-chars_before_messages
+    allowed_iters = math.ceil((allowed_message_chars)/1024)
+    last_len = allowed_message_chars-(allowed_iters*1024)
+    messages_sent = '\n'.join(messages_sent)
+
+    message_list = list(UtilityFunctions.string_chunks(messages_sent, 1024))
+    for ind in range(min(allowed_iters, len(message_list))):
+        mes = message_list[ind]
+        val = mes[:last_len] if ind == allowed_iters-1 else mes
+        send_embed.add_field(name="Trigger Messages" if ind==0 else '\u200b', value=val, inline=False)
 
     return send_embed
 
@@ -100,7 +116,7 @@ def set_bot_abuse_report_channel(client):
     global BOT_ABUSE_REPORT_CHANNEL
     global CLOUDFLARE_REPORT_CHANNEL
     BOT_ABUSE_REPORT_CHANNEL = client.get_channel(common.BOT_ABUSE_REPORT_CHANNEL_ID)
-    if BOT_ABUSE_REPORT_CHANNEL is None: BOT_ABUSE_REPORT_CHANNEL = client.get_channel(924551533692084264)
+    if CW_TESTING: BOT_ABUSE_REPORT_CHANNEL = client.get_channel(CW_REPORT_CHANNEL)
     CLOUDFLARE_REPORT_CHANNEL = client.get_channel(common.CLOUD_FLARE_REPORT_CHANNEL_ID)
     
 #Every 120 seconds, checks to see if anyone was "spamming" the bot and notifies a private channel in my server
