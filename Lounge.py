@@ -30,7 +30,7 @@ class Lounge:
         if self.server_id not in common.lounge_channel_mappings:
             raise Exception("Created a Lounge abomination")
         
-        self.channels_mapping:LoungeUpdateChannels = common.lounge_channel_mappings[self.server_id]
+        self.channels_mapping:common.LoungeUpdateChannels = common.lounge_channel_mappings[self.server_id]
         
         
         

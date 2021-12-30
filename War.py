@@ -5,7 +5,7 @@ Created on Jul 13, 2020
 '''
 
 import ErrorChecker
-from _collections import defaultdict
+from collections import defaultdict
 import random
 import TableBotExceptions
 import UtilityFunctions

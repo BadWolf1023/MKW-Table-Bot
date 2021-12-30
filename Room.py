@@ -10,7 +10,7 @@ import WiimmfiSiteFunctions
 import UserDataProcessing
 import common
 
-from _collections import defaultdict
+from collections import defaultdict
 import UtilityFunctions
 import TagAIShell
 from copy import copy, deepcopy

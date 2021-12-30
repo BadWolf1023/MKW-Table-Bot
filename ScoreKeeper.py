@@ -6,7 +6,7 @@ Created on Jul 12, 2020
 import Room
 import UserDataProcessing
 from discord.utils import escape_markdown, escape_mentions
-from _collections import defaultdict
+from collections import defaultdict
 from typing import List
 import TableBot
 DEBUGGING = False
