@@ -1,0 +1,12 @@
+These migrations are required to change the old database to work with new code. Make sure you create a safe copy of the database before running them. Run them in this order:
+
+./data_tracking/migrations/12_29_2021/new_table_migrations.sql
+./data_tracking/migrations/database_cascade_delete_prep.sql            (make sure you open the file and read it before you run it)
+./data_tracking/migrations/12_29_2021/remove_corrupted_events.sql
+./data_tracking/migrations/database_restrict_delete_prep.sql           (make sure you open the file and read it before you run it)
+./data_tracking/migrations/12_29_2021/time_migration.sql
+./data_tracking/migrations/12_29_2021/race_migration.sql
+./data_tracking/migrations/12_29_2021/event_migration.sql
+
+
+After the database has been successfully migrated, the above files should be deleted and this file should be deleted to avoid any issues with "migrating" multiple times
