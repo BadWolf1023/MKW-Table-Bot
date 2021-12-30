@@ -1039,11 +1039,16 @@ class OtherCommands:
         tuple_data.sort()
 
         str_msg =  f"```diff\n- {last_match_str.strip()} -\n\n"
-        str_msg += '+{:>3} {:<13}| {:<13}| {:<1}\n'.format("#.", "Lounge Name", "Mii Name", "FC")
+        # str_msg += '+{:>3} {:<13}| {:<13}| {:<1}\n'.format("#.", "Lounge Name", "Mii Name", "FC")
+        header = ["#.", "Lounge Name", "Mii Name", "FC"]
+        rows = []
         for place, FC, mii_name, lounge_name in tuple_data:
             if lounge_name == "":
                 lounge_name = "UNKNOWN"
-            str_msg += "{:>4} {:<13}| {:<13}| {:<1}\n".format(str(place)+".",lounge_name, mii_name, FC)
+            rows.append([str(place)+".", lounge_name, mii_name, FC])
+            # str_msg += "{:>4} {:<13}| {:<13}| {:<1}\n".format(str(place)+".",lounge_name, mii_name, FC)
+        
+        str_msg += tabulate(tabular_data=rows, headers=header, tablefmt="simple", colalign=["left"], stralign="left")
 
         #string matching isn't the safest way here, but this is an add-on feature, and I don't want to change
         #the verify_room function
@@ -1057,7 +1062,6 @@ class OtherCommands:
 
         await message.channel.send(f"{str_msg}```")
         await common.safe_delete(message2)
-
 
 
 
