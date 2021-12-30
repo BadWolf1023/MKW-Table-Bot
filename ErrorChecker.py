@@ -75,14 +75,14 @@ def get_room_errors_players(war, room, error_types, startrace=None, endrace=None
                 fc, name = placement.get_fc_and_name()
                 
                 if race.raceNumber in dc_on_or_before and fc in dc_on_or_before[race.raceNumber]:
-                        stuffs = [4, 3, 2, 1]
-                        numberOfDCPtsGivenMissing = war.missingRacePts * stuffs[(int(race.raceNumber)-1)%4]
-                        numberOfDCPtsGivenOn = war.missingRacePts * stuffs[(int(race.raceNumber)-1)%4] - war.missingRacePts
-                                    
-                        if dc_on_or_before[race.raceNumber][fc] == 'on':
-                            errors.append(name + lounge_add(fc, lounge_replace) + " DCed and was on results (tabler confirmed). Giving " + str(numberOfDCPtsGivenOn) + " total DC points (3 per missing race). (" + str(len(race.placements)) + " players in room this race)")
-                        else:
-                            errors.append(name + lounge_add(fc, lounge_replace) + " DCed before this race (tabler confirmed). Giving " + str(numberOfDCPtsGivenMissing) + " total DC points (3 per missing race). (" + str(len(race.placements)) + " players in room this race)")
+                    stuffs = [4, 3, 2, 1]
+                    numberOfDCPtsGivenMissing = war.missingRacePts * stuffs[(int(race.raceNumber)-1)%4]
+                    numberOfDCPtsGivenOn = war.missingRacePts * stuffs[(int(race.raceNumber)-1)%4] - war.missingRacePts
+                                
+                    if dc_on_or_before[race.raceNumber][fc] == 'on':
+                        errors.append(name + lounge_add(fc, lounge_replace) + " DCed and was on results (tabler confirmed). Giving " + str(numberOfDCPtsGivenOn) + " total DC points (3 per missing race). (" + str(len(race.placements)) + " players in room this race)")
+                    else:
+                        errors.append(name + lounge_add(fc, lounge_replace) + " DCed before this race (tabler confirmed). Giving " + str(numberOfDCPtsGivenMissing) + " total DC points (3 per missing race). (" + str(len(race.placements)) + " players in room this race)")
                 else:
                     # if not race.raceNumber in dc_on_or_before or fc not in dc_on_or_before[race.raceNumber]:
                     err_mes = name + lounge_add(fc, lounge_replace) + " had a blank race time. Disconnected unless mkwx bug."

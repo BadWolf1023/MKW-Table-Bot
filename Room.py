@@ -645,22 +645,13 @@ class Room(object):
         
 
         seen_race_id_numbering = defaultdict(lambda:[{}, 0])
-        for raceNum, race in enumerate(races):
+        for race in races:
             race:Race.Race
             rxx_numbering = seen_race_id_numbering[race.get_rxx()]
             if race.get_race_id() not in rxx_numbering:
                 rxx_numbering[1] += 1
                 rxx_numbering[0][race.get_race_id()] = rxx_numbering[1]
             race.set_race_number(rxx_numbering[0][race.get_race_id()])
-
-            if raceNum+1 in self.added_dc_placements: #need to add manual DC placements for this race
-                add = self.added_dc_placements[raceNum+1]
-                for p in add:
-                    race.addPlacement(p)
-            if raceNum+1 in self.removed_dc_placements: #remove manually removed DC placements for this race
-                remove_FC = self.removed_dc_placements[raceNum+1]
-                for fc in remove_FC:
-                    race.remove_placement_by_FC(fc)
 
         return races
 
@@ -718,10 +709,20 @@ class Room(object):
             self.__remove_race__(removed_race_ind, self.races)
         
             
-        #Next, we need to renumber the races
+        #Next, we need to renumber the races + add/remove manual DC placements (done at same time to reduce repeated looping)
         for raceNum, race in enumerate(self.races, 1):
             race.raceNumber = raceNum
-        
+            
+            if raceNum in self.added_dc_placements: #need to add manual DC placements for this race
+                add = self.added_dc_placements[raceNum]
+                for p in add:
+                    race.addPlacement(p)
+            if raceNum in self.removed_dc_placements: #remove manually removed DC placements for this race
+                remove_FC = self.removed_dc_placements[raceNum]
+                for fc in remove_FC:
+                    race.remove_placement_by_FC(fc)
+
+
         #Next, we apply quick edits
         for race_number, race in enumerate(self.races, 1):
             if race_number in self.placement_history:
