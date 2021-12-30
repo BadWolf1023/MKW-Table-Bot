@@ -585,6 +585,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             tracks_played = list(reversed(tracks_played))
         tracks_played = StatisticCommands.filter_out_bad_tracks(tracks_played, is_top_tracks)
 
+        num_pages = len(tracks_played)/number_tracks
         def get_page_callback(page):
             return StatisticCommands.format_tracks_played_result(tracks_played[page*number_tracks:(page+1)*number_tracks],
                                                                  page * number_tracks + 1,
@@ -592,7 +593,11 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
                                                                  is_ct, is_top_tracks, tier=tier,
                                                                  number_of_days=number_of_days)
 
-        await paginate(message, len(tracks_played)/number_tracks, get_page_callback, client)
+        # await paginate(message, len(tracks_played)/number_tracks, get_page_callback, client)
+
+        pages = [get_page_callback(page) for page in range(int(num_pages))]
+        paginator = ComponentPaginator.MessagePaginator(pages, show_disabled=False, show_indicator=True, timeout=common.embed_page_time.seconds)
+        await paginator.send(message)
 
     @staticmethod
     async def player_tracks_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str, command: str, sort_asc=False):
@@ -657,7 +662,11 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
             return f'```diff\n- {message_title}\n\n{table}```'
 
-        await paginate(message, num_pages, get_page_callback, client)
+        # await paginate(message, num_pages, get_page_callback, client)
+
+        pages = [get_page_callback(page) for page in range(int(num_pages))]
+        paginator = ComponentPaginator.MessagePaginator(pages, show_disabled=False, show_indicator=True, timeout=common.embed_page_time.seconds)
+        await paginator.send(message)
 
     @staticmethod
     async def top_players_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str):
@@ -722,7 +731,11 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
             return f'```diff\n- {message_title}\n\n{table}```'
 
-        await paginate(message, num_pages, get_page_callback, client)
+        # await paginate(message, num_pages, get_page_callback, client)
+
+        pages = [get_page_callback(page) for page in range(int(num_pages))]
+        paginator = ComponentPaginator.MessagePaginator(pages, show_disabled=False, show_indicator=True, timeout=common.embed_page_time.seconds)
+        await paginator.send(message)
 
 
 """================== Other Commands ===================="""
