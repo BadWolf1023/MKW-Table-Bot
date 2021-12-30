@@ -2725,13 +2725,15 @@ class TablingCommands:
                 return await message.channel.send("The channel you provided could not be found.")
 
             if is_lounge_server and not common.author_is_lounge_staff(message.author):
-                return await message.channel.send("You don't have permission to transfer a table within the lounge server.")
+                return await message.channel.send("You don't have permission to transfer a table within the lounge server - you must be Lounge staff.")
             
             copied_instance = copy.deepcopy(this_bot)
             table_bots[message.guild.id][channel_id] = copied_instance
+
+            pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
           
-            await message.channel.send(f"Table has been transferred to <#{channel_id}>. This channel's table will remain running.")
-            await channel.send(f"Table from <#{message.channel.id}> has been transferred here.")
+            await message.channel.send(f"Table has been transferred to <#{channel_id}>. This table will remain running.")
+            await channel.send(f"Table from <#{message.channel.id}> has been transferred here.", view=pic_view)
             return
         
         try:
@@ -2744,7 +2746,7 @@ class TablingCommands:
             return await message.channel.send("Invalid server ID. Use the `Copy ID` function to get a server's ID.")
 
         if server_id == common.MKW_LOUNGE_SERVER_ID and not common.author_is_lounge_staff(message.author):
-            return await message.channel.send("You don't have permission to transfer a table to the lounge server.")
+            return await message.channel.send("You don't have permission to transfer a table to the lounge server - you must be Lounge staff.")
 
         guild = client.get_guild(server_id)
         if not guild:
@@ -2755,15 +2757,18 @@ class TablingCommands:
             return await message.channel.send("The channel you provided could not be found.")
         
         if channel_id == message.channel.id:
-            return await message.channel.send("You can't transfer the table to the same channel.")
+            return await message.channel.send("You can't transfer this table to the same channel.")
         
         copied_instance = copy.deepcopy(this_bot)
         if server_id not in table_bots:
             table_bots[server_id] = {}
         table_bots[server_id][channel_id] = copied_instance
 
-        await message.channel.send(f"Table has been transferred to <#{channel_id}> in {guild.name}. This channel's table will remain running.")
-        await channel.send(f"Table from <#{message.channel.id}> in {message.guild.name} has been transferred here.")
+        await message.channel.send(f"Table has been transferred to <#{channel_id}> in {guild.name}. This table will remain running.")
+
+        pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+        await channel.send(f"Table from <#{message.channel.id}> in {message.guild.name} has been transferred here.", view=pic_view)
+
 
 
 

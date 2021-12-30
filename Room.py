@@ -404,9 +404,12 @@ class Room(object):
                 for fc, player in sorted(missing_players):
                     build_string += "\t" + str(counter) + ". **"
                     status_str = "disconnected on or before"
+                    confirm_str = ""
                     if raceNum in self.dc_on_or_before and fc in self.dc_on_or_before[raceNum]:
-                        status_str = f"DCed **{self.dc_on_or_before[raceNum][fc]}** (tabler confirmed)"
-                    build_string += UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, replace_lounge)) + f"** {status_str} race #" + str(raceNum) + " (" + str(self.races[raceNum-1].getTrackNameWithoutAuthor()) + ")\n"
+                        status_str = f"DCed **`{self.dc_on_or_before[raceNum][fc]}`**"
+                        confirm_str = " - *tabler confirmed*"
+
+                    build_string += UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, replace_lounge)) + f"** {status_str} race #" + str(raceNum) + " (" + str(self.races[raceNum-1].getTrackNameWithoutAuthor()) + f"){confirm_str}\n"
                     counter+=1
             return True, build_string
     
