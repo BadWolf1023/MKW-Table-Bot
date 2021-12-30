@@ -648,7 +648,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             secs = track[3]
             track[3] = f'{secs:.2f}s'
 
-        headers = ['+ Track Name', 'Avg Pts', 'Avg Place', 'Avg Delta', "# Plays"]
+        headers = ['+ Track Name', 'Avg Pts', 'Avg Place', 'Avg Behind 1st', "# Plays"]
 
         tracks_per_page = StatisticCommands.ct_number_tracks if is_ct else StatisticCommands.rt_number_tracks
         num_pages = len(best_tracks)/tracks_per_page

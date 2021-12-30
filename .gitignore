@@ -46,3 +46,4 @@ miis/*
 
 logging/full_logging.txt
 
+.vscode/*

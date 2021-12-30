@@ -759,6 +759,7 @@ async def populate_player_fcs_table():
         rows.append((fc, discord_id))
 
     start = time.time()
+    print(f'Populating FC table in database...')
     await db_connection.execute("DELETE FROM Player_FCs;")
     await db_connection.executemany("insert into Player_FCs values (?, ?)", rows)
     print(f'FC table population finished in {time.time()-start} seconds')

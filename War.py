@@ -6,7 +6,6 @@ Created on Jul 13, 2020
 
 import ErrorChecker
 from collections import defaultdict
-from itertools import chain
 import random
 import TableBotExceptions
 import UtilityFunctions

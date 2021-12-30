@@ -6,7 +6,7 @@ Created on Sep 23, 2020
 from typing import List, Set, Dict, Tuple
 from copy import copy
 from datetime import datetime, timedelta
-from _collections import defaultdict
+from collections import defaultdict
 import time
 
 VALID_CHARS = "/\\*^+abcdefghijklmnopqrstuvwxyz\u03A9\u038F" + "abcdefghijklmnopqrstuvwxyz0123456789".upper()
