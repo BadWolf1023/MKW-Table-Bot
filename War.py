@@ -201,18 +201,16 @@ class War(object):
         return self.numberOfTeams*self.playersPerTeam
             
     def clear_resolved_errors(self, errors, resolved):
-        flattened_errors = list(chain.from_iterable(list(errors.values())))
 
         errors = [(k,v) for k, v in errors.items() if len(v)>0]
 
-        ind = len(flattened_errors) - 1
         for race_indx in range(len(errors)-1, -1, -1):
             race_errors = errors[race_indx][1]
             for err_indx in range(len(race_errors)-1, -1, -1):
                 err = race_errors[err_indx]
-                if 'id' not in err:
-                    err['id'] = ind
-                    ind-=1
+                err['race'] = errors[race_indx][0]
+                players = err['player_fc'] if 'player_fc' in err else 'player_fcs'
+                err['id'] = err['type'] + str(players) + str(err['race'])
                 if err['id'] in resolved:
                     race_errors.pop(err_indx)
             if len(race_errors) == 0: errors.pop(race_indx)

@@ -164,7 +164,7 @@ class SuggestionsPaginator(discord.ui.View):
                 Page numbers are zero-indexed when referenced internally, but appear as one-indexed when shown to the user.
         """
         self.update_buttons()
-        page = self.pages[page_number]
+        page = self.messages[page_number] if self.done[page_number] else self.pages[page_number]
         await interaction.response.edit_message(
             content=page if isinstance(page, str) else None, embed=page if isinstance(page, discord.Embed) else None, view=self
         )

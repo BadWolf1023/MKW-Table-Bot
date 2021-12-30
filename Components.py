@@ -44,7 +44,7 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
             if len(players) != this_bot.getWar().get_num_players():
                 await interaction.response.edit_message(view=self.view)
                 
-                return await interaction.followup.send(content=f'''Respond "{server_prefix}no" when asked ***Is this correct?*** - the number of players in the room doesn't match your war format and teams. **Teams might be incorrect.**'''
+                return await interaction.followup.send(content=f'''**Warning:** *the number of players in the room doesn't match your war format and teams. **Table started, but teams might be incorrect.***'''
                                                 + '\n' + this_bot.get_room_started_message(), view=view)
 
             try:
@@ -113,7 +113,8 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
         message = InteractionUtils.create_proxy_msg(interaction, args)
 
         command_mapping = {
-            "blank_player": commands.TablingCommands.change_room_size_command,
+            # "blank_player": commands.TablingCommands.change_room_size_command,
+            "blank_player": commands.TablingCommands.disconnections_command,
             "gp_missing": commands.TablingCommands.change_room_size_command,
             ("gp_missing", 1): commands.TablingCommands.early_dc_command,
             "tie": commands.TablingCommands.quick_edit_command,
@@ -122,7 +123,7 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
         }
         if self.error['type'] == 'tie':
             mes = []
-            for i in range(len(self.error['player_names'])):
+            for _ in range(len(self.error['player_names'])):
                 mes.append(await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.lounge, dont_send=True))
             command_mes = '\n'.join(mes)
         else:
@@ -148,7 +149,8 @@ class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
 
 LABEL_BUILDERS = {
     'missing_player': '{} DCed *{}* race {}',
-    'blank_player': 'Change Room Size',
+    # 'blank_player': 'Change Room Size',
+    'blank_player': "{} DCed *{}* race {}",
     'tie': 'Confirm Placements',
     'large_time': 'Confirm Placements',
     'gp_missing': 'Change Room Size',
@@ -156,13 +158,13 @@ LABEL_BUILDERS = {
 }
 
 class SuggestionView(discord.ui.View):
-    def __init__(self, error, bot, prefix, lounge, index):
+    def __init__(self, error, bot, prefix, lounge, id=None):
         super().__init__(timeout=120)
         self.bot = bot
         self.prefix = prefix
         self.error = error
         self.lounge = lounge
-        self.index = index
+        self.index = id if id else self.error['id']
         self.selected_values = None
 
         self.create_row()
@@ -184,12 +186,12 @@ class SuggestionView(discord.ui.View):
                 self.add_item(SuggestionSelectMenu(error['corrected_room_sizes']))
                 self.add_item(SuggestionButton(error, label, confirm=True))
         
-        elif err_type == 'blank_player':
-            label = label_builder
-            self.add_item(SuggestionSelectMenu(error['corrected_room_sizes']))
-            self.add_item(SuggestionButton(error, label, confirm=True))
+        # elif err_type == 'blank_player':
+        #     label = label_builder
+        #     self.add_item(SuggestionSelectMenu(error['corrected_room_sizes']))
+        #     self.add_item(SuggestionButton(error, label, confirm=True))
 
-        elif err_type == 'missing_player':
+        elif err_type in { 'missing_player', 'blank_player' }:
             for insert in ['during', 'before']:
                 label = label_builder.format(error['player_name'], insert, error['race'])
                 self.add_item(SuggestionButton(error, label))
@@ -229,13 +231,13 @@ def get_command_args(error, info, bot):
         room_size = str(info)
         args = ['changeroomsize', str(race), room_size]
     
-    elif err_type == 'blank_player':
-        race = error['race']
-        room_size = str(info)
-        args = ['changeroomsize', str(race), room_size]
+    # elif err_type == 'blank_player':
+    #     race = error['race']
+    #     room_size = str(info)
+    #     args = ['changeroomsize', str(race), room_size]
     
-    elif err_type == 'missing_player':
-        playerNum = bot.player_to_dc_num(error['player_fc'])
+    elif err_type in { 'missing_player', 'blank_player' }:
+        playerNum = bot.player_to_dc_num(error['race'], error['player_fc'])
 
         time = "on" if "DCed *during*" in info else "before"
         args = ['dc', str(playerNum), time]

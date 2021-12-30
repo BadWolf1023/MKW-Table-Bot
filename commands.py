@@ -1664,7 +1664,7 @@ class TablingCommands:
             await message.channel.send("You must give a dc number on the list and if they were on results or not. Run " + server_prefix + "dcs for more information.")
             return
 
-        missing_per_race = this_bot.getRoom().getMissingOnRace(this_bot.getWar().numberOfGPs)
+        missing_per_race = this_bot.getRoom().getMissingOnRace(this_bot.getWar().numberOfGPs, include_blank=True)
         merged = list(itertools.chain(*missing_per_race))
         disconnection_number = args[1]
         if not disconnection_number.isnumeric():
@@ -1699,13 +1699,15 @@ class TablingCommands:
         player_name = UtilityFunctions.process_name(str(missing_per_race[race-1][index][1]) + lounge_add(player_fc))
         if on_or_before in ["on", "during", "midrace", "results", "onresults"]:
             this_bot.add_save_state(message.content)
-            this_bot.getRoom().dc_on_or_before[race][player_fc] = 'on'
+            # this_bot.getRoom().dc_on_or_before[race][player_fc] = 'on'
+            this_bot.getRoom().edit_dc_status(player_fc, race, 'on')
             mes = "Saved: " + player_name + ' was on results for race #' + str(race)       
             if not dont_send: await message.channel.send(mes)             
             return mes
         if on_or_before in ["before", "prior", "beforerace", "notonresults", "noresults", "off"]:
             this_bot.add_save_state(message.content)
-            this_bot.getRoom().dc_on_or_before[race][player_fc] = 'before'
+            # this_bot.getRoom().dc_on_or_before[race][player_fc] = 'before'
+            this_bot.getRoom().edit_dc_status(player_fc, race, 'before')
             mes = "Saved: " + player_name + ' was not on results for race #' + str(race)
             if not dont_send: await message.channel.send(mes)                  
             return mes 
@@ -2127,7 +2129,7 @@ class TablingCommands:
         players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
 
         if len(players) != this_bot.getWar().get_num_players():
-            await message.channel.send(f'''Respond "{server_prefix}no" when asked ***Is this correct?*** - the number of players in the room doesn't match your war format and teams. **Teams might be incorrect.**''')
+            await message.channel.send(f'''**Warning:** *the number of players in the room doesn't match your war format and teams. **Table started, but teams might be incorrect.***''')
 
         this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
         view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
@@ -2479,8 +2481,7 @@ class TablingCommands:
 
                                 for race, errors in error_types:
                                     for error in errors:
-                                        error['race'] = race
-                                        view_list.append(Components.SuggestionView(error, this_bot, server_prefix, is_lounge_server, error['id']))
+                                        view_list.append(Components.SuggestionView(error, this_bot, server_prefix, is_lounge_server))
                                         try:
                                             players = ' / '.join(error['player_names']) if 'player_names' in error else error['player_name']
                                             info_str = f" - {players}"

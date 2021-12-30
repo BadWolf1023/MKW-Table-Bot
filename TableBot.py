@@ -121,14 +121,14 @@ class ChannelBot(object):
     def get_resolved_errors(self):
         return self.resolved_errors
     
-    def player_to_dc_num(self, player):
+    def player_to_dc_num(self, race, player):
         GPs = self.getWar().getNumberOfGPS()
         dc_list = self.getRoom().get_dc_list_players(GPs)
 
-        return dc_list.index(player)+1
+        return dc_list.index((race, player))+1
     
     def player_to_num(self, player):
-        players = self.getRoom().get_sorted_player_list_string()
+        players = self.getRoom().get_sorted_player_list()
         players = [player[0] for player in players]
 
         return players.index(player)+1

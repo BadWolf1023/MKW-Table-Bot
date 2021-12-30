@@ -16,6 +16,7 @@ import TagAIShell
 from copy import copy, deepcopy
 from UtilityFunctions import isint, isfloat
 from itertools import chain
+from typing import List
 
 DEBUG_RACES = False
 DEBUG_PLACEMENTS = False
@@ -51,6 +52,9 @@ class Room(object):
         
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
         self.dc_on_or_before = defaultdict(dict)
+        self.added_dc_placements = defaultdict(list) #maps raceNumber to manually added DC placements
+        self.removed_dc_placements = defaultdict(list)
+
         self.set_up_user = setup_discord_id
         self.set_up_user_display_name = setup_display_name
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
@@ -79,8 +83,7 @@ class Room(object):
             raise Exception
             
             
-
-        self.races = self.getRacesList(roomSoup, mii_dict)
+        self.races: List[Race.Race] = self.getRacesList(roomSoup, mii_dict)
         
         if len(self.races) > 0:
             self.roomID = self.races[0].roomID
@@ -91,9 +94,7 @@ class Room(object):
             self.roomID = None
             raise Exception #And this is why the room unloads when that internal error occurs
         
-        
-    
-    
+
     def is_initialized(self):
         return self.races is not None and self.rLIDs is not None and len(self.rLIDs) > 0
         
@@ -267,8 +268,6 @@ class Room(object):
             return Race.UNKNOWN_REGION
         for region in regions:
             return region
-        
-            
             
     
     def fcIsInRoom(self, FC):
@@ -340,9 +339,10 @@ class Room(object):
             missingPlayers.append(missingPlayersThisRace)
         return missingPlayers
     
-    def getMissingOnRace(self, numGPS):
+    def getMissingOnRace(self, numGPS, include_blank = False):
         GPPlayers = []
-        missingPlayers = []
+        missingPlayers = [] #players who were missing or had a blank time 
+
         for GPNum in range(numGPS):
             GPPlayers.append(self.getFCPlayerListStartEnd((GPNum*4)+1, (GPNum+1)*4))
         
@@ -360,25 +360,39 @@ class Room(object):
                     if fc not in race.getFCs() and fc not in wentMissingThisGP:
                         wentMissingThisGP.append(fc)
                         missingPlayersThisRace.append((fc, player))
+            
+            for placement in race.placements:
+                if placement.is_disconnected() and placement.getFC() not in wentMissingThisGP:
+                    wentMissingThisGP.append(placement.getFC())
+                    if include_blank:
+                        missingPlayersThisRace.append(placement.get_fc_and_name())
+
             missingPlayers.append(missingPlayersThisRace)
+
         for missingPlayersOnRace in missingPlayers:
             missingPlayersOnRace.sort()
+  
+
         return missingPlayers
     
     def get_dc_list_players(self, numGPs=3):
         '''
         get a sorted list of the DCs (same order as DCListString) for use by Discord Buttons
         '''
-        missingPlayersByRace = self.getMissingOnRace(numGPs)
-        for missing_players in missingPlayersByRace:
-            missing_players.sort()
+        dc_list = list()
+        missingPlayersByRace = self.getMissingOnRace(numGPs, include_blank=True)
 
-        dc_list = list(chain.from_iterable(missingPlayersByRace))
-        dc_list = [player[0] for player in dc_list]
+        for raceNum, race in enumerate(missingPlayersByRace):
+            for dc in race:
+                dc_list.append((raceNum+1, dc[0]))
+
         return dc_list
+        # dc_list = list(chain.from_iterable(missingPlayersByRace))
+        # dc_list = [player[0] for player in dc_list]
+        # return dc_list
     
     def getDCListString(self, numberOfGPs=3, replace_lounge=True):
-        missingPlayersByRace = self.getMissingOnRace(numberOfGPs)
+        missingPlayersByRace = self.getMissingOnRace(numberOfGPs, include_blank=True)
         missingPlayersAmount = sum([len(x) for x in missingPlayersByRace])
         if missingPlayersAmount == 0:
             last_race = self.races[-1]
@@ -389,9 +403,37 @@ class Room(object):
             for raceNum, missing_players in enumerate(missingPlayersByRace, 1):
                 for fc, player in sorted(missing_players):
                     build_string += "\t" + str(counter) + ". **"
-                    build_string += UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, replace_lounge)) + "** disconnected on or before race #" + str(raceNum) + " (" + str(self.races[raceNum-1].getTrackNameWithoutAuthor()) + ")\n"
+                    status_str = "disconnected on or before"
+                    if raceNum in self.dc_on_or_before and fc in self.dc_on_or_before[raceNum]:
+                        status_str = f"DCed **{self.dc_on_or_before[raceNum][fc]}** (tabler confirmed)"
+                    build_string += UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, replace_lounge)) + f"** {status_str} race #" + str(raceNum) + " (" + str(self.races[raceNum-1].getTrackNameWithoutAuthor()) + ")\n"
                     counter+=1
             return True, build_string
+    
+    def edit_dc_status(self, player_fc, raceNum, status):
+        '''
+        edits a player's DC status to `status` for race `raceNum`, then adds/removes their corresponding placement to the race's `placements`
+        '''
+        self.dc_on_or_before[raceNum][player_fc] = status
+        race = self.races[raceNum-1]
+        if status in ["on", "during", "midrace", "results", "onresults"]: #STATUS=ON
+            if not race.FCInPlacements(player_fc): #player wasn't on results and needs to be added as a placement
+                player_obj = self.get_player_from_FC(player_fc)
+                DC_placement = Placement.Placement(player_obj, -1, u'\u2014')
+                self.added_dc_placements[raceNum].append(DC_placement)
+                race.addPlacement(DC_placement)
+                
+        else: #STATUS=BEFORE
+            if race.FCInPlacements(player_fc): #player was on results and should be removed from placements list
+                self.removed_dc_placements[raceNum].append(player_fc)
+                race.remove_placement_by_FC(player_fc)
+    
+    def get_player_from_FC(self, FC):
+        for race in self.races:
+            for placement in race.placements:
+                if placement.player.FC == FC:
+                    return placement.player
+        return None
     
     def getPlayerAtIndex(self, index):
         player_list = self.get_sorted_player_list()
@@ -556,7 +598,6 @@ class Room(object):
                     p = Placement.Placement(plyr, -1, time, delta)
                     races[0].addPlacement(p)
         
-
             
         for race in races:
             if DEBUG_RACES:
@@ -604,15 +645,25 @@ class Room(object):
         
 
         seen_race_id_numbering = defaultdict(lambda:[{}, 0])
-        for race in races:
+        for raceNum, race in enumerate(races):
             race:Race.Race
             rxx_numbering = seen_race_id_numbering[race.get_rxx()]
             if race.get_race_id() not in rxx_numbering:
                 rxx_numbering[1] += 1
                 rxx_numbering[0][race.get_race_id()] = rxx_numbering[1]
             race.set_race_number(rxx_numbering[0][race.get_race_id()])
-        
+
+            if raceNum+1 in self.added_dc_placements: #need to add manual DC placements for this race
+                add = self.added_dc_placements[raceNum+1]
+                for p in add:
+                    race.addPlacement(p)
+            if raceNum+1 in self.removed_dc_placements: #remove manually removed DC placements for this race
+                remove_FC = self.removed_dc_placements[raceNum+1]
+                for fc in remove_FC:
+                    race.remove_placement_by_FC(fc)
+
         return races
+
     
 
     #Soup level functions
@@ -764,7 +815,9 @@ class Room(object):
         save_state['playerPenalties'] = self.playerPenalties.copy()
         
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
-        save_state['dc_on_or_before'] = self.dc_on_or_before.copy()
+        save_state['dc_on_or_before'] = deepcopy(self.dc_on_or_before)
+        save_state['added_dc_placements'] = deepcopy(self.added_dc_placements)
+        save_state['removed_dc_placements'] = deepcopy(self.removed_dc_placements)
         save_state['forcedRoomSize'] = self.forcedRoomSize.copy()
         save_state['rLIDs'] = self.rLIDs.copy()
         save_state['races'] = deepcopy(self.races)

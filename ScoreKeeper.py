@@ -68,11 +68,10 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
             #Someone is missing. Need to give them the specified DC points.
             raceFCs = race.getFCs()
             for fc in fc_player:
-                
-                if raceNum in curRoom.dc_on_or_before:
-                    if fc in curRoom.dc_on_or_before[raceNum]:
-                        if curRoom.dc_on_or_before[raceNum][fc] == 'on':
-                            mkwxNumRacers += 1
+                # if raceNum in curRoom.dc_on_or_before:
+                #     if fc in curRoom.dc_on_or_before[raceNum]:
+                #         if curRoom.dc_on_or_before[raceNum][fc] == 'on':
+                #             mkwxNumRacers += 1
                 
                 
                 if fc not in raceFCs:

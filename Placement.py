@@ -13,7 +13,6 @@ DISCONNECTION_TIME = (999,999,999)
 BOGUS_TIME_LIMIT = (5,59,999)
 MINIMUM_DELTA_VALUE = -10
 MAXIMUM_DELTA_VALUE = 10
-UNKNOWN_DELTA_VALUE = u'\u2014' #em dash character
 
 NO_DELTA_DISPLAY_RANGE = (-.5, .5)
 
@@ -46,8 +45,7 @@ class Placement:
     
     def _process_delta_(self, delta):
         new_delta = float(0)
-        if delta == UNKNOWN_DELTA_VALUE:
-            return delta
+        
         if delta is not None and UtilityFunctions.isfloat(delta):
             return float(delta)
         return new_delta
@@ -58,7 +56,7 @@ class Placement:
     def is_delta_unlikely(self):
         if self.delta is None:
             return False
-        return self.delta == UNKNOWN_DELTA_VALUE or self.delta < MINIMUM_DELTA_VALUE or self.delta > MAXIMUM_DELTA_VALUE
+        return self.delta < MINIMUM_DELTA_VALUE or self.delta > MAXIMUM_DELTA_VALUE
     
     def is_bogus_time(self):
         if self.is_disconnected():
@@ -99,12 +97,15 @@ class Placement:
     
     def getPlayer(self) -> Player.Player:
         return self.player
+
+    def getFC(self):
+        return self.player.FC
     
     def is_from_wiimmfi(self):
         return self.is_wiimmfi_place
     
     def should_display_delta(self):
-        return self.delta == UNKNOWN_DELTA_VALUE or self.delta < NO_DELTA_DISPLAY_RANGE[0] or self.delta > NO_DELTA_DISPLAY_RANGE[1]
+        return self.delta < NO_DELTA_DISPLAY_RANGE[0] or self.delta > NO_DELTA_DISPLAY_RANGE[1]
     
     def get_time_string(self):
         minutes = str(self.time[0])
@@ -133,8 +134,7 @@ class Placement:
             to_return += self.get_time_string()
         
         if self.should_display_delta():
-            delta_display = "UNKNOWN" if self.delta == UNKNOWN_DELTA_VALUE else f"{self.delta}s"
-            to_return += f" - **{delta_display} lag start**"
+            to_return += f" - **{self.delta}s lag start**"
         return to_return
         
      

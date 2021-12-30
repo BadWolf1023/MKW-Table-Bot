@@ -132,7 +132,7 @@ class Race:
             self.track = sha_track_name_mappings[self.track]
         self.track_check()
         self.cc = cc
-        self.placements = []
+        self.placements: List[Placement] = []
         self.region = UNKNOWN_REGION
         self.is_ct = is_ct
         self.is_wiimmfi_race = is_wiimmfi_race
@@ -204,6 +204,14 @@ class Race:
             self.placements[i].place = i+1
             i += 1
         self.update_region()
+    
+    def remove_placement_by_FC(self, FC):
+        for ind, placement in enumerate(self.placements):
+            if placement.player.FC == FC:
+                self.placements.pop(ind)
+                for placement in self.placements[ind:]:
+                    placement.place-=1
+                return
          
     def setRegion(self, region):
         self.region = region
