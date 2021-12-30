@@ -51,6 +51,7 @@ TABLING_HELP_FILES = {"1":start_war_help_file_list,
 HELP_KEY_FILES = {default_help_key:main_help_file_list,
                   tabling_help_key:tabling_help_file_list,
                   "serverdefaults":server_defaults_help_file_list,
+                  "server defaults":server_defaults_help_file_list,
                   "flags":flags_help_file_list,
                   "submittable":lounge_submitting_tables_help_file_list,
                   "submitable":lounge_submitting_tables_help_file_list,
@@ -61,6 +62,16 @@ HELP_KEY_FILES = {default_help_key:main_help_file_list,
                   "updaters":lounge_reporter_help_file_list,
                   "other":other_help_file_list
                   }
+
+HELP_CATEGORIES = [
+    "tabling", 
+    "server defaults",
+    "flags",
+    "submit table",
+    "reporter",
+    "updater",
+    "other"
+]
 
 for tabling_help_list in TABLING_HELP_FILES.values():
     for index, file_name in enumerate(tabling_help_list):

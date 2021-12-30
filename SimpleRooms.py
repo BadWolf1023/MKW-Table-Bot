@@ -16,6 +16,7 @@ import asyncio
 from typing import List
 import common
 import UtilityFunctions
+from tabulate import tabulate
 
 
 def get_placements_from_mkwx_bs4_tag(bs4_racer_tag:Tag):
@@ -302,12 +303,10 @@ class SimpleRooms(object):
             
         str_msg =  "```diff\n" + str(room_str).strip() + "\n\n"
         vr_br_str_full = 'Battle Rating' if race.isBattleWW() else "Versus Rating"
-        
         vr_br_str = ' BR' if race.isBattleWW() else " VR"
+        header = ['#.', "Lounge Name", "Mii Name", "FC", vr_br_str_full]
 
-        longest_strings = [len("lounge name"), len("mii name"), len("fc"), len(vr_br_str_full)]
         row_strings = []
-        main_str = ""
         for placement in race.placements:
             lounge_name = UserDataProcessing.lounge_get(placement.player.FC)
             roomPosition = placement.player.positionInRoom
@@ -318,37 +317,14 @@ class SimpleRooms(object):
             if lounge_name == "":
                 lounge_name = "UNKNOWN"
             
-            row_strings.append([roomPosition, lounge_name, mii_name, FC, vr_str])
-            longest_strings = [max(get_len(lounge_name), longest_strings[0]),
-                                max(get_len(mii_name), longest_strings[1]),
-                                max(len(FC), longest_strings[2])]
+            row_strings.append([str(roomPosition)+'.', lounge_name, mii_name, FC, vr_str])
+           
 
-        lounge_spaces = (longest_strings[0]+1)
-        mii_spaces = (longest_strings[1]+1)
-        FC_spaces = (longest_strings[2]+1)
-        for position, lounge_name, mii_name, FC, vr_str in row_strings:
-            l_spaces = " "*(lounge_spaces-get_len(lounge_name))
-            m_spaces = " "*(mii_spaces-get_len(mii_name))
-            f_spaces = " "*(FC_spaces-len(FC))
-            main_str += "{:>4} {}{}| {}{}| {}{}| {:<1}\n".format(str(position)+".", lounge_name, l_spaces, mii_name, m_spaces, FC, f_spaces, vr_str)
-        
-        str_msg += '+{:>3} {}{}| {}{}| {}{}| {:<1}\n'.format("#.", "Lounge Name", " "*(lounge_spaces-len("Lounge Name")), "Mii Name", " "*(mii_spaces-len("mii name")), "FC", " "*(FC_spaces-len("FC")), vr_br_str_full) 
-        str_msg+=main_str
+        str_msg += tabulate(tabular_data=row_strings, headers=header, tablefmt="simple", colalign=["left"], stralign="left")
 
-        str_msg += f"\nPage {pageNumber+1}/{len(races)}```"
+        str_msg += f"\n\nPage {pageNumber+1}/{len(races)}```"
         return str_msg
 
-
-def get_len(string):
-    '''
-    Return the length of a string (and double the length of each Japanese character)
-    '''
-    normal_len = len(string)
-    cjk_add = 0
-    for char in string:
-        if UtilityFunctions.is_cjk(char):
-            cjk_add += 0.75
-    return normal_len + round(cjk_add)
 
         
 if __name__ == '__main__':

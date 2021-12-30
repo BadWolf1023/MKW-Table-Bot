@@ -956,7 +956,6 @@ class OtherCommands:
             else:
                 rooms = sr.get_private_rooms()
 
-
             if len(rooms) == 0:
                 await message.channel.send(f"There are no {Race.Race.getWWFullName(ww_type)} rooms playing right now.")
                 return
@@ -1463,8 +1462,20 @@ class ServerDefaultCommands:
             return
 
         elif len(args) > 1:
-            setting = args[1]
-            if setting not in ServerFunctions.bool_map:
+            setting = args[1:]
+            valid = False
+            if any([True if ('never' in entry and 'always' in entry) else False for entry in setting]):
+                    valid = False
+            else:
+                try:
+                    setting = ','.join(setting).strip().lower()
+                    setting = ServerFunctions.parse_ILT_setting(setting)
+                    valid = True
+                except (ValueError, IndexError):
+                    valid = False
+
+            # if setting not in ServerFunctions.bool_map:
+            if not valid:
                 await message.channel.send(f"That is not a valid default large time setting. To see valid settings, run the command `{server_prefix}{args[0]}` and read carefully.")
                 return
 
@@ -2016,7 +2027,7 @@ class TablingCommands:
                     if miisPos < 0:
                         useMiis = ServerFunctions.get_server_mii_setting(server_id)
                     if iLTPos < 0:
-                        ignoreLargeTimes = ServerFunctions.get_server_large_time_setting(server_id)
+                        ignoreLargeTimes = ServerFunctions.is_sui_from_format(server_id, warFormat)
 
                     try:
                         this_bot.setWar(War.War(warFormat, numTeams, message.id, numgps, ignoreLargeTimes=ignoreLargeTimes, displayMiis=useMiis))
@@ -2918,11 +2929,13 @@ def get_mii_option(option_number) -> str:
     return "Unknown Option"
 
 def get_large_time_option(option_number) -> str:
-    if option_number == "1" or option_number == 1:
-        return "**Show large times** by default for tables in this server."
-    elif option_number == "2" or option_number == 2:
-        return "**Hide large times** by default for tables in this server."
-    return "Unknown Option"
+    # if option_number == "1" or option_number == 1:
+    #     return "**Show large times** by default for tables in this server."
+    # elif option_number == "2" or option_number == 2:
+    #     return "**Hide large times** by default for tables in this server."
+    # return "Unknown Option"
+    return "Will ignore large times when: " + ServerFunctions.insert_formats(option_number)
+
 
 async def send_available_mii_options(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot, server_prefix:str, server_wide=False):
     to_send = f"Choose an option from this list and do `{server_prefix}{args[0]} <optionNumber>`:\n"
@@ -2931,11 +2944,29 @@ async def send_available_mii_options(message:discord.Message, args:List[str], th
     return await message.channel.send(to_send)
 
 async def send_available_large_time_options(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot, server_prefix:str, server_wide=False):
-    to_send = f"Choose an option from this list and do `{server_prefix}{args[0]} <optionNumber>`:\n"
-    to_send += f"""`1.` {get_large_time_option(1)}
-`2.` {get_large_time_option(2)}"""
+#     to_send = f"Choose an option from this list and do `{server_prefix}{args[0]} <optionNumber>`:\n"
+#     to_send += f"""`1.` {get_large_time_option(1)}
+# `2.` {get_large_time_option(2)}"""
+    to_send = "Choose an option from this list (you can either input the number or the word):\n"
+    for numVal, val, in LARGE_TIME_OPTIONS.items():
+        to_send+="   `{}`. {}\n".format(numVal, f"`{val}`")
+    
     return await message.channel.send(to_send)
 
+LARGE_TIME_OPTIONS = {
+    '0': "Never",
+    '1+': "Always",
+    '1': "FFA",
+    '2': "2v2",
+    '2+': "2v2+",
+    '3': "3v3",
+    '3+': "3v3+",
+    '4': "4v4",
+    '4+': "4v4+",
+    '5': "5v5",
+    '5+': "5v5+",
+    '6': "6v6"
+}
 
 def dump_vr_is_on():
     with open(common.VR_IS_ON_FILE, "wb") as pickle_out:
