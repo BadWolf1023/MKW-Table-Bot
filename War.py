@@ -1,12 +1,10 @@
 '''
 Created on Jul 13, 2020
-
 @author: willg
 '''
 
 import ErrorChecker
 from collections import defaultdict
-from itertools import chain
 import random
 import TableBotExceptions
 import UtilityFunctions
@@ -25,10 +23,6 @@ tableColorPairs = [("#244f96", "#cce7e8"),
                    ("#54ffc9","#54e3ff"),
                    ("#a1ff3d","#fcff3d"),
                    ("#8d8ce6","#cfceff")]
-
-
-
-
 
 
 
@@ -314,4 +308,3 @@ class War(object):
     
         
             
-        
