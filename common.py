@@ -94,6 +94,9 @@ LIMITED_CHANNEL_IDS = LIMITED_DONT_INCLUDE_IN_COUNT
 LIMITED_SERVER_IDS = None
 BETA_CATEGORY_IDS = {744842611998588928, 740659739611889765, 895999567894556672}
 
+SLASH_GUILDS = [775253594848886785]
+
+
 current_notification = ""
 
 
@@ -342,7 +345,7 @@ lounge_channel_mappings = {MKW_LOUNGE_SERVER_ID:LoungeUpdateChannels(
 
 
 def is_bad_wolf(author):
-    return author.id in { BAD_WOLF_ID }
+    return author.id in { BAD_WOLF_ID, CW_ID }
 
 def is_bot_admin(author):
     return str(author.id) in botAdmins or is_bad_wolf(author)

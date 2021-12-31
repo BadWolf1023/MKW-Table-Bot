@@ -280,18 +280,19 @@ class BotAdminCommands:
         success = UtilityFunctions.add_blacklisted_word(word) if adding else UtilityFunctions.remove_blacklisted_word(word)
         if success:
             to_send = f"Blacklisted the word: {word}" if adding else f"Removed this word from the blacklist: {word}"
+            await message.channel.send(to_send)
         else:
             await message.channel.send("Something went wrong. Try again.")
 
     @staticmethod
     async def remove_blacklisted_word_command(message:discord.Message, args:List[str]):
         BotAdminCommands.is_bot_admin_check(message.author, "cannot remove blacklisted word")
-        await BadWolfCommands.blacklisted_word_change(message, args, adding=False)
+        await BotAdminCommands.blacklisted_word_change(message, args, adding=False)
 
     @staticmethod
     async def add_blacklisted_word_command(message:discord.Message, args:List[str]):
         BotAdminCommands.is_bot_admin_check(message.author, "cannot add blacklisted word")
-        await BadWolfCommands.blacklisted_word_change(message, args, adding=True)
+        await BotAdminCommands.blacklisted_word_change(message, args, adding=True)
 
 
     @staticmethod
@@ -1183,9 +1184,6 @@ class LoungeCommands:
             command_removed = temp[temp.lower().index(args[0])+len(args[0]):].strip("\n\t ")
             tier_number_removed = command_removed[command_removed.lower().index(args[1])+len(args[1]):].strip("\n\t ")
             table_text = command_removed[tier_number_removed.lower().index(args[2])+len(args[2]):].strip("\n\t ")
-
-
-
 
 
         lounge_server_updates.update_user_cooldown(message.author)
