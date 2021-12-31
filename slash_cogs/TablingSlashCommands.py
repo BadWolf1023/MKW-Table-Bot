@@ -296,7 +296,7 @@ class Table_Slash(ext_commands.Cog):
         args = [command, str(race), sub_in, sub_out]
 
         await ctx.respond(EMPTY_CHAR)
-        await commands.TablingCommands.substitue_player_command(message, this_bot, args, server_prefix, is_lounge)
+        await commands.TablingCommands.substitute_player_command(message, this_bot, args, server_prefix, is_lounge)
     
     @slash_command(name="undo",
     description="Undo a table modification you made",

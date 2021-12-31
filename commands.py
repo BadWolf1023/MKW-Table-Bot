@@ -1725,14 +1725,12 @@ class TablingCommands:
         player_name = UtilityFunctions.process_name(str(missing_per_race[race-1][index][1]) + lounge_add(player_fc))
         if on_or_before in ["on", "during", "midrace", "results", "onresults"]:
             this_bot.add_save_state(message.content)
-            # this_bot.getRoom().dc_on_or_before[race][player_fc] = 'on'
             this_bot.getRoom().edit_dc_status(player_fc, race, 'on')
             mes = "Saved: " + player_name + ' was on results for race #' + str(race)       
             if not dont_send: await message.channel.send(mes)             
             return mes
         if on_or_before in ["before", "prior", "beforerace", "notonresults", "noresults", "off"]:
             this_bot.add_save_state(message.content)
-            # this_bot.getRoom().dc_on_or_before[race][player_fc] = 'before'
             this_bot.getRoom().edit_dc_status(player_fc, race, 'before')
             mes = "Saved: " + player_name + ' was not on results for race #' + str(race)
             if not dont_send: await message.channel.send(mes)                  
@@ -1775,7 +1773,16 @@ class TablingCommands:
         await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty."))
 
     @staticmethod
-    async def substitue_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+    async def get_subs_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
+        if not this_bot.table_is_set():
+            return await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+        
+        subs_string = this_bot.getRoom().get_room_subs()
+
+        await message.channel.send(subs_string)
+
+    @staticmethod
+    async def substitute_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         example_error_message = f"Do `{server_prefix}sub` for an example of how to use this command."
 
         #If room is not loaded, send an error message

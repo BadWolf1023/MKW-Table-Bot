@@ -95,6 +95,7 @@ ALL_PLAYERS_TERMS = {"allplayers", "ap"}
 FCS_TERMS = {"fcs"}
 CURRENT_ROOM_TERMS = {"currentroom"}
 TRANSFER_TABLE_TERMS = {"transfer", "copy", "copytable", "transfertable", "movetable", "move"}
+GET_SUBSTITUTIONS_TERMS = {"subs", "substitutes", "substitutions", "getsubs", "allsubs"}
 
 
 #General commands that do not require a war to be started (stateless commands)
@@ -172,7 +173,7 @@ GET_LOGS_TERMS = {"getlog", "getlogs", "logs"}
 ADD_SHA_TERMS = {"addsha", "sha"}
 REMOVE_SHA_TERMS = {"removesha", "delsha"}
 
-needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REDO_TERMS | LIST_REDOS_TERMS | LIST_UNDOS_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS
+needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REDO_TERMS | LIST_REDOS_TERMS | LIST_UNDOS_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS | GET_SUBSTITUTIONS_TERMS
 
 ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS
 
@@ -516,7 +517,10 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.remove_race_command(message, this_bot, args, server_prefix, is_lounge_server)
             
             elif args[0] in SUBSTITUTE_TERMS:
-                await commands.TablingCommands.substitue_player_command(message, this_bot, args, server_prefix, is_lounge_server)
+                await commands.TablingCommands.substitute_player_command(message, this_bot, args, server_prefix, is_lounge_server)
+            
+            elif args[0] in GET_SUBSTITUTIONS_TERMS:
+                await commands.TablingCommands.get_subs_command(message, this_bot, server_prefix, is_lounge_server)
                 
             elif args[0] in CURRENT_ROOM_TERMS:
                 await commands.TablingCommands.current_room_command(message, this_bot, server_prefix, is_lounge_server)

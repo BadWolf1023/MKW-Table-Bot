@@ -16,7 +16,7 @@ import TagAIShell
 from copy import copy, deepcopy
 from UtilityFunctions import isint, isfloat
 from itertools import chain
-from typing import List
+from typing import List, Any, Dict
 
 DEBUG_RACES = False
 DEBUG_PLACEMENTS = False
@@ -52,8 +52,7 @@ class Room(object):
         
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
         self.dc_on_or_before = defaultdict(dict)
-        self.added_dc_placements = defaultdict(list) #maps raceNumber to manually added DC placements
-        self.removed_dc_placements = defaultdict(list)
+        self.manual_dc_placements: defaultdict[int, List[Dict[str, Any]]] = defaultdict(list) #maps race to manually configured DC placements (on/before)
 
         self.set_up_user = setup_discord_id
         self.set_up_user_display_name = setup_display_name
@@ -71,6 +70,8 @@ class Room(object):
         return self.dc_on_or_before
     def get_subs(self):
         return self.sub_ins
+    def get_manual_dc_placements(self):
+        return self.manual_dc_placements
     
     def initialize(self, rLIDs, roomSoup, mii_dict=None):
         self.rLIDs = rLIDs
@@ -120,6 +121,20 @@ class Room(object):
     
     def had_subs(self):
         return len(self.sub_ins) != 0
+    
+    def get_room_subs(self):
+        if not self.had_subs():
+            return "No subs this war."
+        
+        ret = "*Subs this war:*"
+        
+        for ind, (sub_in_fc, substitution) in enumerate(self.sub_ins.items(), 1):
+            subInName = self.getMiiNameByFC(sub_in_fc) + UserDataProcessing.lounge_add(sub_in_fc)
+            subOutName = substitution[3]
+            race = substitution[0]
+            ret+=f"\n\t{ind}. **{subInName}** subbed in for **{subOutName}** on race {race}."
+        
+        return ret
     
     def fc_subbed_out(self, fc):
         return self.get_sub_in_fc_for_subout_fc(fc) is not None
@@ -417,18 +432,21 @@ class Room(object):
         '''
         edits a player's DC status to `status` for race `raceNum`, then adds/removes their corresponding placement to the race's `placements`
         '''
-        self.dc_on_or_before[raceNum][player_fc] = status
+        self.dc_on_or_before[raceNum][player_fc] = status #change their dc_on_or_before status
         race = self.races[raceNum-1]
         if status in ["on", "during", "midrace", "results", "onresults"]: #STATUS=ON
             if not race.FCInPlacements(player_fc): #player wasn't on results and needs to be added as a placement
                 player_obj = self.get_player_from_FC(player_fc)
                 DC_placement = Placement.Placement(player_obj, -1, u'\u2014')
-                self.added_dc_placements[raceNum].append(DC_placement)
+
+                add_dict = {'type': 'add', 'payload': DC_placement}
+                self.manual_dc_placements[raceNum].append(add_dict)
                 race.addPlacement(DC_placement)
                 
         else: #STATUS=BEFORE
-            if race.FCInPlacements(player_fc): #player was on results and should be removed from placements list
-                self.removed_dc_placements[raceNum].append(player_fc)
+            if race.FCInPlacements(player_fc): #player was on results and should be removed from placements
+                remove_dict = {'type': 'remove', 'payload': player_fc}
+                self.manual_dc_placements[raceNum].append(remove_dict)
                 race.remove_placement_by_FC(player_fc)
     
     def get_player_from_FC(self, FC):
@@ -712,18 +730,17 @@ class Room(object):
             self.__remove_race__(removed_race_ind, self.races)
         
             
-        #Next, we need to renumber the races + add/remove manual DC placements (done at same time to reduce repeated looping)
+        #Next, we need to renumber the races + add/remove manual DC placements
         for raceNum, race in enumerate(self.races, 1):
             race.raceNumber = raceNum
             
-            if raceNum in self.added_dc_placements: #need to add manual DC placements for this race
-                add = self.added_dc_placements[raceNum]
-                for p in add:
-                    race.addPlacement(p)
-            if raceNum in self.removed_dc_placements: #remove manually removed DC placements for this race
-                remove_FC = self.removed_dc_placements[raceNum]
-                for fc in remove_FC:
-                    race.remove_placement_by_FC(fc)
+            if raceNum in self.manual_dc_placements: #manual DC placements found for this race
+                items = self.manual_dc_placements[raceNum]
+                for p in items:
+                    if p['type'] == 'add':
+                        race.addPlacement(p['payload'])
+                    else:
+                        race.remove_placement_by_FC(p['payload'])
 
 
         #Next, we apply quick edits
@@ -820,8 +837,7 @@ class Room(object):
         
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
         save_state['dc_on_or_before'] = deepcopy(self.dc_on_or_before)
-        save_state['added_dc_placements'] = deepcopy(self.added_dc_placements)
-        save_state['removed_dc_placements'] = deepcopy(self.removed_dc_placements)
+        save_state['manual_dc_placements'] = deepcopy(self.manual_dc_placements)
         save_state['forcedRoomSize'] = self.forcedRoomSize.copy()
         save_state['rLIDs'] = self.rLIDs.copy()
         save_state['races'] = deepcopy(self.races)
