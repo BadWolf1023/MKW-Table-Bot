@@ -502,16 +502,14 @@ class Table_Slash(ext_commands.Cog):
     async def _help(
         self, 
         ctx: discord.ApplicationContext,
-        category: Option(str, "The category you need help with", required=False, default=None, choices=help_documentation.HELP_CATEGORIES) #autocomplete=discord.utils.basic_autocomplete(get_help_categories)
+        category: Option(str, "The category you need help with", required=False, default=None, choices=help_documentation.HELP_CATEGORIES + list(help_documentation.TABLING_HELP_FILES.keys())) #autocomplete=discord.utils.basic_autocomplete(get_help_categories)
     ):
         command, message, this_bot, server_prefix, is_lounge = await InteractionUtils.on_interaction_check(ctx.interaction)
-        # server_prefix = ServerFunctions.get_server_prefix(message.guild.id)
         args = [command]
         if category: args.append(category)
 
         await ctx.respond(EMPTY_CHAR)
         await help_documentation.send_help(message, is_lounge, args, server_prefix)
-
 
 def setup(bot):
     bot.add_cog(Table_Slash(bot))

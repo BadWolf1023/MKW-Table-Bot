@@ -7,7 +7,7 @@ import InteractionUtils
 import common
 import BadWolfBot as BWB
 
-REQUIRED_PERMISSIONS = [Permission(role, 2, True) for role in list(common.mkw_lounge_staff_roles)] + [Permission(common.CW_ID, 2, True)]
+REQUIRED_PERMISSIONS = [Permission(role, 2, True) for role in list(common.reporter_plus_roles)] # + [Permission(common.CW_ID, 2, True)]
 # GUILDS = [common.MKW_LOUNGE_SERVER_ID]+common.SLASH_GUILDS
 GUILDS = common.SLASH_GUILDS
 EMPTY_CHAR = "\u200b"
@@ -23,7 +23,7 @@ class LoungeSlash(ext_commands.Cog):
     async def _rt_update(
         self, 
         ctx: discord.ApplicationContext,
-        tier: Option(str, "Tier of event"),
+        tier: Option(str, "Tier of event", choices=['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5', 'Tier 6', 'Tier 7', 'Tier 8', 'squadqueue']),
         races_played: Option(int, "Number of races played in event"),
         table_text: Option(str, "Table text for manual submissions", required=False, default=None)
     ):
@@ -38,7 +38,7 @@ class LoungeSlash(ext_commands.Cog):
     async def _ct_update(
         self,
         ctx: discord.ApplicationContext,
-        tier: Option(str, "Tier of event"),
+        tier: Option(str, "Tier of event", choices=['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5', 'Tier 6', 'Tier 7', 'squadqueue']),
         races_played: Option(int, "Number of races played in event"),
         table_text: Option(str, "Table text for manual submissions", required=False, default=None)
     ):
@@ -69,10 +69,12 @@ class LoungeSlash(ext_commands.Cog):
     async def _deny_submission(
         self,
         ctx: discord.ApplicationContext,
-        id: Option(int, "Submission ID")
+        id: Option(int, "Submission ID"),
+        reason: Option(str, "Reason for denial", required=False, default=None)
     ):
         command, message, this_bot, _, _ = await InteractionUtils.on_interaction_check(ctx.interaction)
         args = [command, str(id)]
+        if reason: args.append(reason)
 
         await ctx.respond(EMPTY_CHAR)
         await commands.LoungeCommands.deny_submission_command(self.bot, message, args, BWB.lounge_submissions)

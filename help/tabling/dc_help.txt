@@ -1,3 +1,8 @@
 **Someone disconnected, and MKW Table Bot shows an error that they are missing. What do I do?**
 To see a list of all the disconnections for the room, do `{SERVER_PREFIX}dcs`. Each disconnection on this list has a number, which we'll call **dcnumber**. Look at the race that Table Bot says they are missing on. If the person was on the results __of the race that Table Bot says they are missing on__, do `{SERVER_PREFIX}dc dcnumber on`. If they were not on the results of the race that Table Bot says they were missing on, do `{SERVER_PREFIX}dc dcnumber before`.
 *Example:* `{SERVER_PREFIX}dc 1 on` will save that the first disconnection was on the results of the race they disconnected on.
+
+**MKW Table Bot shows an error that a racer had a blank time. What does this mean?**
+Blank finish times mean either one of two things: either the player DCed or it was an mkwx bug.
+*If the player with the blank time DCed:* you can use the `{SERVER_PREFIX}dc` command (described above) and correct whether they disconnected on or before the race.
+*If the player with the blank time did not DC:* the blank time is a bug and you need to either `{SERVER_PREFIX}edit` their GP score after the GP has finished, or do `{SERVER_PREFIX}changeplacement` to give them their correct placement in the race.

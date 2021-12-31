@@ -115,6 +115,17 @@ class MiscSlash(ext_commands.Cog):
         args = [command]
         await commands.OtherCommands.set_flag_command(message, args, BWB.user_flag_exceptions)
     
+    @flags.command(name="show",
+    description="Display your currently set flag for Table Bot")
+    async def _get_flag(
+        self,
+        ctx: discord.ApplicationContext
+    ):  
+        command, message, _, server_prefix, _ = await InteractionUtils.on_interaction_check(ctx.interaction)
+
+        await ctx.respond(EMPTY_CHAR)
+        await commands.OtherCommands.get_flag_command(message, server_prefix)
+    
     @slash_command(name="fc",
     description="Get a Lounge player's FC",
     guild_ids=GUILDS)
