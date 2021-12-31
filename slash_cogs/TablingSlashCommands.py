@@ -349,6 +349,18 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await InteractionUtils.on_interaction_check(ctx.interaction)
         await ctx.respond(EMPTY_CHAR)
         await commands.TablingCommands.get_redos_command(message, this_bot, server_prefix, is_lounge)
+    
+    @slash_command(name="subs",
+    description="Show the table's subs",
+    guild_ids=common.SLASH_GUILDS)
+    async def _show_subs(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        _, message, this_bot, server_prefix, is_lounge = await InteractionUtils.on_interaction_check(ctx.interaction)
+
+        await ctx.respond(EMPTY_CHAR)
+        await commands.TablingCommands.get_subs_command(message, this_bot, server_prefix, is_lounge)
 
     @slash_command(name='tt',
     description="Get the table's table text",

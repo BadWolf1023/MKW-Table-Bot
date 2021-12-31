@@ -33,6 +33,7 @@ class LoungeSlash(ext_commands.Cog):
 
         await ctx.respond(EMPTY_CHAR)
         await commands.LoungeCommands.rt_mogi_update(self.bot, this_bot, message, args, BWB.lounge_submissions)
+        
     @update.command(name='ct',
     description="Submit a CT table to updaters")
     async def _ct_update(
