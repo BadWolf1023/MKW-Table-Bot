@@ -94,7 +94,7 @@ RXX_TERMS = {"rxx", "rlid"}
 ALL_PLAYERS_TERMS = {"allplayers", "ap"}
 FCS_TERMS = {"fcs"}
 CURRENT_ROOM_TERMS = {"currentroom"}
-TRANSFER_TABLE_TERMS = {"transfer", "copy", "copytable", "transfertable", "movetable", "move"}
+TRANSFER_TABLE_TERMS = {"transferfrom", "copyfrom", "transfer", "copy", "copytable", "transfertable", "movetable", "move"}
 GET_SUBSTITUTIONS_TERMS = {"subs", "substitutes", "substitutions", "getsubs", "allsubs"}
 
 

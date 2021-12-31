@@ -452,14 +452,14 @@ class Table_Slash(ext_commands.Cog):
         # await ctx.defer()
         await commands.TablingCommands.reset_command(message, BWB.table_bots)
     
-    @slash_command(name="transfer",
-    description="Transfer this table to another channel",
+    @slash_command(name="copy_from",
+    description="Make this table a copy of another table",
     guild_ids=common.SLASH_GUILDS)
-    async def _transfer(
+    async def _copy_rom(
         self,
         ctx: discord.ApplicationContext,
-        channel: Option(str, "channel to transfer to"),
-        guild: Option(str, "guild that the new channel is in (only need if channel is in different guild)", required=False, default=None)
+        channel: Option(str, "channel that the other table is in"),
+        guild: Option(str, "guild that the other table is in (only need this if other table is in different guild)", required=False, default=None)
     ):
         command, message, this_bot, server_prefix, is_lounge = await InteractionUtils.on_interaction_check(ctx.interaction)
         args = [command, channel]
