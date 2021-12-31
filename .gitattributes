@@ -1,4 +1,3 @@
-testing_rooms/linux/* linguist-vendored
-testing_rooms/windows/* linguist-vendored
+testing_rooms/* linguist-vendored
 *.sql linguist-detectable=true
 *.sql linguist-language=sql
