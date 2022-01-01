@@ -3,9 +3,7 @@ from discord.commands import slash_command, Option, Permission
 from discord.commands.commands import SlashCommandGroup
 from discord.ext import commands as ext_commands
 import commands
-import InteractionUtils
 import common
-import BadWolfBot as BWB
 
 REQUIRED_PERMISSIONS = [Permission(role, 2, True) for role in list(common.reporter_plus_roles)] # + [Permission(common.CW_ID, 2, True)]
 # GUILDS = [common.MKW_LOUNGE_SERVER_ID]+common.SLASH_GUILDS
@@ -27,12 +25,12 @@ class LoungeSlash(ext_commands.Cog):
         races_played: Option(int, "Number of races played in event"),
         table_text: Option(str, "Table text for manual submissions", required=False, default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await InteractionUtils.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
         args = [command, tier, str(races_played)]
         if table_text: args.append(table_text)
 
         await ctx.respond(EMPTY_CHAR)
-        await commands.LoungeCommands.rt_mogi_update(self.bot, this_bot, message, args, BWB.lounge_submissions)
+        await commands.LoungeCommands.rt_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
         
     @update.command(name='ct',
     description="Submit a CT table to updaters")
@@ -43,12 +41,12 @@ class LoungeSlash(ext_commands.Cog):
         races_played: Option(int, "Number of races played in event"),
         table_text: Option(str, "Table text for manual submissions", required=False, default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await InteractionUtils.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
         args = [command, tier, str(races_played)]
         if table_text: args.append(table_text)
 
         await ctx.respond(EMPTY_CHAR)
-        await commands.LoungeCommands.ct_mogi_update(self.bot, this_bot, message, args, BWB.lounge_submissions)
+        await commands.LoungeCommands.ct_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
     
     @slash_command(name="approve",
     description="Approve a lounge submission",
@@ -58,11 +56,11 @@ class LoungeSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         id: Option(int, "Submission ID")
     ):
-        command, message, this_bot, _, _ = await InteractionUtils.on_interaction_check(ctx.interaction)
+        command, message, this_bot, _, _ = await self.bot.on_interaction_check(ctx.interaction)
         args = [command, str(id)]
 
         await ctx.respond(EMPTY_CHAR)
-        await commands.LoungeCommands.approve_submission_command(self.bot, message, args, BWB.lounge_submissions)
+        await commands.LoungeCommands.approve_submission_command(self.bot, message, args, self.bot.lounge_submissions)
     
     @slash_command(name="deny",
     description="Deny a lounge submission",
@@ -73,12 +71,12 @@ class LoungeSlash(ext_commands.Cog):
         id: Option(int, "Submission ID"),
         reason: Option(str, "Reason for denial", required=False, default=None)
     ):
-        command, message, this_bot, _, _ = await InteractionUtils.on_interaction_check(ctx.interaction)
+        command, message, this_bot, _, _ = await self.bot.on_interaction_check(ctx.interaction)
         args = [command, str(id)]
         if reason: args.append(reason)
 
         await ctx.respond(EMPTY_CHAR)
-        await commands.LoungeCommands.deny_submission_command(self.bot, message, args, BWB.lounge_submissions)
+        await commands.LoungeCommands.deny_submission_command(self.bot, message, args, self.bot.lounge_submissions)
     
     @slash_command(name="pending",
     description="Show a list of lounge submissions awaiting updater approval",
@@ -87,10 +85,10 @@ class LoungeSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, _, _, _ = await InteractionUtils.on_interaction_check(ctx.interaction)
+        command, message, _, _, _ = await self.bot.on_interaction_check(ctx.interaction)
 
         await ctx.respond(EMPTY_CHAR)
-        await commands.LoungeCommands.pending_submissions_command(message, BWB.lounge_submissions)
+        await commands.LoungeCommands.pending_submissions_command(message, self.bot.lounge_submissions)
     
 
 

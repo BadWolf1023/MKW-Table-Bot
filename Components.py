@@ -152,7 +152,7 @@ LABEL_BUILDERS = {
     # 'blank_player': 'Change Room Size',
     'blank_player': "{} DCed *{}* race {}",
     'tie': 'Confirm Placements',
-    'large_time': 'Confirm Placements',
+    'large_time': 'Confirm Placement',
     'gp_missing': 'Change Room Size',
     ('gp_missing', 1): 'Missing player early DCed *{}* race {}'
 }
@@ -186,10 +186,6 @@ class SuggestionView(discord.ui.View):
                 self.add_item(SuggestionSelectMenu(error['corrected_room_sizes']))
                 self.add_item(SuggestionButton(error, label, confirm=True))
         
-        # elif err_type == 'blank_player':
-        #     label = label_builder
-        #     self.add_item(SuggestionSelectMenu(error['corrected_room_sizes']))
-        #     self.add_item(SuggestionButton(error, label, confirm=True))
 
         elif err_type in { 'missing_player', 'blank_player' }:
             for insert in ['during', 'before']:
@@ -231,11 +227,6 @@ def get_command_args(error, info, bot):
         room_size = str(info)
         args = ['changeroomsize', str(race), room_size]
     
-    # elif err_type == 'blank_player':
-    #     race = error['race']
-    #     room_size = str(info)
-    #     args = ['changeroomsize', str(race), room_size]
-    
     elif err_type in { 'missing_player', 'blank_player' }:
         playerNum = bot.player_to_dc_num(error['race'], error['player_fc'])
 
@@ -245,11 +236,13 @@ def get_command_args(error, info, bot):
     elif err_type == 'large_time':
         playerNum = bot.player_to_num(error['player_fc'])
         placement = str(info)
-        args = ['changeplace', str(playerNum), placement]
+        race = error['race']
+        args = ['changeplace', str(playerNum), str(race), placement]
     
     elif err_type == 'tie':
         playerNum = bot.player_to_num(error['player_fc'])
+        race = error['race']
         placement = str(info)
-        args = ['changeplace', str(playerNum), placement]
+        args = ['changeplace', str(playerNum), str(race), placement]
     
     return args

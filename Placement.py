@@ -91,6 +91,17 @@ class Placement:
     
     def get_place(self):
         return self.place
+    
+    def get_place_str(self):
+        append = "th"
+        if self.place%100 == 1:
+            append = "st"
+        elif self.place%100 == 2:
+            append = "nd"
+        elif self.place%100 == 3:
+            append = "rd"
+        
+        return f"{self.place}{append}"
         
     def get_delta(self):
         return self.delta

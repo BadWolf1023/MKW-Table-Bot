@@ -2757,7 +2757,7 @@ class TablingCommands:
 
         guild = client.get_guild(server_id)
         if not guild:
-            return await message.channel.send("The server you provided could not be found. *Am I added to the server you are trying to copy from, and do I have access to the channel you are trying to copy from?*.")
+            return await message.channel.send("The server you provided could not be found. *Am I added to the server you are trying to copy from, and do I have access to the channel you are trying to copy from?*")
 
         channel = guild.get_channel(channel_id)
         if not channel:

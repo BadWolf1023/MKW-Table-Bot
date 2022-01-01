@@ -96,7 +96,7 @@ def get_room_errors_players(war, room, error_types, startrace=None, endrace=None
                     fc, name = placement.get_fc_and_name()
                     err_mes = name + lounge_add(fc, lounge_replace) + " had large finish time: " + placement.get_time_string() 
                     errors.append(err_mes + " - use ?qe to change their position")
-                    error_types[int(race.raceNumber)].append(({'type': 'large_time', 'player_name': name + lounge_add(fc, lounge_replace), 'player_fc': fc, 'placements': list(range(1, len(race.placements)+1)),'message': err_mes}))
+                    error_types[int(race.raceNumber)].append(({'type': 'large_time', 'player_name': name + lounge_add(fc, lounge_replace), 'player_fc': fc, 'placements': list(range(1, len(race.placements)+1)),'message': err_mes + f" ({placement.get_place_str()} place)"}))
 
         ties = race.getTies()
         if len(ties) > 0:

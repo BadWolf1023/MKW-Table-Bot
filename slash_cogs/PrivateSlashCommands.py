@@ -21,7 +21,7 @@ class PrivateSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         user: Option(int, "User Discord ID")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await InteractionUtils.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
         args = [command, user]
 
         await ctx.respond(EMPTY_CHAR)
@@ -34,7 +34,7 @@ class PrivateSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         user: Option(int, "User Discord ID")
     ):
-        command, message, _, _, _ = await InteractionUtils.on_interaction_check(ctx.interaction)
+        command, message, _, _, _ = await self.bot.on_interaction_check(ctx.interaction)
         args = [command, user]
         await ctx.respond(EMPTY_CHAR)
         await commands.BadWolfCommands.remove_bot_admin_command(message, args)
@@ -47,7 +47,7 @@ class PrivateSlash(ext_commands.Cog):
         self, 
         ctx: discord.ApplicationContext
     ):
-        command, message, _, _, _ = await InteractionUtils.on_interaction_check(ctx.interaction)
+        command, message, _, _, _ = await self.bot.on_interaction_check(ctx.interaction)
         await ctx.respond(EMPTY_CHAR)
         await commands.BadWolfCommands.get_logs_command(message)
     
@@ -59,7 +59,7 @@ class PrivateSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, _, _, _ = await InteractionUtils.on_interaction_check(ctx.interaction)
+        command, message, _, _, _ = await self.bot.on_interaction_check(ctx.interaction)
         await ctx.respond(EMPTY_CHAR)
         await commands.BadWolfCommands.garbage_collect_command(message)
     
@@ -71,7 +71,7 @@ class PrivateSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        _, message, _, _, _ = await InteractionUtils.on_interaction_check(ctx.interaction)
+        _, message, _, _, _ = await self.bot.on_interaction_check(ctx.interaction)
         await ctx.respond(EMPTY_CHAR)
         await commands.BadWolfCommands.server_process_memory_command(message)
 
