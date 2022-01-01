@@ -5,9 +5,6 @@ Created on Aug 1, 2020
 '''
 import os
 import common
-import itertools
-from more_itertools import consecutive_groups
-
 
 server_prefixes = {}
 

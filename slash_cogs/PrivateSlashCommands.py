@@ -74,6 +74,24 @@ class PrivateSlash(ext_commands.Cog):
         _, message, _, _, _ = await self.bot.on_interaction_check(ctx.interaction)
         await ctx.respond(EMPTY_CHAR)
         await commands.BadWolfCommands.server_process_memory_command(message)
+    
+    @slash_command(name='close_bot',
+    description="Gracefully close Table Bot and save its data",
+    guild_ids=common.SLASH_GUILDS,
+    permissions=REQUIRED_PERMISSIONS)
+    async def _close_bot(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        try:
+            self.bot.save_data()
+            self.bot.destroy_all_tablebots()
+            await ctx.respond("Data has been saved and all table bots have been cleaned up; bot gracefully closed.")
+        except Exception as e:
+            await ctx.respond("An error occurred while saving data; data not successfully saved.")
+            raise e
+        
+        await self.bot.close()
 
 def setup(bot):
     bot.add_cog(PrivateSlash(bot))

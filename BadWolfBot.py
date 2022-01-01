@@ -800,9 +800,16 @@ class BadWolfBot(ext_commands.Bot):
                     await commands.BotAdminCommands.remove_sha_track(message, args)
                 
                 elif args[0] in {'close', 'stopbot', 'disconnect', 'kill'} and common.is_bad_wolf(message.author):
-                    await message.channel.send("All table bots cleaned up; bot gracefully closed.")
+                    try:
+                        self.save_data()
+                        self.destroy_all_tablebots()
+                        await message.channel.send("Data has been saved and all table bots have been cleaned up; bot gracefully closed.")
+                    except Exception as e:
+                        await message.channel.send("An error occurred while saving data; data not successfully saved.")
+                        raise e
+                    
                     await self.close()
-                    sys.exit()
+                    # sys.exit()
                     
                 elif args[0] in {"aidata"} and (common.is_bad_wolf(message.author) or message.author.id == 267395889423712258):
                     if os.path.exists(TagAIShell.AI_Results_file_name):

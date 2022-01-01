@@ -9,3 +9,5 @@ bitstring
 tabulate
 aiosqlite
 lxml
+certifi
+dill
