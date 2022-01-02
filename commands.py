@@ -2516,8 +2516,9 @@ class TablingCommands:
                                     for error in errors:
                                         view_list.append(Components.SuggestionView(error, this_bot, server_prefix, is_lounge_server))
                                         try:
-                                            players = ' / '.join(error['player_names']) if 'player_names' in error else error['player_name']
-                                            info_str = f" - {players}"
+                                            # players = ' / '.join(error['player_names']) if 'player_names' in error else error['player_name']
+                                            player = error['player_name']
+                                            info_str = f" - {player}"
                                         except KeyError:
                                             info_str = ""
 

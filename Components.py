@@ -106,7 +106,6 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
         super().__init__(style=discord.ButtonStyle.primary, label=label, row=2 if confirm else 1, disabled=confirm)
     
     async def callback(self, interaction: discord.Interaction):
-        this_bot = self.view.bot
         server_prefix = self.view.prefix
 
         args = get_command_args(self.error, self.text if not self.confirm else self.view.selected_values, self.view.bot)
@@ -121,24 +120,18 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
             "large_time": commands.TablingCommands.quick_edit_command,
             "missing_player": commands.TablingCommands.disconnections_command
         }
-        if self.error['type'] == 'tie':
-            mes = []
-            for _ in range(len(self.error['player_names'])):
-                mes.append(await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.lounge, dont_send=True))
-            command_mes = '\n'.join(mes)
-        else:
-            command_mes = await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.lounge, dont_send=True)
+       
+        command_mes = await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.lounge, dont_send=True)
 
         await self.view.update_message(command_mes)
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
-    def __init__(self, values, name=None, tie=False):
-        options = [discord.SelectOption(label=str(value)) for value in values] if not tie else\
-                    [discord.SelectOption(label=str(place)+" "+name, value=str(place)) for place in values] #for 'tie' only
-        super().__init__(placeholder=name if name else "Select correct room size", options=options)
+    def __init__(self, values, name):
+        options = [discord.SelectOption(label=str(value)) for value in values]
+        super().__init__(placeholder=name, options=options)
     
     async def callback(self, interaction: discord.Interaction):
-        self.view.selected_values = interaction.data['values'][0]
+        self.view.update_selection_value(interaction.data['values'][0])
         self.placeholder = self.view.selected_values 
 
         self.view.enable_confirm()
@@ -151,7 +144,7 @@ LABEL_BUILDERS = {
     'missing_player': '{} DCed *{}* race {}',
     # 'blank_player': 'Change Room Size',
     'blank_player': "{} DCed *{}* race {}",
-    'tie': 'Confirm Placements',
+    'tie': 'Confirm Placement',
     'large_time': 'Confirm Placement',
     'gp_missing': 'Change Room Size',
     ('gp_missing', 1): 'Missing player early DCed *{}* race {}'
@@ -183,7 +176,7 @@ class SuggestionView(discord.ui.View):
                     self.add_item(SuggestionButton(error, label))
             else:
                 label = label_builder
-                self.add_item(SuggestionSelectMenu(error['corrected_room_sizes']))
+                self.add_item(SuggestionSelectMenu(error['corrected_room_sizes'], name="Select correct room size"))
                 self.add_item(SuggestionButton(error, label, confirm=True))
         
 
@@ -199,16 +192,14 @@ class SuggestionView(discord.ui.View):
         
         elif err_type == 'tie':
             label = label_builder
-            players = error['player_names']
-            for p in players:
-                self.add_item(SuggestionSelectMenu(error['placements'], name="Corrected position for " + p, tie=True))
+            self.add_item(SuggestionSelectMenu(error['placements'], name="Choose correct position"))
             self.add_item(SuggestionButton(error, label, confirm=True))
         
         self.add_item(RejectButton())
     
     def enable_confirm(self):
-        if self.error['type'] in {'tie'} and (self.selected_values!=len(self.error['player_names']) or len(self.error['placements']) > len(set(self.selected_values))):
-            return
+        # if self.error['type'] in {'tie'} and (self.selected_values!=len(self.error['player_names']) or len(self.error['placements']) > len(set(self.selected_values))):
+        #     return
 
         for child in self.children:
             child.disabled=False
@@ -243,6 +234,7 @@ def get_command_args(error, info, bot):
         playerNum = bot.player_to_num(error['player_fc'])
         race = error['race']
         placement = str(info)
+        print(placement)
         args = ['changeplace', str(playerNum), str(race), placement]
     
     return args

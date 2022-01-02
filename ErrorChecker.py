@@ -100,18 +100,23 @@ def get_room_errors_players(war, room, error_types, startrace=None, endrace=None
 
         ties = race.getTies()
         if len(ties) > 0:
-            error_type = {'type': 'tie', 'player_names': [], 'player_fcs': [], 'placements': []}
+            tie_errors_info = {"names": [], "placements": []}
+            tie_errors = []
             errors.append("Ties occurred (check table for errors):")
             for this_fc in sorted(ties, key=lambda fc:race.getPlacement(fc)):
                 this_placement = race.getPlacement(this_fc)
                 _, this_name = this_placement.get_fc_and_name()
                 errors.append(this_name + lounge_add(this_fc, lounge_replace) + "'s finish time: " + this_placement.get_time_string() + " - use ?qe to change their position")
-                error_type['player_names'].append(this_name + lounge_add(this_fc, lounge_replace))
-                error_type['player_fcs'].append(this_fc)
-                error_type['placements'].append(this_placement.get_place())
+                
+                tie_errors_info['placements'].append(this_placement.get_place())
+                tie_errors_info['names'].append(this_name + lounge_add(this_fc, lounge_replace))
+                error_type = {'type': 'tie', 'player_name': this_name+lounge_add(this_fc, lounge_replace), 'player_fc': this_fc, 'cur_place': this_placement.get_place_str()}
+                tie_errors.append(error_type)
 
-            error_type['message'] = "Ties occurred between " + '  |  '.join(error_type['player_names'])
-            error_types[int(race.raceNumber)].append(error_type)
+            for err in tie_errors:
+                err['message'] = "Tie occurred between " + ', '.join(tie_errors_info['names']) + f"\n   - `{err['player_name']}` was {err['cur_place']} on results"
+                err['placements'] = tie_errors_info['placements']
+                error_types[int(race.raceNumber)].append(err)
 
         if blank_time_counter == len(race.placements):
             errors = [EC_Messages_Alternative[_ENTIRE_ROOM_BLANK_RACE_TIMES]]

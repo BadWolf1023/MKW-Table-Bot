@@ -226,11 +226,15 @@ class SuggestionsPaginator(discord.ui.View):
         return all(self.done)
 
     def enable_confirm(self):
-        if self.error['type'] in {'tie'} and (self.selected_values!=len(self.error['player_names']) or len(self.error['placements']) > len(set(self.selected_values))):
-            return
+        # if self.error['type'] in {'tie'} and (self.selected_values!=len(self.error['player_names']) or len(self.error['placements']) > len(set(self.selected_values))):
+        #     return
 
         for child in self.custom_view.children:
             child.disabled=False
+
+    def update_selection_value(self, value):
+        self.selected_values = value
+        self.views[self.current_page].selected_values = value
 
     def update_attrs(self, view):
         self.bot = view.bot

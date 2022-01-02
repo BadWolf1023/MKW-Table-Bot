@@ -214,7 +214,7 @@ elif common.running_beta and not common.beta_is_real:
     lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.BAD_WOLF_SERVER_ID, common.main_lounge_can_report_table)
 
 
-bad_wolf_facts = []
+# bad_wolf_facts = []
 
 def createEmptyTableBot(server_id=None, channel_id=None):
     return TableBot.ChannelBot(server_id=server_id, channel_id=channel_id)
@@ -233,7 +233,7 @@ class BadWolfBot(ext_commands.Bot):
         self.table_bots = dict()
         self.lounge_submissions = lounge_submissions
         self.user_flag_exceptions = set()
-        self.bad_wolf_facts = bad_wolf_facts
+        self.bad_wolf_facts = list()
 
         if ALLOW_SLASH_COMMANDS:
             for ext in SLASH_EXTENSIONS:
@@ -1035,21 +1035,21 @@ def command_is_spam(command:str):
     return True
 
 
-last_fact_times = {}
-fact_cooldown = timedelta(seconds=30)
-async def send_bad_wolf_fact(message:discord.Message):
-    global last_fact_times
-    if len(bad_wolf_facts) > 0:
-        cur_time = datetime.now()
-        if message.channel.id not in last_fact_times \
-        or (cur_time - last_fact_times[message.channel.id]) > fact_cooldown:
-            last_fact_times[message.channel.id] = cur_time
-            fact = random.choice(bad_wolf_facts)
-            if "DISPLAY_NAME" in fact:
-                fact = fact.replace("DISPLAY_NAME", message.author.display_name)
-            if "MENTION" in fact:
-                fact = fact.replace("MENTION", message.author.display_name)
-            await message.channel.send(fact, delete_after=10)
+# last_fact_times = {}
+# fact_cooldown = timedelta(seconds=30)
+# async def send_bad_wolf_fact(message:discord.Message):
+#     global last_fact_times
+#     if len(bad_wolf_facts) > 0:
+#         cur_time = datetime.now()
+#         if message.channel.id not in last_fact_times \
+#         or (cur_time - last_fact_times[message.channel.id]) > fact_cooldown:
+#             last_fact_times[message.channel.id] = cur_time
+#             fact = random.choice(bad_wolf_facts)
+#             if "DISPLAY_NAME" in fact:
+#                 fact = fact.replace("DISPLAY_NAME", message.author.display_name)
+#             if "MENTION" in fact:
+#                 fact = fact.replace("MENTION", message.author.display_name)
+#             await message.channel.send(fact, delete_after=10)
 
 
 

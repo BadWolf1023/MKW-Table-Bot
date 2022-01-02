@@ -54,7 +54,8 @@ special_test_cases = {
     f"{submkwxURL}r0000005":("Clean room with no errors.", f"{common.SAVED_ROOMS_DIR}clean_room.html"),
     f"{submkwxURL}r0000006":("Tag in brackets.", f"{common.SAVED_ROOMS_DIR}tag_in_brackets.html"),
     f"{submkwxURL}r0000007":("Room with an unknown track name (SHA name).", f"{common.SAVED_ROOMS_DIR}unknown_track.html"),
-    f"{submkwxURL}r0000008":("Room to test component suggestions with.", f"{common.SAVED_ROOMS_DIR}SuggestionComponentsTesting.html")
+    f"{submkwxURL}r0000008":("Room to test component suggestions with.", f"{common.SAVED_ROOMS_DIR}SuggestionComponentsTesting.html"),
+    f"{submkwxURL}r0000009":("Room to test component suggestions with (ties).", f"{common.SAVED_ROOMS_DIR}Ties_Testing.html"),
 }
 
 

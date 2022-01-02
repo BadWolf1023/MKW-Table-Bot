@@ -425,7 +425,7 @@ class Table_Slash(ext_commands.Cog):
     @slash_command(name="copy_from",
     description="Make this table a copy of another table",
     guild_ids=common.SLASH_GUILDS)
-    async def _copy_rom(
+    async def _copy_from(
         self,
         ctx: discord.ApplicationContext,
         channel: Option(str, "channel that the other table is in"),

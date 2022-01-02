@@ -85,12 +85,12 @@ class PrivateSlash(ext_commands.Cog):
     ):
         try:
             self.bot.save_data()
-            self.bot.destroy_all_tablebots()
             await ctx.respond("Data has been saved and all table bots have been cleaned up; bot gracefully closed.")
         except Exception as e:
             await ctx.respond("An error occurred while saving data; data not successfully saved.")
             raise e
-        
+            
+        self.bot.destroy_all_tablebots()
         await self.bot.close()
 
 def setup(bot):
