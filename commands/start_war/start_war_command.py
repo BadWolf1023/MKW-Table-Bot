@@ -12,7 +12,7 @@ import UtilityFunctions
 import War
 import common
 from TableBot import ChannelBot
-from commands.shared import mkwx_check, sendRoomWarNotLoaded, updateData, getSuppressLargeTimes, getUseMiis
+from commands.shared import mkwx_check, sendRoomWarNotLoaded, updateData
 
 
 async def start_war_command(
