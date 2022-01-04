@@ -1,4 +1,3 @@
-# Refactor this method to make it more readable
 import asyncio
 from typing import List, Callable
 
@@ -79,8 +78,6 @@ async def start_war_command(
     # Case 4: rLID: No mention, len(args) > 3, is rLID
     # Case 5: Lounge name: No mention, len(args) > 3, neither rLID nor FC
     successful = False
-    discordIDToLoad = None
-    message2 = None
     try:
         this_bot.updateRLCoolDown()
         message2 = await message.channel.send("Loading room...")
