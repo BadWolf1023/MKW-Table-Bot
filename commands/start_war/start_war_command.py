@@ -25,7 +25,6 @@ async def start_war_command(
         permission_check: Callable
 ):
     await mkwx_check(message, "Start war command disabled.")
-    server_id = message.guild.id
     author_id = message.author.id
     message_id = message.id
     author_name = message.author.display_name
@@ -45,6 +44,7 @@ async def start_war_command(
         delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
         return await delete_me.delete(delay=5)
 
+    server_id = message.guild.id
     this_bot.reset(server_id)
     warFormat = args[1]
     numTeams = args[2]
