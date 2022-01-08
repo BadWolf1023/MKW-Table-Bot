@@ -12,7 +12,7 @@ import UtilityFunctions
 import War
 import common
 from TableBot import ChannelBot
-from commands.shared import mkwx_check, sendRoomWarNotLoaded, updateData
+from commands.shared import mkwx_check, send_room_war_not_loaded, update_data
 
 
 async def start_war_command(
@@ -37,7 +37,7 @@ async def start_war_command(
 
     if len(args) < 3:
         # TODO: sui=yes = psb
-        return await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+        return await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
 
     rlCooldown = this_bot.getRLCooldownSeconds()
     if rlCooldown > 0:
@@ -83,7 +83,7 @@ async def start_war_command(
         message2 = await message.channel.send("Loading room...")
         if len(args) == 3 or (len(args) > 3 and (numGPsPos == 3 or iLTPos == 3 or miisPos == 3)):
             discordIDToLoad = str(author_id)
-            await updateData(*await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
+            await update_data(*await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
             FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
             successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id,
                                                         setup_display_name=author_name)
@@ -92,7 +92,7 @@ async def start_war_command(
         elif len(args) > 3:
             if len(message.raw_mentions) > 0:
                 discordIDToLoad = str(message.raw_mentions[0])
-                await updateData(*await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
+                await update_data(*await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
                 FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
                 successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id,
                                                             setup_display_name=author_name)
@@ -117,7 +117,7 @@ async def start_war_command(
                         break
                     their_name += arg + " "
                 their_name = their_name.strip()
-                await updateData(*await LoungeAPIFunctions.getByLoungeNames([their_name]))
+                await update_data(*await LoungeAPIFunctions.getByLoungeNames([their_name]))
                 FCs = UserDataProcessing.getFCsByLoungeName(their_name)
                 successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id,
                                                             setup_display_name=author_name)
@@ -135,7 +135,7 @@ async def start_war_command(
         if this_bot.getWar() is not None:
             asyncio.create_task(this_bot.populate_miis())
             players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numgps * 4).items())
-            await updateData(*await LoungeAPIFunctions.getByFCs([fc for fc, _ in players]))
+            await update_data(*await LoungeAPIFunctions.getByFCs([fc for fc, _ in players]))
             tags_player_fcs = TagAIShell.determineTags(players, this_bot.getWar().playersPerTeam)
             this_bot.getWar().set_temp_team_tags(tags_player_fcs)
 
