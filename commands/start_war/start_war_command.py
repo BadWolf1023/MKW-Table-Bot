@@ -12,7 +12,7 @@ import UtilityFunctions
 import War
 import common
 from TableBot import ChannelBot
-from commands.shared import mkwx_check, sendRoomWarNotLoaded, updateData
+from commands.shared import mkwx_check, send_room_war_not_loaded, update_data
 
 
 async def start_war_command(
@@ -37,32 +37,33 @@ async def start_war_command(
 
     if len(args) < 3:
         # TODO: sui=yes = psb
-        return await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+        return await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
 
-    rlCooldown = this_bot.getRLCooldownSeconds()
-    if rlCooldown > 0:
-        delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
+    rl_cooldown = this_bot.getRLCooldownSeconds()
+    if rl_cooldown > 0:
+        delete_me = await message.channel.send(f"Wait {rl_cooldown} more seconds before using this command.")
         return await delete_me.delete(delay=5)
 
     server_id = message.guild.id
     this_bot.reset(server_id)
-    warFormat = args[1]
-    numTeams = args[2]
-    numGPsPos, numgps = getNumGPs(args)
-    iLTPos, ignoreLargeTimes = getSuppressLargeTimes(args)
-    useMiis, _, miisPos = getUseMiis(args, True, 3)
-    if iLTPos >= 0 and 'sui=' in command:
+    war_format = args[1]
+    num_teams = args[2]
+    num_gps_pos, numgps = getNumGPs(args)
+    ilt_pos, ignore_large_times = getSuppressLargeTimes(args)
+    use_miis, _, miis_pos = getUseMiis(args, True, 3)
+    if ilt_pos >= 0 and 'sui=' in command:
         await message.channel.send(
             "*sui= will change to psb= in later updates. Use psb=yes or professionalseriesbagging=yes in the future*")
 
-    if miisPos < 0:
-        useMiis = ServerFunctions.get_server_mii_setting(server_id)
-    if iLTPos < 0:
-        ignoreLargeTimes = ServerFunctions.get_server_large_time_setting(server_id)
+    if miis_pos < 0:
+        use_miis = ServerFunctions.get_server_mii_setting(server_id)
+    if ilt_pos < 0:
+        ignore_large_times = ServerFunctions.get_server_large_time_setting(server_id)
 
     try:
         this_bot.setWar(
-            War.War(warFormat, numTeams, message.id, numgps, ignoreLargeTimes=ignoreLargeTimes, displayMiis=useMiis))
+            War.War(war_format, num_teams, message.id, numgps, ignoreLargeTimes=ignore_large_times,
+                    displayMiis=use_miis))
     except TableBotExceptions.InvalidWarFormatException:
         await message.channel.send(
             "War format was incorrect. Valid options: FFA, 1v1, 2v2, 3v3, 4v4, 5v5, 6v6. War not created.")
@@ -81,9 +82,9 @@ async def start_war_command(
     try:
         this_bot.updateRLCoolDown()
         message2 = await message.channel.send("Loading room...")
-        if len(args) == 3 or (len(args) > 3 and (numGPsPos == 3 or iLTPos == 3 or miisPos == 3)):
+        if len(args) == 3 or (len(args) > 3 and (num_gps_pos == 3 or ilt_pos == 3 or miis_pos == 3)):
             discordIDToLoad = str(author_id)
-            await updateData(*await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
+            await update_data(*await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
             FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
             successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id,
                                                         setup_display_name=author_name)
@@ -92,7 +93,7 @@ async def start_war_command(
         elif len(args) > 3:
             if len(message.raw_mentions) > 0:
                 discordIDToLoad = str(message.raw_mentions[0])
-                await updateData(*await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
+                await update_data(*await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
                 FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
                 successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id,
                                                             setup_display_name=author_name)
@@ -117,7 +118,7 @@ async def start_war_command(
                         break
                     their_name += arg + " "
                 their_name = their_name.strip()
-                await updateData(*await LoungeAPIFunctions.getByLoungeNames([their_name]))
+                await update_data(*await LoungeAPIFunctions.getByLoungeNames([their_name]))
                 FCs = UserDataProcessing.getFCsByLoungeName(their_name)
                 successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id,
                                                             setup_display_name=author_name)
@@ -135,7 +136,7 @@ async def start_war_command(
         if this_bot.getWar() is not None:
             asyncio.create_task(this_bot.populate_miis())
             players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numgps * 4).items())
-            await updateData(*await LoungeAPIFunctions.getByFCs([fc for fc, _ in players]))
+            await update_data(*await LoungeAPIFunctions.getByFCs([fc for fc, _ in players]))
             tags_player_fcs = TagAIShell.determineTags(players, this_bot.getWar().playersPerTeam)
             this_bot.getWar().set_temp_team_tags(tags_player_fcs)
 

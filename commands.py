@@ -24,7 +24,7 @@ import MogiUpdate
 import Lounge
 import TableBotExceptions
 import common
-from commands.shared import mkwx_check, sendRoomWarNotLoaded, updateData
+from commands.shared import mkwx_check, send_room_war_not_loaded, update_data
 from commands.start_war.start_war_command import start_war_command
 from data_tracking import DataTracker
 
@@ -594,7 +594,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             return
 
         discordIDToLoad = str(message.author.id)
-        await updateData(*await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
+        await update_data(*await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
 
         fcs = UserDataProcessing.get_all_fcs(discordIDToLoad)
         lounge_name = UserDataProcessing.get_lounge(discordIDToLoad)
@@ -782,7 +782,7 @@ class OtherCommands:
     async def lounge_name_command(message:discord.Message):
         author_id = message.author.id
         discordIDToLoad = str(author_id)
-        await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
+        await update_data(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
         lounge_name = UserDataProcessing.get_lounge(author_id)
         if lounge_name is None:
             await message.channel.send("You don't have a lounge name. Join Lounge! (If you think this is an error, go on Wiimmfi and try running this command again.)")
@@ -799,7 +799,7 @@ class OtherCommands:
         if len(args) == 1:
             discordIDToLoad = str(message.author.id)
             id_lounge, fc_id = await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad])
-            await updateData(id_lounge, fc_id)
+            await update_data(id_lounge, fc_id)
         else:
             if len(message.raw_mentions) > 0:
                 discordIDToLoad = str(message.raw_mentions[0])
@@ -814,7 +814,7 @@ class OtherCommands:
                 if discordIDToLoad is None:
                     discordIDToLoad = UserDataProcessing.get_DiscordID_By_LoungeName(to_find_lounge)
 
-        await updateData(id_lounge, fc_id)
+        await update_data(id_lounge, fc_id)
         FC = None
         if fc_id is not None and id_lounge is not None: #This would only occur it the API went down...
             for fc, _id in fc_id.items():
@@ -864,7 +864,7 @@ class OtherCommands:
             FC = discordIDToLoad
         else:
             id_lounge, fc_id = await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad])
-            await updateData(id_lounge, fc_id)
+            await update_data(id_lounge, fc_id)
             FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
             if len(FCs) > 0:
                 FC = FCs[0]
@@ -1025,7 +1025,7 @@ class OtherCommands:
         rLID = None
         if len(args) == 1:
             discordIDToLoad = str(message.author.id)
-            await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]) )
+            await update_data(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
             FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
             successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
             if not successful:
@@ -1033,7 +1033,7 @@ class OtherCommands:
         elif len(args) > 1:
             if len(message.raw_mentions) > 0:
                 discordIDToLoad = str(message.raw_mentions[0])
-                await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
+                await update_data(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
                 FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
                 successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
                 if not successful:
@@ -1043,7 +1043,7 @@ class OtherCommands:
                 if not successful:
                     await message.channel.send("Could not find this FC in a room.")
             else:
-                await updateData( * await LoungeAPIFunctions.getByLoungeNames([" ".join(old_command.split()[1:])]))
+                await update_data(* await LoungeAPIFunctions.getByLoungeNames([" ".join(old_command.split()[1:])]))
                 FCs = UserDataProcessing.getFCsByLoungeName(" ".join(old_command.split()[1:]))
 
                 successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
@@ -1054,7 +1054,7 @@ class OtherCommands:
             await common.safe_delete(message2)
             return
         FC_List = [fc for fc in room_data]
-        await updateData(* await LoungeAPIFunctions.getByFCs(FC_List))
+        await update_data(* await LoungeAPIFunctions.getByFCs(FC_List))
 
 
         tuple_data = [OtherCommands.vr_command_get_data(item) for item in room_data.items()]
@@ -1604,7 +1604,7 @@ class TablingCommands:
     @staticmethod
     async def display_races_played_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
         else:
             await message.channel.send(this_bot.getRoom().get_races_string())
 
@@ -1612,7 +1612,7 @@ class TablingCommands:
     @staticmethod
     async def fcs_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
         else:
             await message.channel.send(this_bot.getRoom().getFCPlayerListString())
 
@@ -1620,7 +1620,7 @@ class TablingCommands:
     @staticmethod
     async def rxx_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
         else:
             await message.channel.send(this_bot.getRoom().getRXXText())
 
@@ -1628,7 +1628,7 @@ class TablingCommands:
     @staticmethod
     async def team_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         if this_bot.getWar().is_ffa():
@@ -1682,7 +1682,7 @@ class TablingCommands:
     @staticmethod
     async def disconnections_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         if len(args) == 1:
@@ -1747,7 +1747,7 @@ class TablingCommands:
     @staticmethod
     async def player_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         if len(args) == 1:
@@ -1783,7 +1783,7 @@ class TablingCommands:
 
         #If room is not loaded, send an error message
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         #Command information for user if command is run with no args
@@ -1856,7 +1856,7 @@ class TablingCommands:
     @staticmethod
     async def change_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         if len(args) == 1:
@@ -1915,7 +1915,7 @@ class TablingCommands:
     @staticmethod
     async def change_player_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         if len(args) < 3:
@@ -1956,7 +1956,7 @@ class TablingCommands:
     @staticmethod
     async def change_player_tag_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
 
@@ -2038,7 +2038,7 @@ class TablingCommands:
     @staticmethod
     async def merge_room_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         if len(args) < 2:
@@ -2075,7 +2075,7 @@ class TablingCommands:
     @staticmethod
     async def table_theme_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         if len(args) == 1:
@@ -2094,7 +2094,7 @@ class TablingCommands:
     @staticmethod
     async def table_graph_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
         else:
             if len(args) == 1:
                 await send_available_graph_list(message, args, this_bot, server_prefix, server_wide=False)
@@ -2110,18 +2110,18 @@ class TablingCommands:
     @staticmethod
     async def all_players_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, len(this_bot.getRoom().races)).items())
         FC_List = [fc for fc, _ in players]
-        await updateData(* await LoungeAPIFunctions.getByFCs(FC_List))
+        await update_data(* await LoungeAPIFunctions.getByFCs(FC_List))
         await message.channel.send(this_bot.getRoom().get_players_list_string())
 
     @staticmethod
     async def set_war_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, old_command:str):
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
         elif len(args) < 2:
             await message.channel.send("No war name given. War name not set.")
         else:
@@ -2131,7 +2131,7 @@ class TablingCommands:
     @staticmethod
     async def get_undos_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         undo_list = this_bot.get_undo_list()
@@ -2140,7 +2140,7 @@ class TablingCommands:
     @staticmethod
     async def get_redos_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
         
         redo_list = this_bot.get_redo_list()
@@ -2149,7 +2149,7 @@ class TablingCommands:
     @staticmethod
     async def undo_command(message:discord.Message, this_bot:ChannelBot, args: List[str], server_prefix:str, is_lounge_server:bool):   
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         do_all = True if (len(args)>1 and args[1].strip().lower() == "all") else False
@@ -2164,7 +2164,7 @@ class TablingCommands:
     @staticmethod
     async def redo_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
-            return await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            return await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
 
         do_all = True if (len(args)>1 and args[1].strip().lower() == "all") else False
         redone_command = this_bot.restore_last_redo_state(do_all=do_all)
@@ -2177,7 +2177,7 @@ class TablingCommands:
     @staticmethod
     async def early_dc_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         if len(args) == 1:
@@ -2209,7 +2209,7 @@ class TablingCommands:
     @staticmethod
     async def change_room_size_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
 
@@ -2238,9 +2238,9 @@ class TablingCommands:
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
         else:
-            await updateData(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs()))
+            await update_data(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs()))
             if len(args) == 1:
                 await message.channel.send(str(this_bot.getRoom().races[-1]))
             else:
@@ -2257,7 +2257,7 @@ class TablingCommands:
     async def war_picture_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         server_id = message.guild.id
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
         else:
             asyncio.create_task(this_bot.populate_miis())
             should_send_notification = this_bot.shouldSendNoticiation()
@@ -2272,7 +2272,7 @@ class TablingCommands:
                 players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, this_bot.getWar().numberOfGPs*4).items())
                 FC_List = [fc for fc, _ in players]
 
-                await updateData(* await LoungeAPIFunctions.getByFCs(FC_List))
+                await update_data(* await LoungeAPIFunctions.getByFCs(FC_List))
 
                 updated = await this_bot.update_room()
                 if not updated:
@@ -2371,7 +2371,7 @@ class TablingCommands:
     async def table_text_command(message:discord.Message, this_bot:ChannelBot, args: List[str], server_prefix:str, is_lounge_server:bool):
         server_id = message.guild.id
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
         else:
             up_to = get_max_specified_race(args)
@@ -2425,7 +2425,7 @@ class TablingCommands:
     @staticmethod
     async def remove_race_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         if len(args) == 1:
@@ -2452,7 +2452,7 @@ class TablingCommands:
     @staticmethod
     async def gp_display_size_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
             return
 
         if len(args) != 2:
@@ -2475,7 +2475,7 @@ class TablingCommands:
     @staticmethod
     async def quick_edit_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
         else:
             if len(args) == 1:
                 to_send = this_bot.getRoom().get_sorted_player_list_string()
@@ -2534,9 +2534,9 @@ class TablingCommands:
     async def current_room_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
         await mkwx_check(message, "Current room command disabled.")
         if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            await send_room_war_not_loaded(message, server_prefix, is_lounge_server)
         elif len(this_bot.getRoom().races) >= 1:
-            await updateData(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs()))
+            await update_data(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs()))
             await message.channel.send(this_bot.getRoom().races[-1].getPlayersByPlaceInRoomString())
 
 

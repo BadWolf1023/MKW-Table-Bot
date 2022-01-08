@@ -19,7 +19,7 @@ async def mkwx_check(message, error_message):
         raise TableBotExceptions.CommandDisabled(error_message)
 
 
-async def sendRoomWarNotLoaded(message: discord.Message, serverPrefix: str, is_lounge=False):
+async def send_room_war_not_loaded(message: discord.Message, serverPrefix: str, is_lounge=False):
     if is_lounge:
         return await message.channel.send(
             f"Room is not loaded! Use the command `{serverPrefix}sw mogiformat numberOfTeams` to load a room."
@@ -30,5 +30,5 @@ async def sendRoomWarNotLoaded(message: discord.Message, serverPrefix: str, is_l
         )
 
 
-async def updateData(id_lounge, fc_id):
+async def update_data(id_lounge, fc_id):
     UserDataProcessing.smartUpdate(id_lounge, fc_id)
