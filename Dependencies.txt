@@ -1,4 +1,4 @@
-py-cord
+git+https://github.com/Pycord-Development/pycord
 opencv-python
 beautifulsoup4
 humanize
