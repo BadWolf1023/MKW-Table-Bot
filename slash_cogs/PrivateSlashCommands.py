@@ -1,11 +1,10 @@
 import discord
 import commands
 from discord.ext import commands as ext_commands
-from discord.commands import SlashCommandGroup, slash_command, Option, Permission
+from discord.commands import SlashCommandGroup, slash_command, Option, CommandPermission
 import common
-import InteractionUtils
 
-REQUIRED_PERMISSIONS = [Permission(common.BAD_WOLF_ID, 2, True), Permission(common.CW_ID, 2, True)]
+REQUIRED_PERMISSIONS = [CommandPermission(common.BAD_WOLF_ID, 2, True), CommandPermission(common.CW_ID, 2, True)]
 EMPTY_CHAR = '\u200b'
 
 class PrivateSlash(ext_commands.Cog):
@@ -89,7 +88,7 @@ class PrivateSlash(ext_commands.Cog):
         except Exception as e:
             await ctx.respond("An error occurred while saving data; data not successfully saved.")
             raise e
-            
+
         self.bot.destroy_all_tablebots()
         await self.bot.close()
 

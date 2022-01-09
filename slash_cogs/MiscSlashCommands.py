@@ -1,13 +1,13 @@
 import discord
 from discord import permissions
 from discord.ext import commands as ext_commands
-from discord.commands import slash_command, SlashCommandGroup, Permission, Option
+from discord.commands import slash_command, SlashCommandGroup, CommandPermission, Option
 import commands
 import common
 
 EMPTY_CHAR = "\u200b"
 GUILDS = common.SLASH_GUILDS
-SETTING_PERMISSIONS = [Permission("administrator", 2, True)]
+SETTING_PERMISSIONS = [CommandPermission("administrator", 2, True)]
 
 class MiscSlash(ext_commands.Cog):
     def __init__(self, bot):

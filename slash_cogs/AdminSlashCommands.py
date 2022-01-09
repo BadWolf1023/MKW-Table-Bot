@@ -1,4 +1,4 @@
-from discord.commands import slash_command, SlashCommandGroup, Option, Permission
+from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.ext import commands as ext_commands
 import InteractionUtils
 import discord

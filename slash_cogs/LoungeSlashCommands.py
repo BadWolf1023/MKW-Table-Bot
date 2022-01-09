@@ -1,11 +1,11 @@
 import discord
-from discord.commands import slash_command, Option, Permission
+from discord.commands import slash_command, Option, CommandPermission
 from discord.commands.commands import SlashCommandGroup
 from discord.ext import commands as ext_commands
 import commands
 import common
 
-REQUIRED_PERMISSIONS = [Permission(role, 2, True) for role in list(common.reporter_plus_roles)] # + [Permission(common.CW_ID, 2, True)]
+REQUIRED_PERMISSIONS = [CommandPermission(role, 2, True) for role in list(common.reporter_plus_roles)] # + [Permission(common.CW_ID, 2, True)]
 # GUILDS = [common.MKW_LOUNGE_SERVER_ID]+common.SLASH_GUILDS
 GUILDS = common.SLASH_GUILDS
 EMPTY_CHAR = "\u200b"
