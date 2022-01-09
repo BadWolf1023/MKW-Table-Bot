@@ -94,11 +94,11 @@ class Placement:
     
     def get_place_str(self):
         append = "th"
-        if self.place%100 == 1:
+        if self.place%10 == 1 and self.place!=11:
             append = "st"
-        elif self.place%100 == 2:
+        elif self.place%10 == 2 and self.place!=12:
             append = "nd"
-        elif self.place%100 == 3:
+        elif self.place%10 == 3 and self.place!=13:
             append = "rd"
         
         return f"{self.place}{append}"
