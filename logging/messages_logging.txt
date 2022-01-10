@@ -1,10 +1,3 @@
 
 2021-10-29 07:30:42.245528: Server: Bad Wolf's Command Center - Channel: testing-bot - User: Bad Wolf#1023 - Command: ?sw ffa 12 r0000001 
 2021-10-29 07:31:21.693163: Server: Bad Wolf's Command Center - Channel: testing-bot - User: Bad Wolf#1023 - Command: ?sw ffa 12 r0000001 
-
-2022-01-09 22:34:01.868995: Server: TEST - Channel: test-channel - User: camelwater#6035 - Command: ?sw 2v2 6 r0000007 
-2022-01-09 22:34:08.202517: Server: TEST - Channel: test-channel - User: camelwater#6035 - Command: ?ww 
-2022-01-09 22:39:09.995828: Server: TEST - Channel: test-channel - User: camelwater#6035 - Command: ?sw 2v2 6 r0000007 
-2022-01-09 22:39:21.157413: Server: TEST - Channel: test-channel - User: camelwater#6035 - Command: /ww 
-2022-01-09 22:40:58.610732: Server: TEST - Channel: test-channel - User: camelwater#6035 - Command: ?sw 2v2 6 r0000007 
-2022-01-09 22:41:04.226988: Server: TEST - Channel: test-channel - User: camelwater#6035 - Command: ?ww 

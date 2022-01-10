@@ -36,7 +36,7 @@ team_formats.pkl
 
 
 miis/mii_cache/*
-logging/*
+# logging/*
 /tablebot_data/*.db
 /*.db
 miis/*
@@ -47,3 +47,4 @@ miis/*
 logging/full_logging.txt
 
 .vscode/*
+properties.json
