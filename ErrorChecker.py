@@ -135,7 +135,7 @@ def get_room_errors_players(war, room, error_types, startrace=None, endrace=None
         errors.extend(room.get_subin_error_string_list(race.raceNumber))
             
         if race.raceNumber in room.forcedRoomSize:
-            errors.append("Room size changed to " + str(room.forcedRoomSize[race.raceNumber]) + " players for this race.")
+            # errors.append("Room size changed to " + str(room.forcedRoomSize[race.raceNumber]) + " players for this race.")
             for indx, err in enumerate(error_types[int(race.raceNumber)]):
                 if err['type'] in ['blank_player', 'gp_missing']:
                     error_types[int(race.raceNumber)].pop(indx)

@@ -182,6 +182,7 @@ def get_max_teams(warFormat:str):
     return int(12/numTeams)
 
 def convert_to_warFormat(warFormat: str):
+    warFormat = warFormat.lower()
     format_map = {1: 'ffa', 2: '2v2', 3: '3v3', 4: '4v4', 5: '5v5', 6: '6v6'}
     if warFormat in {'ffa', '2v2', '3v3', '4v4', '5v5', '6v6'}:
         return warFormat

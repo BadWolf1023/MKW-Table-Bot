@@ -384,51 +384,54 @@ class MessagePaginator(pages.Paginator):
     def __init__(self, pages, show_disabled=True, show_indicator=False, timeout=120):
         super().__init__(pages, show_disabled=show_disabled, show_indicator=show_indicator, timeout=float(timeout))
     
-    async def send(self, messageable: abc.Messageable, ephemeral: bool = False) -> Union[discord.Message, discord.WebhookMessage]:
+    
+    async def send(
+        self,
+        ctx: Context,
+        target: Optional[discord.abc.Messageable] = None,
+        target_message: Optional[str] = None,
+    ) -> discord.Message:
         """Sends a message with the paginated items.
-
 
         Parameters
         ------------
-        messageable: :class:`discord.abc.Messageable`
-            The messageable channel to send to.
-        ephemeral: :class:`bool`
-            Choose whether the message is ephemeral or not. Only works with slash commands.
+        ctx: Union[:class:`~discord.ext.commands.Context`]
+            A command's invocation context.
+        target: Optional[:class:`~discord.abc.Messageable`]
+            A target where the paginated message should be sent, if different from the original :class:`Context`
+        target_message: Optional[:class:`str`]
+            An optional message shown when the paginator message is sent elsewhere.
 
         Returns
         --------
-        Union[:class:`~discord.Message`, :class:`~discord.WebhookMessage`]
+        Union[:class:`~discord.Message`]
             The message that was sent with the paginator.
         """
-        if isinstance(messageable, discord.Message) or hasattr(messageable, 'proxy'):
-            self.user = messageable.author
-            messageable = messageable.channel
+        if isinstance(ctx, discord.Message) or hasattr(ctx, 'proxy'):
+            self.user = ctx.author
+            ctx = ctx.channel
+        elif not isinstance(ctx, Context):
+            raise TypeError(f"expected Context not {ctx.__class__!r}")
 
-        if not isinstance(messageable, abc.Messageable):
-            raise TypeError("messageable should be a subclass of abc.Messageable")
+        if target is not None and not isinstance(target, discord.abc.Messageable):
+            raise TypeError(f"expected abc.Messageable not {target.__class__!r}")
 
+        self.update_buttons()
         page = self.pages[0]
+        page = self.get_page_content(page)
 
-        if isinstance(messageable, (ApplicationContext, Context)):
-            self.user = messageable.author
+        if not self.user:
+            self.user = ctx.author
 
-        if isinstance(messageable, ApplicationContext):
-            msg = await messageable.respond(
-                content=page if isinstance(page, str) else None,
-                embed=page if isinstance(page, discord.Embed) else None,
-                view=self,
-                ephemeral=ephemeral,
-            )
+        if target:
+            if target_message:
+                await ctx.send(target_message)
+            ctx = target
 
-        else:
-            msg = await messageable.send(
-                content=page if isinstance(page, str) else None,
-                embed=page if isinstance(page, discord.Embed) else None,
-                view=self,
-            )
-        if isinstance(msg, (discord.WebhookMessage, discord.Message)):
-            self.message = msg
-        elif isinstance(msg, discord.Interaction):
-            self.message = await msg.original_message()
+        self.message = await ctx.send(
+            content=page if isinstance(page, str) else None,
+            embeds=[] if isinstance(page, str) else page,
+            view=self,
+        )
 
         return self.message

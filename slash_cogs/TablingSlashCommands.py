@@ -131,7 +131,7 @@ class Table_Slash(ext_commands.Cog):
 
 
         await ctx.respond(EMPTY_CHAR)
-        await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge)
+        await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge, message.content)
     
     @slash_command(name='change_position',
     description="Change a race's positions",
@@ -220,7 +220,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
         args = [command, player, name]
         await ctx.respond(EMPTY_CHAR)
-        await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge)
+        await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge, message.content)
 
     @slash_command(name="change_tag",
     description="Change a player's tag",
@@ -235,7 +235,7 @@ class Table_Slash(ext_commands.Cog):
         args = [command, player, tag]
 
         await ctx.respond(EMPTY_CHAR)
-        await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge)
+        await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge, message.content)
 
     @slash_command(name="early_dc",
     description="Fix player incorrectly missing from race 1 of GP",
@@ -263,7 +263,7 @@ class Table_Slash(ext_commands.Cog):
         sub_out: Option(str, "Player subbing out (playerNumber or LoungeName)")
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
-        args = [command, str(race), sub_in, sub_out]
+        args = [command, sub_in, sub_out, str(race)]
 
         await ctx.respond(EMPTY_CHAR)
         await commands.TablingCommands.substitute_player_command(message, this_bot, args, server_prefix, is_lounge)

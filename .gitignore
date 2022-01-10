@@ -47,3 +47,4 @@ miis/*
 logging/full_logging.txt
 
 .vscode/*
+event_structure_migration.sql

@@ -120,10 +120,11 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
             "large_time": commands.TablingCommands.quick_edit_command,
             "missing_player": commands.TablingCommands.disconnections_command
         }
-       
+        if self.error['type'] == 'tie': 
+            self.resolved
         command_mes = await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.lounge, dont_send=True)
-
-        await self.view.update_message(command_mes)
+        author_str = interaction.user.mention
+        await self.view.update_message(f"{author_str}: "+command_mes)
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
     def __init__(self, values, name):

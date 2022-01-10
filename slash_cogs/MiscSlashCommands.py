@@ -137,7 +137,7 @@ class MiscSlash(ext_commands.Cog):
         if player: args.append(player)
         
         await ctx.respond(EMPTY_CHAR)
-        await commands.OtherCommands.fc_command(message, args, message)
+        await commands.OtherCommands.fc_command(message, args, message.content)
     
     @slash_command(name='mii',
     description="Get a Lounge player's last used Mii",
@@ -152,7 +152,7 @@ class MiscSlash(ext_commands.Cog):
         if player: args.append(player)
 
         await ctx.respond(EMPTY_CHAR)
-        await commands.OtherCommands.mii_command(message, args, message)
+        await commands.OtherCommands.mii_command(message, args, message.content)
     
     @slash_command(name="lounge_name",
     description="Get your Lounge name",
