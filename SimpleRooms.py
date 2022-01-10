@@ -296,6 +296,15 @@ class SimpleRooms(object):
         cur_track = race.getTrackNameWithoutAuthor()
         room_str = f"+ {race.getWWFullName(race.region)} Room Rating (out of 100): {race.getRoomRating()}\n\n- Room {race.roomID} - {cur_track} ({race.matchTime}) -"
         
+        spots_available = 12 - len(race.placements)
+        if spots_available == 0:
+            spots_string = "Full Room"
+        else:
+            spots_string = f"{spots_available} Free Spot{'s' if spots_available > 1 else ''}"
+
+        room_str = f"+ {race.getWWFullName(race.region)} Room Rating (out of 100): {race.getRoomRating()}\n\n" \
+                   f"- Room {race.roomID} - {cur_track} ({race.matchTime}) - {spots_string}"
+
         #if len(last_match) == 0:
         #    room_str += "Not started"
         #else:

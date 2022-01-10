@@ -1,6 +1,5 @@
 '''
 Created on Oct 29, 2021
-
 @author: willg
 '''
 PLAYER_TABLE_NAMES = ["fc", "pid", "player_url"]
@@ -13,7 +12,6 @@ TIER_TABLE_NAMES = ["channel_id", "tier"]
 EVENT_ID_TABLE_NAMES = ["event_id"]
 EVENT_TABLE_NAMES = ["event_id", "channel_id", "time_added", "last_updated", "number_of_updates", "region", "set_up_user_discord_id", "set_up_user_display_name", "player_setup_amount"]
 EVENT_STRUCTURE_TABLE_NAMES = ["event_id", "name_changes", "removed_races", "placement_history", "forced_room_size", "player_penalties", "team_penalties", "manual_dc_placements", "disconnections_on_results", "sub_ins", "teams", "rxx_list", "edits", "ignore_large_times", "missing_player_points", "event_name", "number_of_gps", "player_setup_amount", "number_of_teams", "players_per_team"]
-
 
 def get_existing_race_fcs_in_Place_table(race_id_fcs):
     return f"""SELECT {PLACE_TABLE_NAMES[0]}, {PLACE_TABLE_NAMES[1]}
@@ -90,15 +88,12 @@ WHERE {PLACE_TABLE_NAMES[0]} = ? AND {PLACE_TABLE_NAMES[1]} = ? AND {PLACE_TABLE
 def get_insert_into_race_table_script():
     return f"""INSERT INTO Race {build_data_names(RACE_TABLE_NAMES)}
 VALUES{build_sql_args_list(RACE_TABLE_NAMES)}"""
-
 def get_insert_into_player_table_script():
     return f"""INSERT INTO Player {build_data_names(PLAYER_TABLE_NAMES)}
 VALUES{build_sql_args_list(PLAYER_TABLE_NAMES)}"""
-
 def get_insert_into_track_table_script():
     return f"""INSERT INTO Track {build_data_names(TRACK_TABLE_NAMES)}
 VALUES{build_sql_args_list(TRACK_TABLE_NAMES)}"""
-
 def get_insert_into_place_table_script():
     return f"""INSERT INTO Place {build_data_names(PLACE_TABLE_NAMES)}
 VALUES{build_sql_args_list(PLACE_TABLE_NAMES)}"""
@@ -226,22 +221,20 @@ class SQL_Search_Query_Builder(object):
 
     @staticmethod
     def get_best_tracks(fcs, is_ct, tier, last_x_days, min_count):
-        tier_filter_clause = ""
-        days_filter_clause = ""
-        if tier is not None:
-            tier_filter_clause = f"""
-            AND Place.race_id IN (
-                SELECT race_id
-                FROM Event_Races
-                         JOIN Event ON Event_Races.event_id = Event.event_id
-                         JOIN Tier ON Event.channel_id = Tier.channel_id
-                    
-                    WHERE Event.player_setup_amount = 12
-                    AND tier = {tier}
-                    {SQL_Search_Query_Builder.get_event_valid_filter()}
-            )
-            """
+        tier_filter_clause = f"""
+        AND Place.race_id IN (
+            SELECT race_id
+            FROM Event_Races
+                     JOIN Event ON Event_Races.event_id = Event.event_id
+                     JOIN Tier ON Event.channel_id = Tier.channel_id
+                
+                WHERE Event.player_setup_amount = 12
+                {f"AND tier = {tier}" if (tier is not None) else ""}
+                {SQL_Search_Query_Builder.get_event_valid_filter()}
+        )
+        """
 
+        days_filter_clause = ""
         if last_x_days is not None:
             days_filter_clause = "AND " + SQL_Search_Query_Builder.get_sql_days_filter(last_x_days)
 
@@ -252,7 +245,7 @@ class SQL_Search_Query_Builder(object):
             SELECT Track.fixed_track_name,
                    AVG(pts)         AS avg_pts,
                    AVG(Place.place) AS avg_place,
-                   AVG(time-Race.first_place_time) AS avg_delta,
+                   MIN(time) AS avg_delta,
                    COUNT(*)         AS count
             FROM Place
                      JOIN Race ON Place.race_id = Race.race_id
@@ -284,7 +277,7 @@ class SQL_Search_Query_Builder(object):
                discord_id,
                AVG(pts)         AS avg_pts,
                AVG(Place.place) AS avg_place,
-               AVG(time-Race.first_place_time) AS avg_delta,
+               MIN(time) AS avg_delta,
                COUNT(*) AS count
         FROM Place
                  JOIN Race ON Place.race_id = Race.race_id
@@ -301,7 +294,7 @@ class SQL_Search_Query_Builder(object):
                     JOIN Track ON Race.track_name = Track.track_name
         
             WHERE Event.player_setup_amount = 12
-                AND Track.track_name = ?
+                AND Track.fixed_track_name = ?
                 {tier_filter_clause}
                 {SQL_Search_Query_Builder.get_event_valid_filter()}
         )
@@ -316,5 +309,3 @@ class SQL_Search_Query_Builder(object):
         """
 
 #print(get_fcs_not_in_Player_table([1, 2, 3]))
-
-

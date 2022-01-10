@@ -907,7 +907,7 @@ class BadWolfBot(ext_commands.Bot):
                     await commands.StatisticCommands.player_tracks_command(self, message, args, server_prefix, command, sort_asc=True)
 
                 elif args[0] in TOP_PLAYERS_TERMS:
-                    await commands.StatisticCommands.top_players_command(self, message, args, server_prefix)
+                    await commands.StatisticCommands.top_players_command(self, message, args, server_prefix, command)
 
                 else:
                     await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  

@@ -37,13 +37,10 @@ cache_deletion_time_limit = timedelta(hours=2)
 lockout_timelimit = timedelta(minutes=5)
 
 
-
-
-
-
-
 wiimmfi_url = 'https://wiimmfi.de'
 mkwxURL = 'https://wiimmfi.de/stats/mkwx'
+if "mkwx_proxy_url" in common.properties:
+    mkwxURL = common.properties['mkwx_proxy_url']
 submkwxURL = f"{mkwxURL}/list/"
 special_test_cases = {
     f"{submkwxURL}r0000000":("Special room: Room has times with high deltas and a race with times that are the same as another race's times", f"{common.SAVED_ROOMS_DIR}SameTimeHighDelta.html"),
@@ -57,7 +54,6 @@ special_test_cases = {
     f"{submkwxURL}r0000008":("Room to test component suggestions with.", f"{common.SAVED_ROOMS_DIR}SuggestionComponentsTesting.html"),
     f"{submkwxURL}r0000009":("Room to test component suggestions with (ties).", f"{common.SAVED_ROOMS_DIR}Ties_Testing.html"),
     f"{submkwxURL}r0000010":("Room with email protected tags", f"{common.SAVED_ROOMS_DIR}email_protected.html")
-}
 }
 
 

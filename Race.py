@@ -44,23 +44,23 @@ track_name_abbreviation_mappings = {
     "Wii Bowser's Castle (Nintendo)": "BCWii",
     "Wii Rainbow Road (Nintendo)": ("RR", "虹"),
     #Shell Cup
-    "GCN Peach Beach (Nintendo)": ("rPB", "ピーチビーチ"),
-    "DS Yoshi Falls (Nintendo)": ("rYF", "ヨシフォ"),
+    "GCN Peach Beach (Nintendo)": (["rPB","PB"], "ピーチビーチ"),
+    "DS Yoshi Falls (Nintendo)": (["rYF", "YF"], "ヨシフォ"),
     "SNES Ghost Valley 2 (Nintendo)": (["GV2", "rGV2"], "沼"),
     "N64 Mario Raceway (Nintendo)": ("rMR", "64マリサ"),
     #Banana Cup
-    "N64 Sherbet Land (Nintendo)": ("rSL", "シャベラン"),
+    "N64 Sherbet Land (Nintendo)": (["rSL", "SL"], "シャベラン"),
     "GBA Shy Guy Beach (Nintendo)": ("SGB", "兵浜"),
     "DS Delfino Square (Nintendo)": (["rDS", "DSDS"], "モンテ"),
-    "GCN Waluigi Stadium (Nintendo)": ("rWS", "ワルスタ"),
+    "GCN Waluigi Stadium (Nintendo)": (["rWS", "WS"], "ワルスタ"),
     #Leaf Cup
-    "DS Desert Hills (Nintendo)": ("rDH", "さばく"),
+    "DS Desert Hills (Nintendo)": (["rDH", "DH"], "さばく"),
     "GBA Bowser Castle 3 (Nintendo)": "BC3",
     "N64 DK's Jungle Parkway (Nintendo)": (["rJP","rDKJP", "DKJP", "JP"], "ジャンパ"),
     "GCN Mario Circuit (Nintendo)": (["GCN MC", "rMC"], "GCマリサ"),
     #Lightning Cup
     "SNES Mario Circuit 3 (Nintendo)": ("MC3", "SFCマリサ"),
-    "DS Peach Gardens (Nintendo)": ("rPG", "ピチガ"),
+    "DS Peach Gardens (Nintendo)": (["rPG", "PG"], "ピチガ"),
     "GCN DK Mountain (Nintendo)": ("DKM", "山"),
     "N64 Bowser's Castle (Nintendo)": (["BC64", "rBC"], "64BC")
     }

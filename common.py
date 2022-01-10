@@ -3,6 +3,7 @@ Created on Jun 12, 2021
 
 @author: willg
 '''
+import json
 import os
 from datetime import datetime, timedelta, timezone
 import numpy as np
@@ -20,6 +21,8 @@ sslcontext = ssl.create_default_context(cafile=certifi.where())
 
 version = "12.0.0" #Final release from Bad Wolf, stabilizing various things and releasing beta commands
 
+PROPERTIES_FILE = f"properties.json"
+properties = json.load(open(PROPERTIES_FILE)) if os.path.exists(PROPERTIES_FILE) else {}
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
@@ -51,8 +54,12 @@ SCORE_MATRIX = [
 #current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
-in_testing_server = False
-running_beta = False
+is_dev = properties['mode'] == 'dev'
+is_beta = properties['mode'] == 'beta'
+is_prod = properties['mode'] == 'prod'
+
+in_testing_server = is_dev
+running_beta = is_beta
 beta_is_real = False
 
 
@@ -97,9 +104,7 @@ BETA_CATEGORY_IDS = {744842611998588928, 740659739611889765, 895999567894556672}
 SLASH_GUILDS = [775253594848886785]
 # SLASH_GUILDS = [739733336871665696]
 
-
 current_notification = ""
-
 
 #TableBot variables, for ChannelBots
 inactivity_time_period = timedelta(hours=2, minutes=30)
@@ -227,7 +232,7 @@ base_url_edit_table_lorenzi = "https://gb.hlorenzi.com/table?data="
 
 BAD_WOLF_ID = 706120725882470460 
 CW_ID = 366774710186278914
-
+ANDREW_ID = 267395889423712258
 
 #Lounge stuff
 MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=1&event_data="
@@ -269,8 +274,9 @@ reporter_plus_roles = set([393600567781621761, #RT Updater
 
 table_bot_support_plus_roles = reporter_plus_roles | set([748367398905708634])
 
-
-
+SHA_ADDERS = [
+    683193773055934474, # Fear#1616
+]
 
 #Bot Admin information
 blacklistedWordsFileIsOpen = False
@@ -346,10 +352,16 @@ lounge_channel_mappings = {MKW_LOUNGE_SERVER_ID:LoungeUpdateChannels(
 
 
 def is_bad_wolf(author):
-    return author.id in { BAD_WOLF_ID, CW_ID }
+    if is_dev:
+        return author.id in {BAD_WOLF_ID, CW_ID, ANDREW_ID}
+    else:
+        return author.id in {BAD_WOLF_ID, ANDREW_ID}
 
 def is_bot_admin(author):
     return str(author.id) in botAdmins or is_bad_wolf(author)
+
+def is_sha_adder(author):
+    return author.id in SHA_ADDERS
 
 def throw_if_not_lounge(guild):
     if guild.id != MKW_LOUNGE_SERVER_ID:
