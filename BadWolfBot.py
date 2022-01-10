@@ -1177,6 +1177,40 @@ def do_lounge_name_matching():
     
     print("Finished exporting as CSV.")
 
+<<<<<<< HEAD
+=======
+def destroy_all_tablebots():
+    for server_id in table_bots:
+        for channel_id in table_bots[server_id]:
+            table_bots[server_id][channel_id].destroy()
+
+def on_exit():
+    save_data()
+    destroy_all_tablebots()
+    print(f"{str(datetime.now())}: All table bots cleaned up.")
+     
+def save_data():
+    print(f"{str(datetime.now())}: Saving data")
+    successful = UserDataProcessing.non_async_dump_data()
+    if not successful:
+        print("LOUNGE API DATA DUMP FAILED! CRITICAL!")
+        common.log_text("LOUNGE API DATA DUMP FAILED! CRITICAL!", common.ERROR_LOGGING_TYPE)
+    DataTracker.save_data()
+    Race.save_data()
+    pickle_tablebots()
+    pickle_CTGP_region()
+    pickle_lounge_updates()
+    pkl_bad_wolf_facts()
+
+    if common.is_prod:
+        Stats.backup_files()
+        Stats.prune_backups()
+        Stats.dump_to_stats_file()
+        do_lounge_name_matching()
+
+    print(f"{str(datetime.now())}: Finished saving data")
+    
+>>>>>>> main
 
 def get_size(objct, seen=None):
     
@@ -1216,10 +1250,21 @@ def handler(signum, frame):
 signal.signal(signal.SIGINT, handler)
 
 
+<<<<<<< HEAD
 if __name__ == "__main__":
     create_folders()
     private_data_init()
 
+=======
+initialize()
+if common.is_dev:
+    client.run(testing_bot_key)
+elif common.is_beta:
+    client.run(beta_bot_key)
+else:
+    client.run(real_bot_key)
+    
+>>>>>>> main
 
     bot = BadWolfBot()
 

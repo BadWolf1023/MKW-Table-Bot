@@ -235,7 +235,7 @@ class BotAdminCommands:
 
     @staticmethod
     async def add_sha_track(message:discord.Message, args:List[str], command):
-        BotAdminCommands.is_bot_admin_check(message.author, "cannot add sha track")
+        BotAdminCommands.is_sha_adder_check(message.author, "cannot add sha track")
         if len(args) < 3:
             await message.channel.send("Requires 2 args `SHA, track_name`")
             return
@@ -250,7 +250,7 @@ class BotAdminCommands:
 
     @staticmethod
     async def remove_sha_track(message:discord.Message, args:List[str]):
-        BotAdminCommands.is_bot_admin_check(message.author, "cannot remove sha track")
+        BotAdminCommands.is_sha_adder_check(message.author, "cannot remove sha track")
         if len(args) != 2:
             await message.channel.send("Requires 1 args `SHA`")
             return

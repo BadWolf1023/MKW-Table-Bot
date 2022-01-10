@@ -211,7 +211,7 @@ class Mii(KaitaiStruct):
     def __resize_mii_image__(self, mii_image=None, width=common.MII_SIZE_FOR_TABLE, height=common.MII_SIZE_FOR_TABLE):
         if mii_image is None:
             mii_image = self.__get_cv2_mii_image__()
-        return cv2.resize(mii_image, dsize=(width, height), interpolation=cv2.INTER_CUBIC)
+        return cv2.resize(mii_image, dsize=(width, height), interpolation=cv2.INTER_AREA)
     
     """
     def get_cropped_image_for_table(self, mii_image=None, left_crop=LEFT_MII_CROP_AMOUNT, right_crop=RIGHT_MII_CROP_AMOUNT, top_crop=TOP_MII_CROP_AMOUNT, bottom_crop=BOTTOM_MII_CROP_AMOUNT):

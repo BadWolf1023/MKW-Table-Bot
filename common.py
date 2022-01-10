@@ -62,7 +62,6 @@ in_testing_server = is_dev
 running_beta = is_beta
 beta_is_real = False
 
-
 DISABLE_MKWX_COMMANDS = False
 LIMIT_MKWX_COMMANDS = False
 STUB_MKWX = False
@@ -348,7 +347,6 @@ lounge_channel_mappings = {MKW_LOUNGE_SERVER_ID:LoungeUpdateChannels(
     preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
     type_text_secondary="CT")
     }
-
 
 
 def is_bad_wolf(author):
