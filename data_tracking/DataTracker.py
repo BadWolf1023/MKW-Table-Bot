@@ -647,6 +647,7 @@ class RoomTrackerSQL(object):
                 json.dumps(self.channel_bot.getRoom().getForcedRoomSize()),
                 json.dumps(self.channel_bot.getRoom().getPlayerPenalties()),
                 json.dumps(self.channel_bot.getWar().getTeamPenalities()),
+                json.dumps(self.channel_bot.getRoom().get_manual_dc_placements()),
                 json.dumps(self.channel_bot.getRoom().get_dc_statuses()),
                 json.dumps(self.channel_bot.getRoom().get_subs()),
                 json.dumps(self.channel_bot.getWar().get_teams()),
