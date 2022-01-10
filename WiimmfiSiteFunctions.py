@@ -44,6 +44,8 @@ lockout_timelimit = timedelta(minutes=5)
 
 wiimmfi_url = 'https://wiimmfi.de'
 mkwxURL = 'https://wiimmfi.de/stats/mkwx'
+if "mkwx_proxy_url" in common.properties:
+    mkwxURL = common.properties['mkwx_proxy_url']
 submkwxURL = f"{mkwxURL}/list/"
 special_test_cases = {
 f"{submkwxURL}r0000000":("Special room: Room has times with high deltas and a race with times that are the same as another race's times", f"{common.SAVED_ROOMS_DIR}SameTimeHighDelta.html"),
@@ -54,7 +56,7 @@ f"{submkwxURL}r0000004":("Table Bot Remove Race Test w/ quickedit, 2nd room to m
 f"{submkwxURL}r0000005":("Clean room with no errors.", f"{common.SAVED_ROOMS_DIR}clean_room.html"),
 f"{submkwxURL}r0000006":("Tag in brackets.", f"{common.SAVED_ROOMS_DIR}tag_in_brackets.html"),
 f"{submkwxURL}r0000007":("Room with an unknown track name (SHA name).", f"{common.SAVED_ROOMS_DIR}unknown_track.html"),
-f"{submkwxURL}r0000007":("Room with email protected tags", f"{common.SAVED_ROOMS_DIR}email_protected.html")
+f"{submkwxURL}r0000008":("Room with email protected tags", f"{common.SAVED_ROOMS_DIR}email_protected.html")
 }
 
 

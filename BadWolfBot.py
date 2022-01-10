@@ -730,7 +730,7 @@ async def on_message(message: discord.Message):
                 await commands.StatisticCommands.player_tracks_command(client, message, args, server_prefix, command, sort_asc=True)
 
             elif args[0] in TOP_PLAYERS_TERMS:
-                await commands.StatisticCommands.top_players_command(client, message, args, server_prefix)
+                await commands.StatisticCommands.top_players_command(client, message, args, server_prefix, command)
 
             else:
                 await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  
@@ -1032,10 +1032,13 @@ def save_data():
     pickle_CTGP_region()
     pickle_lounge_updates()
     pkl_bad_wolf_facts()
-    Stats.backup_files()
-    Stats.dump_to_stats_file()
-    #do_lounge_name_matching()
-    
+
+    if common.is_prod:
+        Stats.backup_files()
+        Stats.prune_backups()
+        Stats.dump_to_stats_file()
+        do_lounge_name_matching()
+
     print(f"{str(datetime.now())}: Finished saving data")
     
 
@@ -1090,9 +1093,9 @@ signal.signal(signal.SIGINT, handler)
 atexit.register(on_exit)
 
 initialize()
-if common.in_testing_server:
+if common.is_dev:
     client.run(testing_bot_key)
-elif common.running_beta:
+elif common.is_beta:
     client.run(beta_bot_key)
 else:
     client.run(real_bot_key)
