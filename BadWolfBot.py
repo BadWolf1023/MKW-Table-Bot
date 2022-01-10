@@ -365,9 +365,11 @@ class BadWolfBot(ext_commands.Bot):
         pickle_CTGP_region()
         self.pickle_lounge_updates()
         self.pkl_bad_wolf_facts()
-        Stats.backup_files()
-        Stats.dump_to_stats_file()
-        #do_lounge_name_matching()
+        if common.is_prod:
+            Stats.backup_files()
+            Stats.prune_backups()
+            Stats.dump_to_stats_file()
+            do_lounge_name_matching()
         
         print(f"{str(datetime.now())}: Finished saving data")
     
@@ -1221,9 +1223,9 @@ if __name__ == "__main__":
 
     bot = BadWolfBot()
 
-    if common.in_testing_server:
+    if common.is_dev:
         bot.run(testing_bot_key)
-    elif common.running_beta:
+    elif common.is_beta:
         bot.run(beta_bot_key)
     else:
         bot.run(real_bot_key)
