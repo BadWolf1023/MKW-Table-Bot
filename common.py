@@ -52,7 +52,7 @@ SCORE_MATRIX = [
 
 #Main loop constants
 in_testing_server = False
-running_beta = False
+running_beta = True
 beta_is_real = False
 
 

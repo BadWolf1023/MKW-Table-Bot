@@ -425,13 +425,15 @@ class BadWolfBot(ext_commands.Bot):
         self.table_bots[server_id][channel_id].updatedLastUsed()
         return self.table_bots[server_id][channel_id]
     
-    async def on_interaction_check(self, interaction):
+    async def on_interaction_check(self, interaction:discord.Interaction):
         if interaction.type != discord.InteractionType.application_command:
             return
 
         message = InteractionUtils.create_proxy_msg(interaction)
 
         is_lounge_server = InteractionUtils.check_lounge_server(message)
+        if common.running_beta and not is_lounge_server: #is_lounge_server is True if in Bad Wolf's server if beta is running
+            return
 
         await AbuseTracking.blacklisted_user_check(message)
         await AbuseTracking.abuse_track_check(message)
@@ -540,6 +542,8 @@ class BadWolfBot(ext_commands.Bot):
         if message.guild is None:
             return
         if not finished_on_ready:
+            return
+        if common.running_beta and not InteractionUtils.check_lounge_server(message): #lounge server is Bad Wolf's server if beta is running
             return
         
         try:

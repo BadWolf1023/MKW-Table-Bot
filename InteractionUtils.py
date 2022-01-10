@@ -6,6 +6,9 @@ import InteractionExceptions
 def check_lounge_server(message):
     return message.guild.id == common.MKW_LOUNGE_SERVER_ID
 
+def check_beta_server(message):
+    return message.guild.id == common.MKW_LOUNGE_SERVER_ID
+
 def bot_admin_check(ctx: discord.ApplicationContext):
     can = common.is_bot_admin(ctx.author)
     if not can:
