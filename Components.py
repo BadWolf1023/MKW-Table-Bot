@@ -1,6 +1,8 @@
 import discord
+from discord.abc import Messageable
 import commands
 import InteractionUtils
+from discord.ext import tasks
 
 class ConfirmButton(discord.ui.Button['ConfirmView']):
     def __init__(self, cat):
@@ -25,8 +27,7 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
         if self.cat == 'no':
             this_bot.manualWarSetUp = True
             await interaction.response.edit_message(view=self.view)
-            await interaction.followup.send(content=f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{server_prefix}A 2 3 / B 1 4 / Player 5 6*"
-                                            )
+            await interaction.followup.send(content=f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{server_prefix}A 2 3 / B 1 4 / Player 5 6*")
             
         else:
             if this_bot.getRoom() is None or not this_bot.getRoom().is_initialized():
@@ -44,15 +45,18 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
             if len(players) != this_bot.getWar().get_num_players():
                 await interaction.response.edit_message(view=self.view)
                 
-                return await interaction.followup.send(content=f'''**Warning:** *the number of players in the room doesn't match your war format and teams. **Table started, but teams might be incorrect.***'''
-                                                + '\n' + this_bot.get_room_started_message(), view=view)
+                # return await interaction.followup.send(content=f'''**Warning:** *the number of players in the room doesn't match your war format and teams. **Table started, but teams might be incorrect.***'''
+                #                                 + '\n' + this_bot.get_room_started_message(), view=view)
+                return await view.send(interaction.channel, content='''**Warning:** *the number of players in the room doesn't match your war format and teams. **Table started, but teams might be incorrect.***'''
+                                                + '\n' + this_bot.get_room_started_message())
 
             try:
                 await interaction.response.edit_message(view=self.view)
             except:
                 pass 
             
-            await interaction.followup.send(content=this_bot.get_room_started_message(), view=view)
+            # await interaction.followup.send(content=this_bot.get_room_started_message(), view=view)
+            await view.send(interaction.channel, content=this_bot.get_room_started_message())
 
 class ConfirmView(discord.ui.View):
     def __init__(self, bot, prefix, lounge):
@@ -68,11 +72,27 @@ class ConfirmView(discord.ui.View):
 
 
 class PictureButton(discord.ui.Button['PictureView']):
-    def __init__(self):
+    def __init__(self, bot):
         super().__init__(style=discord.ButtonStyle.primary, label='Picture')
+        self.bot = bot
+        self.disabled = self.bot.getWPCooldownSeconds() > 0
+        try:
+            self.check_clickable.start()
+        except:
+            pass
+    
+    @tasks.loop(seconds=0.5)
+    async def check_clickable(self):
+        if not self.view or not self.view.message: return
+        if self.disabled and self.bot.getWPCooldownSeconds() < 1:
+            self.disabled = False
+        elif not self.disabled and self.bot.getWPCooldownSeconds() > 0:
+            self.disabled = True
+        await self.view.message.edit(view=self.view)
 
     async def callback(self, interaction: discord.Interaction):
         msg = InteractionUtils.create_proxy_msg(interaction, ['wp'])
+        self.interaction = interaction
         await interaction.response.edit_message(view=self.view) # view=none? but maybe it's good to allow people to click them whenever (since there is a cooldown on ?wp)
         await commands.TablingCommands.war_picture_command(msg, self.view.bot, ['wp'], self.view.prefix, self.view.lounge)
 
@@ -82,7 +102,15 @@ class PictureView(discord.ui.View):
         self.bot = bot
         self.prefix = prefix
         self.lounge = is_lounge_server
-        self.add_item(PictureButton())
+        self.message = None
+            
+    async def send(self, messageable, content=None, file=None, embed=None):
+        if hasattr(messageable, 'channel'):
+            messageable = messageable.channel
+        self.add_item(PictureButton(self.bot))
+
+        self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
+
 
 
 ###########################################################################################

@@ -2166,7 +2166,8 @@ class TablingCommands:
 
         this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
         view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
-        await message.channel.send(this_bot.get_room_started_message(), view=view)
+        # await message.channel.send(this_bot.get_room_started_message(), view=view)
+        await view.send(message, this_bot.get_room_started_message())
 
     @staticmethod
     async def merge_room_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2500,13 +2501,6 @@ class TablingCommands:
                                 temp = temp[:2048-len(error_message)] + error_message
                             embed.set_footer(text=temp)
 
-                            pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
-                            await message.channel.send(file=file, embed=embed, view=pic_view)
-                            await common.safe_delete(message3)
-
-                            if should_send_notification and common.current_notification != "":
-                                await message.channel.send(common.current_notification.replace("{SERVER_PREFIX}", server_prefix))
-
                             # if error_types: error_types = [(k, v) for k, v in error_types.items() if len(v)!=0]
                             if error_types and len(error_types)>0:
                                 view_list = list()
@@ -2526,7 +2520,16 @@ class TablingCommands:
                                         page_list.append(f'\u200b\n**Race #{race}{info_str}**\n{description}\n\u200b')
                                         # await message.channel.send(f'**Race #{race}{info_str}**', view=view)
                                 paginator = ComponentPaginator.SuggestionsPaginator(page_list, view_list)
-                                await paginator.send(message)
+
+                            pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+                            # await message.channel.send(file=file, embed=embed, view=pic_view)
+                            await pic_view.send(message, file=file, embed=embed)
+                            await common.safe_delete(message3)
+                            await paginator.send(message)
+
+
+                            if should_send_notification and common.current_notification != "":
+                                await message.channel.send(common.current_notification.replace("{SERVER_PREFIX}", server_prefix))
                                 
                     finally:
                         if os.path.exists(table_image_path):
@@ -2737,11 +2740,13 @@ class TablingCommands:
             if not copied_instance.table_is_set():
                 return await message.channel.send("The table you are trying to copy has not been loaded.")
 
+            copied_instance.lastWPTime = None
             table_bots[message.guild.id][message.channel.id] = copied_instance #change this instance
 
             pic_view = Components.PictureView(copied_instance, server_prefix, is_lounge_server)
           
-            return await message.channel.send(f"Table has been copied from <#{channel_id}>.", view=pic_view)
+            # return await message.channel.send(f"Table has been copied from <#{channel_id}>.", view=pic_view)
+            return await pic_view.send(message, content=f"Table has been copied from <#{channel_id}>.")
         
         # copy from another server
         try:
@@ -2775,14 +2780,16 @@ class TablingCommands:
         if not copied_instance.table_is_set():
             return await message.channel.send("The table you are trying to copy has not been loaded.")
 
+        copied_instance.lastWPTime = None
+
         if message.guild.id not in table_bots:
             table_bots[message.guild.id] = {}
+        
         table_bots[message.guild.id][message.channel.id] = copied_instance
 
         pic_view = Components.PictureView(copied_instance, server_prefix, is_lounge_server)
-        await message.channel.send(f"Table has been copied from <#{channel_id}> in {guild.name}.", view=pic_view)
-
-
+        # await message.channel.send(f"Table has been copied from <#{channel_id}> in {guild.name}.", view=pic_view)
+        await pic_view.send(message, content=f"Table has been copied from <#{channel_id}> in {guild.name}.")
 
 
 
