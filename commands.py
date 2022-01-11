@@ -2261,10 +2261,6 @@ class TablingCommands:
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
-
-        players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, len(this_bot.getRoom().races)).items())
-        FC_List = [fc for fc, _ in players]
-        await updateData(* await LoungeAPIFunctions.getByFCs(FC_List))
         await message.channel.send(this_bot.getRoom().get_players_list_string())
 
     @staticmethod
