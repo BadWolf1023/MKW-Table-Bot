@@ -72,24 +72,3 @@ class CommandDisabled(Exception):
 class WiimmfiSiteFailure(Exception):
     pass
 
-class MKWXCloudflareBlock(WiimmfiSiteFailure):
-    pass
-
-class RequestedRecently(WiimmfiSiteFailure):
-    pass
-
-class WiimmfiSiteRaceCondition(WiimmfiSiteFailure):
-    pass
-
-class WiimmfiRaceConditionFailure(WiimmfiSiteRaceCondition):
-    pass
-
-class CacheRaceCondition(WiimmfiSiteRaceCondition):
-    pass
-
-class URLLocked(WiimmfiSiteRaceCondition):
-    pass
-
-class NoAvailableBrowsers(WiimmfiSiteFailure):
-    pass
-
