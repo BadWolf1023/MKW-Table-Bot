@@ -38,7 +38,7 @@ class URLCacher():
         self.url_cache[url]["time_received"] = datetime.now()
         self.url_cache[url]["currently_pulling"] = False
         
-    async def fetch_url(self, url):
+    async def __fetch_url__(self, url):
         '''Sends an asychronous request for the given url, caches the response text, and returns the response text'''
         response_text = None
         self.__prepare_fetch__(url)
@@ -76,7 +76,7 @@ class URLCacher():
         
         for url in urls_to_delete:
             del self.urls_to_delete[url]
-            
+
 
     async def __can_hit_cache__(self, url, cache_length, allow_hanging):
         if self.url_cache[url]["currently_pulling"]:
@@ -107,4 +107,4 @@ class URLCacher():
         if self.__can_hit_cache__(url, cache_length, allow_hanging):
             return self.url_cache[url]["response_text"]
         else:
-            return await self.fetch_url(url)
+            return await self.__fetch_url__(url)
