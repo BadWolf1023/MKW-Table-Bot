@@ -1,4 +1,4 @@
-#Internal imports (stuff I coded) for this file
+# Internal imports (stuff I coded) for this file
 import ServerFunctions
 import Stats
 import LoungeAPIFunctions
@@ -14,11 +14,10 @@ import common
 import MogiUpdate
 import URLShortener
 import AbuseTracking
-import WiimmfiSiteFunctions
 import TagAIShell
 from data_tracking import DataTracker
 
-#External library imports for this file
+# External library imports for this file
 import discord
 from discord.ext import tasks
 import traceback
