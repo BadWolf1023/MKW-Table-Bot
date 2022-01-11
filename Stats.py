@@ -41,7 +41,17 @@ def backup_files(to_back_up=common.FILES_TO_BACKUP):
         else:
             if file_name == common.FULL_MESSAGE_LOGGING_FILE:
                 os.remove(common.FULL_MESSAGE_LOGGING_FILE)   
-                common.check_create(common.FULL_MESSAGE_LOGGING_FILE) 
+                common.check_create(common.FULL_MESSAGE_LOGGING_FILE)
+
+def prune_backups():
+    for folder in os.listdir(backup_folder):
+        try:
+            create_time = datetime.strptime(folder,'%Y-%m-%d').date()
+            delta = datetime.date(datetime.now()) - create_time
+            if delta.days > 14 and create_time.day != 1:
+                shutil.rmtree(backup_folder + folder)
+        except:
+            pass
     
 def get_commands_from_txt(to_find, needle_function, log_file, limit=None):
     results = []

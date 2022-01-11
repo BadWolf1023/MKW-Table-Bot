@@ -45,5 +45,8 @@ miis/*
 !*/BadWolf.jpg
 
 logging/full_logging.txt
+logging/error_logs.txt
+logging/messages_logging.txt
+discord_server_settings/*
 
 .vscode/*
