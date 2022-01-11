@@ -43,7 +43,7 @@ class Table_Slash(ext_commands.Cog):
         psb: Option(bool, 'Suppress large finish time warnings', required=False, default=None),
         miis: Option(bool, 'Show miis on table', required=False, default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
 
         if num_teams is None:
             num_teams = UtilityFunctions.get_max_teams(war_format)
@@ -79,7 +79,7 @@ class Table_Slash(ext_commands.Cog):
         use_lounge_names: Option(bool, "Show lounge names on table", required=False, default=None),
         use_mii_names: Option(bool, "Show mii names on table", required=False, default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command]
 
         bool_map = {True: 'yes', False: 'no'}
@@ -109,7 +109,7 @@ class Table_Slash(ext_commands.Cog):
         dc_number: Option(int, 'DC number of player who DCed (check /dcs)'),
         status: Option(str, 'DC status', choices=['during', 'before']) #TODO: add lounge_name and race parameters so don't have to lookup /dcs
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
 
         args = [command, str(dc_number), status]
 
@@ -126,7 +126,7 @@ class Table_Slash(ext_commands.Cog):
         gp: Option(str, "GP to edit"),
         score: Option(int, "New score")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, player, gp, score]
 
 
@@ -143,7 +143,7 @@ class Table_Slash(ext_commands.Cog):
         player: Option(str, "Player to change positions for (playerNumber or LoungeName)"),
         position: Option(int, "New position for player")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, str(race), player, str(position)]
 
 
@@ -160,7 +160,7 @@ class Table_Slash(ext_commands.Cog):
         player: Option(str, 'Player to give a penalty/reward to'),
         amount: Option(int, "Penalty: positive number; Reward: negative number")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, player, str(amount)]
 
         await ctx.respond(EMPTY_CHAR)
@@ -175,7 +175,7 @@ class Table_Slash(ext_commands.Cog):
         race: Option(int, "Race to change room size"),
         room_size: Option(int, "Corrected room size")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, str(race), str(room_size)]
 
         await ctx.respond(EMPTY_CHAR)
@@ -189,7 +189,7 @@ class Table_Slash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         room_arg: Option(str, "rxx of room or LoungeName in room")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, room_arg]
 
         await ctx.respond(EMPTY_CHAR)
@@ -203,7 +203,7 @@ class Table_Slash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         race: Option(int, "Race to remove from table")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, str(race)]
         await ctx.respond(EMPTY_CHAR)
         await commands.TablingCommands.remove_race_command(message, this_bot, args, server_prefix, is_lounge)
@@ -217,7 +217,7 @@ class Table_Slash(ext_commands.Cog):
         player: Option(str, "playerNumber or LoungeName"),
         name: Option(str, "New name (put a # at the beginning to remove the player from table)")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, player, name]
         await ctx.respond(EMPTY_CHAR)
         await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge, message.content)
@@ -231,7 +231,7 @@ class Table_Slash(ext_commands.Cog):
         player: Option(str, "playerNumber or LoungeName"),
         tag: Option(str, "Corrected tag")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, player, tag]
 
         await ctx.respond(EMPTY_CHAR)
@@ -246,7 +246,7 @@ class Table_Slash(ext_commands.Cog):
         gp: Option(int, "GP where early DC occurred"),
         status: Option(str, "DC status", choices=['during', 'before'], required=False, default="during")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, str(gp), status]
 
         await ctx.respond(EMPTY_CHAR)
@@ -262,7 +262,7 @@ class Table_Slash(ext_commands.Cog):
         sub_in: Option(str, "Player subbing in (playerNumber or LoungeName)"),
         sub_out: Option(str, "Player subbing out (playerNumber or LoungeName)")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, sub_in, sub_out, str(race)]
 
         await ctx.respond(EMPTY_CHAR)
@@ -276,7 +276,7 @@ class Table_Slash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         undo_all: Option(bool, 'Undo every command at once', required=False, default=False)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command]
         if undo_all: args.append("all")
 
@@ -291,7 +291,7 @@ class Table_Slash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         redo_all: Option(bool, "Redo every command at once", required=False, default=False)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command]
         if redo_all: args.append("all")
 
@@ -305,7 +305,7 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         await ctx.respond(EMPTY_CHAR)
         await commands.TablingCommands.get_undos_command(message, this_bot, server_prefix, is_lounge)
     
@@ -316,7 +316,7 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         await ctx.respond(EMPTY_CHAR)
         await commands.TablingCommands.get_redos_command(message, this_bot, server_prefix, is_lounge)
     
@@ -327,7 +327,7 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        _, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        _, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
 
         await ctx.respond(EMPTY_CHAR)
         await commands.TablingCommands.get_subs_command(message, this_bot, server_prefix, is_lounge)
@@ -340,7 +340,7 @@ class Table_Slash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         max_race: Option(int, "Maximum race to display on table text", required=False, default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command]
         if max_race: args.append(str(max_race))
 
@@ -354,7 +354,7 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         await ctx.respond(EMPTY_CHAR)
         await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge)
 
@@ -365,7 +365,7 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         await ctx.respond(EMPTY_CHAR)
         await commands.TablingCommands.all_players_command(message, this_bot, server_prefix, is_lounge)
 
@@ -376,7 +376,7 @@ class Table_Slash(ext_commands.Cog):
         self, 
         ctx: discord.ApplicationContext
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command]
 
         await ctx.respond(EMPTY_CHAR)
@@ -389,7 +389,7 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
 
         await ctx.respond(EMPTY_CHAR)
         await commands.TablingCommands.display_races_played_command(message, this_bot, server_prefix, is_lounge)
@@ -402,7 +402,7 @@ class Table_Slash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         race: Option(int, "Race to display results of", required=False, default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command]
         if race: args.append(str(race))
 
@@ -416,7 +416,7 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
 
         await ctx.respond(EMPTY_CHAR)
         # await ctx.defer()
@@ -431,7 +431,7 @@ class Table_Slash(ext_commands.Cog):
         channel: Option(str, "channel that the other table is in"),
         guild: Option(str, "guild that the other table is in (only need this if other table is in different guild)", required=False, default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, channel]
         if guild: args.append(guild)
 
@@ -447,7 +447,7 @@ class Table_Slash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         players: Option(str, "Player(s) in the room", default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command]
         if players: args.append(players)
 
@@ -461,7 +461,7 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         
         await ctx.respond(EMPTY_CHAR)
         await commands.OtherCommands.wws_command(None, this_bot, message) #can refactor wws_command to get rid of `client` argument (no longer needed)
@@ -473,7 +473,7 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
 
         await ctx.respond(EMPTY_CHAR)
         await commands.OtherCommands.wws_command(None, this_bot, message, ww_type=Race.CTGP_CTWW_REGION) #can refactor wws_command to get rid of `client` argument (no longer needed)
@@ -486,7 +486,7 @@ class Table_Slash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         category: Option(str, "The category you need help with", required=False, default=None, choices=help_documentation.HELP_CATEGORIES + list(help_documentation.TABLING_HELP_FILES.keys())) #autocomplete=discord.utils.basic_autocomplete(get_help_categories)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command]
         if category: args.append(category)
 

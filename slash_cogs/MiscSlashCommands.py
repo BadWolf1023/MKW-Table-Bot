@@ -22,7 +22,7 @@ class MiscSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, this_bot, server_prefix, _ = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         await ctx.respond(EMPTY_CHAR)
         await commands.ServerDefaultCommands.show_settings_command(message, this_bot, server_prefix)
     
@@ -33,7 +33,7 @@ class MiscSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         prefix: Option(str, "New prefix")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, prefix]
         await ctx.respond(EMPTY_CHAR)
         await commands.ServerDefaultCommands.change_server_prefix_command(message, args)
@@ -45,7 +45,7 @@ class MiscSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         formats: Option(str, "War formats to ignore large time warnings for")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, formats]
         await ctx.respond(EMPTY_CHAR)
         await commands.ServerDefaultCommands.large_time_setting_command(message, this_bot, args, server_prefix)
@@ -57,7 +57,7 @@ class MiscSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         setting: Option(str, "Default mii setting", choices=['on', 'off'])
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         setting = 1 if setting == "on" else 0
         args = [command, setting]
         await ctx.respond(EMPTY_CHAR)
@@ -70,7 +70,7 @@ class MiscSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         graph: Option(int, "Default graph setting number")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, str(graph)]
         await ctx.respond(EMPTY_CHAR)
         await commands.ServerDefaultCommands.graph_setting_command(message, this_bot, args, server_prefix)
@@ -82,7 +82,7 @@ class MiscSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         theme: Option(int, "Default theme setting number")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, str(theme)]
         await ctx.respond(EMPTY_CHAR)
         await commands.ServerDefaultCommands.theme_setting_command(message, this_bot, args, server_prefix)
@@ -97,7 +97,7 @@ class MiscSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         flag: Option(str, "flag code")
     ):  
-        command, message, _, _, _ = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, flag]
 
         await ctx.respond(EMPTY_CHAR)
@@ -109,7 +109,7 @@ class MiscSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, _, _, _ = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command]
         await commands.OtherCommands.set_flag_command(message, args, self.bot.user_flag_exceptions)
     
@@ -119,7 +119,7 @@ class MiscSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):  
-        command, message, _, server_prefix, _ = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
 
         await ctx.respond(EMPTY_CHAR)
         await commands.OtherCommands.get_flag_command(message, server_prefix)
@@ -132,7 +132,7 @@ class MiscSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         player: Option(str, "Player", required=False, default=None)
     ):
-        command, message, _, _, _ = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command]
         if player: args.append(player)
         
@@ -147,7 +147,7 @@ class MiscSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         player: Option(str, "Player", required=False, default=None)
     ):
-        command, message, _, _, _ = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command]
         if player: args.append(player)
 
@@ -161,7 +161,7 @@ class MiscSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext,
     ):
-        command, message, _, _, _ = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
 
         await ctx.respond(EMPTY_CHAR)
         await commands.OtherCommands.lounge_name_command(message)

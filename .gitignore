@@ -1,50 +1,30 @@
+#IDE/Editor directories
 .project
 .pydevproject
 .idea
-tablebot_data/bad_wolf_facts.pkl
-tablebot_data/blacklisted_users.txt
-tablebot_data/blacklisted_words.txt
-tablebot_data/bot_admins.txt
-tablebot_data/CTGP_Region_File.pkl
-tablebot_data/discord_id_FCS.txt
-tablebot_data/discord_id_flags.txt
-tablebot_data/discord_id_lounges.txt
-tablebot_data/flag_codes.txt
-tablebot_data/flag_exceptions.txt
-tablebot_data/lounge_counter.pkl
-tablebot_data/lounge_table_update_ids.pkl
-tablebot_data/private.txt
-tablebot_data/stats.txt
-tablebot_data/tablebots.pkl
-tablebot_data/vr_is_on.pkl
-tablebot_data/*
-
 *.pyc
 .settings/org.eclipse.core.resources.prefs
+.vscode/*
 
-chrome-cli/*
+#private Table Bot data
+tablebot_data/*
 room_data.txt
 room_race_data.txt
-tablebot_data/all_room_data.pkl
-tablebot_data/sha_track_names.pkl
 AI_data.pkl
-helpful_tools/DB.Browser.for.SQLite-3.12.2-win32.msi
 room_data_tracking.db
 data_tracking/*.db
 */room_data_tracking.db
 team_formats.pkl
-
-
 miis/mii_cache/*
-# logging/*
-/tablebot_data/*.db
 /*.db
 miis/*
+logging/full_logging.txt
 
+#keep description files
 !*/description.txt
 !*/BadWolf.jpg
 
-logging/full_logging.txt
-
-.vscode/*
+#dev files
+chrome-cli/*
+helpful_tools/DB.Browser.for.SQLite-3.12.2-win32.msi
 properties.json

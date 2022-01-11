@@ -25,7 +25,7 @@ class LoungeSlash(ext_commands.Cog):
         races_played: Option(int, "Number of races played in event"),
         table_text: Option(str, "Table text for manual submissions", required=False, default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, tier, str(races_played)]
         if table_text: args.append(table_text)
 
@@ -41,7 +41,7 @@ class LoungeSlash(ext_commands.Cog):
         races_played: Option(int, "Number of races played in event"),
         table_text: Option(str, "Table text for manual submissions", required=False, default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, tier, str(races_played)]
         if table_text: args.append(table_text)
 
@@ -56,7 +56,7 @@ class LoungeSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         id: Option(int, "Submission ID")
     ):
-        command, message, this_bot, _, _ = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, str(id)]
 
         await ctx.respond(EMPTY_CHAR)
@@ -71,7 +71,7 @@ class LoungeSlash(ext_commands.Cog):
         id: Option(int, "Submission ID"),
         reason: Option(str, "Reason for denial", required=False, default=None)
     ):
-        command, message, this_bot, _, _ = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, this_bot, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, str(id)]
         if reason: args.append(reason)
 
@@ -85,7 +85,7 @@ class LoungeSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, _, _, _ = await self.bot.on_interaction_check(ctx.interaction)
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
 
         await ctx.respond(EMPTY_CHAR)
         await commands.LoungeCommands.pending_submissions_command(message, self.bot.lounge_submissions)

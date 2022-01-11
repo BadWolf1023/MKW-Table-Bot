@@ -11,3 +11,4 @@ aiosqlite
 lxml
 certifi
 dill
+requests

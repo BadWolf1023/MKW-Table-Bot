@@ -2034,7 +2034,7 @@ class TablingCommands:
         author_id = message.author.id
         message_id = message.id
         author_name = message.author.display_name
-        if not is_lounge_server or permission_check(message.author) or (len(args) - command.count(" gps=") - command.count(" sui=") - command.count(" psb=")) <= 3:
+        if not is_lounge_server or permission_check(message.author) or common.running_beta or (len(args) - command.count(" gps=") - command.count(" sui=") - command.count(" psb=")) <= 3:
             if len(args) < 3:
                 #TODO: sui=yes = psb
                 await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
