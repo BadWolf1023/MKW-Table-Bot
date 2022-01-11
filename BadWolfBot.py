@@ -1,4 +1,4 @@
-#Internal imports (stuff I coded) for this file
+# Internal imports (stuff I coded) for this file
 import ServerFunctions
 import Stats
 import LoungeAPIFunctions
@@ -14,11 +14,10 @@ import common
 import MogiUpdate
 import URLShortener
 import AbuseTracking
-import WiimmfiSiteFunctions
 import TagAIShell
 from data_tracking import DataTracker
 
-#External library imports for this file
+# External library imports for this file
 import discord
 from discord.ext import tasks
 import traceback
@@ -767,27 +766,6 @@ async def on_message(message: discord.Message):
     except aiohttp.client_exceptions.ClientOSError:
         await common.safe_send(message, "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
         raise
-    except TableBotExceptions.RequestedRecently:
-        logging_info = log_command_sent(message, extra_text="Error info: Room requested recently, but the original request failed.")
-        await common.safe_send(message, f"Your room was requested recently, perhaps by another person, but their request failed. To avoid hitting the website, I've denied your command. Try again after {common.wp_cooldown_seconds} seconds.")         
-        await send_to_503_channel(logging_info)
-    except TableBotExceptions.NoAvailableBrowsers:
-        logging_info = log_command_sent(message, extra_text="**Error info:** No available browsers.")
-        await common.safe_send(message, "I don't have the resources to process your command. Table Bot usage might be high at this time. Try again in a minute.")
-        await send_to_503_channel(logging_info)
-    except TableBotExceptions.MKWXCloudflareBlock:
-        logging_info = log_command_sent(message, extra_text="**Error info:** Cloudflare blocked this command.")
-        await common.safe_send(message, "Cloudflare blocked me, so I am currently trying to solve their captcha. If this is the first time you've seen this message in a while, DO try again in a few seconds, as I may have solved their captcha by then.\n\n**However**, if you get this error 5 times in a row without success, it means I cannot solve their captcha and you SHOULD NOT KEEP RUNNING THIS COMMAND. If you get this error 5 times in a row and continue to run commands, you risk being permanently banned from Table Bot.")         
-        await send_to_503_channel(logging_info)
-        await AbuseTracking.CLOUDFLARE_REPORT_CHANNEL.send(f"Cloudflare blocked this command: Server Name: {message.guild} - User: **{message.author}** - User ID: {message.author.id} - Nickname: {message.author.display_name} - Command: {message.content}\nIf this person repeatedly does this over the course 20 minutes or less, blacklist them.")
-    except TableBotExceptions.URLLocked:
-        logging_info = log_command_sent(message, extra_text="Error info: Minor race condition for this command, URL Locked.")
-        await common.safe_send(message, f"This room is locked at this time. This isn't your fault. Cloudflare on mkwx has complicated things. Please wait {WiimmfiSiteFunctions.lockout_timelimit.total_seconds()} seconds before trying again.")         
-        await send_to_503_channel(logging_info)
-    except TableBotExceptions.CacheRaceCondition:
-        logging_info = log_command_sent(message, extra_text="Error info: Race condition for this command.")
-        await common.safe_send(message, f"Something weird happened. This isn't your fault. Cloudflare on mkwx has complicated things. Go ahead and run your command again after {common.wp_cooldown_seconds} seconds.")         
-        await send_to_503_channel(logging_info)
     except TableBotExceptions.WiimmfiSiteFailure:
         logging_info = log_command_sent(message, extra_text="Error info: MKWX inaccessible, other error.")
         await common.safe_send(message, "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")    
@@ -827,9 +805,6 @@ async def on_ready():
     
     dumpDataAndBackup.start()
     checkBotAbuse.start()
-    
-    if WiimmfiSiteFunctions.USING_EXPERIMENTAL_REQUEST:
-        driver_reset_cycle.start()
         
     finished_on_ready = True
     
@@ -888,21 +863,6 @@ async def stay_alive_503():
         await send_to_503_channel("Stay alive to prevent 503")
     except:
         pass
-    
-if WiimmfiSiteFunctions.USING_EXPERIMENTAL_REQUEST:
-    import itertools
-    driver_cycle = itertools.cycle([i for i in range(WiimmfiSiteFunctions.number_of_browsers)])
-    driver_reset_cycle_loop_time = int(WiimmfiSiteFunctions.captcha_time_estimation / WiimmfiSiteFunctions.number_of_browsers)
-    @tasks.loop(minutes=driver_reset_cycle_loop_time)
-    async def driver_reset_cycle():
-        await asyncio.sleep(10) #Make sure we're done booting
-        current_driver_index = next(driver_cycle)
-        try:
-            success = await WiimmfiSiteFunctions.safe_restart_driver(current_driver_index, logging_message=f"Resetting driver at index {current_driver_index} because a captcha may be hit soon.")
-            if not success:
-                print(f"Failed to reset driver at index {current_driver_index} because it was busy for {WiimmfiSiteFunctions.SAFE_DRIVER_RESTART_TIMEOUT} seconds.")
-        except Exception as e:
-            print(f"Failed to reset driver at index {current_driver_index} because of the following exception: {e}")
 
    
 #This function will run every 1 minutes. It will remove any table bots that are
