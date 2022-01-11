@@ -16,7 +16,6 @@ import ssl
 import certifi
 import dill
 
-
 sslcontext = ssl.create_default_context(cafile=certifi.where())
 
 version = "12.0.0" #Final release from Bad Wolf, stabilizing various things and releasing beta commands
@@ -26,7 +25,7 @@ properties = json.load(open(PROPERTIES_FILE)) if os.path.exists(PROPERTIES_FILE)
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
-ON_WINDOWS = os.name == 'nt'
+ON_WINDOWS = os.name == 'nt' and "mkwx_proxy_url" not in properties
 HREF_HTML_NAME = 'href' if ON_WINDOWS else 'data-href'
 TOOLTIP_NAME = "data-tooltip" if ON_WINDOWS else "title"
 SAVED_ROOMS_DIR = "testing_rooms/windows/" if ON_WINDOWS else "testing_rooms/linux/"
@@ -146,7 +145,6 @@ ROOM_DATA_TRACKING_DATABASE_MAINTENANCE_SQL = f"{DATA_TRACKING_PATH}database_mai
 
 LOUNGE_ID_COUNTER_FILE = f"{DATA_PATH}lounge_counter.pkl"
 LOUNGE_TABLE_UPDATES_FILE = f"{DATA_PATH}lounge_table_update_ids.pkl"
-BAD_WOLF_FACT_FILE = f"{DATA_PATH}bad_wolf_facts.pkl"
 CTGP_REGION_FILE = f"{DATA_PATH}CTGP_Region_File.pkl"
 BADWOLF_PICTURE_FILE = f'{DATA_PATH}BadWolf.jpg'
 
@@ -159,7 +157,6 @@ FLAG_EXCEPTION_FILE = f"{DATA_PATH}flag_exceptions.txt"
 
 PRIVATE_INFO_FILE = f'{DATA_PATH}private.txt'
 STATS_FILE = f"{DATA_PATH}stats.txt"
-ROOM_DATA_TRACKER_FILE = f"{DATA_PATH}all_room_data.pkl"
 SHA_TRACK_NAMES_FILE = f"{DATA_PATH}sha_track_names.pkl"
 
 TABLE_BOT_PKL_FILE = f'{DATA_PATH}tablebots.pkl'
@@ -205,7 +202,6 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    DEFAULT_TABLE_THEME_FILE_NAME,
                    DEFAULT_GRAPH_FILE,
                    DEFAULT_MII_FILE,
-                   BAD_WOLF_FACT_FILE,
                    BLACKLISTED_USERS_FILE,
                    BLACKLISTED_WORDS_FILE,
                    BOT_ADMINS_FILE,
@@ -219,7 +215,6 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    STATS_FILE,
                    TABLE_BOT_PKL_FILE,
                    VR_IS_ON_FILE,
-                   ROOM_DATA_TRACKER_FILE,
                    SHA_TRACK_NAMES_FILE,
                    ROOM_DATA_TRACKING_DATABASE_FILE
                    }

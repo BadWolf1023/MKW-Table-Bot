@@ -489,34 +489,12 @@ class BadWolfBot(ext_commands.Bot):
             elif isinstance(err, aiohttp.client_exceptions.ClientOSError):
                 await common.safe_send(message, "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
                 raise
-            elif isinstance(err, TableBotExceptions.RequestedRecently):
-                logging_info = log_command_sent(message, extra_text="Error info: Room requested recently, but the original request failed.")
-                await common.safe_send(message, f"Your room was requested recently, perhaps by another person, but their request failed. To avoid hitting the website, I've denied your command. Try again after {common.wp_cooldown_seconds} seconds.")         
-                await self.send_to_503_channel(logging_info)
-            elif isinstance(err, TableBotExceptions.NoAvailableBrowsers):
-                logging_info = log_command_sent(message, extra_text="**Error info:** No available browsers.")
-                await common.safe_send(message, "I don't have the resources to process your command. Table Bot usage might be high at this time. Try again in a minute.")
-                await self.send_to_503_channel(logging_info)
-            elif isinstance(err, TableBotExceptions.MKWXCloudflareBlock):
-                logging_info = log_command_sent(message, extra_text="**Error info:** Cloudflare blocked this command.")
-                await common.safe_send(message, "Cloudflare blocked me, so I am currently trying to solve their captcha. If this is the first time you've seen this message in a while, DO try again in a few seconds, as I may have solved their captcha by then.\n\n**However**, if you get this error 5 times in a row without success, it means I cannot solve their captcha and you SHOULD NOT KEEP RUNNING THIS COMMAND. If you get this error 5 times in a row and continue to run commands, you risk being permanently banned from Table Bot.")         
-                await self.send_to_503_channel(logging_info)
-                await AbuseTracking.CLOUDFLARE_REPORT_CHANNEL.send(f"Cloudflare blocked this command: Server Name: {message.guild} - User: **{message.author}** - User ID: {message.author.id} - Nickname: {message.author.display_name} - Command: {message.content}\nIf this person repeatedly does this over the course 20 minutes or less, blacklist them.")
-            elif isinstance(err, TableBotExceptions.URLLocked):
-                logging_info = log_command_sent(message, extra_text="Error info: Minor race condition for this command, URL Locked.")
-                await common.safe_send(message, f"This room is locked at this time. This isn't your fault. Cloudflare on mkwx has complicated things. Please wait {WiimmfiSiteFunctions.lockout_timelimit.total_seconds()} seconds before trying again.")         
-                await self.send_to_503_channel(logging_info)
-            elif isinstance(err, TableBotExceptions.CacheRaceCondition):
-                logging_info = log_command_sent(message, extra_text="Error info: Race condition for this command.")
-                await common.safe_send(message, f"Something weird happened. This isn't your fault. Cloudflare on mkwx has complicated things. Go ahead and run your command again after {common.wp_cooldown_seconds} seconds.")         
-                await self.send_to_503_channel(logging_info)
             elif isinstance(err, TableBotExceptions.WiimmfiSiteFailure):
                 logging_info = log_command_sent(message, extra_text="Error info: MKWX inaccessible, other error.")
                 await common.safe_send(message, "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")    
                 await self.send_to_503_channel(logging_info)
             elif isinstance(err, TableBotExceptions.CommandDisabled):
-                await common.safe_send(message, "MKW Table Bot cannot access the website. Wiimm has neglected this situation. There is no path forward unless Wiimm whitelists Table Bot. I suggest you go to <https://forum.wii-homebrew.com>, go to 'User Introductions', and create a post about it.")
-
+                await common.safe_send(message, "This command has been disabled.")
             else:
                 common.log_traceback(traceback)
                 self.lounge_submissions.clear_user_cooldown(message.author)
@@ -529,7 +507,9 @@ class BadWolfBot(ext_commands.Bot):
             raise error   
     
     async def on_message(self, message: discord.Message):
-        
+        """
+        On_message bot event overridden - could refactor into bot.commands, but a lot of work
+        """
         if message.author == self.user:
             return
         if message.guild is None:
@@ -798,10 +778,6 @@ class BadWolfBot(ext_commands.Bot):
                     await self.close()
                     # sys.exit()
                     
-                elif args[0] in {"aidata"} and (common.is_bad_wolf(message.author) or message.author.id == 267395889423712258):
-                    if os.path.exists(TagAIShell.AI_Results_file_name):
-                        await message.channel.send(content="Put in Table Bot directory, and use `TagAIShell.view_AI_results()`", file=discord.File(TagAIShell.AI_Results_file_name))
-
                 elif args[0] in RACES_TERMS:
                     await commands.TablingCommands.display_races_played_command(message, this_bot, server_prefix, is_lounge_server)
                 
@@ -929,33 +905,12 @@ class BadWolfBot(ext_commands.Bot):
         except aiohttp.client_exceptions.ClientOSError:
             await common.safe_send(message, "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
             raise
-        except TableBotExceptions.RequestedRecently:
-            logging_info = log_command_sent(message, extra_text="Error info: Room requested recently, but the original request failed.")
-            await common.safe_send(message, f"Your room was requested recently, perhaps by another person, but their request failed. To avoid hitting the website, I've denied your command. Try again after {common.wp_cooldown_seconds} seconds.")         
-            await self.send_to_503_channel(logging_info)
-        except TableBotExceptions.NoAvailableBrowsers:
-            logging_info = log_command_sent(message, extra_text="**Error info:** No available browsers.")
-            await common.safe_send(message, "I don't have the resources to process your command. Table Bot usage might be high at this time. Try again in a minute.")
-            await self.send_to_503_channel(logging_info)
-        except TableBotExceptions.MKWXCloudflareBlock:
-            logging_info = log_command_sent(message, extra_text="**Error info:** Cloudflare blocked this command.")
-            await common.safe_send(message, "Cloudflare blocked me, so I am currently trying to solve their captcha. If this is the first time you've seen this message in a while, DO try again in a few seconds, as I may have solved their captcha by then.\n\n**However**, if you get this error 5 times in a row without success, it means I cannot solve their captcha and you SHOULD NOT KEEP RUNNING THIS COMMAND. If you get this error 5 times in a row and continue to run commands, you risk being permanently banned from Table Bot.")         
-            await self.send_to_503_channel(logging_info)
-            await AbuseTracking.CLOUDFLARE_REPORT_CHANNEL.send(f"Cloudflare blocked this command: Server Name: {message.guild} - User: **{message.author}** - User ID: {message.author.id} - Nickname: {message.author.display_name} - Command: {message.content}\nIf this person repeatedly does this over the course 20 minutes or less, blacklist them.")
-        except TableBotExceptions.URLLocked:
-            logging_info = log_command_sent(message, extra_text="Error info: Minor race condition for this command, URL Locked.")
-            await common.safe_send(message, f"This room is locked at this time. This isn't your fault. Cloudflare on mkwx has complicated things. Please wait {WiimmfiSiteFunctions.lockout_timelimit.total_seconds()} seconds before trying again.")         
-            await self.send_to_503_channel(logging_info)
-        except TableBotExceptions.CacheRaceCondition:
-            logging_info = log_command_sent(message, extra_text="Error info: Race condition for this command.")
-            await common.safe_send(message, f"Something weird happened. This isn't your fault. Cloudflare on mkwx has complicated things. Go ahead and run your command again after {common.wp_cooldown_seconds} seconds.")         
-            await self.send_to_503_channel(logging_info)
         except TableBotExceptions.WiimmfiSiteFailure:
             logging_info = log_command_sent(message, extra_text="Error info: MKWX inaccessible, other error.")
             await common.safe_send(message, "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")    
             await self.send_to_503_channel(logging_info)
         except TableBotExceptions.CommandDisabled:
-            await common.safe_send(message, "MKW Table Bot cannot access the website. Wiimm has neglected this situation. There is no path forward unless Wiimm whitelists Table Bot. I suggest you go to <https://forum.wii-homebrew.com>, go to 'User Introductions', and create a post about it.")
+            await common.safe_send(message, "This command has been disabled.")
 
         except Exception as e:
             common.log_traceback(traceback)
