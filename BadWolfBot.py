@@ -560,7 +560,6 @@ class BadWolfBot(ext_commands.Bot):
             return
         if common.running_beta and not InteractionUtils.check_lounge_server(message): #lounge server is Bad Wolf's server if beta is running
             return
-
         try:
             #server_id = message.guild.id   
             is_lounge_server = message.guild.id == common.MKW_LOUNGE_SERVER_ID
