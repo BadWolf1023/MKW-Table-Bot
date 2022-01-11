@@ -161,9 +161,6 @@ REMOVE_BLACKLISTED_WORD_TERMS = {"removeblacklistword", "removeblacklistedword",
 SERVER_USAGE_TERMS = {"serverusage", "usage", "serverstats"}
 TABLE_BOT_MEMORY_USAGE_TERMS = {"memory", "memoryusage"}
 GARBAGE_COLLECT_TERMS = {"gc", "garbagecollect"}
-ADD_BAD_WOLF_FACT_TERMS = {"addbadwolffact", "abwf"}
-REMOVE_BAD_WOLF_FACT_TERMS = {"removebadwolffact", "rbwf"}
-BAD_WOLF_FACT_TERMS = {"badwolffacts", "bwfs"}
 TOTAL_CLEAR_TERMS = {'totalclear'}
 DUMP_DATA_TERMS = {"dtt", "dothething"}
 LOOKUP_TERMS = {"lookup"}
@@ -214,8 +211,6 @@ elif common.running_beta and not common.beta_is_real:
     lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.BAD_WOLF_SERVER_ID, common.main_lounge_can_report_table)
 
 
-# bad_wolf_facts = []
-
 def createEmptyTableBot(server_id=None, channel_id=None):
     return TableBot.ChannelBot(server_id=server_id, channel_id=channel_id)
 
@@ -233,7 +228,6 @@ class BadWolfBot(ext_commands.Bot):
         self.table_bots = dict()
         self.lounge_submissions = lounge_submissions
         self.user_flag_exceptions = set()
-        self.bad_wolf_facts = list()
 
         if ALLOW_SLASH_COMMANDS:
             for ext in SLASH_EXTENSIONS:
@@ -263,7 +257,6 @@ class BadWolfBot(ext_commands.Bot):
             self.load_tablebot_pickle()
             load_CTGP_region_pickle()
             commands.load_vr_is_on()
-            self.load_bad_wolf_facts_pkl()
         
         AbuseTracking.set_bot_abuse_report_channel(self)
         self.updatePresence.start()
@@ -332,21 +325,6 @@ class BadWolfBot(ext_commands.Bot):
 
     def pickle_lounge_updates(self):
         self.lounge_submissions.dump_pkl() 
-    
-    def pkl_bad_wolf_facts(self):
-        with open(common.BAD_WOLF_FACT_FILE, "wb") as pickle_out:
-            try:
-                p.dump(self.bad_wolf_facts, pickle_out)
-            except:
-                print("Could not dump pickle for bad wolf facts. Current facts:", '\n'.join(self.bad_wolf_facts))
-            
-    def load_bad_wolf_facts_pkl(self):
-        if os.path.exists(common.BAD_WOLF_FACT_FILE):
-            with open(common.BAD_WOLF_FACT_FILE, "rb") as pickle_in:
-                try:
-                    self.bad_wolf_facts = p.load(pickle_in)
-                except:
-                    print("Could not read in the pickle for bad wolf facts.")
 
     def destroy_all_tablebots(self):
         for server_id in self.table_bots:
@@ -364,12 +342,10 @@ class BadWolfBot(ext_commands.Bot):
         self.pickle_tablebots()
         pickle_CTGP_region()
         self.pickle_lounge_updates()
-        self.pkl_bad_wolf_facts()
         if common.is_prod:
             Stats.backup_files()
             Stats.prune_backups()
             Stats.dump_to_stats_file()
-            do_lounge_name_matching()
         
         print(f"{str(datetime.now())}: Finished saving data")
     
@@ -465,8 +441,11 @@ class BadWolfBot(ext_commands.Bot):
 
         return interaction.data['name'], message, this_bot, '/', is_lounge_server
 
-    #SLASH COMMAND ERRORS
+
     async def on_application_command_error(self, ctx: discord.ApplicationContext, error):
+        """
+        Slash command errors
+        """
         message = ctx.message
         if not message: message = InteractionUtils.create_proxy_msg(ctx.interaction)
         server_prefix = '/'
@@ -550,7 +529,6 @@ class BadWolfBot(ext_commands.Bot):
             raise error   
     
     async def on_message(self, message: discord.Message):
-    ##########################################################################################At this point, we know the room exists, and we certainly have rLID. We're not sure if we have the roomID yet though.    
         
         if message.author == self.user:
             return
@@ -611,15 +589,6 @@ class BadWolfBot(ext_commands.Bot):
                 
                 elif args[0] in GARBAGE_COLLECT_TERMS:
                     commands.BadWolfCommands.garbage_collect_command(message)
-                    
-                elif args[0] in ADD_BAD_WOLF_FACT_TERMS:
-                    commands.BadWolfCommands.add_fact_command(message, command, self.bad_wolf_facts, self.pkl_bad_wolf_facts)
-                    
-                elif args[0] in REMOVE_BAD_WOLF_FACT_TERMS:
-                    commands.BadWolfCommands.remove_fact_command(message, args, self.bad_wolf_facts, self.pkl_bad_wolf_facts)
-                    
-                elif args[0] in BAD_WOLF_FACT_TERMS:
-                    commands.BadWolfCommands.send_all_facts_command(message, self.bad_wolf_facts)
                         
                 elif args[0] in START_WAR_TERMS:
                     await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
@@ -1006,7 +975,6 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     if common.author_is_table_bot_support_plus(message_author):
         return True
     
-    
     if this_bot is not None and this_bot.getWar() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
         return this_bot.getRoom().canModifyTable(message_author.id) #Fixed! Check ALL people who can modify table, not just the person who started it!
     
@@ -1035,10 +1003,6 @@ def has_prefix(command, pref=common.default_prefix):
         return False
     return command.startswith(pref)
 
-def has_my_name(message:str):
-    return False
-    return "tablebot" in message.lower().replace(" ", "")
-
 def is_vr_command(message:discord.Message):
     str_msg = message.content.strip()
     if str_msg[0] not in {"!"}:
@@ -1051,23 +1015,6 @@ def command_is_spam(command:str):
         if c in common.COMMAND_TRIGGER_CHARS:
             return False
     return True
-
-
-# last_fact_times = {}
-# fact_cooldown = timedelta(seconds=30)
-# async def send_bad_wolf_fact(message:discord.Message):
-#     global last_fact_times
-#     if len(bad_wolf_facts) > 0:
-#         cur_time = datetime.now()
-#         if message.channel.id not in last_fact_times \
-#         or (cur_time - last_fact_times[message.channel.id]) > fact_cooldown:
-#             last_fact_times[message.channel.id] = cur_time
-#             fact = random.choice(bad_wolf_facts)
-#             if "DISPLAY_NAME" in fact:
-#                 fact = fact.replace("DISPLAY_NAME", message.author.display_name)
-#             if "MENTION" in fact:
-#                 fact = fact.replace("MENTION", message.author.display_name)
-#             await message.channel.send(fact, delete_after=10)
 
 
 async def send_lounge_locked_message(message, this_bot):
@@ -1158,39 +1105,6 @@ def pickle_CTGP_region():
         except:
             print("Could not dump pickle for CTGP region for ?ctww. Exception occurred.")
             
-def do_lounge_name_matching():
-    lounge_name_list_path = "C:/Users/willg/Desktop/all_lounge.txt"
-    import csv
-    dict_data = {}
-    txt_file = "mapping.txt"
-    print("Started building map.")
-    with open(lounge_name_list_path, encoding="utf-8") as f:
-        for name in f:
-            name = name.strip().strip("\n")
-            discord_id = UserDataProcessing.get_DiscordID_By_LoungeName(name).strip("\n")
-            dict_data[name] = discord_id if discord_id != "" else "None"
-    print("Finished building map.")
-    
-    no_space_no_caps_names = [name.replace(" ","").lower().replace("\t","").replace("\n","") for name in dict_data]
-    for name in no_space_no_caps_names:
-        if no_space_no_caps_names.count(name) != 1:
-            print(name)
-    
-    dids = [did for did in dict_data.values() if did != ""]
-    for did in dids:
-        if dids.count(did) != 1:
-            print(did)
-            
-            
-    try:
-        with open(txt_file,'w', encoding="utf-8") as g:
-            for name, discord_id in dict_data.items():
-                g.write(f"{discord_id}\n")
-            
-    except IOError:
-        print("I/O error")
-    
-    print("Finished exporting as CSV.")
 
 def get_size(objct, seen=None):
     
