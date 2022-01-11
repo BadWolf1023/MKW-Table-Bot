@@ -49,3 +49,4 @@ logging/messages_logging.txt
 discord_server_settings/*
 
 .vscode/*
+properties.json
