@@ -10,6 +10,7 @@ import aiohttp
 import asyncio
 import common
 
+PRINT_REQUESTS = True
 class URLCacher():
     """Class for asynchronous requests that caches the response"""
 
@@ -75,7 +76,7 @@ class URLCacher():
                 urls_to_delete.add(url)
         
         for url in urls_to_delete:
-            del self.urls_to_delete[url]
+            del self.url_cache[url]
 
 
     async def __can_hit_cache__(self, url, cache_length, allow_hanging):
@@ -105,6 +106,12 @@ class URLCacher():
         cache_length = self.default_cache_length if cache_length is None else cache_length
         allow_hanging = self.allow_hanging if allow_hanging is None else allow_hanging
         if await self.__can_hit_cache__(url, cache_length, allow_hanging):
+            if PRINT_REQUESTS:
+                cur_time = datetime.now()
+                print(f"{cur_time.time()}: {url} hit the cache because page was downloaded {(cur_time - self.url_cache[url]['time_received']).total_seconds()} seconds ago.")
             return self.url_cache[url]["response_text"]
         else:
+            if PRINT_REQUESTS:
+                cur_time = datetime.now()
+                print(f"{cur_time.time()}: {url} is making an HTTPS request.")
             return await self.__fetch_url__(url)
