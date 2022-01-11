@@ -249,7 +249,7 @@ class SuggestionView(discord.ui.View):
         
         elif err_type == 'large_time':
             for insert in ["placed"]:
-                label = label_builder.format(error['player_name', insert, UtilityFunctions.place_to_str(error['placement'])])
+                label = label_builder.format(error['player_name'], insert, UtilityFunctions.place_to_str(error['placement']))
                 self.add_item(SuggestionButton(error, label, value=error['placement']))
         
         elif err_type == 'tie':

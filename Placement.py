@@ -70,7 +70,7 @@ class Placement:
         if self.time[0]<11:
             return self.time
 
-        reconstructed_time = (self.time[0][1:], self.time[1], self.time[2])
+        reconstructed_time = (int(str(self.time[0])[1:]), self.time[1], self.time[2])
         return reconstructed_time
     
     def __init__(self, player, place, time, delta=None, is_wiimmfi_place=False):
