@@ -63,6 +63,16 @@ class Placement:
             return False
         return self.time > BOGUS_TIME_LIMIT
     
+    def get_reconstructed_bogus_time(self):
+        '''
+        Gets a reconstructed time for large times (first digit dropped)
+        '''
+        if self.time[0]<11:
+            return self.time
+
+        reconstructed_time = (self.time[0][1:], self.time[1], self.time[2])
+        return reconstructed_time
+    
     def __init__(self, player, place, time, delta=None, is_wiimmfi_place=False):
         self.player = player
         self.place = place

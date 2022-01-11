@@ -1,8 +1,8 @@
 import discord
-from discord.abc import Messageable
 import commands
 import InteractionUtils
 from discord.ext import tasks
+import UtilityFunctions
 
 class ConfirmButton(discord.ui.Button['ConfirmView']):
     def __init__(self, cat):
@@ -12,8 +12,10 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
         super().__init__(style=buttonType, label=emoji, row=1)
     
     async def callback(self, interaction: discord.Interaction):
-        for child in self.view.children:
+        for ind, child in enumerate(self.view.children):
             child.disabled = True
+            if child != self: 
+                self.view.children.pop(ind)
         
         self.view.stop()
 
@@ -73,17 +75,25 @@ class ConfirmView(discord.ui.View):
 
 class PictureButton(discord.ui.Button['PictureView']):
     def __init__(self, bot):
-        super().__init__(style=discord.ButtonStyle.primary, label='Picture')
+        super().__init__(style=discord.ButtonStyle.primary, label='Picture', row=0)
         self.bot = bot
+        self.button_number = self.bot.pic_button_count + 1
         self.disabled = self.bot.getWPCooldownSeconds() > 0
         try:
             self.check_clickable.start()
+            self.bot.pic_button_count+=1
         except:
             pass
     
     @tasks.loop(seconds=0.5)
     async def check_clickable(self):
         if not self.view or not self.view.message: return
+        if self.bot.pic_button_count - self.button_number > 2:
+            self.view.clear_items()
+            self.view.stop()
+            await self.view.message.edit(view=self.view)
+            self.check_clickable.cancel()
+
         if self.disabled and self.bot.getWPCooldownSeconds() < 1:
             self.disabled = False
         elif not self.disabled and self.bot.getWPCooldownSeconds() > 0:
@@ -103,6 +113,14 @@ class PictureView(discord.ui.View):
         self.prefix = prefix
         self.lounge = is_lounge_server
         self.message = None
+    
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, 'wp')
+    
+    async def on_timeout(self) -> None:
+        self.clear_items()
+        self.stop()
+        await self.message.edit(view=self)
             
     async def send(self, messageable, content=None, file=None, embed=None):
         if hasattr(messageable, 'channel'):
@@ -112,47 +130,49 @@ class PictureView(discord.ui.View):
         self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
 
 
-
 ###########################################################################################
 
 
 class RejectButton(discord.ui.Button['SuggestionView']):
     def __init__(self):
-        super().__init__(style=discord.ButtonStyle.danger, label="Discard Suggestion", row=3)
+        super().__init__(style=discord.ButtonStyle.danger, label="Discard")
     
     async def callback(self, interaction: discord.Interaction):
         self.view.bot.resolved_errors.add(self.view.index)
 
-        await self.view.update_message("Suggestion discarded.")
+        self.view.clear_items() #get rid of all buttons except Picture Button
+        await interaction.response.edit_message(view=self.view)
         
 
 class SuggestionButton(discord.ui.Button['SuggestionView']):
-    def __init__(self, error, label, confirm=False):
+    def __init__(self, error, label, value=None, confirm=False):
         self.error = error #dict of error information
         self.confirm = confirm
-        self.text = label
-        super().__init__(style=discord.ButtonStyle.primary, label=label, row=2 if confirm else 1, disabled=confirm)
+        self.value = value
+        if not confirm: 
+            label = f"R{self.error['race']}: "+label
+        super().__init__(style=discord.ButtonStyle.secondary, label=label, disabled=confirm)
     
     async def callback(self, interaction: discord.Interaction):
         server_prefix = self.view.prefix
 
-        args = get_command_args(self.error, self.text if not self.confirm else self.view.selected_values, self.view.bot)
+        args = get_command_args(self.error, self.value if not self.confirm else self.view.selected_values, self.view.bot)
         message = InteractionUtils.create_proxy_msg(interaction, args)
 
         command_mapping = {
-            # "blank_player": commands.TablingCommands.change_room_size_command,
             "blank_player": commands.TablingCommands.disconnections_command,
             "gp_missing": commands.TablingCommands.change_room_size_command,
-            ("gp_missing", 1): commands.TablingCommands.early_dc_command,
+            "gp_missing_1": commands.TablingCommands.early_dc_command,
             "tie": commands.TablingCommands.quick_edit_command,
             "large_time": commands.TablingCommands.quick_edit_command,
             "missing_player": commands.TablingCommands.disconnections_command
         }
-        if self.error['type'] == 'tie': 
-            self.resolved
+        
         command_mes = await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.lounge, dont_send=True)
         author_str = interaction.user.mention
-        await self.view.update_message(f"{author_str}: "+command_mes)
+        self.view.stop()
+        self.view.clear_items()
+        await interaction.response.edit_message(content=f"{author_str} - "+command_mes, view=self.view)
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
     def __init__(self, values, name):
@@ -160,7 +180,7 @@ class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
         super().__init__(placeholder=name, options=options)
     
     async def callback(self, interaction: discord.Interaction):
-        self.view.update_selection_value(interaction.data['values'][0])
+        self.view.selected_values(interaction.data['values'][0])
         self.placeholder = self.view.selected_values 
 
         self.view.enable_confirm()
@@ -170,13 +190,12 @@ class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
             pass
 
 LABEL_BUILDERS = {
-    'missing_player': '{} DCed *{}* race {}',
-    # 'blank_player': 'Change Room Size',
-    'blank_player': "{} DCed *{}* race {}",
-    'tie': 'Confirm Placement',
-    'large_time': 'Confirm Placement',
+    'missing_player': '{} DCed *{}* race',
+    'blank_player': "{} DCed *{}* race",
+    'tie': '{} placed *{}*',
+    'large_time': '{} {} *{}*', #placed / did not place
     'gp_missing': 'Change Room Size',
-    ('gp_missing', 1): 'Missing player early DCed *{}* race {}'
+    'gp_missing_1': 'Missing player early DCed *{}* race'
 }
 
 class SuggestionView(discord.ui.View):
@@ -188,48 +207,59 @@ class SuggestionView(discord.ui.View):
         self.lounge = lounge
         self.index = id if id else self.error['id']
         self.selected_values = None
+        self.message = None
 
         self.create_row()
+
+    async def on_timeout(self) -> None:
+        self.clear_items()
+        self.stop()
+        await self.message.edit(view=self)
     
+    async def send(self, messageable, content=None, file=None, embed=None):
+        if hasattr(messageable, 'channel'):
+            messageable = messageable.channel
+
+        self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, InteractionUtils.convert_key_to_command(self.error['type']))
+
     def create_row(self):
         error = self.error
         err_type = error['type']
         label_builder = LABEL_BUILDERS[err_type]
 
-        if err_type == 'gp_missing':
-            if error['num_missing'] == 1:
-                label_builder = LABEL_BUILDERS[(err_type, 1)]
-                error['type'] = (err_type, 1)
+        if 'gp_missing' in err_type:
+            if '_1' in err_type:
+                label_builder = LABEL_BUILDERS[err_type]
                 for insert in ['during', 'before']:
-                    label = label_builder.format(insert, error['race'])
-                    self.add_item(SuggestionButton(error, label))
+                    label = label_builder.format(insert)
+                    self.add_item(SuggestionButton(error, label, value=insert))
             else:
                 label = label_builder
-                self.add_item(SuggestionSelectMenu(error['corrected_room_sizes'], name="Select correct room size"))
+                self.add_item(SuggestionSelectMenu(error['corrected_room_sizes'], name=f"R{error['race']}: Select correct room size"))
                 self.add_item(SuggestionButton(error, label, confirm=True))
         
 
         elif err_type in { 'missing_player', 'blank_player' }:
             for insert in ['during', 'before']:
-                label = label_builder.format(error['player_name'], insert, error['race'])
-                self.add_item(SuggestionButton(error, label))
+                label = label_builder.format(error['player_name'], insert)
+                self.add_item(SuggestionButton(error, label, value=insert))
         
         elif err_type == 'large_time':
-            label = label_builder
-            self.add_item(SuggestionSelectMenu(error['placements'], name="Choose correct position"))
-            self.add_item(SuggestionButton(error, label, confirm=True))
+            for insert in ["placed"]:
+                label = label_builder.format(error['player_name', insert, UtilityFunctions.place_to_str(error['placement'])])
+                self.add_item(SuggestionButton(error, label, value=error['placement']))
         
         elif err_type == 'tie':
-            label = label_builder
-            self.add_item(SuggestionSelectMenu(error['placements'], name="Choose correct position"))
-            self.add_item(SuggestionButton(error, label, confirm=True))
+            for insert in error['placements']:
+                label = label_builder.format(error['player_name'], insert)
+                self.add_item(SuggestionButton(error, label, value=insert))
         
         self.add_item(RejectButton())
     
     def enable_confirm(self):
-        # if self.error['type'] in {'tie'} and (self.selected_values!=len(self.error['player_names']) or len(self.error['placements']) > len(set(self.selected_values))):
-        #     return
-
         for child in self.children:
             child.disabled=False
 
@@ -237,9 +267,9 @@ class SuggestionView(discord.ui.View):
 def get_command_args(error, info, bot):
     err_type = error['type']
 
-    if err_type == ('gp_missing', 1):
+    if err_type == 'gp_missing_1':
         GP = int((error['race']-1)/4) + 1
-        time = "on" if "DCed *during*" in info else "before"
+        time = "on" if info == 'during' else "before"
         args = ['earlydc', str(GP), time]
     
     elif err_type == 'gp_missing':
@@ -250,7 +280,7 @@ def get_command_args(error, info, bot):
     elif err_type in { 'missing_player', 'blank_player' }:
         playerNum = bot.player_to_dc_num(error['race'], error['player_fc'])
 
-        time = "on" if "DCed *during*" in info else "before"
+        time = "on" if info == 'during' else "before"
         args = ['dc', str(playerNum), time]
     
     elif err_type == 'large_time':
@@ -263,7 +293,6 @@ def get_command_args(error, info, bot):
         playerNum = bot.player_to_num(error['player_fc'])
         race = error['race']
         placement = str(info)
-        print(placement)
         args = ['changeplace', str(playerNum), str(race), placement]
     
     return args

@@ -42,6 +42,13 @@ def lounge_add(fc, lounge_replace=True):
             return " - (" + did_lounge[fc_did[fc][0]] + ")"
     return ""
 
+def lounge_add_no_dash(fc, lounge_replace=True):
+    if not lounge_replace: return
+    fc_did = FC_DiscordID
+    did_lounge = discordID_Lounges
+    if fc in fc_did and fc_did[fc][0] in did_lounge:
+        return " (" + did_lounge[fc_did[fc][0]] + ")"
+
 def lounge_get(fc, lounge_replace=True):
     if lounge_replace:
         fc_did = FC_DiscordID
@@ -50,6 +57,11 @@ def lounge_get(fc, lounge_replace=True):
             return did_lounge[fc_did[fc][0]]
     return ""
 
+def lounge_get_fill(fc, name, lounge_replace=True):
+    loungeName = lounge_get(fc, lounge_replace)
+    if loungeName=="":
+        return name
+    return loungeName
 
 def read_Blacklisted_file(filename=common.BLACKLISTED_USERS_FILE):
     common.check_create(filename)

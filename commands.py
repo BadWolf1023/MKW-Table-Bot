@@ -2521,33 +2521,16 @@ class TablingCommands:
                             if len(temp) + len(error_message) >= 2048:
                                 temp = temp[:2048-len(error_message)] + error_message
                             embed.set_footer(text=temp)
-
-                            # if error_types: error_types = [(k, v) for k, v in error_types.items() if len(v)!=0]
-                            if error_types and len(error_types)>0:
-                                view_list = list()
-                                page_list = list()
-
-                                for race, errors in error_types:
-                                    for error in errors:
-                                        view_list.append(Components.SuggestionView(error, this_bot, server_prefix, is_lounge_server))
-                                        try:
-                                            # players = ' / '.join(error['player_names']) if 'player_names' in error else error['player_name']
-                                            player = error['player_name']
-                                            info_str = f" - {player}"
-                                        except KeyError:
-                                            info_str = ""
-
-                                        description = error['message']
-                                        page_list.append(f'\u200b\n**Race #{race}{info_str}**\n{description}\n\u200b')
-                                        # await message.channel.send(f'**Race #{race}{info_str}**', view=view)
-                                paginator = ComponentPaginator.SuggestionsPaginator(page_list, view_list)
-
+                                
                             pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
                             # await message.channel.send(file=file, embed=embed, view=pic_view)
                             await pic_view.send(message, file=file, embed=embed)
-                            await common.safe_delete(message3)
-                            await paginator.send(message)
+                            if error_types and len(error_types)>0:
+                                chosen_suggestion = get_suggestion(error_types)
+                                sug_view = Components.SuggestionView(chosen_suggestion, this_bot, server_prefix, is_lounge_server)
+                                await sug_view.send(message, content='\u200b')
 
+                            await common.safe_delete(message3)
 
                             if should_send_notification and common.current_notification != "":
                                 await message.channel.send(common.current_notification.replace("{SERVER_PREFIX}", server_prefix))
@@ -2815,6 +2798,17 @@ class TablingCommands:
 
 
 #============== Helper functions ================
+
+def get_suggestion(errors):
+    chosen_suggestion = None
+    race, possible_suggestions = errors[-1]
+    for priorityType in ['tie', 'missing_player', 'blank_player', 'gp_missing_1', 'large_time', 'gp_missing']:
+        for sug in possible_suggestions:
+            if sug['type'] == priorityType:
+                chosen_suggestion = sug
+                chosen_suggestion['race'] = race
+                return chosen_suggestion  
+    return None
 
 async def paginate(message, num_pages, get_page_callback, client):
     authorized_user = message.author.id

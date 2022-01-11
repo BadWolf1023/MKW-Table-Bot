@@ -148,6 +148,16 @@ def isint(value):
     except:
         return False
 
+def place_to_str(place):
+    append = "th"
+    if place%10 == 1 and place!=11:
+        append = "st"
+    elif place%10 == 2 and place!=12:
+        append = "nd"
+    elif place%10 == 3 and place!=13:
+        append = "rd"
+    
+    return f"{place}{append}"
 
 #Takes a list of strings and concatenates them until a new concatenation would push it over the limit given
 #Separator is what will separate each concatenation

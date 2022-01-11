@@ -65,6 +65,7 @@ class ChannelBot(object):
         self.miis: Dict[str, Mii.Mii] = {}
         
         self.resolved_errors = set()
+        self.pic_button_count = 0
         
         self.populating = False
         
@@ -619,6 +620,7 @@ class ChannelBot(object):
         self.save_states = []
         self.state_pointer = -1
         self.resolved_errors = set()
+        self.pic_button_count = 0
         self.miis = {}
         self.populating = False
         self.should_send_mii_notification = True

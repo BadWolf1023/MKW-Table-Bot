@@ -280,20 +280,25 @@ class Race:
         return False
     
     def getTies(self):
-        ties = []
+        ties = {}
         for placement_1 in self.placements:
             for placement_2 in self.placements:
                 if placement_1.player.FC != placement_2.player.FC and placement_1 == placement_2\
                 and not placement_1.is_bogus_time() and not placement_2.is_bogus_time()\
                 and not placement_1.is_disconnected() and not placement_1.is_disconnected():
+                    if placement_1.time not in ties:
+                        ties[placement_1.time] = []
                     if placement_1.player.FC not in ties:
-                        ties.append(placement_1.player.FC)
+                        ties[placement_1.time].append(placement_1.player.FC)
                     if placement_2.player.FC not in ties:
-                        ties.append(placement_2.player.FC)       
+                        ties[placement_1.time].append(placement_2.player.FC)       
         return ties
     
     def get_placement_times_as_set(self) -> set:
         return set(placement.get_time() for placement in self.placements)
+    
+    def get_sorted_valid_times(self):
+        return sorted([place.get_time() for place in self.placements if not place.is_bogus_time()])
     
     #Specialized function
     def times_are_subset_of(self, other_race) -> bool:

@@ -431,9 +431,25 @@ class BadWolfBot(ext_commands.Bot):
         if interaction.type != discord.InteractionType.application_command:
             return 
         
+        message = InteractionUtils.create_proxy_msg(interaction)
+        command = interaction.data['name']
+
+        await AbuseTracking.blacklisted_user_check(message)
+        await AbuseTracking.abuse_track_check(message)
+
+        log_command_sent(message)
+
         is_lounge_server = InteractionUtils.check_lounge_server_id(interaction.guild.id)
         if common.running_beta and not is_lounge_server: #is_lounge_server is True if in Bad Wolf's server if beta is running
             return
+        
+        if interaction.channel.category_id in TEMPORARY_VR_CATEGORIES and command not in ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS:
+            return
+        
+        this_bot = self.check_create_channel_bot(message)
+        
+        if not commandIsAllowed(is_lounge_server, interaction.user, this_bot, command):
+            return await send_lounge_locked_message(message, this_bot)
 
         await self.process_application_commands(interaction)
     
@@ -441,19 +457,11 @@ class BadWolfBot(ext_commands.Bot):
         message = InteractionUtils.create_proxy_msg(interaction)
 
         is_lounge_server = InteractionUtils.check_lounge_server(message)
-
-        await AbuseTracking.blacklisted_user_check(message)
-        await AbuseTracking.abuse_track_check(message)
-                    
-        log_command_sent(message)
         
         this_bot = self.check_create_channel_bot(message)
         this_bot.updatedLastUsed()
         if is_lounge_server and this_bot.isFinishedLounge():
             this_bot.freeLock()
-        
-        if not commandIsAllowed(is_lounge_server, message.author, this_bot, interaction.data.get('name')):
-            await send_lounge_locked_message(message, this_bot)
 
         return interaction.data['name'], message, this_bot, '/', is_lounge_server
 
@@ -1061,7 +1069,6 @@ def command_is_spam(command:str):
 #             if "MENTION" in fact:
 #                 fact = fact.replace("MENTION", message.author.display_name)
 #             await message.channel.send(fact, delete_after=10)
-
 
 
 async def send_lounge_locked_message(message, this_bot):

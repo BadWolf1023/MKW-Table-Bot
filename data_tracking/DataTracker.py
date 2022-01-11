@@ -787,7 +787,7 @@ async def initialize():
     await populate_tier_table()
     await populate_score_matrix_table()
     await populate_player_fcs_table()
-    await database_maintenance()
+    # await database_maintenance()
 
 def save_data():
     pass
