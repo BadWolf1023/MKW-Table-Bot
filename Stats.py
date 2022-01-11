@@ -93,11 +93,17 @@ def hard_check(discord_username, limit=None):
 
 def count_lines_of_code():
     lines_count = 0
-    for file in os.listdir('.'):
-        if fnmatch.fnmatch(file, '*.py'):
-            with open(file, encoding='utf-8') as f:
-                for _ in f:
-                    lines_count += 1
+    directory_stack = ['.']
+    while directory_stack:
+        dirname = directory_stack.pop()
+        with os.scandir(dirname) as dir_iter:
+            for item in dir_iter:
+                if item.is_dir():
+                    directory_stack.append(item.path)
+                elif fnmatch.fnmatch(item.name, '*.py') or fnmatch.fnmatch(item.name, '*.sql'):
+                    with open(item, encoding='utf-8') as f:
+                        for _ in f:
+                            lines_count += 1
     return lines_count
 
 def get_from_stats_file(stats_file=common.STATS_FILE):
@@ -231,5 +237,4 @@ def stats(num_bots:int, client=None, stats_file=common.STATS_FILE, commands_logg
  
         
 if __name__ == '__main__':
-    print(hard_check("Dash8r#2342"))
     print(count_lines_of_code())
