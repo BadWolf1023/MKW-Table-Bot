@@ -160,9 +160,6 @@ REMOVE_BLACKLISTED_WORD_TERMS = {"removeblacklistword", "removeblacklistedword",
 SERVER_USAGE_TERMS = {"serverusage", "usage", "serverstats"}
 TABLE_BOT_MEMORY_USAGE_TERMS = {"memory", "memoryusage"}
 GARBAGE_COLLECT_TERMS = {"gc", "garbagecollect"}
-ADD_BAD_WOLF_FACT_TERMS = {"addbadwolffact", "abwf"}
-REMOVE_BAD_WOLF_FACT_TERMS = {"removebadwolffact", "rbwf"}
-BAD_WOLF_FACT_TERMS = {"badwolffacts", "bwfs"}
 TOTAL_CLEAR_TERMS = {'totalclear'}
 DUMP_DATA_TERMS = {"dtt", "dothething"}
 LOOKUP_TERMS = {"lookup"}
@@ -208,8 +205,6 @@ elif common.running_beta and not common.beta_is_real:
     common.mkw_lounge_staff_roles.add(common.BAD_WOLF_SERVER_EVERYONE_ROLE_ID)
     lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.BAD_WOLF_SERVER_ID, common.main_lounge_can_report_table)
 
-
-bad_wolf_facts = []
 
 def createEmptyTableBot(server_id=None, channel_id=None):
     return TableBot.ChannelBot(server_id=server_id, channel_id=channel_id)
@@ -283,22 +278,6 @@ def command_is_spam(command:str):
             return False
     return True
 
-
-last_fact_times = {}
-fact_cooldown = timedelta(seconds=30)
-async def send_bad_wolf_fact(message:discord.Message):
-    global last_fact_times
-    if len(bad_wolf_facts) > 0:
-        cur_time = datetime.now()
-        if message.channel.id not in last_fact_times \
-        or (cur_time - last_fact_times[message.channel.id]) > fact_cooldown:
-            last_fact_times[message.channel.id] = cur_time
-            fact = random.choice(bad_wolf_facts)
-            if "DISPLAY_NAME" in fact:
-                fact = fact.replace("DISPLAY_NAME", message.author.display_name)
-            if "MENTION" in fact:
-                fact = fact.replace("MENTION", message.author.display_name)
-            await message.channel.send(fact, delete_after=10)
 
 
 
@@ -435,15 +414,6 @@ async def on_message(message: discord.Message):
             
             elif args[0] in GARBAGE_COLLECT_TERMS:
                 commands.BadWolfCommands.garbage_collect_command(message)
-                
-            elif args[0] in ADD_BAD_WOLF_FACT_TERMS:
-                commands.BadWolfCommands.add_fact_command(message, command, bad_wolf_facts, pkl_bad_wolf_facts)
-                
-            elif args[0] in REMOVE_BAD_WOLF_FACT_TERMS:
-                commands.BadWolfCommands.remove_fact_command(message, args, bad_wolf_facts, pkl_bad_wolf_facts)
-                
-            elif args[0] in BAD_WOLF_FACT_TERMS:
-                commands.BadWolfCommands.send_all_facts_command(message, bad_wolf_facts)
                     
             elif args[0] in START_WAR_TERMS:
                 await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
@@ -792,7 +762,6 @@ async def on_ready():
         load_tablebot_pickle()
         load_CTGP_region_pickle()
         commands.load_vr_is_on()
-        load_bad_wolf_facts_pkl()
     
     AbuseTracking.set_bot_abuse_report_channel(client)
     updatePresence.start()
@@ -896,23 +865,6 @@ def load_CTGP_region_pickle():
 def pickle_lounge_updates():
     lounge_submissions.dump_pkl()
     
-def pkl_bad_wolf_facts():
-    global bad_wolf_facts
-    with open(common.BAD_WOLF_FACT_FILE, "wb") as pickle_out:
-        try:
-            p.dump(bad_wolf_facts, pickle_out)
-        except:
-            print("Could not dump pickle for bad wolf facts. Current facts:", '\n'.join(bad_wolf_facts))
-            
-def load_bad_wolf_facts_pkl():
-    global bad_wolf_facts
-    if os.path.exists(common.BAD_WOLF_FACT_FILE):
-        with open(common.BAD_WOLF_FACT_FILE, "rb") as pickle_in:
-            try:
-                bad_wolf_facts = p.load(pickle_in)
-            except:
-                print("Could not read in the pickle for bad wolf facts.")
-    
                 
 def pickle_tablebots():
     global table_bots
@@ -991,7 +943,6 @@ def save_data():
     pickle_tablebots()
     pickle_CTGP_region()
     pickle_lounge_updates()
-    pkl_bad_wolf_facts()
 
     if common.is_prod:
         Stats.backup_files()

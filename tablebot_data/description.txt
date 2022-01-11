@@ -5,7 +5,6 @@ This directory is loaded when Table Bot starts.
 There are no files in this directory since either the data is private, or the data is temporary between shutdowns.
 However, the files that are normal in this directory are:
 
-bad_wolf_facts.pkl
 blacklisted_users.txt
 blacklisted_words.txt
 bot_admins.txt

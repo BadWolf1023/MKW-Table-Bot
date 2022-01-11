@@ -171,42 +171,10 @@ class BadWolfCommands:
         await message.channel.send(command_output)
 
     @staticmethod
-    async def add_fact_command(message:discord.Message, command:str, bad_wolf_facts:List[str], data_save):
-        BadWolfCommands.is_badwolf_check(message.author, "cannot add fact")
-        fact = " ".join(command.split()[1:]).strip()
-        if len(fact) == 0:
-            await message.channel.send("Cannot add empty fact.")
-            return
-        bad_wolf_facts.append(fact)
-        data_save()
-        await message.channel.send(f"Added: {fact}")
-
-
-
-    @staticmethod
-    async def remove_fact_command(message:discord.Message, args:List[str], bad_wolf_facts:List[str], data_save):
-        BadWolfCommands.is_badwolf_check(message.author, "cannot remove fact")
-        index = "".join(args[1:])
-        if not index.isnumeric() or int(index) < 0 or int(index) >= len(bad_wolf_facts):
-            await message.channel.send(f"Cannot remove fact at index {index}")
-            return
-        removed_fact = bad_wolf_facts.pop(int(index))
-        data_save()
-        await message.channel.send(f"Removed: {removed_fact}")
-
-
-    @staticmethod
     async def garbage_collect_command(message:discord.Message):
         BadWolfCommands.is_badwolf_check(message.author, "cannot garbage collect")
         gc.collect()
         await message.channel.send("Collected")
-
-
-    @staticmethod
-    async def send_all_facts_command(message:discord.Message, bad_wolf_facts:List[str]):
-        BadWolfCommands.is_badwolf_check(message.author, "cannot display facts")
-        if len(bad_wolf_facts) > 0:
-            await message.channel.send("\n".join(bad_wolf_facts))
 
 
     @staticmethod

@@ -142,7 +142,6 @@ ROOM_DATA_TRACKING_DATABASE_MAINTENANCE_SQL = f"{DATA_TRACKING_PATH}database_mai
 
 LOUNGE_ID_COUNTER_FILE = f"{DATA_PATH}lounge_counter.pkl"
 LOUNGE_TABLE_UPDATES_FILE = f"{DATA_PATH}lounge_table_update_ids.pkl"
-BAD_WOLF_FACT_FILE = f"{DATA_PATH}bad_wolf_facts.pkl"
 CTGP_REGION_FILE = f"{DATA_PATH}CTGP_Region_File.pkl"
 BADWOLF_PICTURE_FILE = f'{DATA_PATH}BadWolf.jpg'
 
@@ -201,7 +200,6 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    DEFAULT_TABLE_THEME_FILE_NAME,
                    DEFAULT_GRAPH_FILE,
                    DEFAULT_MII_FILE,
-                   BAD_WOLF_FACT_FILE,
                    BLACKLISTED_USERS_FILE,
                    BLACKLISTED_WORDS_FILE,
                    BOT_ADMINS_FILE,
