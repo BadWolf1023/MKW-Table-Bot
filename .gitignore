@@ -18,7 +18,9 @@ team_formats.pkl
 miis/mii_cache/*
 /*.db
 miis/*
-logging/full_logging.txt
+logging/error_logs.txt
+logging/messages_logging.txt
+discord_server_settings/*
 
 #keep description files
 !*/description.txt
