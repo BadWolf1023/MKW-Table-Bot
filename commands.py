@@ -1893,10 +1893,13 @@ class TablingCommands:
             await message.channel.send("GP Number and amount must all be numbers. Do " + server_prefix + "edit for an example on how to use this command.")
             return
 
-        players = this_bot.getRoom().get_sorted_player_list()
         numGPs = this_bot.getWar().numberOfGPs
         GPNum = int(GPNum)
         amount = int(amount)
+
+        playerNum, playerErrorMessage = getPlayerIndexInRoom(playerNum, this_bot.getRoom(), server_prefix, "edit")
+        
+
         if playerNum.isnumeric():
             playerNum = int(playerNum)
             if playerNum < 1 or playerNum > len(players):
@@ -2675,15 +2678,6 @@ class TablingCommands:
 
             else:
                 await message.channel.send("Do " + server_prefix + "quickedit to learn how to use this command.")
-
-    @staticmethod
-    async def current_room_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
-        await mkwx_check(message, "Current room command disabled.")
-        if not this_bot.table_is_set():
-            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
-        elif len(this_bot.getRoom().races) >= 1:
-            await updateData(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs()))
-            await message.channel.send(this_bot.getRoom().races[-1].getPlayersByPlaceInRoomString())
 
 
 
