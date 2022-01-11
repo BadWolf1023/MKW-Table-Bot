@@ -426,7 +426,7 @@ class StatisticCommands:
     @staticmethod
     def validate_days_arg(arg):
         original_arg = arg
-        arg = arg.lower()
+        arg = arg.lower().replace("d", "")
         days = None
         if UtilityFunctions.isint(arg):
             days = int(arg)
@@ -582,8 +582,8 @@ class StatisticCommands:
     async def popular_tracks_command(client, message:discord.Message, args:List[str], server_prefix:str, command:str, is_top_tracks=True):
         error_message = f"""Here are 3 examples of how to use this command:
 Most played CTs of all time: `{server_prefix}{args[0]} ct`
-Most played RTs in the past week: `{server_prefix}{args[0]} rt 7`
-Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t4 5`"""
+Most played RTs in the past week: `{server_prefix}{args[0]} rt 7d`
+Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t4 5d`"""
 
         is_ct, tier, number_of_days, specific_error = StatisticCommands.validate_tracks_args(command)
 
@@ -614,7 +614,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         adjective = "worst" if sort_asc else "best"
         error_message = f"""Here are examples of how to use this command:
 - Your {adjective} RTs: `{server_prefix}{args[0]} rt`
-- Somebody else's {adjective} RTs: `{server_prefix}{args[0]} [player_name] rt`
+- Somebody else's {adjective} RTs: `{server_prefix}{args[0]} rt [player_name]`
 - Your {adjective} RTs in the past week: `{server_prefix}{args[0]} rt 7d`
 - Your {adjective} RTs in Tier 4: `{server_prefix}{args[0]} rt t4`
 - Your {adjective} CTs with at least 10 plays: `{server_prefix}{args[0]} ct min=10`
