@@ -154,7 +154,6 @@ FLAG_EXCEPTION_FILE = f"{DATA_PATH}flag_exceptions.txt"
 
 PRIVATE_INFO_FILE = f'{DATA_PATH}private.txt'
 STATS_FILE = f"{DATA_PATH}stats.txt"
-ROOM_DATA_TRACKER_FILE = f"{DATA_PATH}all_room_data.pkl"
 SHA_TRACK_NAMES_FILE = f"{DATA_PATH}sha_track_names.pkl"
 
 TABLE_BOT_PKL_FILE = f'{DATA_PATH}tablebots.pkl'
@@ -213,7 +212,6 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    STATS_FILE,
                    TABLE_BOT_PKL_FILE,
                    VR_IS_ON_FILE,
-                   ROOM_DATA_TRACKER_FILE,
                    SHA_TRACK_NAMES_FILE,
                    ROOM_DATA_TRACKING_DATABASE_FILE
                    }
