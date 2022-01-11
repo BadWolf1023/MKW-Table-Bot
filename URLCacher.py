@@ -104,7 +104,7 @@ class URLCacher():
         self.__clean_old_cache__()
         cache_length = self.default_cache_length if cache_length is None else cache_length
         allow_hanging = self.allow_hanging if allow_hanging is None else allow_hanging
-        if self.__can_hit_cache__(url, cache_length, allow_hanging):
+        if await self.__can_hit_cache__(url, cache_length, allow_hanging):
             return self.url_cache[url]["response_text"]
         else:
             return await self.__fetch_url__(url)
