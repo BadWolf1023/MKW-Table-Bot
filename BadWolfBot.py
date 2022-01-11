@@ -827,9 +827,6 @@ async def on_ready():
     
     dumpDataAndBackup.start()
     checkBotAbuse.start()
-    
-    if WiimmfiSiteFunctions.USING_EXPERIMENTAL_REQUEST:
-        driver_reset_cycle.start()
         
     finished_on_ready = True
     
@@ -888,21 +885,6 @@ async def stay_alive_503():
         await send_to_503_channel("Stay alive to prevent 503")
     except:
         pass
-    
-if WiimmfiSiteFunctions.USING_EXPERIMENTAL_REQUEST:
-    import itertools
-    driver_cycle = itertools.cycle([i for i in range(WiimmfiSiteFunctions.number_of_browsers)])
-    driver_reset_cycle_loop_time = int(WiimmfiSiteFunctions.captcha_time_estimation / WiimmfiSiteFunctions.number_of_browsers)
-    @tasks.loop(minutes=driver_reset_cycle_loop_time)
-    async def driver_reset_cycle():
-        await asyncio.sleep(10) #Make sure we're done booting
-        current_driver_index = next(driver_cycle)
-        try:
-            success = await WiimmfiSiteFunctions.safe_restart_driver(current_driver_index, logging_message=f"Resetting driver at index {current_driver_index} because a captcha may be hit soon.")
-            if not success:
-                print(f"Failed to reset driver at index {current_driver_index} because it was busy for {WiimmfiSiteFunctions.SAFE_DRIVER_RESTART_TIMEOUT} seconds.")
-        except Exception as e:
-            print(f"Failed to reset driver at index {current_driver_index} because of the following exception: {e}")
 
    
 #This function will run every 1 minutes. It will remove any table bots that are

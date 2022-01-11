@@ -13,22 +13,7 @@ import asyncio
 import TableBotExceptions
 import common
 import UtilityFunctions
-USING_EXPERIMENTAL_REQUEST = False
-if USING_EXPERIMENTAL_REQUEST:
-    #from concurrent.futures.process import ProcessPoolExecutor
-    #from concurrent.futures.thread import ThreadPoolExecutor
-    #Number of minutes between captchas
-    captcha_time_estimation = 117
-    import undetected_chromedriver.v2 as uc
-    #from selenium import webdriver as uc
-    options = uc.ChromeOptions()
-    options.add_extension('./anticaptcha-plugin_v0.59.crx')
-    #options.add_extension('./plugin.zip')
-    number_of_browsers = 1
-    driver_infos = [[uc.Chrome("./chrome-cli/chromedriver.exe", options=options), 0, 0, 0, False] for _ in range(number_of_browsers)] #browser, number of cloudflare failures, number of ongoing requests, total requests, browser in use
-    failures_allowed = 20
-    #process_pool_executor = ThreadPoolExecutor(max_workers=number_of_browsers)
-    
+
 url_response_cache = {}
 cache_time = timedelta(seconds=30)
 long_cache_time = timedelta(seconds=45)
@@ -56,59 +41,6 @@ f"{submkwxURL}r0000006":("Tag in brackets.", f"{common.SAVED_ROOMS_DIR}tag_in_br
 f"{submkwxURL}r0000007":("Room with an unknown track name (SHA name).", f"{common.SAVED_ROOMS_DIR}unknown_track.html"),
 f"{submkwxURL}r0000007":("Room with email protected tags", f"{common.SAVED_ROOMS_DIR}email_protected.html")
 }
-
-
-
-
-
-def select_free_driver():
-    index_of_min_driver = 0
-    cur_min = (driver_infos[0][2], driver_infos[0][3])
-    for ind, driver_info in enumerate(driver_infos):
-        if (driver_info[2], driver_info[3]) < cur_min and not driver_info[4]: #If the load for the driver is the lowest AND it is not in use...
-            index_of_min_driver = ind
-            cur_min = (driver_info[2], driver_info[3])
-    return index_of_min_driver, driver_infos[index_of_min_driver]
-
-SAFE_DRIVER_RESTART_TIMEOUT = 45
-async def safe_restart_driver(index, logging_message):
-    for _ in range(SAFE_DRIVER_RESTART_TIMEOUT):
-        if driver_infos[index][4]:
-            await asyncio.sleep(1)
-        if not driver_infos[index][4]:
-            await restart_driver(index, logging_message)
-            return True
-    return False
-
-#Note: We don't reset the total number of requests. The total number of requests accumulates regardless of if the browser is restarted
-#This is to ensure that, assuming the load is equal (eg the number of requests in the queue for a browser) across all 3 browsers, the browser selection continues to rotate
-async def restart_driver(index, logging_message):
-    driver_info = driver_infos[index]
-    driver_info[4] = True
-    print(logging_message)
-    driver_info[1] = 0
-    driver_info[0].quit()
-    await asyncio.sleep(3)
-    driver_info[0] = uc.Chrome("./chrome-cli/chromedriver.exe", options=options)
-    await asyncio.sleep(3)
-    driver_info[2] = 0
-    driver_info[4] = False
-
-async def cloudflare_block_handle(driver_index, original_source):
-    originally_had_cloudflare = False
-    if "Ray ID: " in original_source:
-        print("Blocked by Cloudflare, attempting first bypass")
-        originally_had_cloudflare = True
-        await asyncio.sleep(5)
-        
-        if "Ray ID: " in driver_infos[driver_index][0].page_source:
-            print("Blocked by Cloudflare, attempting second bypass through restart...")
-            driver_infos[driver_index][0].service.stop()
-            await asyncio.sleep(6)
-            driver_infos[driver_index][0].service.start()
-            driver_infos[driver_index][0].start_session()
-            await asyncio.sleep(2)
-    return originally_had_cloudflare, "Ray ID: " not in driver_infos[driver_index][0].page_source
 
 
 
@@ -165,26 +97,6 @@ def clear_old_caches():
         #Off the top of my head, an iteration change exception could occur. More might, but they generally all mean that we failed. We'll just try again later.
         print(f"Race condition happened in clear_old_caches")
 
-async def cloudflare_failure_check():
-    for index, driver_info in enumerate(driver_infos):
-        if driver_info[1] >= failures_allowed and not driver_info[4]:
-            await restart_driver(index, logging_message=f"Driver at {index} had {driver_info[1]} failures and {driver_info[2]} ongoing requests. Restarting browser...")
-
-
-#async def delay_until_url_matches(driver, url, timeout=timedelta(seconds=10)):
-#    pass
-
-async def threaded_fetch(session, url, use_long_cache_time=False):
-    if USING_EXPERIMENTAL_REQUEST:
-        #result = await asyncio.get_event_loop().run_in_executor(process_pool_executor, fetch, session, url, use_long_cache_time)
-        result = None
-        return result
-    else:
-        return await __fetch__(session, url, use_long_cache_time)
-        
-          
-#def fetch(session, url, use_long_cache_time=False):
-#    return asyncio.run(__fetch__(session, url, use_long_cache_time))
 
 async def __fetch__(session, url, use_long_cache_time=False):
     #print_url_cache()
@@ -336,13 +248,13 @@ async def getRoomHTML(roomLink):
         return replace_content(html_data)
         
     async with aiohttp.ClientSession() as session:
-        temp = await threaded_fetch(session, roomLink, use_long_cache_time=True)
+        temp = await __fetch__(session, roomLink, use_long_cache_time=True)
         return replace_content(temp)
 
 
 async def __getMKWXSoupCall__():
     async with aiohttp.ClientSession() as session:
-        mkwxHTML = await threaded_fetch(session, mkwxURL, use_long_cache_time=False)
+        mkwxHTML = await __fetch__(session, mkwxURL, use_long_cache_time=False)
         return BeautifulSoup(replace_content(mkwxHTML), "html.parser")
 
 async def getMKWXSoup():
