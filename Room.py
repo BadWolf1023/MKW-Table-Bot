@@ -365,8 +365,8 @@ class Room(object):
         return missingPlayers
     
     
-    def getDCListString(self, numberOfGPs=3, replace_lounge=True):
-        missingPlayersByRace = self.getMissingOnRace(numberOfGPs)
+    def getDCListString(self, num_of_GPs=3, replace_lounge=True):
+        missingPlayersByRace = self.getMissingOnRace(num_of_GPs)
         missingPlayersAmount = sum([len(x) for x in missingPlayersByRace])
         if missingPlayersAmount == 0:
             last_race = self.races[-1]
@@ -603,11 +603,7 @@ class Room(object):
         return races
     
 
-    #Soup level functions
-    
-    def getNumberOfGPS(self):
-        return int((len(self.races)-1)/4)+1
-    
+    #Soup level functions    
     async def update_room(self, database_call, is_vr_command, mii_dict=None):
         if self.is_initialized():
             soups = []

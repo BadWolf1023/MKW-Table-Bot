@@ -382,7 +382,7 @@ class ChannelBotSQLDataValidator(object):
             raise SQLTypeWrong(self.wrong_type_message(channel_bot.get_room().get_known_region(), str))
         if not isinstance(channel_bot.get_room().get_set_up_display_name(), str):
             raise SQLTypeWrong(self.wrong_type_message(channel_bot.get_room().get_set_up_display_name(), str))
-        self.validate_int(channel_bot.get_war().get_num_players())
+        self.validate_int(channel_bot.get_war().get_user_defined_num_players())
             
     
     def validate_event_fc_data(self, event_id_fcs):
@@ -582,7 +582,7 @@ class RoomTrackerSQL(object):
                 channel_bot.get_room().get_known_region(),
                 channel_bot.get_room().get_set_up_user_discord_id(),
                 channel_bot.get_room().get_set_up_display_name(),
-                channel_bot.get_war().get_num_players()
+                channel_bot.get_war().get_user_defined_num_players()
                 )
         
     async def insert_missing_event(self, was_real_update=False):
@@ -648,18 +648,18 @@ class RoomTrackerSQL(object):
                 json.dumps(self.channel_bot.get_room().getPlacementHistory()),
                 json.dumps(self.channel_bot.get_room().getForcedRoomSize()),
                 json.dumps(self.channel_bot.get_room().getPlayerPenalties()),
-                json.dumps(self.channel_bot.get_war().getTeamPenalities()),
+                json.dumps(self.channel_bot.get_war().get_team_penalties()),
                 json.dumps(self.channel_bot.get_room().get_dc_statuses()),
                 json.dumps(self.channel_bot.get_room().get_subs()),
                 json.dumps(self.channel_bot.get_war().get_teams()),
                 json.dumps(self.channel_bot.get_room().get_rxxs()),
-                json.dumps(self.channel_bot.get_war().get_player_edits()),
-                self.channel_bot.get_war().should_ignore_large_times(),
-                self.channel_bot.get_war().get_missing_player_points(),
-                self.channel_bot.get_war().get_manually_set_war_name(),
-                self.channel_bot.get_war().get_number_of_gps(),
-                self.channel_bot.get_war().get_num_players(),
-                self.channel_bot.get_war().get_number_of_teams(),
+                json.dumps(self.channel_bot.get_war().get_edited_scores()),
+                self.channel_bot.get_war().get_show_large_time_errors(),
+                self.channel_bot.get_war().get_race_points_when_missing(),
+                self.channel_bot.get_war().get_user_defined_war_name(),
+                self.channel_bot.get_war().get_user_defined_num_of_gps(),
+                self.channel_bot.get_war().get_user_defined_num_players(),
+                self.channel_bot.get_war().get_user_defined_num_of_teams(),
                 self.channel_bot.get_war().get_players_per_team())
         
     async def dump_event_structure_data(self):

@@ -18,7 +18,7 @@ server_graphs = {}
 default_mii_setting = "1"
 server_miis = {}
 
-default_large_time_setting = "1"
+show_large_time_errors_default = "1"
 server_large_times = {}
 
 bool_map = {"1":True, "2":False}
@@ -36,10 +36,10 @@ def get_server_mii_setting(server_id, default_mii_setting=default_mii_setting):
         return bool_map[default_mii_setting]
     return bool_map[server_miis[server_id]]
 
-def get_server_large_time_setting(server_id, default_large_time_setting=default_large_time_setting):
+def get_server_setting_show_large_time_errors(server_id, default_show_setting=show_large_time_errors_default):
     server_id = str(server_id).strip()
     if server_id not in server_large_times:
-        return not bool_map[default_large_time_setting]
+        return not bool_map[default_show_setting]
     return not bool_map[server_large_times[server_id]]
 
 def get_server_graph(server_id, default_graph=default_graph):
@@ -60,7 +60,7 @@ def get_server_settings(server_name, server_id):
         (get_server_graph, "Default Graph"),
         (get_server_table_theme, "Default Theme"),
         (get_server_mii_setting, "Default Mii Setting"),
-        (get_server_large_time_setting, "Default Suppress Large Times")
+        (get_server_setting_show_large_time_errors, "Default Show Large Time Errors")
     ]
 
     spaces = max([len(k[1]) for k in setting_list])+1

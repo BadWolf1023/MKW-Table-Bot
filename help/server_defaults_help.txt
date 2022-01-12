@@ -21,7 +21,7 @@ To turn off mii heads by default, use the command `{SERVER_PREFIX}defaultmii 2`
 To turn on mii heads by default, use the command `{SERVER_PREFIX}defaultmii 1`
 *Note:* When you start a table, you can always override the server default by doing `miis=on` or `miis=off`. Eg `{SERVER_PREFIX}sw ffa 12 miis=on`
 
-**How can I ignore large times by default? We only table wars, and bagger large times flood the chat.**
+**How can I hide large time errors by default? We only table wars, and bagger large times flood the chat.**
 To automatically hide large times on tables for your server, use the command `{SERVER_PREFIX}defaultpsb 2`
 To automatically show large times on tables for your server, use the command `{SERVER_PREFIX}defaultpsb 1`
 *Note:* When you start a table, you can always override the server default by doing `psb=on` or `psb=off`. Eg `{SERVER_PREFIX}sw 5v5 2 psb=on`

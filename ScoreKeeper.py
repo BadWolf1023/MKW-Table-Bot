@@ -49,7 +49,7 @@ def print_scores(fc_score, fc_player):
     
     
 #Calculates the scores from the start race to the end race (eg startRace = 1 and endRace = 4 would be GP1)
-def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePts=3, server_id=None):
+def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, race_points_when_missing=3, server_id=None):
     #disconnections = curRoom.getMissingOnRace()
     fc_score = {}
     fc_player = curRoom.getFCPlayerListStartEnd(startRace, endRace)
@@ -84,10 +84,10 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
                             if curRoom.dc_on_or_before[raceNum][fc] == 'on':
                                 points_to_get = 0
                             else:
-                                points_to_get = missingRacePts
+                                points_to_get = race_points_when_missing
                             fc_score[fc].append( points_to_get )
                     if not was_in_manual_dcs:    
-                        fc_score[fc].append(missingRacePts)
+                        fc_score[fc].append(race_points_when_missing)
                         
         if raceNum in curRoom.forcedRoomSize:
             mkwxNumRacers = curRoom.forcedRoomSize[raceNum]
@@ -116,10 +116,10 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
     return fc_score
 
     
-def calculateGPScoresDCS(GPNumber, curRoom, missingRacePts=3, server_id=None):
+def calculateGPScoresDCS(GPNumber, curRoom, race_points_when_missing=3, server_id=None):
     startRace = ((GPNumber-1)*4)+1
     endRace = GPNumber * 4
-    return calculateScoresDCs(curRoom, startRace, endRace, missingRacePts, server_id)
+    return calculateScoresDCs(curRoom, startRace, endRace, race_points_when_missing, server_id)
 
 def chunk_list(to_chunk:List, n):
     """Yield successive n-sized chunks from the given list."""
@@ -159,18 +159,18 @@ def resizeGPsInto(GPs, new_size_GP):
     
     
 
-def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False, step=None, up_to_race=None):
+def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, race_points_when_missing=3, discord_escape=False, step=None, up_to_race=None):
     war = channel_bot.get_war()
     room = channel_bot.get_room()
     if step is None:
         step = channel_bot.get_race_size()
-    numGPs = war.getNumberOfGPS()
+    numGPs = war.get_user_defined_num_of_gps()
     GPs = []
     use_lounge_names = lounge_replace
     fc_did = UserDataProcessing.FC_DiscordID
     did_lounge = UserDataProcessing.discordID_Lounges
     for x in range(numGPs):
-        GPs.append(calculateGPScoresDCS(x+1, room, missingRacePts, server_id))
+        GPs.append(calculateGPScoresDCS(x+1, room, race_points_when_missing, server_id))
         
     fcs_players = room.getFCPlayerListStartEnd(1, numGPs*4)
     
@@ -275,11 +275,11 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             
 
     #build table string
-    numRaces = up_to_race if up_to_race else min( (len(room.races), war.getNumberOfGPS()*4) )
-    table_str = "#title " + war.getTableWarName(numRaces) + "\n"
+    numRaces = up_to_race if up_to_race else min( (len(room.races), war.get_user_defined_num_of_gps()*4) )
+    table_str = "#title " + war.get_war_name_for_table(numRaces) + "\n"
     curTeam = None
     teamCounter = 0
-    is_ffa = war.playersPerTeam == 1
+    is_ffa = war.get_players_per_team() == 1
     if is_ffa:
         table_str += "FFA\n"
     
@@ -296,8 +296,8 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
         for fc, player_data in all_players:
             total_score += player_score(player_data)
             
-        if team_tag in war.getTeamPenalities():
-            total_score -= war.getTeamPenalities()[curTeam]
+        if team_tag in war.get_team_penalties():
+            total_score -= war.get_team_penalties()[curTeam]
         return total_score
     
 
@@ -313,41 +313,24 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             player_scores_str = player_data[0]
             if not is_ffa:
                 if team_tag != curTeam:
-                    if curTeam in war.getTeamPenalities() and war.getTeamPenalities()[curTeam] > 0:
-                        table_str += "\nPenalty -" + str(war.getTeamPenalities()[curTeam]) + "\n"
+                    if curTeam in war.get_team_penalties() and war.get_team_penalties()[curTeam] > 0:
+                        table_str += "\nPenalty -" + str(war.get_team_penalties()[curTeam]) + "\n"
                     curTeam = war.getTeamForFC(fc)
                     teamHex = ""
-                    if war.teamColors is not None:
-                        if teamCounter < len(war.teamColors):
-                            teamHex = " " + war.teamColors[teamCounter]
+                    if war.get_team_colors() is not None:
+                        if teamCounter < len(war.get_team_colors()):
+                            teamHex = " " + war.get_team_colors()[teamCounter]
                     table_str += "\n" + curTeam + teamHex + "\n"
                     teamCounter += 1
             table_str += player_scores_str + "\n"
     if not is_ffa:
-        if team_tag in war.getTeamPenalities():
-            table_str += "Penalty -" + str(war.getTeamPenalities()[war.getTeamForFC(fc)]) + "\n"
+        if team_tag in war.get_team_penalties():
+            table_str += "Penalty -" + str(war.get_team_penalties()[war.getTeamForFC(fc)]) + "\n"
     
-    """for fc, player_data in FC_table_str_items:
-        player_scores_str = player_data[0]
-        if not is_ffa:
-            if war.getTeamForFC(fc) != curTeam:
-                if curTeam in war.getTeamPenalities():
-                    table_str += "\nPenalty -" + str(war.getTeamPenalities()[curTeam]) + "\n"
-                curTeam = war.getTeamForFC(fc)
-                teamHex = ""
-                if war.teamColors is not None:
-                    if teamCounter < len(war.teamColors):
-                        teamHex = " " + war.teamColors[teamCounter]
-                table_str += "\n" + curTeam + teamHex + "\n"
-                teamCounter += 1
-        table_str += player_scores_str + "\n"
-    if not is_ffa:
-        if war.getTeamForFC(fc) in war.getTeamPenalities():
-            table_str += "Penalty -" + str(war.getTeamPenalities()[war.getTeamForFC(fc)]) + "\n"""
     return table_str, scores_by_team
 
-def get_race_scores_for_fc(friend_code:str, channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False):
-    _, race_score_data = get_war_table_DCS(channel_bot, use_lounge_otherwise_mii, use_miis, lounge_replace, server_id, missingRacePts, discord_escape, step=1)
+def get_race_scores_for_fc(friend_code:str, channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, race_points_when_missing=3, discord_escape=False):
+    _, race_score_data = get_war_table_DCS(channel_bot, use_lounge_otherwise_mii, use_miis, lounge_replace, server_id, race_points_when_missing, discord_escape, step=1)
     for _, team_players in race_score_data:
         for fc, player_data in team_players:
             if fc == friend_code:
