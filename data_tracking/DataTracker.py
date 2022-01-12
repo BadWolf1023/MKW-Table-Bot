@@ -6,6 +6,7 @@ Created on Oct 21, 2021
 This module helps track and store data from Wiimmfi.
 
 '''
+import asyncio
 import json
 import os
 import time
@@ -754,15 +755,19 @@ async def populate_player_fcs_table():
     rows = []
 
     fc_map = UserDataProcessing.FC_DiscordID
-    if len(fc_map) == 0:
+    existing_count = (await db_connection.execute("SELECT count(*) FROM Player_FCs;"))[0][0]
+
+    if len(fc_map) == 0 or len(fc_map) == existing_count:
+        print("Not changing FC table")
         return
+
+    start = time.time()
+    print(f'Populating FC table in database...')
 
     for fc in fc_map:
         discord_id = fc_map[fc][0]
         rows.append((fc, discord_id))
 
-    start = time.time()
-    print(f'Populating FC table in database...')
     await db_connection.execute("DELETE FROM Player_FCs;")
     await db_connection.executemany("insert into Player_FCs values (?, ?)", rows)
     print(f'FC table population finished in {time.time()-start} seconds')
@@ -782,6 +787,20 @@ async def database_maintenance():
     maintenance_script = common.read_sql_file(common.ROOM_DATA_TRACKING_DATABASE_MAINTENANCE_SQL)
     await db_connection.executescript(maintenance_script)
 
+async def vacuum():
+    await db_connection.executescript("VACUUM;")
+
+async def fix_shas(shas:Dict):
+    for sha, track_name in shas.items():
+        no_author_name = Race.remove_author_and_version_from_name(track_name)
+        lookup = Race.get_track_name_lookup(no_author_name)
+        script =     f"""
+            INSERT OR IGNORE INTO Track VALUES("{track_name}", "No Track Page", "{no_author_name}", 1, "{lookup}");
+            UPDATE Race SET track_name = "{track_name}" WHERE Race.track_name = "{sha}";
+            DELETE FROM Track WHERE track.track_name = "{sha}";
+        """
+        await db_connection.executescript(script)
+
 async def initialize():
     load_room_data()
     await start_database()
@@ -789,7 +808,11 @@ async def initialize():
     await populate_tier_table()
     await populate_score_matrix_table()
     await populate_player_fcs_table()
-    # await database_maintenance()
+
+    # Race.initialize needs to be called first
+    await fix_shas(Race.sha_track_name_mappings)
+    if common.is_prod or common.is_beta:
+        await vacuum()
 
 def save_data():
     pass

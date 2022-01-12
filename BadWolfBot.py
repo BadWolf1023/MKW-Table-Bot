@@ -241,9 +241,6 @@ class BadWolfBot(ext_commands.Bot):
         ServerFunctions.initialize()
         UtilityFunctions.initialize()
         TagAIShell.initialize()
-
-    async def close(self):
-        await super().close()
     
     def should_send_help(self, message):
         return message.content.strip().lower() in ["?help"] or (self.user.mentioned_in(message) and 'help' in message.content.strip().lower())
@@ -328,7 +325,7 @@ class BadWolfBot(ext_commands.Bot):
             for channel_id in self.table_bots[server_id]:
                 self.table_bots[server_id][channel_id].destroy()
     
-    def save_data(self):
+    async def save_data(self):
         print(f"{str(datetime.now())}: Saving data")
         successful = UserDataProcessing.non_async_dump_data()
         if not successful:
@@ -341,7 +338,7 @@ class BadWolfBot(ext_commands.Bot):
         self.pickle_lounge_updates()
         if common.is_prod:
             Stats.backup_files()
-            Stats.prune_backups()
+            await Stats.prune_backups()
             Stats.dump_to_stats_file()
         
         print(f"{str(datetime.now())}: Finished saving data")
@@ -920,6 +917,16 @@ class BadWolfBot(ext_commands.Bot):
     
     def run(self, key):
         super().run(key, reconnect=True)
+    
+    async def close(self):
+        await super().close()
+        await self.on_exit()
+        os._exit(1)
+    
+    async def on_exit(self):
+        await self.save_data()
+        self.destroy_all_tablebots()
+        print(f"{str(datetime.now())}: All table bots cleaned up.")
 
 def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bot:TableBot.ChannelBot, command:str):
     if not isLoungeServer:
@@ -1042,7 +1049,6 @@ def pickle_CTGP_region():
         except:
             print("Could not dump pickle for CTGP region for ?ctww. Exception occurred.")
             
-
 def get_size(objct, seen=None):
     """Recursively finds size of objects"""
     if seen is None:
@@ -1074,10 +1080,10 @@ def get_size(objct, seen=None):
                 all_objects.append(i)
     return total_size
 
-def handler(signum, frame):
-    sys.exit()
+# def handler(signum, frame):
+#     sys.exit()
 
-signal.signal(signal.SIGINT, handler)
+# signal.signal(signal.SIGINT, handler)
 
 
 if __name__ == "__main__":
