@@ -269,9 +269,6 @@ class BadWolfBot(ext_commands.Bot):
         
         self.dumpDataAndBackup.start()
         checkBotAbuse.start()
-        
-        if WiimmfiSiteFunctions.USING_EXPERIMENTAL_REQUEST:
-            driver_reset_cycle.start()
     
         finished_on_ready = True
     
@@ -498,12 +495,12 @@ class BadWolfBot(ext_commands.Bot):
             else:
                 common.log_traceback(traceback)
                 self.lounge_submissions.clear_user_cooldown(message.author)
-                await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please use {server_prefix}log to tell me what happened. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
+                await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
                 raise err
         else:
             common.log_traceback(traceback)
             self.lounge_submissions.clear_user_cooldown(message.author)
-            await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please use {server_prefix}log to tell me what happened. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
+            await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
             raise error   
     
     async def on_message(self, message: discord.Message):
@@ -589,7 +586,6 @@ class BadWolfBot(ext_commands.Bot):
                 elif args[0] in LOUNGE_CT_MOGI_UPDATE_TERMS:
                     await commands.LoungeCommands.ct_mogi_update(self, this_bot, message, args, self.lounge_submissions)
                     
-            
                 elif args[0] in LOUNGE_TABLE_SUBMISSION_APPROVAL_TERMS:
                     await commands.LoungeCommands.approve_submission_command(self, message, args, self.lounge_submissions)
                     
@@ -710,6 +706,7 @@ class BadWolfBot(ext_commands.Bot):
                     await commands.LoungeCommands.lookup_command(self, message, args)
                 elif args[0] in TABLE_BOT_MEMORY_USAGE_TERMS:
                     commands.BadWolfCommands.is_badwolf_check(message.author, "cannot display table bot internal memory usage")
+                    load_mes = await message.channel.send("Calculating memory usage...")
                     size_str = ""
                     print(f"get_size: Lounge table reports size (KiB):")
                     size_str += "Lounge submission tracking size (KiB): " + str(get_size(self.lounge_submissions)//1024)
@@ -736,6 +733,7 @@ class BadWolfBot(ext_commands.Bot):
                     print(f"get_size: PROCESS SIZE (KiB) (actual): ")
                     size_str += "\nPROCESS SIZE (KiB) (actual): " + str((psutil.Process(os.getpid()).memory_info().rss)//1024)
                     print(f"get_size: Done.")
+                    await load_mes.delete()
                     await message.channel.send(size_str)
             
                 elif args[0] in SET_PREFIX_TERMS:
@@ -915,7 +913,7 @@ class BadWolfBot(ext_commands.Bot):
         except Exception as e:
             common.log_traceback(traceback)
             self.lounge_submissions.clear_user_cooldown(message.author)
-            await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please use {server_prefix}log to tell me what happened. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
+            await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
             raise e
         else:
             pass
@@ -1026,23 +1024,7 @@ def private_data_init():
 async def checkBotAbuse():
     await AbuseTracking.check_bot_abuse()
         
-    
-if WiimmfiSiteFunctions.USING_EXPERIMENTAL_REQUEST:
-    import itertools
-    driver_cycle = itertools.cycle([i for i in range(WiimmfiSiteFunctions.number_of_browsers)])
-    driver_reset_cycle_loop_time = int(WiimmfiSiteFunctions.captcha_time_estimation / WiimmfiSiteFunctions.number_of_browsers)
-    @tasks.loop(minutes=driver_reset_cycle_loop_time)
-    async def driver_reset_cycle():
-        await asyncio.sleep(10) #Make sure we're done booting
-        current_driver_index = next(driver_cycle)
-        try:
-            success = await WiimmfiSiteFunctions.safe_restart_driver(current_driver_index, logging_message=f"Resetting driver at index {current_driver_index} because a captcha may be hit soon.")
-            if not success:
-                print(f"Failed to reset driver at index {current_driver_index} because it was busy for {WiimmfiSiteFunctions.SAFE_DRIVER_RESTART_TIMEOUT} seconds.")
-        except Exception as e:
-            print(f"Failed to reset driver at index {current_driver_index} because of the following exception: {e}")
-
-
+ 
 def load_CTGP_region_pickle():
     if os.path.exists(common.CTGP_REGION_FILE):
         with open(common.CTGP_REGION_FILE, "rb") as pickle_in:
@@ -1062,7 +1044,6 @@ def pickle_CTGP_region():
             
 
 def get_size(objct, seen=None):
-    
     """Recursively finds size of objects"""
     if seen is None:
         seen = set()
