@@ -1647,12 +1647,12 @@ class TablingCommands:
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
 
-        if this_bot.get_war().is_ffa():
+        if this_bot.get_war().is_FFA():
             await message.channel.send("You can't give team penalties in FFAs. Do " + server_prefix + "penalty to give an individual player a penalty in an FFA.")
             return
 
         if len(args) == 1:
-            teams = sorted(this_bot.get_war().getTags())
+            teams = sorted(this_bot.get_war().get_all_tags())
             to_send = ""
             for team_num, team in enumerate(teams, 1):
                 to_send += UtilityFunctions.process_name(str(team_num)) + ". " + team + "\n"
@@ -1666,7 +1666,7 @@ class TablingCommands:
 
         teamNum = args[1]
         amount = args[2]
-        teams = sorted(this_bot.get_war().getTags())
+        teams = sorted(this_bot.get_war().get_all_tags())
         if not teamNum.isnumeric():
             for ind, team in enumerate(teams):
                 if team.lower() == teamNum:
@@ -1858,14 +1858,14 @@ class TablingCommands:
         subOutEndRace = raceNum - 1
         subOutScores = SK.get_race_scores_for_fc(subOutFC, this_bot)[subOutStartRace-1:subOutEndRace]
         subOutName = UserDataProcessing.lounge_get(subOutFC)
-        subOutTag = this_bot.get_war().getTeamForFC(subOutFC)
+        subOutTag = this_bot.get_war().get_teg_for_FC(subOutFC)
         if subOutName == "":
             subOutName = subOutMiiName
         subInStartRace = raceNum
         subInEndRace = this_bot.get_war().get_user_defined_num_of_races()
         this_bot.add_save_state(message.content)
         this_bot.get_room().add_sub(subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores)
-        this_bot.get_war().setTeamForFC(subInFC, subOutTag)
+        this_bot.get_war().set_tag_for_FC(subInFC, subOutTag)
         await message.channel.send(f"Got it. **{UtilityFunctions.process_name(subInMiiName + lounge_add(subInFC))}** subbed in for **{UtilityFunctions.process_name(subOutMiiName + lounge_add(subOutFC))}** on race #{subInStartRace}")
 
 
@@ -1979,7 +1979,7 @@ class TablingCommands:
             return
 
 
-        if this_bot.get_war().is_ffa():
+        if this_bot.get_war().is_FFA():
             to_send = "You cannot change a player's tag in an FFA. FFAs have no teams."
             await message.channel.send(to_send)
             return
@@ -2000,7 +2000,7 @@ class TablingCommands:
                     await message.channel.send("The player number must be on this list (between 1 and " + str(len(players)) + "). Do " + server_prefix + "changetag for an example on how to use this command.")
                 else:
                     this_bot.add_save_state(message.content)
-                    this_bot.get_war().setTeamForFC(players[playerNum-1][0], new_tag)
+                    this_bot.get_war().set_tag_for_FC(players[playerNum-1][0], new_tag)
                     await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
             else:
                 lounge_name = str(copy.copy(playerNum))
@@ -2016,7 +2016,7 @@ class TablingCommands:
                     await message.channel.send("Could not find Lounge name " + UtilityFunctions.process_name(str(lounge_name)) + " in this room.")
                 else:
                     this_bot.add_save_state(message.content)
-                    this_bot.get_war().setTeamForFC(players[_playerNum-1][0], new_tag)
+                    this_bot.get_war().set_tag_for_FC(players[_playerNum-1][0], new_tag)
                     await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + lounge_add(players[_playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
 
 
@@ -2123,10 +2123,10 @@ class TablingCommands:
                             asyncio.create_task(this_bot.populate_miis())
                             players = list(this_bot.get_room().getFCPlayerListStartEnd(1, numgps*4).items())
                             await updateData(* await LoungeAPIFunctions.getByFCs([fc for fc, _ in players]))
-                            tags_fcs = TagAIShell.determineTags(players, this_bot.get_war().get_players_per_team())
+                            tags_fcs = TagAIShell.determineTags(players, this_bot.get_war().get_user_defined_players_per_team())
                             this_bot.get_war().set_temporary_tag_fcs(tags_fcs)
 
-                            if not this_bot.get_war().is_ffa():
+                            if not this_bot.get_war().is_FFA():
                                 to_send = f"{this_bot.get_war().get_tags_str()}\n***Is this correct?** Respond `{server_prefix}yes` or `{server_prefix}no`*"
                                 await message.channel.send(to_send)
                                 this_bot.prev_command_sw = True
@@ -2134,7 +2134,7 @@ class TablingCommands:
                             else:
                                 dummy_teams = {}
 
-                                for teamNumber in range(0, min(this_bot.get_war()._number_of_teams, len(players))):
+                                for teamNumber in range(0, min(this_bot.get_war()._user_defined_number_of_teams, len(players))):
                                     dummy_teams[players[teamNumber][0]] = str(teamNumber)
                                 this_bot.get_war().set_teams(dummy_teams)
                                 await message.channel.send(this_bot.get_room_started_message())

@@ -143,8 +143,8 @@ def add_miis_to_table(channel_bot:ChannelBot, team_scores:List[Tuple[str, List[T
 def get_footer_with_miis(channel_bot:ChannelBot, team_scores:List[Tuple[str, List[Tuple[str, Tuple[str, int]]]]]):
     
     team_footers = []
-    extension_should_reflect = not channel_bot.get_war().is_ffa()
-    if channel_bot.get_war().is_ffa():
+    extension_should_reflect = not channel_bot.get_war().is_FFA()
+    if channel_bot.get_war().is_FFA():
         all_miis = {}
         for team_tag, team_players in team_scores:
             available_miis = channel_bot.get_available_miis_dict([player_data[0] for player_data in team_players])

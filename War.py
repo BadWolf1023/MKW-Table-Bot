@@ -3,7 +3,7 @@ Created on Jul 13, 2020
 
 @author: willg
 '''
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Set, DefaultDict
 import ErrorChecker
 from collections import defaultdict
 import random
@@ -55,6 +55,7 @@ class War(object):
         return self._team_colors
 
     def get_teams(self) -> Dict[str, str]:
+        '''returns a dictionary of FCs, each FC is mapped to its tag'''
         return self._teams
 
     def get_user_defined_num_of_gps(self) -> int:
@@ -81,21 +82,25 @@ class War(object):
     def display_miis(self) -> bool:
         return self._display_miis
 
-    def get_team_penalties(self):
+    def get_team_penalties(self) -> DefaultDict[str, int]:
+        '''Returns a default dict: team tag mapped to the penalty for the team'''
         return self._team_penalties
 
     def get_user_defined_war_format(self) -> str:
-        return self._war_format
+        return self._user_defined_war_format
 
     def get_user_defined_num_of_teams(self) -> int:
-        return self._number_of_teams
+        return self._user_defined_number_of_teams
+    
+    def get_user_defined_players_per_team(self) -> int:
+        return self._user_defined_players_per_team
 
-    def get_user_defined_num_players(self):
-        return self.get_user_defined_num_of_teams()*self.get_players_per_team()
+    def get_user_defined_num_players(self) -> int:
+        return self.get_user_defined_num_of_teams()*self.get_user_defined_players_per_team()
 
-    #playersPerTeam
-    def get_players_per_team(self):
-        return self.get_players_per_team()
+    def is_FFA(self) -> bool:
+        return self.get_user_defined_players_per_team() == 1
+
 
     # Setters
     def _set_team_colors(self, team_colors: Tuple[str, str]):
@@ -108,32 +113,33 @@ class War(object):
     def set_number_of_gps(self, number_of_GPs: int):
         self._number_of_GPs = number_of_GPs
 
-    def set_user_set_war_name(self, war_name):
+    def set_user_set_war_name(self, war_name: str):
         self._user_defined_war_name = war_name
 
-    def set_race_points_when_missing(self, race_points_when_missing):
+    def set_race_points_when_missing(self, race_points_when_missing: int):
         self._race_points_when_missing = race_points_when_missing
 
-    def _set_edited_scores(self, edited_scores):
+    def _set_edited_scores(self, edited_scores: Dict[str, Tuple[int, int]]):
+        '''See get_edited_scores for more information'''
         self._edited_scores = edited_scores
 
-    def set_show_large_time_errors(self, show_large_time_errors):
+    def set_show_large_time_errors(self, show_large_time_errors: bool):
         self._show_large_time_errors = show_large_time_errors
 
-    def set_display_miis(self, display_miis):
+    def set_display_miis(self, display_miis: bool):
         self._display_miis = display_miis
 
-    def _set_team_penalties(self, team_penalties):
+    def _set_team_penalties(self, team_penalties: DefaultDict[str, int]):
         self._team_penalties = team_penalties
 
-    def _set_war_format(self, war_format):
-        self._war_format = war_format
+    def _set_user_defined_war_format(self, war_format: str):
+        self._user_defined_war_format = war_format
 
-    def _set_number_of_teams(self, number_of_teams):
-        self._number_of_teams = number_of_teams
+    def _set_user_defined_number_of_teams(self, number_of_teams: int):
+        self._user_defined_number_of_teams = number_of_teams
 
-    def _set_players_per_teams(self, players_per_team):
-        self._players_per_team = players_per_team
+    def _set_user_defined_players_per_teams(self, players_per_team: int):
+        self._user_defined_players_per_team = players_per_team
 
     def _war_format_setup(self, format_: str, number_of_teams: str):
         if format_ not in self._war_format_players_per_team:
@@ -147,36 +153,41 @@ class War(object):
         if players_per_team * number_of_teams > 12:
             raise TableBotExceptions.InvalidNumberOfPlayersException()
 
-        self._set_war_format(format_)
-        self._set_number_of_teams(number_of_teams)
-        self._set_players_per_teams(players_per_team)
+        self._set_user_defined_war_format(format_)
+        self._set_user_defined_number_of_teams(number_of_teams)
+        self._set_user_defined_players_per_teams(players_per_team)
         if self.get_user_defined_num_of_teams() == 2:
             self._set_team_colors(random.choice(TWO_TEAM_TABLE_COLOR_PAIRS))
 
-    def isFFA(self):
-        return self.get_players_per_team() == 1
 
-    def getTeamForFC(self, FC):
+    # ========= Functions for looking up tags and FCs ==========
+    def get_teg_for_FC(self, FC: str) -> str:
+        '''Takes the tag for a given FC. If there is no tag for the FC, "NO TEAM" is returned'''
         if self.get_teams() is None:
             raise TableBotExceptions.WarSetupStillRunning()
         if FC in self.get_teams():
             return self.get_teams()[FC]
         return "NO TEAM"
 
-    def setTeamForFC(self, FC, team):
+    def set_tag_for_FC(self, FC: str, tag: str):
+        '''Sets the given FC's tag to the specified tag.'''
         if self.get_teams() is None:
             raise TableBotExceptions.WarSetupStillRunning()
-        self.get_teams()[FC] = team
+        self.get_teams()[FC] = tag
 
-    def getTags(self):
+    def get_all_tags(self) -> Set[str]:
+        '''Returns a set of all the tags - the tags returned are a combination of the accepted AI results and users defining tags for players'''
         if self.get_teams() is None:
             raise TableBotExceptions.WarSetupStillRunning()
         return set(self.get_teams().values())
 
-    def getFCsForTag(self, tagToGet):
+    def get_FCs_for_tag(self, tag: str) -> List[str]:
+        '''Returns a list of FCs whose tag is the specified tag'''
         if self.get_teams() is None:
             raise TableBotExceptions.WarSetupStillRunning()
-        return [fc for fc, tag in self.get_teams().items() if tag == tagToGet]
+        return [fc for fc, team_tag in self.get_teams().items() if team_tag == tag]
+
+
 
     def set_temporary_tag_fcs(self, tag_fcs):
         self._temporary_tags_fcs = tag_fcs
@@ -238,9 +249,6 @@ class War(object):
     def addTeamPenalty(self, team_tag, amount):
         self.get_team_penalties()[team_tag] += amount
 
-    def is_ffa(self):
-        return self._war_format == "1v1" or self._war_format == "ffa"
-
     def get_war_errors_string_2(self, room, replaceLounge=True, up_to_race=None):
         errors = ErrorChecker.get_war_errors_players(
             self, room, replaceLounge, show_large_time_errors=self.should_show_large_time_errors())
@@ -295,8 +303,8 @@ class War(object):
         if self.get_user_defined_war_name() is not None:
             return self.get_user_defined_war_name()
         
-        all_teams = {"FFA"} if self.is_ffa else set(self.get_teams().values())
-        return " vs ".join(all_teams) + f": {self._war_format} ({num_races} races)"
+        all_teams = {"FFA"} if self.is_FFA() else set(self.get_teams().values())
+        return " vs ".join(all_teams) + f": {self._user_defined_war_format} ({num_races} races)"
 
     def get_war_name_for_table(self, num_races: int) -> str:
         '''If the user has set a name for the table manually, that is returned.
@@ -327,8 +335,8 @@ class War(object):
     def _print_teams(self) -> None:
         if self.get_teams() is None:
             raise TableBotExceptions.WarSetupStillRunning()
-        for tag in self.getTags(self, self.get_teams()):
-            print(tag + self.getFCsForTag(tag))
+        for tag in self.get_all_tags(self, self.get_teams()):
+            print(tag + self.get_FCs_for_tag(tag))
 
     def __str__(self):
         return f"""-- WAR --

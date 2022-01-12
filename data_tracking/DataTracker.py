@@ -660,7 +660,7 @@ class RoomTrackerSQL(object):
                 self.channel_bot.get_war().get_user_defined_num_of_gps(),
                 self.channel_bot.get_war().get_user_defined_num_players(),
                 self.channel_bot.get_war().get_user_defined_num_of_teams(),
-                self.channel_bot.get_war().get_players_per_team())
+                self.channel_bot.get_war().get_user_defined_players_per_team())
         
     async def dump_event_structure_data(self):
         event_structure_tuple = self.get_event_structure_tuple()

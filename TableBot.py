@@ -119,7 +119,7 @@ class ChannelBot(object):
 
     
     def get_room_started_message(self) -> str:
-        started_war_str = "FFA started" if self.get_war().isFFA() else "War started"
+        started_war_str = "FFA started" if self.get_war().is_FFA() else "War started"
         if not self.get_war().should_show_large_time_errors():
             started_war_str += " (ignoring errors for large finish times)"
         started_war_str += f". {self.get_room().getRXXText()}"

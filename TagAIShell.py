@@ -81,12 +81,12 @@ def sort_dict(my_dict:dict, key=None):
         result[k] = my_dict[k]
     return result
 
-def get_alpha_AI_results(players, playersPerTeam=None):
-    return alpha_AI(players, playersPerTeam)
+def get_alpha_AI_results(players, players_per_team=None):
+    return alpha_AI(players, players_per_team)
 
-def get_beta_AI_results(players, playersPerTeam=None):
+def get_beta_AI_results(players, players_per_team=None):
     all_player_names = [player_data[1] for player_data in players]
-    players_per_team_guess, team_results = beta_AI(all_player_names, target_size=playersPerTeam)
+    players_per_team_guess, team_results = beta_AI(all_player_names, target_size=players_per_team)
     #Change results format into the format Table Bot expects:
     table_bot_formatted_results = {}
     for team_tag, team_player_indexes in team_results.items():
@@ -101,20 +101,20 @@ def get_beta_AI_results(players, playersPerTeam=None):
     return players_per_team_guess, table_bot_formatted_results
     
     
-def determineTags(players, playersPerTeam=None, give_beta_ai_format=True):
+def determineTags(players, players_per_team=None, give_beta_ai_format=True):
     alpha_team_results = None
     beta_team_results = None
     beta_players_per_team_guess = None
-    beta_ai_players_per_team = playersPerTeam if give_beta_ai_format else None
+    beta_ai_players_per_team = players_per_team if give_beta_ai_format else None
     if RUN_ALPHA_AI or not USE_BETA_AI:
         try:
             #Run Alpha AI:
             t0_alpha = time.perf_counter()
-            alpha_team_results = get_alpha_AI_results(players, playersPerTeam)
+            alpha_team_results = get_alpha_AI_results(players, players_per_team)
             t1_alpha = time.perf_counter()
             time_taken_alpha = t1_alpha - t0_alpha
             if LOG_AI_RESULTS:
-                log_AI_results(players, alpha_team_results, time_taken_alpha, playersPerTeam, is_alpha_AI=True)
+                log_AI_results(players, alpha_team_results, time_taken_alpha, players_per_team, is_alpha_AI=True)
         except Exception as e:
             raise e
             common.log_text(f"Alpha AI threw an exception: {e}", common.ERROR_LOGGING_TYPE)
@@ -123,7 +123,7 @@ def determineTags(players, playersPerTeam=None, give_beta_ai_format=True):
         #Run Beta AI:
         try:
             t0_beta = time.perf_counter()
-            beta_players_per_team_guess, beta_team_results = get_beta_AI_results(players, playersPerTeam=beta_ai_players_per_team)
+            beta_players_per_team_guess, beta_team_results = get_beta_AI_results(players, players_per_team=beta_ai_players_per_team)
             t1_beta = time.perf_counter()
             time_taken_beta = t1_beta - t0_beta
             if LOG_AI_RESULTS:

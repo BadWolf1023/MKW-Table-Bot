@@ -150,12 +150,12 @@ def __clean(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str, str, int]
     
 
             
-def __clean_by_num_players(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str, str, int]]], playersPerTeam:int):       
+def __clean_by_num_players(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str, str, int]]], players_per_team:int):       
     for tags_counts in all_possible_counts.values():
         to_remove = set()
         for index, (tag_val, _, tag_count) in enumerate(tags_counts):
             
-            if tag_count < (playersPerTeam - 1): #the number of *other* players who have this tag
+            if tag_count < (players_per_team - 1): #the number of *other* players who have this tag
                 to_remove.add(index)
         
         #remove from list, from greatest index to least (so that we don't change list order and remove something we shouldn't)
@@ -238,7 +238,7 @@ def __choose_best_solution(solutions: List[Dict[Tuple[str, str, int], Set[Tuple[
         
             
                 
-def __clean_by_overlap(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str, str, int]]], playersPerTeam:int):       
+def __clean_by_overlap(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str, str, int]]], players_per_team:int):       
     #if there exists a combination of players and tags such that no player is on both teams, this combination is most likely correct
     #At this point, hopefully, all players will have at least one possible tag - if they don't, we'll handle that in the calling function after this runs
     #The important thing at this point is to eliminate any tags that create an impossible scenario, such as player 1 being on both tag Ap and tag Pw
@@ -263,7 +263,7 @@ def __clean_by_overlap(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str
                         players_on_more_than_one_team.add(p_1)
    
     #Each player can only appear once, and each tag must have the same or more players per team as numPlayersPerTeam
-    def is_possible_solution(tags_possibilities:List[Tuple[Tuple[str, str, int], Set[Tuple[str,str]]]], allPlayers:List[Tuple[str, str]], playersPerTeam:int):
+    def is_possible_solution(tags_possibilities:List[Tuple[Tuple[str, str, int], Set[Tuple[str,str]]]], allPlayers:List[Tuple[str, str]], players_per_team:int):
         #check if the solution set has the same players as the original player set
         #if it doesn't, it clearly can't be a valid solution
         solution_players = set()
@@ -275,7 +275,7 @@ def __clean_by_overlap(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str
         for player in allPlayers:
             instanceCount = 0
             for (tag, players) in tags_possibilities.items():
-                if len(players) != playersPerTeam:
+                if len(players) != players_per_team:
                         return False
                 if player in players:
                     instanceCount += 1
@@ -305,12 +305,12 @@ def __clean_by_overlap(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str
         return is_beyond_time
     
     
-    def all_possible_solutions_recurrsion(duplicates:List[Tuple[str, str]], tags_possibilities:List[Tuple[str, Set[Tuple[str,str]]]], allPlayers:List[Tuple[str, str]], possible_solutions:List[Tuple[str, Set[Tuple[str,str]]]], playersPerTeam:int):
+    def all_possible_solutions_recurrsion(duplicates:List[Tuple[str, str]], tags_possibilities:List[Tuple[str, Set[Tuple[str,str]]]], allPlayers:List[Tuple[str, str]], possible_solutions:List[Tuple[str, Set[Tuple[str,str]]]], players_per_team:int):
         if beyond_time():
             
             return
         
-        if is_possible_solution(tags_possibilities, allPlayers, playersPerTeam):
+        if is_possible_solution(tags_possibilities, allPlayers, players_per_team):
             possible_solutions.append(copy_solution(tags_possibilities))
                 
         if len(duplicates) == 0:
@@ -337,12 +337,12 @@ def __clean_by_overlap(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str
             #don't even go down the path if there's a tag with less players per team than the format has
             not_enough_players = {}
             for tag, players in tags_possibilities.items():
-                if players is None or len(players) < playersPerTeam:
+                if players is None or len(players) < players_per_team:
                     not_enough_players[tag] = players
             for tag in not_enough_players:
                 del(tags_possibilities[tag])
             
-            all_possible_solutions_recurrsion(duplicates, tags_possibilities, allPlayers, possible_solutions, playersPerTeam)
+            all_possible_solutions_recurrsion(duplicates, tags_possibilities, allPlayers, possible_solutions, players_per_team)
             if beyond_time():
                 return
             
@@ -357,7 +357,7 @@ def __clean_by_overlap(all_possible_counts: Dict[Tuple[str, str], List[Tuple[str
     dups = list(players_on_more_than_one_team)
     all_players = set(all_possible_counts.keys())
     all_possible_solutions = []
-    all_possible_solutions_recurrsion(dups, tag_players, all_players, all_possible_solutions, playersPerTeam)
+    all_possible_solutions_recurrsion(dups, tag_players, all_players, all_possible_solutions, players_per_team)
     if beyond_time():
         return None
     if all_possible_solutions is None or len(all_possible_solutions) == 0:
@@ -403,9 +403,9 @@ def __choose_and_cleanup(counts: Dict[Tuple[str, str], List[Tuple[str, str, int]
         
     return fc_player_tags, has_None_Tags
 
-def __majorityTagCorrection(counts: Dict[Tuple[str, str], List[Tuple[str, str]]], has_None_Tags, playersPerTeam:int) -> Dict[Tuple[str, str], Tuple[str, str]]:
+def __majorityTagCorrection(counts: Dict[Tuple[str, str], List[Tuple[str, str]]], has_None_Tags, players_per_team:int) -> Dict[Tuple[str, str], Tuple[str, str]]:
     #Now we want to correct anyone with the wrong tag
-    if not has_None_Tags and playersPerTeam >= 2: #Majority tag correction
+    if not has_None_Tags and players_per_team >= 2: #Majority tag correction
         value_tags_counts = defaultdict(list)
         for tag in counts.values():
             tag_val, actual_tag = tag[0], tag[1]
@@ -420,10 +420,10 @@ def __majorityTagCorrection(counts: Dict[Tuple[str, str], List[Tuple[str, str]]]
             counts[fc_player] = (tag[0], replacement_tags[tag[0]])
     return counts
 
-def getTagsSmart(fc_players:List[Tuple[str, str]], playersPerTeam:int) -> Dict[Tuple[str, str], Tuple[str, str]]:
+def getTagsSmart(fc_players:List[Tuple[str, str]], players_per_team:int) -> Dict[Tuple[str, str], Tuple[str, str]]:
     #import time
     #startTime = time.perf_counter_ns() 
-    if playersPerTeam <= 1:
+    if players_per_team <= 1:
         return BaseTagAI.get_ffa_teams(fc_players)
             
     
@@ -433,24 +433,24 @@ def getTagsSmart(fc_players:List[Tuple[str, str]], playersPerTeam:int) -> Dict[T
     tag_counts = __count_tags(all_possible)
     
     __clean(tag_counts)
-    __clean_by_num_players(tag_counts, playersPerTeam)
-    temp = __clean_by_overlap(tag_counts, playersPerTeam)
+    __clean_by_num_players(tag_counts, players_per_team)
+    temp = __clean_by_overlap(tag_counts, players_per_team)
     
 
     if temp is None or len(temp) == 0:
-        return reverse_dict_order_and_finalize(get_alphabetical_tags(fc_players, playersPerTeam))
+        return reverse_dict_order_and_finalize(get_alphabetical_tags(fc_players, players_per_team))
     
     if len(tag_counts) == len(temp):
         tag_counts = temp
 
 
     tag_counts, hasNoneTags = __choose_and_cleanup(tag_counts)
-    tag_counts = __majorityTagCorrection(tag_counts, hasNoneTags, playersPerTeam)
+    tag_counts = __majorityTagCorrection(tag_counts, hasNoneTags, players_per_team)
     #print("Time this took:", time.perf_counter_ns() - startTime)
     if hasNoneTags:
-        return reverse_dict_order_and_finalize(get_alphabetical_tags(fc_players, playersPerTeam))
+        return reverse_dict_order_and_finalize(get_alphabetical_tags(fc_players, players_per_team))
     
-    return reverse_dict_order_and_finalize(fix_duplicate_tags(tag_counts, playersPerTeam))
+    return reverse_dict_order_and_finalize(fix_duplicate_tags(tag_counts, players_per_team))
 
 #Takes a player_fc dict (player, fc):(tag_value, actual_tag) and converts it to a sorted dict (tag_value, actual_tag):(player, fc)
 def reverse_dict_order_and_finalize(player_fcs_tags):

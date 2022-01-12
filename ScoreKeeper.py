@@ -279,14 +279,13 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     table_str = "#title " + war.get_war_name_for_table(numRaces) + "\n"
     curTeam = None
     teamCounter = 0
-    is_ffa = war.get_players_per_team() == 1
-    if is_ffa:
+    if war.is_FFA():
         table_str += "FFA\n"
     
-    FC_table_str_items = sorted(FC_table_str.items(), key=lambda t: war.getTeamForFC(t[0]))
+    FC_table_str_items = sorted(FC_table_str.items(), key=lambda t: war.get_teg_for_FC(t[0]))
     scores_by_team = defaultdict(list)
     for fc, player_data in FC_table_str_items:
-        scores_by_team[war.getTeamForFC(fc)].append((fc, player_data))
+        scores_by_team[war.get_teg_for_FC(fc)].append((fc, player_data))
     
     def player_score(player_data):
         return player_data[1]
@@ -311,11 +310,11 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     for team_tag, team_players in scores_by_team:
         for fc, player_data in team_players:
             player_scores_str = player_data[0]
-            if not is_ffa:
+            if not war.is_FFA():
                 if team_tag != curTeam:
                     if curTeam in war.get_team_penalties() and war.get_team_penalties()[curTeam] > 0:
                         table_str += "\nPenalty -" + str(war.get_team_penalties()[curTeam]) + "\n"
-                    curTeam = war.getTeamForFC(fc)
+                    curTeam = war.get_teg_for_FC(fc)
                     teamHex = ""
                     if war.get_team_colors() is not None:
                         if teamCounter < len(war.get_team_colors()):
@@ -323,9 +322,9 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
                     table_str += "\n" + curTeam + teamHex + "\n"
                     teamCounter += 1
             table_str += player_scores_str + "\n"
-    if not is_ffa:
+    if not war.is_FFA():
         if team_tag in war.get_team_penalties():
-            table_str += "Penalty -" + str(war.get_team_penalties()[war.getTeamForFC(fc)]) + "\n"
+            table_str += "Penalty -" + str(war.get_team_penalties()[war.get_teg_for_FC(fc)]) + "\n"
     
     return table_str, scores_by_team
 

@@ -111,7 +111,7 @@ def get_war_errors_players(war, room, lounge_replace=True, show_large_time_error
         return None
     
     race_errors = {}
-    numberOfPlayers = war.numberOfTeams * war.playersPerTeam
+    numberOfPlayers = war.get_user_defined_num_players()
     missingPlayersByRace = room.getMissingOnRace(war.get_user_defined_num_of_gps())
         
     startrace = 0
