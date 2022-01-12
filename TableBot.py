@@ -256,10 +256,10 @@ class ChannelBot(object):
             try:
                 if self.getRoom() is not None:
                     self.remove_miis_with_missing_files()
-                    all_fcs_in_room = self.getRoom().getFCs()
+                    all_fcs_in_room = self.getRoom().get_room_FCs()
                                         
                     if all_fcs_in_room != self.miis.keys():
-                        all_missing_fcs = [fc for fc in self.getRoom().getFCs() if fc not in self.miis]
+                        all_missing_fcs = [fc for fc in self.getRoom().get_room_FCs() if fc not in self.miis]
                         result = await MiiPuller.get_miis(all_missing_fcs, self.get_event_id())
                         if not isinstance(result, (str, type(None))):
                             for fc, mii_pull_result in result.items():

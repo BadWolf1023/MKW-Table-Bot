@@ -615,7 +615,7 @@ class RoomTrackerSQL(object):
         '''Inserts event_id, fcs in self.channel_bot's races are not yet in the database's Event_FCS table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted placements (as 2-tuples: race_id, fc) upon success. (An empty list is returned if no placements were inserted.)'''
-        event_id_fcs = list({(self.channel_bot.get_event_id(), fc, None) for fc in self.channel_bot.getRoom().getFCs()})
+        event_id_fcs = list({(self.channel_bot.get_event_id(), fc, None) for fc in self.channel_bot.getRoom().get_room_FCs()})
         if len(event_id_fcs) == 0:
             return []
         

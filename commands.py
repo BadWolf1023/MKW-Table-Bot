@@ -2273,6 +2273,7 @@ class TablingCommands:
             this_bot.add_save_state(message.content)
             this_bot.getWar().setWarName(old_command[len(server_prefix)+len("setwarname"):].strip())
             await message.channel.send("War name set!")
+
     @staticmethod
     async def get_undos_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
         if not this_bot.table_is_set() or not this_bot.getRoom().is_initialized():
@@ -2385,7 +2386,7 @@ class TablingCommands:
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         else:
-            await updateData(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs()))
+            await updateData(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().get_room_FCs()))
             if len(args) == 1:
                 await message.channel.send(str(this_bot.getRoom().races[-1]))
             else:

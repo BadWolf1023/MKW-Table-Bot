@@ -259,7 +259,7 @@ class Race:
     def getNumberOfPlayers(self):
         return len(self.placements)
     
-    def getFCs(self):
+    def get_race_FCs(self):
         return [pl.player.FC for pl in self.placements]
     
     

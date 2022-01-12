@@ -160,9 +160,9 @@ def get_war_errors_players(war, room, lounge_replace=True, ignoreLargeTimes=Fals
         
     for gp_num, gp in by_gp.items():
         if len(gp) >= 2:
-            for index_num in range(1, len(gp)):
-                if not set(gp[index_num].getFCs()).issubset(set(gp[index_num-1].getFCs())):
-                    race_num = int(gp[index_num].raceNumber)
+            for gp_race_num in range(1, len(gp)):
+                if not set(gp[gp_race_num].get_race_FCs()).issubset(set(gp[gp_race_num-1].get_race_FCs())):
+                    race_num = int(gp[gp_race_num].raceNumber)
                     if race_num not in race_errors:
                         race_errors[race_num] = []
                     race_errors[race_num].append("Players in room changed mid-GP. THIS IS AN MKWX BUG. Table is incorrect for this GP.")      

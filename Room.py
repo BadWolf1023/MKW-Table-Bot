@@ -271,7 +271,7 @@ class Room(object):
             
     
     def fcIsInRoom(self, FC):
-        return FC in self.getFCs()       
+        return FC in self.get_room_FCs()       
     
     def getNameChanges(self):
         return self.name_changes
@@ -291,7 +291,7 @@ class Room(object):
     def setNameForFC(self, FC, name):
         self.name_changes[FC] = name
     
-    def getFCs(self):
+    def get_room_FCs(self):
         return self.getFCPlayerList(endrace=None).keys()
     
     def getPlayers(self):
@@ -334,7 +334,7 @@ class Room(object):
             missingPlayersThisRace = []
             if raceNum % 4 != 0: #not the start of the GP:
                 for fc, player in thisGPPlayers.items():
-                    if fc not in race.getFCs():
+                    if fc not in race.get_race_FCs():
                         missingPlayersThisRace.append((fc, player))
             missingPlayers.append(missingPlayersThisRace)
         return missingPlayers
@@ -356,7 +356,7 @@ class Room(object):
             
             if raceNum % 4 != 0: #not the start of the GP:
                 for fc, player in thisGPPlayers.items():
-                    if fc not in race.getFCs() and fc not in wentMissingThisGP:
+                    if fc not in race.get_race_FCs() and fc not in wentMissingThisGP:
                         wentMissingThisGP.append(fc)
                         missingPlayersThisRace.append((fc, player))
             missingPlayers.append(missingPlayersThisRace)
@@ -697,7 +697,7 @@ class Room(object):
         return UtilityFunctions.process_name(string_build)
     
     def get_loungenames_in_room(self):
-        all_fcs = self.getFCs()
+        all_fcs = self.get_room_FCs()
         lounge_names = []
         for FC in all_fcs:
             lounge_name = UserDataProcessing.lounge_get(FC)
@@ -721,7 +721,7 @@ class Room(object):
         return str(discord_id) in discord_ids
         
     def getRoomFCDiscordIDs(self):
-        FC_DID = {FC:(None, None) for FC in self.getFCs()}
+        FC_DID = {FC:(None, None) for FC in self.get_race_FCs()}
         for FC in FC_DID:
             if FC in UserDataProcessing.FC_DiscordID:
                 FC_DID[FC] = UserDataProcessing.FC_DiscordID[FC]
