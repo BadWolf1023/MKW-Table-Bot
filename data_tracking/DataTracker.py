@@ -382,6 +382,7 @@ class ChannelBotSQLDataValidator(object):
             raise SQLTypeWrong(self.wrong_type_message(channel_bot.getRoom().get_known_region(), str))
         if not isinstance(channel_bot.getRoom().get_set_up_display_name(), str):
             raise SQLTypeWrong(self.wrong_type_message(channel_bot.getRoom().get_set_up_display_name(), str))
+        self.validate_int(channel_bot.get_war().get_num_players())
             
     
     def validate_event_fc_data(self, event_id_fcs):
