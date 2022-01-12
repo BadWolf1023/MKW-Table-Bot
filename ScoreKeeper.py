@@ -161,7 +161,7 @@ def resizeGPsInto(GPs, new_size_GP):
 
 def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False, step=None, up_to_race=None):
     war = channel_bot.get_war()
-    room = channel_bot.getRoom()
+    room = channel_bot.get_room()
     if step is None:
         step = channel_bot.get_race_size()
     numGPs = war.getNumberOfGPS()
