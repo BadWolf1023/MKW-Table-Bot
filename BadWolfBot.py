@@ -219,7 +219,7 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
         return True
     
     
-    if this_bot is not None and this_bot.getWar() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
+    if this_bot is not None and this_bot.get_war() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
         return this_bot.getRoom().canModifyTable(message_author.id) #Fixed! Check ALL people who can modify table, not just the person who started it!
     
     if command not in needPermissionCommands:
@@ -237,7 +237,7 @@ def getNumActiveWars():
     num_wars = 0
     for s in table_bots:
         for c in table_bots[s]:
-            if table_bots[s][c] is not None and table_bots[s][c].getWar() is not None:
+            if table_bots[s][c] is not None and table_bots[s][c].get_war() is not None:
                 time_passed = datetime.now() - table_bots[s][c].last_used
                 if time_passed < inactivity_time_period_count:
                     num_wars += 1

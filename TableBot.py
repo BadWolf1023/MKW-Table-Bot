@@ -10,15 +10,12 @@ from datetime import datetime
 import humanize
 from bs4 import NavigableString, Tag
 import MiiPuller
-#import concurrent.futures
 import common
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List, Any
 import Mii
 import ServerFunctions
-import asyncio
 from data_tracking import DataTracker
 import UtilityFunctions
-import copy
 
 
 lorenzi_style_key = "#style"
@@ -52,8 +49,8 @@ class ChannelBot(object):
     classdocs
     '''
     def __init__(self, prev_command_sw=False, room=None, war=None, manualWarSetup=False, server_id=None, channel_id=None):
-        self.room:Room.Room = room
-        self.war:War.War = war
+        self.room: Room.Room = room
+        self.war: War.War = war
         self.prev_command_sw = prev_command_sw
         self.manualWarSetUp = manualWarSetup
         self.last_used = datetime.now()
@@ -76,56 +73,56 @@ class ChannelBot(object):
         self.event_id = None
         
 
-    def get_race_size(self):
+    def get_race_size(self) -> int:
         return self.race_size
     def get_miis(self) -> Dict[str, Mii.Mii]:
         return self.miis
-    def get_room(self):
+    def get_room(self) -> Room.Room:
         return self.room
-    def get_war(self):
+    def set_war(self, war) -> None:
+        self.war = war
+    def get_war(self) -> War.War:
         return self.war
-    def get_prev_command_sw(self):
+    def get_prev_command_sw(self) -> bool:
         return self.prev_command_sw
-    def get_manual_war_set_up(self):
+    def get_manual_war_set_up(self) -> bool:
         return self.manualWarSetUp
     def get_last_used(self):
         return self.last_used
-    def get_lounge_finish_time(self):
+    def get_lounge_finish_time(self) -> datetime:
         return self.loungeFinishTime
-    def get_last_wptime(self):
+    def get_last_wptime(self) -> datetime:
         return self.lastWPTime
-    def get_room_load_time(self):
+    def get_room_load_time(self) -> datetime:
         return self.roomLoadTime
-    def get_save_states(self):
+    def get_save_states(self) -> List[Tuple[str, Dict[str, Any]]]:
         return self.save_states
-    def get_redo_states(self):
-        return self.redo_save_states
-    def get_populating(self):
+    def get_populating(self) -> bool:
         return self.populating
-    def get_should_send_mii_notification(self):
+    def get_should_send_mii_notification(self) -> bool:
         return self.should_send_mii_notification
-    def get_server_id(self):
+    def get_server_id(self): # TODO: Add type hinting for this - is server_id an int or a str?
         return self.server_id
-    def get_channel_id(self):
+    def get_channel_id(self): # TODO: Add type hinting for this - is channel_id an int or a str?
         return self.channel_id
-    def get_event_id(self):
+    def get_event_id(self): # TODO: Add type hinting for this - is event_id an int or a str?
         return self.event_id
-    def get_graph(self):
+    def get_graph(self): # TODO: Add type hinting for this - is graph an int or a str?
         return self.graph
-    def get_style(self):
+    def get_style(self): # TODO: Add type hinting for this - is style an int or a str?
         return self.style
-    def get_dc_points(self):
+    def get_dc_points(self) -> int:
         return self.dc_points
 
     
-    def get_room_started_message(self):
-        started_war_str = "FFA started" if self.getWar().isFFA() else "War started"
-        if self.getWar().ignoreLargeTimes:
+    def get_room_started_message(self) -> str:
+        started_war_str = "FFA started" if self.get_war().isFFA() else "War started"
+        if self.get_war().ignoreLargeTimes:
             started_war_str += " (ignoring errors for large finish times)"
         started_war_str += f". {self.getRoom().getRXXText()}"
         return started_war_str
         
-    def set_race_size(self, new_race_size:int):
+    def set_race_size(self, new_race_size: int):
         self.race_size = new_race_size
 
     
@@ -212,7 +209,7 @@ class ChannelBot(object):
         return "Bot will become unlocked " + humanize.naturaltime(cooldown_time)
     
     def table_is_set(self):
-        return self.room is not None and self.war is not None
+        return self.room is not None and self.get_war() is not None
     
     def get_available_miis_dict(self, FCs) -> Dict[str, Mii.Mii]:
         return {fc: self.miis[fc] for fc in FCs if fc in self.miis}
@@ -248,7 +245,7 @@ class ChannelBot(object):
         if common.MIIS_ON_TABLE_DISABLED:
             return
         #print("\n\n\n" + str(self.get_miis()))
-        if self.getWar() is not None:
+        if self.get_war() is not None:
             if self.populating:
                 return
             self.populating = True
@@ -414,11 +411,6 @@ class ChannelBot(object):
     def getRoom(self) -> Room.Room:
         return self.room
     
-    def setWar(self, war):
-        self.war = war
-    def getWar(self) -> War.War:
-        return self.war
-    
     def updatedLastUsed(self):
         self.last_used = datetime.now()
         self.updateLoungeFinishTime()
@@ -427,7 +419,7 @@ class ChannelBot(object):
         self.lastWPTime = datetime.now()
         
     def shouldSendNoticiation(self) -> bool:
-        if self.war is not None:
+        if self.get_war() is not None:
             return self.should_send_mii_notification
         return False
     
@@ -496,7 +488,7 @@ class ChannelBot(object):
     
     def get_save_state(self, command="Unknown Command"):
         save_state = {}
-        save_state["War"] = self.getWar().get_recoverable_save_state()
+        save_state["War"] = self.get_war().get_recoverable_save_state()
         save_state["Room"] = self.getRoom().get_recoverable_save_state()
         save_state["graph"] = self.graph
         save_state["race_size"] = self.race_size
@@ -564,7 +556,7 @@ class ChannelBot(object):
 
         
         self.getRoom().restore_save_state(save_state["Room"])
-        self.getWar().restore_save_state(save_state["War"])
+        self.get_war().restore_save_state(save_state["War"])
         self.graph = save_state["graph"]
         self.style = save_state["style"]
         self.race_size = save_state["race_size"]
@@ -584,7 +576,7 @@ class ChannelBot(object):
         command, save_state = self.save_states[self.state_pointer][0], self.save_states[self.state_pointer+1][1]
         
         self.getRoom().restore_save_state(save_state["Room"])
-        self.getWar().restore_save_state(save_state["War"])
+        self.get_war().restore_save_state(save_state["War"])
         self.graph = save_state["graph"]
         self.style = save_state["style"]
         self.race_size = save_state["race_size"]
