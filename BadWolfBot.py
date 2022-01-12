@@ -1015,12 +1015,17 @@ def destroy_all_tablebots():
         for channel_id in table_bots[server_id]:
             table_bots[server_id][channel_id].destroy()
 
-def on_exit():
-    save_data()
+@client.event
+async def close():
+    await on_exit()
+    os._exit(1)
+
+async def on_exit():
+    await save_data()
     destroy_all_tablebots()
     print(f"{str(datetime.now())}: All table bots cleaned up.")
      
-def save_data():
+async def save_data():
     print(f"{str(datetime.now())}: Saving data")
     successful = UserDataProcessing.non_async_dump_data()
     if not successful:
@@ -1035,7 +1040,7 @@ def save_data():
 
     if common.is_prod:
         Stats.backup_files()
-        Stats.prune_backups()
+        await Stats.prune_backups()
         Stats.dump_to_stats_file()
         #do_lounge_name_matching()
 
@@ -1082,15 +1087,12 @@ def log_command_sent(message:discord.Message, extra_text=""):
 #in our two dictionaries to local storage and the main dictionaries      
 @tasks.loop(hours=24)
 async def dumpDataAndBackup():
-    save_data()
+    await save_data()
 
-
-def handler(signum, frame):
-    sys.exit()
-
-signal.signal(signal.SIGINT, handler)
-
-atexit.register(on_exit)
+# def handler(signum, frame):
+#     sys.exit()
+# signal.signal(signal.SIGINT, handler)
+# atexit.register(on_exit)
 
 initialize()
 if common.is_dev:
