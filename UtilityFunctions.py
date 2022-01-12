@@ -248,7 +248,7 @@ def is_rLID(roomID):
     return re.match("^r[0-9]{7}$", roomID) is not None
 
 def is_fc(fc):
-    return re.match("^[0-9]{4}[-][0-9]{4}[-][0-9]{4}$", fc.strip()) is not None
+    return re.match("^[0-9]{4}[-][0-9]{4}[-][0-9]{4}(-2)?$", fc.strip()) is not None
     
 def initialize():
     common.botAdmins.clear()
