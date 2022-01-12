@@ -33,7 +33,7 @@ room_data_tracking.db
 data_tracking/*.db
 */room_data_tracking.db
 team_formats.pkl
-
+properties.json
 
 miis/mii_cache/*
 logging/*
