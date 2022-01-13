@@ -21,8 +21,8 @@ CW_REPORT_CHANNEL = 924551533692084264
 CW_TESTING = False
 WHITELIST = { 366774710186278914 }
 
-WARN_MESSAGES_PER_SECOND_RATE = .45
-BAN_RATE_MESSAGES_PER_SECOND = .48
+WARN_MESSAGES_PER_SECOND_RATE = .48
+BAN_RATE_MESSAGES_PER_SECOND = .5
 MIN_MESSAGES_NEEDED_BEFORE_WARN = 6
 MIN_MESSAGES_NEEDED_BEFORE_BAN = 8
 
@@ -112,9 +112,9 @@ def create_notification_embed(message: discord.Message, messages_sent, ban):
 #Sends a notification once in a while that they are blacklisted
 async def blacklisted_user_check(message:discord.Message, notify_threshold=15):
     author_id = message.author.id
-    if str(author_id) in UserDataProcessing.blacklisted_Users:
+    if str(author_id) in UserDataProcessing.blacklisted_users:
         if blacklisted_command_count[author_id] % notify_threshold == 0:
-            await message.channel.send("You have been blacklisted by a bot admin. You are not allowed to use this bot. Reason: " + str(UserDataProcessing.blacklisted_Users[str(author_id)]))
+            await message.channel.send("You have been blacklisted by a bot admin. You are not allowed to use this bot. Reason: " + str(UserDataProcessing.blacklisted_users[str(author_id)]))
         blacklisted_command_count[author_id] += 1
         raise TableBotExceptions.BlacklistedUser("blacklisted user")
     return True
@@ -134,7 +134,7 @@ async def check_bot_abuse():
     
     for user_id, message_count in bot_abuse_tracking.items():
         if message_count[0] > common.SPAM_THRESHOLD:
-            if str(user_id) not in UserDataProcessing.blacklisted_Users:
+            if str(user_id) not in UserDataProcessing.blacklisted_users:
                 abuserIDs.add(str(user_id))
     bot_abuse_tracking.clear()
     

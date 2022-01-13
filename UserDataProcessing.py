@@ -6,6 +6,7 @@ Created on Jul 25, 2020
 #DN = Discord Name
 import asyncio
 import os
+from collections import defaultdict
 from typing import Dict, Tuple
 import common
 from datetime import datetime, timedelta
@@ -15,44 +16,43 @@ from data_tracking import DataTracker
 seperator = "="
 
 
-FC_discord_id_file_is_open = False
-discord_id_lounges_file_is_open = False
-discordID_flags_file_is_open = False
+fc_discord_id_file_is_open = False
+discordId_lounges_file_is_open = False
+discordId_flags_file_is_open = False
 
-FC_DiscordID = {}
-discordID_Lounges = {}
-discordID_Flags = {}
-blacklisted_Users = {}
+fc_discordId = {}
+discordId_fc = {}
+
+discordId_lounges = {}
+lounges_discordId = {}
+
+discordId_flags = {}
+blacklisted_users = {}
 
 valid_flag_codes = set()
-
-
-to_add_lounge = {}
-to_add_fc = {}
-
 
 #datetime(year, month, day[, hour[, minute[, second[, microsecond[,tzinfo]]]]])
 DEFAULT_LAST_USED_DATE = datetime(year=2020,month=8,day=1, hour=1, minute=0, second=0, microsecond=1)
 
 def lounge_add(fc, lounge_replace=True):
     if lounge_replace:
-        fc_did = FC_DiscordID
-        did_lounge = discordID_Lounges
+        fc_did = fc_discordId
+        did_lounge = discordId_lounges
         if fc in fc_did and fc_did[fc][0] in did_lounge:
             return " - (" + did_lounge[fc_did[fc][0]] + ")"
     return ""
 
 def lounge_add_no_dash(fc, lounge_replace=True):
     if not lounge_replace: return
-    fc_did = FC_DiscordID
-    did_lounge = discordID_Lounges
+    fc_did = fc_discordId
+    did_lounge = discordId_lounges
     if fc in fc_did and fc_did[fc][0] in did_lounge:
         return " (" + did_lounge[fc_did[fc][0]] + ")"
 
 def lounge_get(fc, lounge_replace=True):
     if lounge_replace:
-        fc_did = FC_DiscordID
-        did_lounge = discordID_Lounges
+        fc_did = fc_discordId
+        did_lounge = discordId_lounges
         if fc in fc_did and fc_did[fc][0] in did_lounge:
             return did_lounge[fc_did[fc][0]]
     return ""
@@ -62,6 +62,9 @@ def lounge_get_fill(fc, name, lounge_replace=True):
     if loungeName=="":
         return name
     return loungeName
+
+def process_lounge_name(name):
+    return name.lower().replace(" ","").strip()
 
 def read_Blacklisted_file(filename=common.BLACKLISTED_USERS_FILE):
     common.check_create(filename)
@@ -73,10 +76,10 @@ def read_Blacklisted_file(filename=common.BLACKLISTED_USERS_FILE):
     return temp
 
 def add_Blacklisted_user(discord_id, reason):
-    global blacklisted_Users
+    global blacklisted_users
     discord_id = str(discord_id)
-    if discord_id in blacklisted_Users:
-        del blacklisted_Users[discord_id]
+    if discord_id in blacklisted_users:
+        del blacklisted_users[discord_id]
         
         temp_file_name = f"{common.BLACKLISTED_USERS_FILE}_temp"
         with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.BLACKLISTED_USERS_FILE, "r", encoding="utf-8", errors="replace") as original:
@@ -86,7 +89,7 @@ def add_Blacklisted_user(discord_id, reason):
         
             if reason not in ["unban", "remove", "unblacklist", ""]:
                 temp_out.write(discord_id + seperator + reason + "\n")
-                blacklisted_Users[discord_id] = reason
+                blacklisted_users[discord_id] = reason
                     
         os.remove(common.BLACKLISTED_USERS_FILE)
         os.rename(temp_file_name, common.BLACKLISTED_USERS_FILE)
@@ -94,7 +97,7 @@ def add_Blacklisted_user(discord_id, reason):
         if reason not in ["unban", "remove", "unblacklist", ""]:
             with open(common.BLACKLISTED_USERS_FILE, "a", encoding="utf-8", errors="replace") as f:
                 f.write(str(discord_id) + seperator + reason + "\n")
-                blacklisted_Users[discord_id] = reason
+                blacklisted_users[discord_id] = reason
     
     return True
 
@@ -109,17 +112,17 @@ def read_DiscordID_Flags_file(filename=common.DISCORD_ID_FLAGS_FILE):
     return temp
 
 def add_flag(discord_id, flag):
-    global discordID_flags_file_is_open
+    global discordId_flags_file_is_open
     
     discord_id = str(discord_id)
-    if discordID_flags_file_is_open:
+    if discordId_flags_file_is_open:
         return False
     else:
-        discordID_flags_file_is_open = True
+        discordId_flags_file_is_open = True
         
         #If their discord ID already has a flag.... go remove their flag, then add it
-        if discord_id in discordID_Flags:
-            del discordID_Flags[discord_id]
+        if discord_id in discordId_flags:
+            del discordId_flags[discord_id]
             
             temp_file_name = f"{common.DISCORD_ID_FLAGS_FILE}_temp"
             with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.DISCORD_ID_FLAGS_FILE, "r", encoding="utf-8", errors="replace") as original:
@@ -129,7 +132,7 @@ def add_flag(discord_id, flag):
             
                 if flag not in ["none", ""]:
                     temp_out.write(discord_id + seperator + flag + "\n")
-                    discordID_Flags[discord_id] = flag
+                    discordId_flags[discord_id] = flag
                         
             os.remove(common.DISCORD_ID_FLAGS_FILE)
             os.rename(temp_file_name, common.DISCORD_ID_FLAGS_FILE)
@@ -137,17 +140,17 @@ def add_flag(discord_id, flag):
             if flag not in ["none", ""]:
                 with open(common.DISCORD_ID_FLAGS_FILE, "a", encoding="utf-8", errors="replace") as f:
                     f.write(str(discord_id) + seperator + flag + "\n")
-                    discordID_Flags[discord_id] = flag
+                    discordId_flags[discord_id] = flag
         
-        discordID_flags_file_is_open = False
+        discordId_flags_file_is_open = False
         return True
      
 def get_flag(discord_id):
     discord_id = str(discord_id)
-    global discordID_Flags
+    global discordId_flags
     
-    if discord_id in discordID_Flags:
-        return discordID_Flags[discord_id]
+    if discord_id in discordId_flags:
+        return discordId_flags[discord_id]
     return None
     
 def flag_exception(discord_id, add=True):
@@ -175,34 +178,59 @@ def read_flag_exceptions():
             if line.isnumeric():
                 flag_exceptions.add(int(line))
     return flag_exceptions
- 
 
 def read_DiscordID_Lounges_file(filename=common.DISCORD_ID_LOUNGES_FILE):
     common.check_create(filename)
-    temp = {}
+    did_lounges = {}
+    lounges_did = {}
     counter = 1
     with open(filename, "r", encoding="utf-8", errors="replace" ) as f:
         for line in f:
             counter += 1
             DID, lounge_name = line.split(seperator)
-            temp[DID] = lounge_name.strip()
-    return temp
+            did_lounges[DID] = lounge_name.strip()
+
+            lounge_name = process_lounge_name(lounge_name)
+            if lounge_name in lounges_did:
+                if get_last_used_fc_time(DID) > get_last_used_fc_time(lounges_did[lounge_name]):
+                    lounges_did[lounge_name] = DID
+            else:
+                lounges_did[lounge_name] = DID
+
+    return did_lounges, lounges_did
+
+
+def read_FC_DiscordID_file(filename=common.FC_DISCORD_ID_FILE):
+    common.check_create(filename)
+    fc_did = {}
+    did_fc = defaultdict(list)
+    counter = 0
+    with open(filename,"r",encoding="utf-8",errors="replace") as f:
+        for line in f:
+            data = line.split(seperator)
+            FC,DID = data[0],data[1].strip()
+            offset = timedelta(seconds=counter)
+            last_used = DEFAULT_LAST_USED_DATE - offset
+            if len(data) == 3:
+                last_used = convert_datetime_str(data[2].strip())
+            else:
+                counter += 1
+            fc_did[FC] = (DID.strip(),last_used)
+            did_fc[DID].append([FC,last_used])
+
+    return fc_did,did_fc
  
 def non_async_dump_data():
-    global FC_discord_id_file_is_open
-    global discord_id_lounges_file_is_open
-    global FC_DiscordID
-    global discordID_Lounges
-    global to_add_lounge
-    global to_add_fc
-
+    global fc_discord_id_file_is_open
+    global discordId_lounges_file_is_open
+    global fc_discordId
+    global discordId_lounges
     
-    
-    if FC_discord_id_file_is_open or discord_id_lounges_file_is_open:
+    if fc_discord_id_file_is_open or discordId_lounges_file_is_open:
         return False
     else:
-        FC_discord_id_file_is_open = True
-        discord_id_lounges_file_is_open = True
+        fc_discord_id_file_is_open = True
+        discordId_lounges_file_is_open = True
         common.check_create(common.FC_DISCORD_ID_FILE)
         common.check_create(common.DISCORD_ID_LOUNGES_FILE)
 
@@ -210,7 +238,7 @@ def non_async_dump_data():
         #Next, let's add all of the fc and lounge names to the file and dictionary
         temp_file_name = f"{common.DISCORD_ID_LOUNGES_FILE}_temp"
         with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.DISCORD_ID_LOUNGES_FILE, "r", encoding="utf-8", errors="replace") as original:
-            for discord_id, lounge_name in discordID_Lounges.items():
+            for discord_id, lounge_name in discordId_lounges.items():
                 temp_out.write(discord_id + seperator + lounge_name + "\n")
                 
 
@@ -221,114 +249,57 @@ def non_async_dump_data():
         
         temp_file_name = f"{common.FC_DISCORD_ID_FILE}_temp"
         with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.FC_DISCORD_ID_FILE, "r", encoding="utf-8", errors="replace") as original:
-            for fc, (discord_id, last_used) in FC_DiscordID.items():
+            for fc, (discord_id, last_used) in fc_discordId.items():
                 temp_out.write(fc + seperator + discord_id + seperator + str(last_used) + "\n")
         
         os.remove(common.FC_DISCORD_ID_FILE)
         os.rename(temp_file_name, common.FC_DISCORD_ID_FILE)
         
-        to_add_lounge.clear()
-        to_add_fc.clear()
-        
-        FC_discord_id_file_is_open = False
-        discord_id_lounges_file_is_open = False
+        fc_discord_id_file_is_open = False
+        discordId_lounges_file_is_open = False
         return True
     
 async def dump_data():
     return non_async_dump_data()
-    
-def add_lounge(discord_id, lounge_name):
-    global discord_id_lounges_file_is_open
-    
-    discord_id = str(discord_id)
-    if discord_id_lounges_file_is_open:
-        return False
-    else:
-        discord_id_lounges_file_is_open = True
-        
-        #If their discord ID already has a lounge name.... go remove their flag, then add it
-        if discord_id in discordID_Lounges:
-            del discordID_Lounges[discord_id]
-            
-            temp_file_name = f"{common.DISCORD_ID_LOUNGES_FILE}_temp"
-            with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.DISCORD_ID_LOUNGES_FILE, "r", encoding="utf-8", errors="replace") as original:
-                for line in original:
-                    if line.strip("\n").split(seperator)[0] != discord_id:
-                        temp_out.write(line)
-            
-                temp_out.write(discord_id + seperator + lounge_name + "\n")
-                discordID_Lounges[discord_id] = lounge_name
-                        
-            os.remove(common.DISCORD_ID_LOUNGES_FILE)
-            os.rename(temp_file_name, common.DISCORD_ID_LOUNGES_FILE)
-        else:
-            with open(common.DISCORD_ID_LOUNGES_FILE, "a", encoding="utf-8", errors="replace") as f:
-                f.write(str(discord_id) + seperator + lounge_name + "\n")
-                discordID_Lounges[discord_id] = lounge_name
-        
-        discord_id_lounges_file_is_open = False
-        return True    
-
-
 
 def get_lounge(discord_id):
     discord_id = str(discord_id)
-    global discordID_Lounges   
+    global discordId_lounges
     
-    if discord_id in discordID_Lounges:
-        return discordID_Lounges[discord_id]
+    if discord_id in discordId_lounges:
+        return discordId_lounges[discord_id]
     return None
 
-
-
-
-def read_FC_DiscordID_file(filename=common.FC_DISCORD_ID_FILE):
-    common.check_create(filename)
-    temp = {}
-    counter = 0
-    with open(filename, "r", encoding="utf-8", errors="replace") as f:
-        for line in f:
-            data = line.split(seperator)
-            FC, DID = data[0], data[1].strip()
-            offset = timedelta(seconds=counter)
-            last_used = DEFAULT_LAST_USED_DATE - offset
-            if len(data) == 3:
-                last_used = convert_datetime_str(data[2].strip())
-            else:
-                counter += 1
-            temp[FC] = (DID.strip(), last_used)
-        
-    return temp
-
-
-def get_all_fcs(discord_id, FCDID=None):
+def get_all_fcs(discord_id, include_time=False):
     if discord_id is None:
         return []
-    if FCDID is None:
-        FCDID = FC_DiscordID
         
     discord_id = str(discord_id)
-    FCs = []
-    for fc, (dict_discord_id, last_used) in FCDID.items():
-        if dict_discord_id == discord_id:
-            FCs.append((fc, last_used))
-            
-    FCs.sort(key=lambda d:d[1], reverse=True)
-    return [data[0] for data in FCs]
+    if discord_id not in discordId_fc:
+        return []
 
-def get_DiscordID_By_LoungeName(lounge_name:str, DID_L=None):
+    fcs = discordId_fc[discord_id]
+    fcs.sort(key=lambda d:d[1], reverse=True)
+
+    if include_time:
+        return [data for data in fcs]
+    else:
+        return [data[0] for data in fcs]
+
+def get_last_used_fc_time(discord_id):
+    fc_times = get_all_fcs(discord_id, include_time=True)
+    if len(fc_times) == 0:
+        return datetime.min
+    return max([x[1] for x in fc_times])
+
+def get_DiscordID_By_LoungeName(lounge_name:str):
     if lounge_name is None:
         return ''
-    if DID_L is None:
-        DID_L = discordID_Lounges
-    
-    lounge_name = lounge_name.lower()
-    lounge_no_spaces = lounge_name.replace(" ", "")
-    for discord_id, dict_lounge_name in DID_L.items():
-        if dict_lounge_name.replace(" ", "").lower() == lounge_no_spaces:
-            return discord_id
-    return ''
-        
+
+    lounge_name = process_lounge_name(lounge_name)
+    if lounge_name not in lounges_discordId:
+        return ''
+    return lounges_discordId[lounge_name]
 
 def getFCsByLoungeName(lounge_name:str):
     if lounge_name is None:
@@ -338,17 +309,33 @@ def getFCsByLoungeName(lounge_name:str):
         return []
     return get_all_fcs(did)
 
-
 def addIDsLounges(to_add: Dict[str,str]):
-    global discordID_Lounges
-    discordID_Lounges.update(to_add)
-    to_add_lounge.update(to_add)
-    
+    global discordId_lounges
+    discordId_lounges.update(to_add)
+
+    for DID, lounge_name in to_add.items():
+        lounge_name = process_lounge_name(lounge_name)
+
+        if lounge_name in lounges_discordId and lounges_discordId[lounge_name] != DID:
+            if get_last_used_fc_time(DID) > get_last_used_fc_time(lounges_discordId[lounge_name]):
+                lounges_discordId[lounge_name] = DID
+        else:
+            lounges_discordId[lounge_name] = DID
 
 def addFCsIDs(to_add: Dict[str,Tuple[str,datetime]]):
-    global FC_DiscordID
-    FC_DiscordID.update(to_add)
-    to_add_fc.update(to_add)
+    global fc_discordId
+    fc_discordId.update(to_add)
+
+    for fc, pair in to_add.items():
+        did, time = pair
+
+        for pair in discordId_fc[did]:
+            if pair[0] == fc:
+                pair[1] = time
+
+        if fc not in [x[0] for x in discordId_fc[did]]:
+            discordId_fc[did].append([fc,time])
+
     asyncio.create_task(DataTracker.add_player_fcs(to_add))
     
 def smartUpdate(id_lounge=None, fc_id=None):
@@ -356,7 +343,6 @@ def smartUpdate(id_lounge=None, fc_id=None):
         addIDsLounges(id_lounge)
     if fc_id is not None:
         addFCsIDs(fc_id)
-        
 
 def read_valid_flags_file(filename=common.FLAG_CODES_FILE):
     common.check_create(filename)
@@ -366,27 +352,27 @@ def read_valid_flags_file(filename=common.FLAG_CODES_FILE):
             flag_codes.add(line.strip("\n").strip().lower())
     return flag_codes
 
-
 def initialize():
-    global discordID_Flags
-    global discordID_Lounges
-    global FC_DiscordID
+    global discordId_flags
+    global discordId_lounges
+    global lounges_discordId
+    global fc_discordId
+    global discordId_fc
     global valid_flag_codes
-    global blacklisted_Users
-    global tutorial_link
-    discordID_Flags.clear()
-    discordID_Flags.update(read_DiscordID_Flags_file())
-    discordID_Lounges.clear()
-    discordID_Lounges.update(read_DiscordID_Lounges_file())
-    FC_DiscordID.clear()
-    FC_DiscordID.update(read_FC_DiscordID_file())
+    global blacklisted_users
+
+    discordId_flags.clear()
+    discordId_flags.update(read_DiscordID_Flags_file())
+
+    fc_discordId,discordId_fc = read_FC_DiscordID_file()
+    discordId_lounges,lounges_discordId = read_DiscordID_Lounges_file()
+
     valid_flag_codes.clear()
     valid_flag_codes.update(read_valid_flags_file())
-    blacklisted_Users.clear()
-    blacklisted_Users.update(read_Blacklisted_file())
+    blacklisted_users.clear()
+    blacklisted_users.update(read_Blacklisted_file())
     
 #2021-04-03 20:29:45.779373
-
 def convert_datetime_str(datetime_str:str):
     return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S.%f')
 
