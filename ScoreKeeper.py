@@ -227,7 +227,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     for GPnum, GP_scores in enumerate(GPs, 1):
         for fc in FC_table_str:
             gp_amount = [0, 0, 0, 0]
-            editAmount = war.getEditAmount(fc, GPnum)
+            editAmount = war.get_player_gp_score_edit(fc, GPnum)
             if editAmount is not None:
                 gp_amount = [editAmount, 0, 0, 0]
             else:

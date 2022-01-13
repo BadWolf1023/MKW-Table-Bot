@@ -163,7 +163,7 @@ class Room(object):
             if sub_in_fc in self.getNameChanges():
                 subInName = self.getNameChanges()[sub_in_fc]
             suboutName = sub_data[3]
-            sub_str_list.append(f"Tabler subbed in {UtilityFunctions.process_name(subInName)} for {UtilityFunctions.process_name(suboutName)} this race")
+            sub_str_list.append(f"Tabler subbed in {UtilityFunctions.filter_text(subInName)} for {UtilityFunctions.filter_text(suboutName)} this race")
         return sub_str_list
     
     def add_sub(self, subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores):
@@ -235,7 +235,7 @@ class Room(object):
         FCPL = self.getFCPlayerList(startrace, endrace)
         to_build = ""
         for fc, name in FCPL.items():
-            to_build += fc + ": " + UtilityFunctions.process_name(name + UserDataProcessing.lounge_add(fc, lounge_replace)) + "\n"
+            to_build += fc + ": " + UtilityFunctions.filter_text(name) + UserDataProcessing.lounge_add(fc, lounge_replace) + "\n"
         return to_build
     
     def getPlayerPenalities(self):
@@ -377,7 +377,7 @@ class Room(object):
             for raceNum, missing_players in enumerate(missingPlayersByRace, 1):
                 for fc, player in sorted(missing_players):
                     build_string += "\t" + str(counter) + ". **"
-                    build_string += UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, replace_lounge)) + "** disconnected on or before race #" + str(raceNum) + " (" + str(self.races[raceNum-1].getTrackNameWithoutAuthor()) + ")\n"
+                    build_string += UtilityFunctions.filter_text(player) + UserDataProcessing.lounge_add(fc, replace_lounge) + "** disconnected on or before race #" + str(raceNum) + " (" + str(self.races[raceNum-1].getTrackNameWithoutAuthor()) + ")\n"
                     counter+=1
             return True, build_string
     
@@ -399,7 +399,7 @@ class Room(object):
         players = self.get_sorted_player_list(startrace, endrace)
         to_build = ""
         for list_num, (fc, player) in enumerate(players, 1):
-            to_build += str(list_num) + ". " + UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, lounge_replace)) + "\n"
+            to_build += str(list_num) + ". " + UtilityFunctions.filter_text(player) + UserDataProcessing.lounge_add(fc, lounge_replace) + "\n"
         return to_build
             
             
@@ -407,9 +407,9 @@ class Room(object):
         player_list = self.get_sorted_player_list(startrace, endrace)
         build_str = ""
         for counter, (fc, player) in enumerate(player_list, 1):
-            build_str += str(counter) + ". " + UtilityFunctions.process_name(player)
+            build_str += str(counter) + ". " + UtilityFunctions.filter_text(player)
             if lounge_replace:
-                build_str += UtilityFunctions.process_name(UserDataProcessing.lounge_add(fc, lounge_replace))
+                build_str += UserDataProcessing.lounge_add(fc, lounge_replace)
             build_str += "\n"
         return build_str
     
@@ -690,7 +690,7 @@ class Room(object):
             num += 1
         if len(string_build) < 1:
             string_build = "No races played yet."
-        return UtilityFunctions.process_name(string_build)
+        return UtilityFunctions.filter_text(string_build)
     
     def get_loungenames_in_room(self):
         all_fcs = self.get_room_FCs()

@@ -92,7 +92,7 @@ def getPlayerIndexInRoom(name:str, room:TableBot.Room.Room, server_prefix:str, c
             playerNum = None
 
         if playerNum is None:
-            return None, f"Could not find Lounge name \"{UtilityFunctions.process_name(str(lounge_name))}\" in this room."
+            return None, f"Could not find Lounge name \"{UtilityFunctions.filter_text(lounge_name)}\" in this room."
         return playerNum, None
 
     #Sanity check, should not ever run:
@@ -373,7 +373,7 @@ class StatisticCommands:
             is_ct = True
 
         if is_ct is None:
-            return None, f"{UtilityFunctions.process_name(arg)} is not a valid option. Put in **rt** or **ct**."
+            return None, f"{UtilityFunctions.filter_text(arg)} is not a valid option. Put in **rt** or **ct**."
         return is_ct, None
 
     @staticmethod
@@ -389,7 +389,7 @@ class StatisticCommands:
             tier = int(arg.strip("t"))
 
         if tier is None:
-            return None, f"{UtilityFunctions.process_name(original_arg)} is not a valid {rt_ct_error_string} tier. Valid options for {rt_ct_error_string} tier are: {', '.join(StatisticCommands.valid_ct_tiers) if is_ct else ', '.join(StatisticCommands.valid_rt_tiers)}"
+            return None, f"{UtilityFunctions.filter_text(original_arg)} is not a valid {rt_ct_error_string} tier. Valid options for {rt_ct_error_string} tier are: {', '.join(StatisticCommands.valid_ct_tiers) if is_ct else ', '.join(StatisticCommands.valid_rt_tiers)}"
         return tier, None
 
     @staticmethod
@@ -400,10 +400,10 @@ class StatisticCommands:
         if UtilityFunctions.isint(arg):
             days = int(arg)
             if days < 1:
-                None, f"{UtilityFunctions.process_name(original_arg)} was given as the number of days, but it must be 1 or more"
+                None, f"{UtilityFunctions.filter_text(original_arg)} was given as the number of days, but it must be 1 or more"
             else:
                 return days, None
-        return None, f"{UtilityFunctions.process_name(original_arg)} must be the number of days"
+        return None, f"{UtilityFunctions.filter_text(original_arg)} must be the number of days"
 
     @staticmethod
     def validate_tracks_args(command:str):
@@ -425,7 +425,7 @@ class StatisticCommands:
                 days, _ = StatisticCommands.validate_days_arg(args[2])
 
             if tier is None and days is None:
-                return is_ct, None, None, f"{UtilityFunctions.process_name(args[2])} is not a tier nor is it a number of days."
+                return is_ct, None, None, f"{UtilityFunctions.filter_text(args[2])} is not a tier nor is it a number of days."
 
             if tier is not None:
                 return is_ct, tier, None, None
@@ -601,7 +601,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         if rest:
             discordIDToLoad = UserDataProcessing.get_DiscordID_By_LoungeName(rest)
             if not discordIDToLoad:
-                specific_error = f"No FCs found for {UtilityFunctions.process_name(rest)}"
+                specific_error = f"No FCs found for {UtilityFunctions.filter_text(rest)}"
         else:
             discordIDToLoad = str(message.author.id)
 
@@ -673,7 +673,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         track_name, fixed_track_name, is_ct = await StatisticCommands.get_track_name(track_lookup_name.lower().replace(" ", ""))
 
         if not track_name:
-            await message.channel.send(f"No track named `{UtilityFunctions.process_name(track_lookup_name)}` found. \n\n" + error_message)
+            await message.channel.send(f"No track named `{UtilityFunctions.filter_text(track_lookup_name)}` found. \n\n" + error_message)
             return
 
         if not min_count:
@@ -803,7 +803,7 @@ class OtherCommands:
         if lounge_name is None:
             await message.channel.send("You don't have a lounge name. Join Lounge! (If you think this is an error, go on Wiimmfi and try running this command again.)")
         else:
-            await message.channel.send("Your lounge name is: " + UtilityFunctions.process_name(str(lounge_name)))
+            await message.channel.send("Your lounge name is: " + UtilityFunctions.filter_text(lounge_name))
 
 
     @staticmethod
@@ -846,10 +846,10 @@ class OtherCommands:
             if len(args) == 1:
                 await message.channel.send("You have not set an FC. (Use Friendbot to add your FC, then try this command later.")
             elif len(message.raw_mentions) > 0:
-                lookup_name = UtilityFunctions.process_name(str(message.mentions[0].name))
+                lookup_name = UtilityFunctions.filter_text(message.mentions[0].name)
                 await message.channel.send(f"No FC found for {lookup_name}. Try again later.")
             else:
-                lookup_name = UtilityFunctions.process_name(" ".join(old_command.split()[1:]))
+                lookup_name = UtilityFunctions.filter_text(" ".join(old_command.split()[1:]))
                 await message.channel.send(f"No FC found for {lookup_name}. Try again later.")
         else:
             await message.channel.send(FC)
@@ -889,10 +889,10 @@ class OtherCommands:
             if len(args) == 1:
                 await message.channel.send("You have not set an FC. (Use Friendbot to add your FC, then try this command later.")
             elif len(message.raw_mentions) > 0:
-                lookup_name = UtilityFunctions.process_name(str(message.mentions[0].name))
+                lookup_name = UtilityFunctions.filter_text(message.mentions[0].name)
                 await message.channel.send(f"No FC found for {lookup_name}, so cannot find the mii. Try again later.")
             else:
-                lookup_name = UtilityFunctions.process_name(' '.join(old_command.split()[1:]))
+                lookup_name = UtilityFunctions.filter_text(' '.join(old_command.split()[1:]))
                 await message.channel.send(f"No FC found for {lookup_name}, so cannot find the mii. Try again later.")
         else:
             mii_dict = await MiiPuller.get_miis([FC], str(message.id))
@@ -1053,7 +1053,7 @@ class OtherCommands:
                 FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
                 successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
                 if not successful:
-                    await message.channel.send(f"Could not find {UtilityFunctions.process_name(str(message.mentions[0].name))} in a room. (This could be an error if I couldn't find their FC in the database.)")
+                    await message.channel.send(f"Could not find {UtilityFunctions.filter_text(message.mentions[0].name)} in a room. (This could be an error if I couldn't find their FC in the database.)")
             elif UtilityFunctions.is_fc(args[1]):
                 successful, room_data, last_match_str, rLID = await this_bot.verify_room([args[1]])
                 if not successful:
@@ -1064,7 +1064,7 @@ class OtherCommands:
 
                 successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
                 if not successful:
-                    await message.channel.send(f"Could not find {UtilityFunctions.process_name(' '.join(old_command.split()[1:]))} in a room. (This could be an error if I couldn't their FC in the database.)")
+                    await message.channel.send(f"Could not find {UtilityFunctions.filter_text(' '.join(old_command.split()[1:]))} in a room. (This could be an error if I couldn't their FC in the database.)")
 
         if not successful or room_data is None or rLID is None:
             await common.safe_delete(message2)
@@ -1250,7 +1250,7 @@ class LoungeCommands:
                 else:
 
                     if using_table_bot_table:
-                        war_had_errors = len(this_bot.get_war().get_all_war_errors_players(this_bot.get_room(), False)) > 0
+                        war_had_errors = len(this_bot.get_war().get_war_errors(this_bot.get_room(), False)) > 0
                         tableWasEdited = len(this_bot.get_war().get_edited_scores()) > 0 or len(this_bot.get_room().dc_on_or_before) > 0 or len(this_bot.get_room().forcedRoomSize) > 0 or this_bot.get_room().had_positions_changed() or len(this_bot.get_room().get_removed_races_string()) > 0 or this_bot.get_room().had_subs()
                         header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
                         footer_combine_success = True
@@ -1655,7 +1655,7 @@ class TablingCommands:
             teams = sorted(this_bot.get_war().get_all_tags())
             to_send = ""
             for team_num, team in enumerate(teams, 1):
-                to_send += UtilityFunctions.process_name(str(team_num)) + ". " + team + "\n"
+                to_send += UtilityFunctions.filter_text(team_num) + ". " + team + "\n"
             to_send += "\n**To give the 2nd team on the list a 15 point penalty:** *" + server_prefix + "teampenalty 2 15*"
             await message.channel.send(to_send)
             return
@@ -1688,8 +1688,8 @@ class TablingCommands:
             await message.channel.send(f"The team number must be on this list (between 1 and {len(teams)}). {example_help(server_prefix, args[0])}")
         else:
             this_bot.add_save_state(message.content)
-            this_bot.get_war().addTeamPenalty(teams[teamNum-1], amount)
-            await message.channel.send(UtilityFunctions.process_name(teams[teamNum-1] + " given a " + str(amount) + " point penalty."))
+            this_bot.get_war().add_penalty_for_tag(teams[teamNum-1], amount)
+            await message.channel.send(UtilityFunctions.filter_text(teams[teamNum-1] + " given a " + str(amount) + " point penalty."))
 
 
 
@@ -1717,7 +1717,7 @@ class TablingCommands:
         merged = list(itertools.chain(*missing_per_race))
         disconnection_number = args[1]
         if not disconnection_number.isnumeric():
-            await message.channel.send(UtilityFunctions.process_name(str(disconnection_number)) + " is not a number on the dcs list. Do " + server_prefix + "dcs for an example on how to use this command.")
+            await message.channel.send(UtilityFunctions.filter_text(disconnection_number) + " is not a number on the dcs list. Do " + server_prefix + "dcs for an example on how to use this command.")
             return
         if int(disconnection_number) > len(merged):
             await message.channel.send("There have not been this many DCs. Run " + server_prefix + "dcs to learn how to use this command.")
@@ -1745,7 +1745,7 @@ class TablingCommands:
             break
 
         player_fc = missing_per_race[race-1][index][0]
-        player_name = UtilityFunctions.process_name(str(missing_per_race[race-1][index][1]) + lounge_add(player_fc))
+        player_name = UtilityFunctions.filter_text(missing_per_race[race-1][index][1]) + lounge_add(player_fc)
         if on_or_before in ["on", "during", "midrace", "results", "onresults"]:
             this_bot.add_save_state(message.content)
             this_bot.get_room().dc_on_or_before[race][player_fc] = 'on'
@@ -1757,7 +1757,7 @@ class TablingCommands:
             await message.channel.send("Saved: " + player_name + ' was not on results for race #' + str(race))
             return
 
-        await message.channel.send('"' + UtilityFunctions.process_name(str(on_or_before)) + '" needs to be either "on" or "before". Do ' + server_prefix + "dcs for an example on how to use this command.")
+        await message.channel.send('"' + UtilityFunctions.filter_text(on_or_before) + '" needs to be either "on" or "before". Do ' + server_prefix + "dcs for an example on how to use this command.")
 
 
     @staticmethod
@@ -1791,7 +1791,7 @@ class TablingCommands:
 
         this_bot.add_save_state(message.content)
         this_bot.get_room().addPlayerPenalty(players[playerNum-1][0], amount)
-        await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty."))
+        await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1]) + lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty.")
 
     @staticmethod
     async def substitue_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -1866,7 +1866,7 @@ class TablingCommands:
         this_bot.add_save_state(message.content)
         this_bot.get_room().add_sub(subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores)
         this_bot.get_war().set_tag_for_FC(subInFC, subOutTag)
-        await message.channel.send(f"Got it. **{UtilityFunctions.process_name(subInMiiName + lounge_add(subInFC))}** subbed in for **{UtilityFunctions.process_name(subOutMiiName + lounge_add(subOutFC))}** on race #{subInStartRace}")
+        await message.channel.send(f"Got it. **{UtilityFunctions.filter_text(subInMiiName) + lounge_add(subInFC)}** subbed in for **{UtilityFunctions.filter_text(subOutMiiName) + lounge_add(subOutFC)}** on race #{subInStartRace}")
 
 
     @staticmethod
@@ -1906,11 +1906,11 @@ class TablingCommands:
             if playerNum < 1 or playerNum > len(players):
                 await message.channel.send("The player number must be on this list (between 1 and " + str(len(players)) + "). Do " + server_prefix + "edit for an example on how to use this command.")
             elif GPNum < 1 or GPNum > numGPs:
-                await message.channel.send("The current war is only set to " + str(numGPs) + " GPs. Your GP number was: " + UtilityFunctions.process_name(str(GPNum)))
+                await message.channel.send("The current war is only set to " + str(numGPs) + " GPs. Your GP number was: " + UtilityFunctions.filter_text(GPNum))
             else:
                 this_bot.add_save_state(message.content)
-                this_bot.get_war().addEdit(players[playerNum-1][0], GPNum, amount)
-                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points."))
+                this_bot.get_war().edit_player_gp_score(players[playerNum-1][0], GPNum, amount)
+                await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1]) + lounge_add(players[playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points.")
         else:
             lounge_name = str(copy.copy(playerNum))
             loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
@@ -1922,11 +1922,11 @@ class TablingCommands:
 
 
             if _playerNum is None:
-                await message.channel.send("Could not find Lounge name " + UtilityFunctions.process_name(str(lounge_name)) + " in this room.")
+                await message.channel.send("Could not find Lounge name " + UtilityFunctions.filter_text(lounge_name) + " in this room.")
             else:
                 this_bot.add_save_state(message.content)
-                this_bot.get_war().addEdit(players[_playerNum-1][0], GPNum, amount)
-                await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + lounge_add(players[_playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points."))
+                this_bot.get_war().edit_player_gp_score(players[_playerNum-1][0], GPNum, amount)
+                await message.channel.send(UtilityFunctions.filter_text(players[_playerNum-1][1]) + lounge_add(players[_playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points.")
 
 
 
@@ -1954,7 +1954,7 @@ class TablingCommands:
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.get_room().setNameForFC(players[playerNum-1][0], new_name)
-                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0])) + " name set to: " + UtilityFunctions.process_name(new_name))
+                await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1]) + lounge_add(players[playerNum-1][0]) + " name set to: " + UtilityFunctions.filter_text(new_name))
         else:
             lounge_name = str(copy.copy(playerNum))
             loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
@@ -1966,11 +1966,11 @@ class TablingCommands:
 
 
             if _playerNum is None:
-                await message.channel.send("Could not find Lounge name " + UtilityFunctions.process_name(str(lounge_name)) + " in this room.")
+                await message.channel.send("Could not find Lounge name " + UtilityFunctions.filter_text(lounge_name) + " in this room.")
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.get_room().setNameForFC(players[_playerNum-1][0], new_name)
-                await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + lounge_add(players[_playerNum-1][0])) + " name set to: " + UtilityFunctions.process_name(new_name))
+                await message.channel.send(UtilityFunctions.filter_text(players[_playerNum-1][1]) + lounge_add(players[_playerNum-1][0]) + " name set to: " + UtilityFunctions.filter_text(new_name))
 
     @staticmethod
     async def change_player_tag_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
@@ -2001,7 +2001,7 @@ class TablingCommands:
                 else:
                     this_bot.add_save_state(message.content)
                     this_bot.get_war().set_tag_for_FC(players[playerNum-1][0], new_tag)
-                    await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
+                    await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1]) + lounge_add(players[playerNum-1][0]) + " tag set to: " + UtilityFunctions.filter_text(new_tag))
             else:
                 lounge_name = str(copy.copy(playerNum))
                 loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
@@ -2013,11 +2013,11 @@ class TablingCommands:
 
 
                 if _playerNum is None:
-                    await message.channel.send("Could not find Lounge name " + UtilityFunctions.process_name(str(lounge_name)) + " in this room.")
+                    await message.channel.send("Could not find Lounge name " + UtilityFunctions.filter_text(lounge_name) + " in this room.")
                 else:
                     this_bot.add_save_state(message.content)
                     this_bot.get_war().set_tag_for_FC(players[_playerNum-1][0], new_tag)
-                    await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + lounge_add(players[_playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
+                    await message.channel.send(UtilityFunctions.filter_text(players[_playerNum-1][1]) + lounge_add(players[_playerNum-1][0]) + " tag set to: " + UtilityFunctions.filter_text(new_tag))
 
 
     #Refactor this method to make it more readable
@@ -2089,7 +2089,7 @@ class TablingCommands:
                                 FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
                                 successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
-                                    lookup_name = UtilityFunctions.process_name(str(message.mentions[0].name))
+                                    lookup_name = UtilityFunctions.filter_text(message.mentions[0].name)
                                     await message.channel.send(f"Could not find {lookup_name} in a room. **Did they finish the first race?**")
                             elif UtilityFunctions.is_rLID(args[3]):
                                 successful = await this_bot.load_room_smart([args[3]], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
@@ -2110,7 +2110,7 @@ class TablingCommands:
                                 FCs = UserDataProcessing.getFCsByLoungeName(their_name)
                                 successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
-                                    processed_lookup_name = UtilityFunctions.process_name(their_name)
+                                    processed_lookup_name = UtilityFunctions.filter_text(their_name)
                                     await message.channel.send(f"Could not find {processed_lookup_name} in a room. **Did they finish the first race?**")
                     finally:
                         if not successful:
@@ -2127,7 +2127,7 @@ class TablingCommands:
                             this_bot.get_war().set_temporary_tag_fcs(tags_fcs)
 
                             if not this_bot.get_war().is_FFA():
-                                to_send = f"{this_bot.get_war().get_tags_str()}\n***Is this correct?** Respond `{server_prefix}yes` or `{server_prefix}no`*"
+                                to_send = f"{this_bot.get_war().get_temporary_tag_fcs_str()}\n***Is this correct?** Respond `{server_prefix}yes` or `{server_prefix}no`*"
                                 await message.channel.send(to_send)
                                 this_bot.prev_command_sw = True
 
@@ -2181,7 +2181,7 @@ class TablingCommands:
         if len(players) != this_bot.get_war().get_user_defined_num_players():
             await message.channel.send(f'''Respond "{server_prefix}no" when asked ***Is this correct?*** - the number of players in the room doesn't match your war format and teams. Trying to still start war, but teams will be incorrect.''')
 
-        this_bot.get_war().set_teams(this_bot.get_war().getConvertedTempTeams())
+        this_bot.get_war().set_teams(this_bot.get_war().converted_temporary_tag_fcs())
         await message.channel.send(this_bot.get_room_started_message())
 
     @staticmethod
@@ -2304,7 +2304,7 @@ class TablingCommands:
         if undone_command is False:
             await message.channel.send("No commands to undo.")
             return
-        mes = "All possible commands have been undone." if do_all else f"The following command has been undone: `{UtilityFunctions.process_name(undone_command)}`"
+        mes = "All possible commands have been undone." if do_all else f"The following command has been undone: `{UtilityFunctions.filter_text(undone_command)}`"
         await message.channel.send(f"{mes}\nRun `{server_prefix}wp` to make sure table bot is fully refreshed.")
 
     @staticmethod
@@ -2317,7 +2317,7 @@ class TablingCommands:
         if redone_command is False:
             return await message.channel.send("No commands to redo.")
 
-        mes = "All possible commands have been redone." if do_all else f"The following command has been redone: `{UtilityFunctions.process_name(redone_command)}`"
+        mes = "All possible commands have been redone." if do_all else f"The following command has been redone: `{UtilityFunctions.filter_text(redone_command)}`"
         await message.channel.send(f"{mes}\nRun `{server_prefix}wp` to make sure table bot is fully refreshed.")
 
     @staticmethod
@@ -2474,7 +2474,7 @@ class TablingCommands:
                             await message.channel.send("Could not download table picture.")
                             return
                         #did the room have *any* errors? Regardless of ignoring any type of error
-                        war_had_errors = len(this_bot.get_war().get_all_war_errors_players(this_bot.get_room(), False)) > 0
+                        war_had_errors = len(this_bot.get_war().get_war_errors(this_bot.get_room(), False)) > 0
                         tableWasEdited = len(this_bot.get_war().get_edited_scores()) > 0 or len(this_bot.get_room().dc_on_or_before) > 0 or len(this_bot.get_room().forcedRoomSize) > 0 or this_bot.get_room().had_positions_changed() or len(this_bot.get_room().get_removed_races_string()) > 0 or this_bot.get_room().had_subs()
                         header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
                         footer_combine_success = True
@@ -2500,7 +2500,7 @@ class TablingCommands:
                             embed.set_author(name=this_bot.get_war().get_war_name_for_display(numRaces), icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                             embed.set_image(url="attachment://" + table_image_path)
 
-                            temp = this_bot.get_war().get_war_errors_string_2(this_bot.get_room(), lounge_replace, up_to_race=up_to)
+                            temp = this_bot.get_war().get_war_errors_text(this_bot.get_room(), lounge_replace, up_to_race=up_to)
                             error_message = "\n\nMore errors occurred. Embed only allows so many errors to display."
                             if len(temp) + len(error_message) >= 2048:
                                 temp = temp[:2048-len(error_message)] + error_message
@@ -2538,7 +2538,7 @@ class TablingCommands:
             this_bot.set_war(None)
             return
 
-        fc_tag = this_bot.get_war().getConvertedTempTeams()
+        fc_tag = this_bot.get_war().converted_temporary_tag_fcs()
 
         def setTeamTagAtIndex(index, teamTag):
             for cur_ind, fc in enumerate(fc_tag):
@@ -2556,8 +2556,8 @@ class TablingCommands:
             teamTag = teamArgs[0]
             for pos in teamArgs[1:]:
                 if not pos.isnumeric():
-                    processed_team_name = UtilityFunctions.process_name(str(teamTag))
-                    userinput_team_position = UtilityFunctions.process_name(str(pos))
+                    processed_team_name = UtilityFunctions.filter_text(teamTag)
+                    userinput_team_position = UtilityFunctions.filter_text(pos)
                     await message.channel.send(f"On team {processed_team_name}, {userinput_team_position} isn't a number. Try putting in the teams again.")
                     return
                 setTeamTagAtIndex(int(pos)-1, teamTag)
@@ -2648,7 +2648,7 @@ class TablingCommands:
 
 
                         if _playerNum is None:
-                            await message.channel.send("Could not find Lounge name " + UtilityFunctions.process_name(str(lounge_name)) + " in this room.")
+                            await message.channel.send("Could not find Lounge name " + UtilityFunctions.filter_text(lounge_name) + " in this room.")
                         playerNum = _playerNum
                     else:
                         playerNum = int(playerNum)
@@ -2665,11 +2665,10 @@ class TablingCommands:
                             playerFC = players[playerNum-1][0]
                             if this_bot.get_room().races[raceNum-1].FCInPlacements(playerFC):
                                 this_bot.add_save_state(message.content)
-                                #TODO: This needs to call change placement on ROOM, not Race
                                 this_bot.get_room().changePlacement(raceNum, playerFC, placement)
-                                await message.channel.send("Changed " + UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " place to " + str(placement) + " for race #" + str(raceNum) + "."))
+                                await message.channel.send("Changed " + UtilityFunctions.filter_text(players[playerNum-1][1]) + lounge_add(players[playerNum-1][0]) + " place to " + str(placement) + " for race #" + str(raceNum) + ".")
                             else:
-                                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " is not in race #" + str(raceNum)))
+                                await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " is not in race #" + str(raceNum)))
 
             else:
                 await message.channel.send("Do " + server_prefix + "quickedit to learn how to use this command.")

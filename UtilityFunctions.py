@@ -6,6 +6,7 @@ import discord
 from pathlib import Path
 import re
 from datetime import datetime, timezone
+from typing import Any
 
     
         
@@ -28,11 +29,15 @@ def remove_blacklisted(name:str, get_blacklisted_words=get_blw):
     return name, False
             
 
-def process_name(name:str, get_blacklisted_words=get_blw):
+def filter_text(text: Any, get_blacklisted_words=get_blw):
+    '''Removes any words from the given text that are "blacklisted" words.
+    Also escapes Discord mentions (so users can't abuse @here if bot has permissions)
+    and markdown (so the inputted text doesn't come out in markdown format, eg "`hello`" should come out as "`hello`", not "hello" in a special format)'''
+    text = str(text)
     had_blacklisted = True
     while had_blacklisted:
-        name, had_blacklisted = remove_blacklisted(name, get_blacklisted_words)
-    return escape_mentions(escape_markdown(name))
+        text, had_blacklisted = remove_blacklisted(text, get_blacklisted_words)
+    return escape_mentions(escape_markdown(text))
 
 
 def readBlackListedWordsFile(filename=common.BLACKLISTED_WORDS_FILE):

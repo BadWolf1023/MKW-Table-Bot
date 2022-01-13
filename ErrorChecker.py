@@ -4,6 +4,7 @@ Created on Jul 23, 2020
 @author: willg
 '''
 #Module with functions for verifying room information
+from typing import Union, List, Dict
 from UserDataProcessing import lounge_add
 from collections import defaultdict
 import common
@@ -21,17 +22,6 @@ _TABLE_EDITED = 61
 _ROOM_SIZE_EDITED = 62
 _MULTIPLE_RACES_WITH_SAME_TIMES = 71
 _LARGE_DELTA_OCURRED = 72
-
-EC_Messages = {_SINGLE_BLANK_RACE_TIME: "Room had a single blank race time. If there were no disconnections, table unreliable for this GP. If someone disconnected and DC points are being counted, this will count as a DC (and you can ignore this warning).",
-               _MULTIPLE_BLANK_RACE_TIMES: "Room had a multiple blank race times (but not all times were blank). If there were no disconnections, table unreliable for this GP. If multiple people disconnected and DC points are being counted, these will count as a DCs (and you can ignore this warning).",
-               _ENTIRE_ROOM_BLANK_RACE_TIMES: "Entire room had blank finish times. Could not determine actual results. Table unreliable for this GP.",
-               _WRONG_PLAYER_COUNT_GP_START: "The number of players at the start of the GP does not match how many should be playing. If it was simply a disconnection, results should be reliable still. Otherwise, mkwx known bug #2.",
-               _WRONG_PLAYER_COUNT_RACE: "The number of players doesn't match how many should be playing.",
-               _SINGLE_LARGE_TIME : "One player had a large finish time (anti-cheat or mkwx error). Table unreliable for this GP.",
-               _MULTIPLE_LARGE_TIMES : "Multiple players had large finish times (anti-cheat or mkwx error). Table unreliable for this GP.",
-               _RACERS_TIED:"2 or more racers finished with the exact same time.",
-               _MULTIPLE_RACES_WITH_SAME_TIMES:"",
-               _LARGE_DELTA_OCURRED:""}
 
 EC_Messages_Alternative = {_SINGLE_BLANK_RACE_TIME: "One blank race time. If no disconnections, table unreliable for this GP. If someone disconnected and DC points are being counted, this will count as a DC (and you can ignore this warning).",
                _MULTIPLE_BLANK_RACE_TIMES: "Room had a multiple blank race times (but not all times were blank). If there were no disconnections, table unreliable for this GP. If multiple people disconnected and DC points are being counted, these will count as a DCs (and you can ignore this warning).",
@@ -106,7 +96,10 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
     
     return race_errors
 
-def get_war_errors_players(war, room, lounge_replace=True, show_large_time_errors=True):
+def get_war_errors_players(war, room, lounge_replace=True, show_large_time_errors=True) -> Union[None, Dict[int, List[str]]]:
+    '''Returns the errors that occurred on each race.
+       In the dictionary that is returned, the race number is the key, mapped to a List of strings. Each string is a single error that occurred on that race.
+       Returns None if the room is not initialized.'''
     if room is None or not room.is_initialized():
         return None
     
@@ -168,7 +161,7 @@ def get_war_errors_players(war, room, lounge_replace=True, show_large_time_error
                     race_errors[race_num].append("Players in room changed mid-GP. THIS IS AN MKWX BUG. Table is incorrect for this GP.")      
                     
     for i in range(war.get_user_defined_num_of_gps()):
-        if len(war.getEditsForGP(i+1)) > 0:
+        if len(war.get_gp_score_edits(i+1)) > 0:
             GPRaceStart = (i*4) + 1
             if GPRaceStart not in race_errors:
                 race_errors[GPRaceStart] = []
