@@ -8,7 +8,7 @@ Created on Jun 26, 2021
 import WiimmfiSiteFunctions
 import ServerFunctions
 import ImageCombine
-import War
+import Table
 import TagAIShell
 import LoungeAPIFunctions
 import ScoreKeeper as SK
@@ -67,7 +67,7 @@ async def send_missing_permissions(channel:discord.TextChannel, content=None, de
 #If the given name was a number, checks to see if the number is actually on the player list and returns the integer version of that index if it is found
 #If no FCs of the given player were found on the table, or if the integer given is out of range, an error message is returned
 #Returns playerNumber, errorMessage - errorMessage will be None is a playerNumber is found. playerNumber will be None if no playerNumber could be found.
-def getPlayerIndexInRoom(name:str, room:TableBot.Room.Room, server_prefix:str, command_name:str):
+def getPlayerIndexInRoom(name:str, room:TableBot.Table.Room, server_prefix:str, command_name:str):
     players = room.get_sorted_player_list()
     playerNum = None
 
@@ -2052,7 +2052,7 @@ class TablingCommands:
                         display_large_time_errors = ServerFunctions.get_server_setting_show_large_time_errors(server_id)
 
                     try:
-                        this_bot.set_war(War.War(warFormat, numTeams, numgps, show_large_time_errors=display_large_time_errors, display_miis=display_miis))
+                        this_bot.set_war(Table.War(warFormat, numTeams, numgps, show_large_time_errors=display_large_time_errors, display_miis=display_miis))
                     except TableBotExceptions.InvalidWarFormatException:
                         await message.channel.send("War format was incorrect. Valid options: FFA, 1v1, 2v2, 3v3, 4v4, 5v5, 6v6. War not created.")
                         return

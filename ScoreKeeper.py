@@ -3,7 +3,7 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
-import Room
+import Table
 import UserDataProcessing
 from discord.utils import escape_markdown, escape_mentions
 from collections import defaultdict
@@ -49,7 +49,7 @@ def print_scores(fc_score, fc_player):
     
     
 #Calculates the scores from the start race to the end race (eg startRace = 1 and endRace = 4 would be GP1)
-def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, race_points_when_missing=3, server_id=None):
+def calculateScoresDCs(curRoom:Table.Room, startRace=1, endRace=12, race_points_when_missing=3, server_id=None):
     #disconnections = curRoom.getMissingOnRace()
     fc_score = {}
     fc_player = curRoom.getFCPlayerListStartEnd(startRace, endRace)

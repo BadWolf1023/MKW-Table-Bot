@@ -4,8 +4,7 @@ Created on Jul 30, 2020
 @author: willg
 '''
 import WiimmfiSiteFunctions
-import Room
-import War
+import Table
 from datetime import datetime
 import humanize
 from bs4 import NavigableString, Tag
@@ -48,7 +47,7 @@ class ChannelBot(object):
     '''
     classdocs
     '''
-    def __init__(self, prev_command_sw=False, room: Room.Room=None, war: War.War=None, manualWarSetup=False, server_id=None, channel_id=None):
+    def __init__(self, prev_command_sw=False, room: Table.Room=None, war: Table.War=None, manualWarSetup=False, server_id=None, channel_id=None):
         self.set_room(room)
         self.set_war(war)
         self.prev_command_sw = prev_command_sw
@@ -77,11 +76,11 @@ class ChannelBot(object):
         return self.race_size
     def get_miis(self) -> Dict[str, Mii.Mii]:
         return self.miis
-    def get_room(self) -> Room.Room:
+    def get_room(self) -> Table.Room:
         return self.room
     def set_war(self, war) -> None:
         self.war = war
-    def get_war(self) -> War.War:
+    def get_war(self) -> Table.War:
         return self.war
     def get_prev_command_sw(self) -> bool:
         return self.prev_command_sw
@@ -387,7 +386,7 @@ class ChannelBot(object):
                 break
         else:
             roomSoup = WiimmfiSiteFunctions.combineSoups(soups)
-            temp = Room.Room(rLIDs, roomSoup, setup_discord_id, setup_display_name)
+            temp = Table.Room(rLIDs, roomSoup, setup_discord_id, setup_display_name)
             
             
             if temp.is_initialized():
