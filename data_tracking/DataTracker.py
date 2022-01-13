@@ -753,7 +753,7 @@ async def populate_score_matrix_table():
 async def populate_player_fcs_table():
     rows = []
 
-    fc_map = UserDataProcessing.FC_DiscordID
+    fc_map = UserDataProcessing.fc_discordId
     existing_count = (await db_connection.execute("SELECT count(*) FROM Player_FCs;"))[0][0]
 
     if len(fc_map) == 0 or len(fc_map) == existing_count:

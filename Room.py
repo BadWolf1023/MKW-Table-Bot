@@ -723,8 +723,8 @@ class Room(object):
     def getRoomFCDiscordIDs(self):
         FC_DID = {FC:(None, None) for FC in self.getFCs()}
         for FC in FC_DID:
-            if FC in UserDataProcessing.FC_DiscordID:
-                FC_DID[FC] = UserDataProcessing.FC_DiscordID[FC]
+            if FC in UserDataProcessing.fc_discordId:
+                FC_DID[FC] = UserDataProcessing.fc_discordId[FC]
         return FC_DID
         
     
