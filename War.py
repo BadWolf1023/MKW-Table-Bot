@@ -229,36 +229,30 @@ class War(object):
     def edit_player_gp_score(self, FC: str, gp_number: int, gp_score: int) -> None:
         '''Sets the score of the given FC for the given gp number'''
         if FC not in self.get_edited_scores():
-            self.get_edited_scores()[FC] = []
+            self.get_edited_scores()[FC] = {}
 
-        index = None
-        # Need to remove previous edit for this player's GP, if it exists
-        for i, (cur_gp_number, _) in enumerate(self.get_edited_scores()[FC]):
-            if cur_gp_number == gp_number:
-                index = i
-                break
-        if index is not None:
-            del self.get_edited_scores()[FC][index]
+        self._remove_player_gp_edit(FC, gp_number)
 
-        self.get_edited_scores()[FC].append((gp_number, gp_score))
+        self.get_edited_scores()[FC][gp_number] = gp_score
 
-    def get_gp_score_edits(self, gp_num: int) -> List[Tuple[str, int]]:
-        '''Returns a list of FC with their edited score for a given gp'''
-        gp_edits = []
+    def _remove_player_gp_edit(self, FC: str, gp_number: int):
+        '''If the given FC has an edit for the given GP, deletes that edit'''
+        if FC in self.get_edited_scores() and gp_number in self.get_edited_scores()[FC]:
+            del self.get_edited_scores()[FC][gp_number]
+
+    def get_gp_score_edits(self, gp_num: int) -> Dict[str, int]:
+        '''Returns a dictionary of FCs with their edited score for a given gp'''
+        gp_edits = {}
         for FC, edits in self.get_edited_scores().items():
-            for cur_gp_num, score in edits:
-                if cur_gp_num == gp_num:
-                    gp_edits.append((FC, score))
+            if gp_num in edits:
+                gp_edits[FC] = edits[gp_num]
         return gp_edits
 
     def get_player_gp_score_edit(self, FC: str, gp_num: int) -> Union[None, int]:
         '''If the given FC has an edited score for the given GP, returns that edited score.
            Otherwise (if the given FC does not have a score edit for that GP), returns None'''
-        if FC in self.get_edited_scores():
-            for gp_num_, gp_score_ in self.get_edited_scores()[FC]:
-                if gp_num_ == gp_num:
-                    return gp_score_
-        return None
+        if FC in self.get_edited_scores() and gp_num in self.get_edited_scores()[FC]:
+            return self.get_edited_scores()[FC][gp_num]
 
     # =================== Functions related to team penalties ==========================
     def add_penalty_for_tag(self, team_tag: str, penalty_amount: int) -> None:
