@@ -3,6 +3,7 @@ Created on Jun 12, 2021
 
 @author: willg
 '''
+import asyncio
 import json
 import os
 from datetime import datetime, timedelta, timezone
@@ -488,6 +489,14 @@ def load_pkl(file_name, error_message, default):
             except:
                 print(error_message)
     return default()
+
+async def run_command_async(command:str):
+    proc = await asyncio.create_subprocess_exec(
+        *command.split(" "),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    a,b = await proc.communicate()
     
 def get_utc_time():
     return datetime.now(timezone.utc)

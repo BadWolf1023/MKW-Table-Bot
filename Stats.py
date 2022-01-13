@@ -3,8 +3,10 @@ Created on Aug 4, 2020
 
 @author: willg
 '''
+import asyncio
 import fnmatch
 import os
+import subprocess
 from datetime import datetime
 import humanize
 from pathlib import Path
@@ -31,6 +33,10 @@ def backup_files(to_back_up=common.FILES_TO_BACKUP):
             
             temp_file_n = file_name
             if os.path.exists(todays_backup_path + temp_file_n):
+                # don't backup the database more than once, otherwise server will run out of disk
+                if file_name == common.ROOM_DATA_TRACKING_DATABASE_FILE:
+                    continue
+
                 for i in range(50):
                     temp_file_n = file_name + "_" + str(i) 
                     if not os.path.exists(todays_backup_path + temp_file_n):
@@ -43,13 +49,22 @@ def backup_files(to_back_up=common.FILES_TO_BACKUP):
                 os.remove(common.FULL_MESSAGE_LOGGING_FILE)   
                 common.check_create(common.FULL_MESSAGE_LOGGING_FILE)
 
-def prune_backups():
+
+async def prune_backups():
     for folder in os.listdir(backup_folder):
         try:
-            create_time = datetime.strptime(folder,'%Y-%m-%d').date()
+            create_time = datetime.strptime(folder.replace(".zip", ""),'%Y-%m-%d').date()
             delta = datetime.date(datetime.now()) - create_time
+            path = backup_folder + folder
             if delta.days > 14 and create_time.day != 1:
-                shutil.rmtree(backup_folder + folder)
+                if ".zip" in folder:
+                    os.remove(path)
+                else:
+                    shutil.rmtree(path)
+            elif delta.days >= 1 and '.zip' not in folder:
+                print("Zipping", path)
+                await common.run_command_async(f'zip -r {path}.zip {path}')
+                await common.run_command_async(f'rm -rf {path}')
         except:
             pass
     

@@ -697,8 +697,8 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             player[0] = UserDataProcessing.get_lounge(player[0])
             player[0] = f"{str(i) + ('. ' if i < 10 else '.')} {player[0]}"
 
-            secs = player[3]
-            player[3] = f'{int(secs // 60)}:{round(secs % 60):02}'
+            secs = int(player[3])
+            player[3] = f'{int(secs // 60)}:{int(secs % 60):02}'
 
         headers = ['+ Player', 'Avg Pts', 'Avg Place', 'Best Time', "# Plays"]
 

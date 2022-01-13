@@ -167,8 +167,8 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     numGPs = war.get_user_defined_num_of_gps()
     GPs = []
     use_lounge_names = lounge_replace
-    fc_did = UserDataProcessing.FC_DiscordID
-    did_lounge = UserDataProcessing.discordID_Lounges
+    fc_did = UserDataProcessing.fc_discordId
+    did_lounge = UserDataProcessing.discordId_lounges
     for x in range(numGPs):
         GPs.append(calculateGPScoresDCS(x+1, room, race_points_when_missing, server_id))
         
@@ -218,10 +218,10 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
         FC_table_str[fc] = [name + " ", 0, []]
         
         #add flag, if the FC has a flag set
-        if fc in UserDataProcessing.FC_DiscordID:
-            discord_id_number = UserDataProcessing.FC_DiscordID[fc][0]
-            if discord_id_number in UserDataProcessing.discordID_Flags:
-                FC_table_str[fc][0] += "[" + UserDataProcessing.discordID_Flags[discord_id_number] + "] "
+        if fc in UserDataProcessing.fc_discordId:
+            discord_id_number = UserDataProcessing.fc_discordId[fc][0]
+            if discord_id_number in UserDataProcessing.discordId_flags:
+                FC_table_str[fc][0] += "[" + UserDataProcessing.discordId_flags[discord_id_number] + "] "
     
     
     for GPnum, GP_scores in enumerate(GPs, 1):

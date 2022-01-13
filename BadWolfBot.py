@@ -546,19 +546,15 @@ async def on_message(message: discord.Message):
                 print(f"get_size: Lounge table reports size (KiB):")
                 size_str += "Lounge submission tracking size (KiB): " + str(get_size(lounge_submissions)//1024)
                 print(f"get_size: FC_DiscordID:")
-                size_str += "\nFC_DiscordID (KiB): " + str(get_size(UserDataProcessing.FC_DiscordID)//1024)
+                size_str += "\nFC_DiscordID (KiB): " + str(get_size(UserDataProcessing.fc_discordId) // 1024)
                 print(f"get_size: discordID_Lounges:")
-                size_str += "\ndiscordID_Lounges (KiB): " + str(get_size(UserDataProcessing.discordID_Lounges)//1024)
+                size_str += "\ndiscordID_Lounges (KiB): " + str(get_size(UserDataProcessing.discordId_lounges) // 1024)
                 print(f"get_size: discordID_Flags (KiB):")
-                size_str += "\ndiscordID_Flags (KiB): " + str(get_size(UserDataProcessing.discordID_Flags)//1024)
+                size_str += "\ndiscordID_Flags (KiB): " + str(get_size(UserDataProcessing.discordId_flags) // 1024)
                 print(f"get_size: blacklisted_Users (KiB):")
-                size_str += "\nblacklisted_Users (KiB): " + str(get_size(UserDataProcessing.blacklisted_Users)//1024)
+                size_str += "\nblacklisted_Users (KiB): " + str(get_size(UserDataProcessing.blacklisted_users) // 1024)
                 print(f"get_size: valid_flag_codes (KiB):")
                 size_str += "\nvalid_flag_codes (KiB): " + str(get_size(UserDataProcessing.valid_flag_codes)//1024)
-                print(f"get_size: to_add_lounge (KiB):")
-                size_str += "\nto_add_lounge (KiB): " + str(get_size(UserDataProcessing.to_add_lounge)//1024)
-                print(f"get_size: to_add_fc (KiB):")
-                size_str += "\nto_add_fc (KiB): " + str(get_size(UserDataProcessing.to_add_fc)//1024)
                 print(f"get_size: bot_abuse_tracking (KiB):")
                 size_str += "\nbot_abuse_tracking (KiB): " + str(get_size(AbuseTracking.bot_abuse_tracking)//1024)
                 print(f"get_size: table_bots (KiB):")
@@ -881,12 +877,17 @@ def destroy_all_tablebots():
         for channel_id in table_bots[server_id]:
             table_bots[server_id][channel_id].destroy()
 
-def on_exit():
-    save_data()
+@client.event
+async def close():
+    await on_exit()
+    os._exit(1)
+
+async def on_exit():
+    await save_data()
     destroy_all_tablebots()
     print(f"{str(datetime.now())}: All table bots cleaned up.")
      
-def save_data():
+async def save_data():
     print(f"{str(datetime.now())}: Saving data")
     successful = UserDataProcessing.non_async_dump_data()
     if not successful:
@@ -900,7 +901,7 @@ def save_data():
 
     if common.is_prod:
         Stats.backup_files()
-        Stats.prune_backups()
+        await Stats.prune_backups()
         Stats.dump_to_stats_file()
 
     print(f"{str(datetime.now())}: Finished saving data")
@@ -946,15 +947,12 @@ def log_command_sent(message:discord.Message, extra_text=""):
 #in our two dictionaries to local storage and the main dictionaries      
 @tasks.loop(hours=24)
 async def dumpDataAndBackup():
-    save_data()
+    await save_data()
 
-
-def handler(signum, frame):
-    sys.exit()
-
-signal.signal(signal.SIGINT, handler)
-
-atexit.register(on_exit)
+# def handler(signum, frame):
+#     sys.exit()
+# signal.signal(signal.SIGINT, handler)
+# atexit.register(on_exit)
 
 initialize()
 if common.is_dev:
