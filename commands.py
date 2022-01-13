@@ -13,7 +13,6 @@ import TagAIShell
 import LoungeAPIFunctions
 import ScoreKeeper as SK
 import UserDataProcessing
-from UserDataProcessing import lounge_add
 import TableBot
 from TableBot import ChannelBot
 import UtilityFunctions
@@ -1743,7 +1742,7 @@ class TablingCommands:
             break
 
         player_fc = missing_per_race[race-1][index][0]
-        player_name = UtilityFunctions.filter_text(missing_per_race[race-1][index][1]) + lounge_add(player_fc)
+        player_name = UtilityFunctions.filter_text(missing_per_race[race-1][index][1]) + UserDataProcessing.lounge_add(player_fc)
         if on_or_before in ["on", "during", "midrace", "results", "onresults"]:
             this_bot.add_save_state(message.content)
             this_bot.get_room().dc_on_or_before[race][player_fc] = 'on'
@@ -1789,7 +1788,7 @@ class TablingCommands:
 
         this_bot.add_save_state(message.content)
         this_bot.get_room().addPlayerPenalty(players[playerNum-1][0], amount)
-        await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1]) + lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty.")
+        await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1]) + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty.")
 
     @staticmethod
     async def substitue_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -1864,7 +1863,7 @@ class TablingCommands:
         this_bot.add_save_state(message.content)
         this_bot.get_room().add_sub(subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores)
         this_bot.get_war().set_tag_for_FC(subInFC, subOutTag)
-        await message.channel.send(f"Got it. **{UtilityFunctions.filter_text(subInMiiName) + lounge_add(subInFC)}** subbed in for **{UtilityFunctions.filter_text(subOutMiiName) + lounge_add(subOutFC)}** on race #{subInStartRace}")
+        await message.channel.send(f"Got it. **{UtilityFunctions.filter_text(subInMiiName) + UserDataProcessing.lounge_add(subInFC)}** subbed in for **{UtilityFunctions.filter_text(subOutMiiName) + UserDataProcessing.lounge_add(subOutFC)}** on race #{subInStartRace}")
 
 
     @staticmethod
@@ -1908,7 +1907,7 @@ class TablingCommands:
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.get_war().edit_player_gp_score(players[playerNum-1][0], GPNum, amount)
-                await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1]) + lounge_add(players[playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points.")
+                await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1]) + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points.")
         else:
             lounge_name = str(copy.copy(playerNum))
             loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
@@ -1924,7 +1923,7 @@ class TablingCommands:
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.get_war().edit_player_gp_score(players[_playerNum-1][0], GPNum, amount)
-                await message.channel.send(UtilityFunctions.filter_text(players[_playerNum-1][1]) + lounge_add(players[_playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points.")
+                await message.channel.send(UtilityFunctions.filter_text(players[_playerNum-1][1]) + UserDataProcessing.lounge_add(players[_playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points.")
 
 
 
@@ -1952,7 +1951,7 @@ class TablingCommands:
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.get_room().setNameForFC(players[playerNum-1][0], new_name)
-                await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1]) + lounge_add(players[playerNum-1][0]) + " name set to: " + UtilityFunctions.filter_text(new_name))
+                await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1]) + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " name set to: " + UtilityFunctions.filter_text(new_name))
         else:
             lounge_name = str(copy.copy(playerNum))
             loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
@@ -1968,7 +1967,7 @@ class TablingCommands:
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.get_room().setNameForFC(players[_playerNum-1][0], new_name)
-                await message.channel.send(UtilityFunctions.filter_text(players[_playerNum-1][1]) + lounge_add(players[_playerNum-1][0]) + " name set to: " + UtilityFunctions.filter_text(new_name))
+                await message.channel.send(UtilityFunctions.filter_text(players[_playerNum-1][1]) + UserDataProcessing.lounge_add(players[_playerNum-1][0]) + " name set to: " + UtilityFunctions.filter_text(new_name))
 
     @staticmethod
     async def change_player_tag_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
@@ -1999,7 +1998,7 @@ class TablingCommands:
                 else:
                     this_bot.add_save_state(message.content)
                     this_bot.get_war().set_tag_for_FC(players[playerNum-1][0], new_tag)
-                    await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1]) + lounge_add(players[playerNum-1][0]) + " tag set to: " + UtilityFunctions.filter_text(new_tag))
+                    await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1]) + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " tag set to: " + UtilityFunctions.filter_text(new_tag))
             else:
                 lounge_name = str(copy.copy(playerNum))
                 loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
@@ -2015,7 +2014,7 @@ class TablingCommands:
                 else:
                     this_bot.add_save_state(message.content)
                     this_bot.get_war().set_tag_for_FC(players[_playerNum-1][0], new_tag)
-                    await message.channel.send(UtilityFunctions.filter_text(players[_playerNum-1][1]) + lounge_add(players[_playerNum-1][0]) + " tag set to: " + UtilityFunctions.filter_text(new_tag))
+                    await message.channel.send(UtilityFunctions.filter_text(players[_playerNum-1][1]) + UserDataProcessing.lounge_add(players[_playerNum-1][0]) + " tag set to: " + UtilityFunctions.filter_text(new_tag))
 
 
     #Refactor this method to make it more readable
@@ -2663,9 +2662,9 @@ class TablingCommands:
                             if this_bot.get_room().races[raceNum-1].FCInPlacements(playerFC):
                                 this_bot.add_save_state(message.content)
                                 this_bot.get_room().changePlacement(raceNum, playerFC, placement)
-                                await message.channel.send("Changed " + UtilityFunctions.filter_text(players[playerNum-1][1]) + lounge_add(players[playerNum-1][0]) + " place to " + str(placement) + " for race #" + str(raceNum) + ".")
+                                await message.channel.send("Changed " + UtilityFunctions.filter_text(players[playerNum-1][1]) + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " place to " + str(placement) + " for race #" + str(raceNum) + ".")
                             else:
-                                await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " is not in race #" + str(raceNum)))
+                                await message.channel.send(UtilityFunctions.filter_text(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " is not in race #" + str(raceNum)))
 
             else:
                 await message.channel.send("Do " + server_prefix + "quickedit to learn how to use this command.")

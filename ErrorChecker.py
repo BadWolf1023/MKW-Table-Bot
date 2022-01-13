@@ -4,8 +4,7 @@ Created on Jul 23, 2020
 @author: willg
 '''
 #Module with functions for verifying room information
-from typing import Union, List, Dict
-from UserDataProcessing import lounge_add
+import UserDataProcessing
 from collections import defaultdict
 import common
 
@@ -53,12 +52,12 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
         for placement in race.placements:
             if placement.is_disconnected():
                 fc, name = placement.get_fc_and_name()
-                errors.append(name + lounge_add(fc, lounge_replace) + " had a blank race time. Disconnected unless mkwx bug. Not giving DC points for this race - use ?changeroomsize if they were not on the results of this race")
+                errors.append(name + UserDataProcessing.lounge_add(fc, lounge_replace) + " had a blank race time. Disconnected unless mkwx bug. Not giving DC points for this race - use ?changeroomsize if they were not on the results of this race")
                 blank_time_counter += 1
             if show_large_time_errors:
                 if placement.is_bogus_time():
                     fc, name = placement.get_fc_and_name()
-                    errors.append(name + lounge_add(fc, lounge_replace) + " had large finish time: " + placement.get_time_string() + " - use ?cp to change their position")
+                    errors.append(name + UserDataProcessing.lounge_add(fc, lounge_replace) + " had large finish time: " + placement.get_time_string() + " - use ?cp to change their position")
         
         ties = race.getTies()
         if len(ties) > 0:
@@ -66,7 +65,7 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
             for this_fc in sorted(ties, key=lambda fc:race.getPlacement(fc)):
                 this_placement = race.getPlacement(this_fc)
                 _, this_name = this_placement.get_fc_and_name()
-                errors.append(this_name + lounge_add(this_fc, lounge_replace) + "'s finish time: " + this_placement.get_time_string() + " - use ?cp to change their position")
+                errors.append(this_name + UserDataProcessing.lounge_add(this_fc, lounge_replace) + "'s finish time: " + this_placement.get_time_string() + " - use ?cp to change their position")
             
         if blank_time_counter == len(race.placements):
             errors = [EC_Messages_Alternative[_ENTIRE_ROOM_BLANK_RACE_TIMES]]
@@ -130,12 +129,12 @@ def get_war_errors_players(war, room, lounge_replace=True, show_large_time_error
                                     num_extra_players += 1
                                     
                             if dc_on_or_before[race.raceNumber][missingFC] == 'on':
-                                race_errors[int(race.raceNumber)].append(missingName + lounge_add(missingFC, lounge_replace) + " DCed and was on results. Giving " + str(numberOfDCPtsGivenOn) + " total DC points (3 per missing race). (" + str(len(race.placements) + num_extra_players) + " players in room this race)")
+                                race_errors[int(race.raceNumber)].append(missingName + UserDataProcessing.lounge_add(missingFC, lounge_replace) + " DCed and was on results. Giving " + str(numberOfDCPtsGivenOn) + " total DC points (3 per missing race). (" + str(len(race.placements) + num_extra_players) + " players in room this race)")
                             else:
-                                race_errors[int(race.raceNumber)].append(missingName + lounge_add(missingFC, lounge_replace) + " DCed before this race. Giving " + str(numberOfDCPtsGivenMissing) + " total DC points (3 per missing race). (" + str(len(race.placements) + num_extra_players) + " players in room this race)")
+                                race_errors[int(race.raceNumber)].append(missingName + UserDataProcessing.lounge_add(missingFC, lounge_replace) + " DCed before this race. Giving " + str(numberOfDCPtsGivenMissing) + " total DC points (3 per missing race). (" + str(len(race.placements) + num_extra_players) + " players in room this race)")
     
                         else:
-                            race_errors[int(race.raceNumber)].append(missingName + lounge_add(missingFC, lounge_replace) + " is missing. Giving " + str(war.get_race_points_when_missing()) + " DC points per missing race. (" + str(len(race.placements)) + " players in room) - Use ?dcs to fix this.")
+                            race_errors[int(race.raceNumber)].append(missingName + UserDataProcessing.lounge_add(missingFC, lounge_replace) + " is missing. Giving " + str(war.get_race_points_when_missing()) + " DC points per missing race. (" + str(len(race.placements)) + " players in room) - Use ?dcs to fix this.")
                 
                 if not race_errors[int(race.raceNumber)]:
                     del race_errors[int(race.raceNumber)]
