@@ -1856,7 +1856,7 @@ class TablingCommands:
         subOutEndRace = raceNum - 1
         subOutScores = SK.get_race_scores_for_fc(subOutFC, this_bot)[subOutStartRace-1:subOutEndRace]
         subOutName = UserDataProcessing.lounge_get(subOutFC)
-        subOutTag = this_bot.get_war().get_teg_for_FC(subOutFC)
+        subOutTag = this_bot.get_war().get_tag_for_FC(subOutFC)
         if subOutName == "":
             subOutName = subOutMiiName
         subInStartRace = raceNum

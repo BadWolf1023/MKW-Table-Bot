@@ -282,10 +282,10 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     if war.is_FFA():
         table_str += "FFA\n"
     
-    FC_table_str_items = sorted(FC_table_str.items(), key=lambda t: war.get_teg_for_FC(t[0]))
+    FC_table_str_items = sorted(FC_table_str.items(), key=lambda t: war.get_tag_for_FC(t[0]))
     scores_by_team = defaultdict(list)
     for fc, player_data in FC_table_str_items:
-        scores_by_team[war.get_teg_for_FC(fc)].append((fc, player_data))
+        scores_by_team[war.get_tag_for_FC(fc)].append((fc, player_data))
     
     def player_score(player_data):
         return player_data[1]
@@ -314,7 +314,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
                 if team_tag != curTeam:
                     if curTeam in war.get_team_penalties() and war.get_team_penalties()[curTeam] > 0:
                         table_str += "\nPenalty -" + str(war.get_team_penalties()[curTeam]) + "\n"
-                    curTeam = war.get_teg_for_FC(fc)
+                    curTeam = war.get_tag_for_FC(fc)
                     teamHex = ""
                     if war.get_team_colors() is not None:
                         if teamCounter < len(war.get_team_colors()):
@@ -324,7 +324,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             table_str += player_scores_str + "\n"
     if not war.is_FFA():
         if team_tag in war.get_team_penalties():
-            table_str += "Penalty -" + str(war.get_team_penalties()[war.get_teg_for_FC(fc)]) + "\n"
+            table_str += "Penalty -" + str(war.get_team_penalties()[war.get_tag_for_FC(fc)]) + "\n"
     
     return table_str, scores_by_team
 

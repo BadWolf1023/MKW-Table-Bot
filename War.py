@@ -161,7 +161,7 @@ class War(object):
 
 
     # ========= Functions for looking up tags and FCs ==========
-    def get_teg_for_FC(self, FC: str) -> str:
+    def get_tag_for_FC(self, FC: str) -> str:
         '''Takes the tag for a given FC. If there is no tag for the FC, "NO TEAM" is returned'''
         if self.get_teams() is None:
             raise TableBotExceptions.WarSetupStillRunning()
