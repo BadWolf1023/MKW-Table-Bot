@@ -28,7 +28,7 @@ TWO_TEAM_TABLE_COLOR_PAIRS = [("#244f96", "#cce7e8"),
 
 class War(object):
     '''
-    Wars contain meta user defined meta information. The information in Wars is used to morph how Rooms look, though overtime, morphing how Rooms look has spread to other classes too.
+    War objects contain user defined meta information. The information in Wars is used to morph how Rooms look, though overtime, morphing how Rooms look has spread to other classes too.
     '''
     GP_SIZE = 4
 
