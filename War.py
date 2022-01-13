@@ -28,14 +28,14 @@ TWO_TEAM_TABLE_COLOR_PAIRS = [("#244f96", "#cce7e8"),
 
 class War(object):
     '''
-    classdocs
+    Wars contain meta user defined meta information. The information in Wars is used to morph how Rooms look, though overtime, morphing how Rooms look has spread to other classes too.
     '''
     GP_SIZE = 4
 
     _war_format_players_per_team = {u"ffa": 1, u"1v1": 1, u"2v2": 2,
                                     u"3v3": 3, u"4v4": 4, u"5v5": 5, u"6v6": 6}
 
-    def __init__(self, format_: str, number_of_teams: str, message_id: int, num_of_GPs=3,
+    def __init__(self, format_: str, number_of_teams: str, num_of_GPs=3,
                  race_points_when_missing=3, show_large_time_errors=True, display_miis=True):
         self._set_team_colors(None)
         self.set_teams(None)
@@ -48,7 +48,7 @@ class War(object):
         self.set_display_miis(display_miis)
         self._set_team_penalties(defaultdict(int))
         self.set_temporary_tag_fcs(None)
-        self.war_id = message_id
+
 
     # Getters
     def get_team_colors(self) -> Tuple[str, str]:

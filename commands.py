@@ -48,8 +48,6 @@ import re
 
 vr_is_on = False
 
-w = War.War()
-
 
 async def sendRoomWarNotLoaded(message: discord.Message, serverPrefix:str, is_lounge=False):
     if is_lounge:
@@ -2054,7 +2052,7 @@ class TablingCommands:
                         display_large_time_errors = ServerFunctions.get_server_setting_show_large_time_errors(server_id)
 
                     try:
-                        this_bot.set_war(War.War(warFormat, numTeams, message.id, numgps, show_large_time_errors=display_large_time_errors, display_miis=display_miis))
+                        this_bot.set_war(War.War(warFormat, numTeams, numgps, show_large_time_errors=display_large_time_errors, display_miis=display_miis))
                     except TableBotExceptions.InvalidWarFormatException:
                         await message.channel.send("War format was incorrect. Valid options: FFA, 1v1, 2v2, 3v3, 4v4, 5v5, 6v6. War not created.")
                         return
