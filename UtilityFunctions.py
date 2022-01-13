@@ -214,7 +214,7 @@ def get_wiimmfi_utc_time(race_time:str):
 def is_race_ID(raceID):
     return re.match("^r[0-9]{7}$", raceID) is not None
 
-def is_rLID(roomID):
+def is_rxx(roomID):
     return re.match("^r[0-9]{7}$", roomID) is not None
 
 def is_fc(fc):

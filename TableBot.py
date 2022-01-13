@@ -48,12 +48,12 @@ class ChannelBot(object):
     classdocs
     '''
     def __init__(self, prev_command_sw=False, room: Table.Room=None, war: Table.War=None, manualWarSetup=False, server_id=None, channel_id=None):
+        self.loungeFinishTime = None
         self.set_room(room)
         self.set_war(war)
         self.prev_command_sw = prev_command_sw
         self.manualWarSetUp = manualWarSetup
         self.last_used = datetime.now()
-        self.loungeFinishTime = None
         self.lastWPTime = None
         self.roomLoadTime = None
         self.save_states = []
@@ -70,6 +70,8 @@ class ChannelBot(object):
         self.channel_id = channel_id
         self.race_size = 4
         self.event_id = None
+
+        self._races = []
         
 
     def get_race_size(self) -> int:
@@ -294,7 +296,7 @@ class ChannelBot(object):
     async def verify_room(self, load_me):
         to_find = load_me[0]
 
-        beautiful_soup_room_top = await WiimmfiSiteFunctions.getRoomHTMLDataSmart(to_find)
+        beautiful_soup_room_top = await WiimmfiSiteFunctions.get_front_race_smart(to_find)
         if beautiful_soup_room_top is None:
             del beautiful_soup_room_top
             return False, None, None, None
@@ -307,7 +309,7 @@ class ChannelBot(object):
         
         
         created_when = str(temp_test.contents[2].string).strip()
-        rLID = str(temp_test.contents[1][common.HREF_HTML_NAME]).split("/")[4]
+        rxx = str(temp_test.contents[1][common.HREF_HTML_NAME]).split("/")[4]
         created_when = created_when[:created_when.index("ago)")+len("ago)")].strip()
         room_str = "Room " + str(temp_test.contents[1].text) + ": " + created_when + " - "
         last_match = str(temp_test.contents[6].string).strip("\n\t ")
@@ -370,33 +372,33 @@ class ChannelBot(object):
             
             while len(mii_classes) > 0:
                 del mii_classes[0]
-        return True, player_data, room_str, rLID
+        return True, player_data, room_str, rxx
     
     
     async def load_room_smart(self, load_me, is_vr_command=False, message_id=None, setup_discord_id=0, setup_display_name=""):
-        rLIDs = []
+        rxxs = []
         soups = []
         success = False
-        for item in load_me:
-            _, rLID, roomSoup = await WiimmfiSiteFunctions.getRoomDataSmart(item)
-            rLIDs.append(rLID)
-            soups.append(roomSoup)
-            
-            if roomSoup is None: #wrong roomID or no races played
-                break
-        else:
-            roomSoup = WiimmfiSiteFunctions.combineSoups(soups)
-            temp = Table.Room(rLIDs, roomSoup, setup_discord_id, setup_display_name)
-            
-            
-            if temp.is_initialized():
-                self.set_room(temp)
-                self.event_id = message_id
-                success = True
-                #Make call to database to add data
-                if not is_vr_command:
-                    await DataTracker.RoomTracker.add_data(self)
-                self.get_room().apply_tabler_adjustments()
+
+        _, rxx, roomSoup = await WiimmfiSiteFunctions.get_races_smart(item)
+        rxxs.append(rxx)
+        soups.append(roomSoup)
+        
+        if roomSoup is None: #wrong roomID or no races played
+            return False
+
+        roomSoup = WiimmfiSiteFunctions.combine_soups(soups)
+        temp = Table.Room(rxxs, roomSoup, setup_discord_id, setup_display_name)
+        
+        
+        if temp.is_initialized():
+            self.set_room(temp)
+            self.event_id = message_id
+            success = True
+            #Make call to database to add data
+            if not is_vr_command:
+                await DataTracker.RoomTracker.add_data(self)
+            self.get_room().apply_tabler_adjustments()
         
         while len(soups) > 0:
             if soups[0] is not None:

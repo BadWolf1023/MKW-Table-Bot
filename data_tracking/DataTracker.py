@@ -257,7 +257,7 @@ class ChannelBotSQLDataValidator(object):
     
     def rxx_validation(self, rxx):
         self.validate_str(rxx)
-        if not UtilityFunctions.is_rLID(rxx):
+        if not UtilityFunctions.is_rxx(rxx):
             raise SQLFormatWrong(f"{rxx} is not a formatted like an rxx")
         
     def wiimmfi_utc_time_validation(self, wiimmfi_time):
@@ -759,6 +759,9 @@ async def populate_player_fcs_table():
     for fc in fc_map:
         discord_id = fc_map[fc][0]
         rows.append((fc, discord_id))
+
+    if common.fast_boot:
+        return
 
     start = time.time()
     print(f'Populating FC table in database...')

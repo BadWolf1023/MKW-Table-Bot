@@ -18,7 +18,7 @@ import TableBot
 from TableBot import ChannelBot
 import UtilityFunctions
 import MiiPuller
-import SimpleRooms
+import WiimmfiParser
 import Race
 import MogiUpdate
 import Lounge
@@ -921,8 +921,8 @@ class OtherCommands:
         else:
 
             this_bot.updateRLCoolDown()
-            sr = SimpleRooms.SimpleRooms()
-            await sr.populate_rooms_information()
+            sr = WiimmfiParser.FrontPageParser()
+            await sr._populate_rooms_information()
             rooms = []
             if ww_type == Race.RT_WW_REGION:
                 rooms = sr.get_RT_WWs()
@@ -946,7 +946,7 @@ class OtherCommands:
             embed_page_start_time = datetime.now()
             sent_missing_perms_message = False
             current_page = 0
-            curRoomTxt = SimpleRooms.SimpleRooms.get_embed_text_for_race(rooms, current_page)
+            curRoomTxt = WiimmfiParser.FrontPageParser.get_embed_text_for_race(rooms, current_page)
             should_send_error_message = False
             msg = await message.channel.send(curRoomTxt)
             await msg.add_reaction(common.LEFT_ARROW_EMOTE)
@@ -967,7 +967,7 @@ class OtherCommands:
                     else:
                         current_page = (current_page + 1) % (len(rooms))
 
-                    curRoomTxt = SimpleRooms.SimpleRooms.get_embed_text_for_race(rooms, current_page)
+                    curRoomTxt = WiimmfiParser.FrontPageParser.get_embed_text_for_race(rooms, current_page)
 
                     try:
                         await msg.edit(content=curRoomTxt)
@@ -1002,8 +1002,8 @@ class OtherCommands:
 
 
     @staticmethod
-    async def vr_command_get_races(rLID:str, temp_bot:TableBot.ChannelBot):
-        successful = await temp_bot.load_room_smart([rLID], is_vr_command=True, message_id=None)
+    async def vr_command_get_races(rxx:str, temp_bot:TableBot.ChannelBot):
+        successful = await temp_bot.load_room_smart([rxx], is_vr_command=True, message_id=None)
         if not successful:
             return None
         return temp_bot.get_room().get_races_abbreviated(last_x_races=12)
@@ -1032,16 +1032,16 @@ class OtherCommands:
         #Case 1: No mention, get FCs for the user - this happens when len(args) = 3
         #Case 2: Mention, get FCs for the mentioned user, this happens when len(args) > 3 and len(mentions) > 1
         #Case 3: FC: No mention, len(args) > 3, and is FC
-        #Case 4: rLID: No mention, len(args) > 3, is rLID
-        #Case 5: Lounge name: No mention, len(args) > 3, neither rLID nor FC
+        #Case 4: rxx: No mention, len(args) > 3, is rxx
+        #Case 5: Lounge name: No mention, len(args) > 3, neither rxx nor FC
         successful = False
         room_data = None
-        rLID = None
+        rxx = None
         if len(args) == 1:
             discordIDToLoad = str(message.author.id)
             await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]) )
             FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-            successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
+            successful, room_data, last_match_str, rxx = await this_bot.verify_room([FCs])
             if not successful:
                 await message.channel.send("Could not find you in a room. (This could be an error if I couldn't find your FC.)")
         elif len(args) > 1:
@@ -1049,22 +1049,22 @@ class OtherCommands:
                 discordIDToLoad = str(message.raw_mentions[0])
                 await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
                 FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-                successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
+                successful, room_data, last_match_str, rxx = await this_bot.verify_room([FCs])
                 if not successful:
                     await message.channel.send(f"Could not find {UtilityFunctions.filter_text(message.mentions[0].name)} in a room. (This could be an error if I couldn't find their FC in the database.)")
             elif UtilityFunctions.is_fc(args[1]):
-                successful, room_data, last_match_str, rLID = await this_bot.verify_room([args[1]])
+                successful, room_data, last_match_str, rxx = await this_bot.verify_room([args[1]])
                 if not successful:
                     await message.channel.send("Could not find this FC in a room.")
             else:
                 await updateData( * await LoungeAPIFunctions.getByLoungeNames([" ".join(old_command.split()[1:])]))
                 FCs = UserDataProcessing.getFCsByLoungeName(" ".join(old_command.split()[1:]))
 
-                successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
+                successful, room_data, last_match_str, rxx = await this_bot.verify_room([FCs])
                 if not successful:
                     await message.channel.send(f"Could not find {UtilityFunctions.filter_text(' '.join(old_command.split()[1:]))} in a room. (This could be an error if I couldn't their FC in the database.)")
 
-        if not successful or room_data is None or rLID is None:
+        if not successful or room_data is None or rxx is None:
             await common.safe_delete(message2)
             return
         FC_List = [fc for fc in room_data]
@@ -1085,7 +1085,7 @@ class OtherCommands:
         #the verify_room function
         if "(last start" in last_match_str:
             #go get races from room
-            races_str = await OtherCommands.vr_command_get_races(rLID, temp_bot)
+            races_str = await OtherCommands.vr_command_get_races(rxx, temp_bot)
             if races_str is not None:
                 str_msg += "\n\nRaces (Last 12): " + races_str
             else:
@@ -2065,8 +2065,8 @@ class TablingCommands:
                     #Case 1: No mention, get FCs for the user - this happens when len(args) = 3
                     #Case 2: Mention, get FCs for the mentioned user, this happens when len(args) > 3 and len(mentions) > 1
                     #Case 3: FC: No mention, len(args) > 3, and is FC
-                    #Case 4: rLID: No mention, len(args) > 3, is rLID
-                    #Case 5: Lounge name: No mention, len(args) > 3, neither rLID nor FC
+                    #Case 4: rxx: No mention, len(args) > 3, is rxx
+                    #Case 5: Lounge name: No mention, len(args) > 3, neither rxx nor FC
                     successful = False
                     discordIDToLoad = None
                     message2 = None
@@ -2089,7 +2089,7 @@ class TablingCommands:
                                 if not successful:
                                     lookup_name = UtilityFunctions.filter_text(message.mentions[0].name)
                                     await message.channel.send(f"Could not find {lookup_name} in a room. **Did they finish the first race?**")
-                            elif UtilityFunctions.is_rLID(args[3]):
+                            elif UtilityFunctions.is_rxx(args[3]):
                                 successful = await this_bot.load_room_smart([args[3]], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
                                     await message.channel.send("Could not find this rxx number. Is the room over 24 hours old?")
@@ -2191,26 +2191,25 @@ class TablingCommands:
         if len(args) < 2:
             await message.channel.send("Nothing given to mergeroom. No merges nor changes made.")
             return
-        rxx_given = UtilityFunctions.is_rLID(args[1])
-        if rxx_given and args[1] in this_bot.get_room().rLIDs:
+        rxx_given = UtilityFunctions.is_rxx(args[1])
+        if rxx_given and args[1] in this_bot.get_room().rxxs:
             await message.channel.send("The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `?undo`.")
 
-        roomLink, rLID, rLIDSoup = await WiimmfiSiteFunctions.getRoomDataSmart(args[1])
-        rLIDSoupWasNone = rLIDSoup is None
-        if not rLIDSoupWasNone:
-            rLIDSoup.decompose()
-            del rLIDSoup
+        roomLink, rxx, page_soup = await WiimmfiSiteFunctions.get_races_smart(args[1])
+        if page_soup is not None:
+            page_soup.decompose()
+            del page_soup
 
-        if roomLink is None or rLID is None or rLIDSoupWasNone:
-            await message.channel.send("Either the FC given to mergeroom isn't in a room, or the rLID given to mergeroom doesn't exist. No merges nor changes made. **Make sure the new room has finished the first race before using this command.**")
+        if roomLink is None or rxx is None or page_soup is None:
+            await message.channel.send("Either the FC given to mergeroom isn't in a room, or the rxx given to mergeroom doesn't exist. No merges nor changes made. **Make sure the new room has finished the first race before using this command.**")
             return
 
-        if not rxx_given and rLID in this_bot.get_room().rLIDs:
+        if not rxx_given and rxx in this_bot.get_room().rxxs:
             await message.channel.send("The room you are currently in has already been merge in this war. No changes made.")
             return
 
         this_bot.add_save_state(message.content)
-        this_bot.get_room().rLIDs.insert(0, rLID)
+        this_bot.get_room().rxxs.insert(0, rxx)
         updated = await this_bot.update_room()
         if updated:
             await message.channel.send(f"Successfully merged with this room: {this_bot.get_room().getLastRXXString()} | Total number of races played: " + str(len(this_bot.get_room().races)))
@@ -2524,7 +2523,7 @@ class TablingCommands:
                 await message.channel.send(table_text)
             except AttributeError:
                 await message.channel.send("Table Bot has a bug, and this mkwx room triggered it. I cannot tally your scores.")
-                await message.channel.send("rLID is " + str(this_bot.get_room().rLIDs) )
+                await message.channel.send("rxx is " + str(this_bot.get_room().rxxs) )
                 raise
 
     @staticmethod

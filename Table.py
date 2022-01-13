@@ -3,21 +3,38 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
-import Race
+import random
+from collections import defaultdict
+from copy import copy, deepcopy
+from typing import Any, DefaultDict, Dict, List, Set, Tuple, Union
+
+import common
+import ErrorChecker
 import Placement
 import Player
-import WiimmfiSiteFunctions
-import UserDataProcessing
-import common
-
-from collections import defaultdict
-import UtilityFunctions
+import Race
+import TableBotExceptions
 import TagAIShell
-from copy import copy, deepcopy
-from UtilityFunctions import isint, isfloat
+import UserDataProcessing
+import UtilityFunctions
+import WiimmfiSiteFunctions
+from UtilityFunctions import isfloat, isint
 
-DEBUG_RACES = False
-DEBUG_PLACEMENTS = False
+
+
+TWO_TEAM_TABLE_COLOR_PAIRS = [("#244f96", "#cce7e8"),
+                              ("#D11425", "#E8EE28"),
+                              ("#E40CA6", "#ADCFCD"),
+                              ("#2EFF04", "#FF0404"),
+                              ("#193FFF", "#FF0404"),
+                              ("#ff8cfd", "#fdff8c"),
+                              ("#96c9ff", "#ffbe96"),
+                              ("#ffbbb1", "#b1ffd9"),
+                              ("#ff69b4", "#b4ff69"),
+                              ("#95eefa", "#58cede"),
+                              ("#54ffc9", "#54e3ff"),
+                              ("#a1ff3d", "#fcff3d"),
+                              ("#8d8ce6", "#cfceff")]
 
 # Function takes a default dictionary, the key being a number, and makes any keys that are greater than the threshold one less, then removes that threshold, if it exists
 def generic_dictionary_shifter(old_dict, threshold):
@@ -35,7 +52,7 @@ class Room(object):
     '''
     classdocs
     '''
-    def __init__(self, rLIDs, roomSoup, setup_discord_id, setup_display_name):
+    def __init__(self, rxxs, roomSoup, setup_discord_id, setup_display_name):
         self.name_changes = {}
         self.removed_races = []
         
@@ -55,7 +72,7 @@ class Room(object):
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         self.sub_ins = {}
         
-        self.initialize(rLIDs, roomSoup)
+        self.initialize(rxxs, roomSoup)
         self.is_freed = False
     
     def get_set_up_user_discord_id(self):
@@ -67,12 +84,12 @@ class Room(object):
     def get_subs(self):
         return self.sub_ins
     
-    def initialize(self, rLIDs, roomSoup, mii_dict=None):
-        self.rLIDs = rLIDs
+    def initialize(self, rxxs, roomSoup, mii_dict=None):
+        self.rxxs = rxxs
         
         if roomSoup is None:
             raise Exception
-        if self.rLIDs is None or len(self.rLIDs) == 0:
+        if self.rxxs is None or len(self.rxxs) == 0:
             #TODO: Here? Caller should?
             roomSoup.decompose()
             raise Exception
@@ -85,7 +102,7 @@ class Room(object):
             self.roomID = self.races[0].roomID
             
         else: #Hmmmm, if there are no races, what should we do? We currently unload the room... edge case...
-            self.rLIDs = None
+            self.rxxs = None
             self.races = None
             self.roomID = None
             raise Exception #And this is why the room unloads when that internal error occurs
@@ -94,10 +111,10 @@ class Room(object):
     
     
     def is_initialized(self):
-        return self.races is not None and self.rLIDs is not None and len(self.rLIDs) > 0
+        return self.races is not None and self.rxxs is not None and len(self.rxxs) > 0
         
     def get_rxxs(self):
-        return self.rLIDs
+        return self.rxxs
     
     def had_positions_changed(self):
         for changes in self.placement_history.values():
@@ -307,18 +324,18 @@ class Room(object):
     
     def getRXXText(self):
         resultText = ""
-        if len(self.rLIDs) == 1:
-            rxx = self.rLIDs[0]
+        if len(self.rxxs) == 1:
+            rxx = self.rxxs[0]
             resultText = f"**Room URL:** https://wiimmfi.de/stats/mkwx/list/{rxx}  |  **rxx number:** {rxx}\n"
         else:
             resultText = "**?mergeroom** was used, so there are multiple rooms:\n\n"
-            for i, rxx in enumerate(self.rLIDs[::-1], 1):
+            for i, rxx in enumerate(self.rxxs[::-1], 1):
                 resultText += f"**- Room #{i} URL:** https://wiimmfi.de/stats/mkwx/list/{rxx}  |  **rxx number:** {rxx}\n"
         return resultText
     
     def getLastRXXString(self):
-        if len(self.rLIDs) > 0:
-            last_rxx = self.rLIDs[0]
+        if len(self.rxxs) > 0:
+            last_rxx = self.rxxs[0]
             return f"**Room URL:** https://wiimmfi.de/stats/mkwx/list/{last_rxx}  |  **rxx number:** {last_rxx}"
         return ""
     
@@ -413,212 +430,26 @@ class Room(object):
             build_str += "\n"
         return build_str
     
-    #SOUP LEVEL FUNCTIONS
-    
-    @staticmethod
-    def getPlacementInfo(line):
-        allRows = line.find_all("td")
-        playerPageLink = str(allRows[0].find("a")[common.HREF_HTML_NAME])
-        
-        
-        FC = str(allRows[0].find("span").string)
-        ol_status = str(allRows[1][common.TOOLTIP_NAME]).split(":")[1].strip()
-    
-        roomPosition = -1
-        
-        role = "-1"
-        if (allRows[1].find("b") is not None):
-            roomPosition = 1
-            role = "host"
-        else:
-            temp = str(allRows[1].string).strip().split()
-            roomPosition = temp[0].strip(".")
-            role = temp[1].strip()
-        
-        playerRegion = str(allRows[2].string)
-        playerConnFails = str(allRows[3].string)
-        if not isint(playerConnFails) and not isfloat(playerConnFails):
-            playerConnFails = None
-        else:
-            playerConnFails = float(playerConnFails)
-        #TODO: Handle VR?
-        vr = str(allRows[4].string)
-        if not isint(vr):
-            vr = None
-        else:
-            vr = int(vr)
-        
-        character_vehicle = None
-        if allRows[5].has_attr(common.TOOLTIP_NAME):
-            character_vehicle = str(allRows[5][common.TOOLTIP_NAME])
-        
-        
-        delta = str(allRows[7].string) #Not true delta, but significant delta (above .5)
-        
-        time = str(allRows[8].string)
-        
-        playerName = str(allRows[9].string)
-        while len(allRows) > 0:
-            del allRows[0]
-        
-        return FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, delta, time, playerName
-    
-    def getRaceInfoFromList(self, textList):
-        '''Utility Function'''
-        raceTime = str(textList[0])
-        UTCIndex = raceTime.index("UTC")
-        raceTime = raceTime[:UTCIndex+3]
-        
-        matchID = str(textList[1])
-        
-        raceNumber = str(textList[2]).strip().strip("(").strip(")").strip("#")
-        
-        roomID = str(textList[4])
-        
-        roomType = str(textList[6])
-        
-        cc = str(textList[7])[3:-2] #strip white spaces, the star, and the cc
-        is_ct = str(textList[-1]) in {'u', 'c'}
-        track = "Unknown_Track (Bad HTML, mkwx messed up)"
-        try:
-            if len(textList) == 12:
-                track = str(textList[9])
-            elif len(textList) == 10:
-                track = str(textList[8]).split(":")[-1].strip()
-            else:
-                track = str(textList[9]).strip()
-        except IndexError:
-            pass
-        
-        placements = []
-        
-        while len(textList) > 0:
-            del textList[0]
-        
-        return raceTime, matchID, raceNumber, roomID, roomType, cc, track, placements, is_ct
-    
-    def getRXXFromHTMLLine(self, line):
-        roomLink = line.find_all('a')[1][common.HREF_HTML_NAME]
-        return roomLink.split("/")[-1]
-        
-    def getRaceIDFromHTMLLine(self, line):
-        return line.get('id')
-    
-    def getTrackURLFromHTMLLine(self, line):
-        try:
-            return line.find_all('a')[2][common.HREF_HTML_NAME]
-        except IndexError:
-            return "No Track Page"
-        
-      
-    def getRacesList(self, roomSoup, mii_dict=None):
-        #Utility function
-        tableLines = roomSoup.find_all("tr")
-        
-        foundRaceHeader = False
-        races = []
-        for line in tableLines:
-            if foundRaceHeader:
-                foundRaceHeader = False
-            else:
-                if (line.get('id') is not None): #Found Race Header
-                    #_ used to be the racenumber, but mkwx deletes races 24 hours after being played. This leads to rooms getting races removed, and even though
-                    #they have race numbers, the number doesn't match where they actually are on the page
-                    #This was leading to out of bounds exceptions.
-                    raceTime, matchID, mkwxRaceNumber, roomID, roomType, cc, track, placements, is_ct = self.getRaceInfoFromList(line.findAll(text=True))
-                    room_rxx = self.getRXXFromHTMLLine(line)
-                    race_id = self.getRaceIDFromHTMLLine(line)
-                    trackURL = self.getTrackURLFromHTMLLine(line)
-                    raceNumber = None
-                    races.insert(0, Race.Race(raceTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, mkwxRaceNumber, room_rxx, race_id, trackURL))
-                    foundRaceHeader = True
-                    
-                else:
-                    FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, delta, time, playerName = self.getPlacementInfo(line)
-                    if races[0].hasFC(FC):
-                        FC = FC + "-2"
-                    mii_hex = None
-                    if mii_dict is not None and FC in mii_dict:
-                        mii_hex = mii_dict[FC].mii_data_hex_str
-                    plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, playerName, mii_hex=mii_hex)
-                    p = Placement.Placement(plyr, -1, time, delta)
-                    races[0].addPlacement(p)
-        
-
-            
-        for race in races:
-            if DEBUG_RACES:
-                print()
-                print(f"Room ID: {race.roomID}")
-                print(f"Room rxx: {race.rxx}")
-                print(f"Room Type: {race.roomType}")
-                print(f"Race Match ID: {race.matchID}")
-                print(f"Race ID: {race.raceID}")
-                print(f"Race Time: {race.matchTime}")
-                print(f"Race Number: {race.raceNumber}")
-                print(f"Race Track: {race.track}")
-                print(f"Track URL: {race.trackURL}")
-                print(f"Race cc: {race.cc}")
-                print(f"Is CT? {race.is_ct}")
-            if DEBUG_PLACEMENTS:
-                for placement in race.getPlacements():
-                    print()
-                    print(f"\tPlayer Name: {placement.getPlayer().name}")
-                    print(f"\tPlayer FC: {placement.getPlayer().FC}")
-                    print(f"\tPlayer Page: {placement.getPlayer().playerPageLink}")
-                    print(f"\tPlayer ID: {placement.getPlayer().pid}")
-                    print(f"\tFinish Time: {placement.get_time_string()}")
-                    print(f"\tPlace: {placement.place}")
-                    print(f"\tol_status: {placement.getPlayer().ol_status}")
-                    print(f"\tPosition in Room: {placement.getPlayer().positionInRoom}")
-                    print(f"\tPlayer Region: {placement.getPlayer().region}")
-                    print(f"\tPlayer Conn Fails: {placement.getPlayer().playerConnFails}")
-                    print(f"\tRole: {placement.getPlayer().role}")
-                    print(f"\tVR: {placement.getPlayer().vr}")
-                    print(f"\tCharacter: {placement.getPlayer().character}")
-                    print(f"\tVehicle: {placement.getPlayer().vehicle}")
-                    print(f"\tDiscord name: {placement.getPlayer().discord_name}")
-                    print(f"\tLounge name: {placement.getPlayer().lounge_name}")
-                    print(f"\tCharacter: {placement.getPlayer().character}")
-                    print(f"\tVehicle: {placement.getPlayer().vehicle}")
-                    print(f"\tPlayer Discord name: {placement.getPlayer().discord_name}")
-                    print(f"\tPlayer lounge name: {placement.getPlayer().lounge_name}")
-                    print(f"\tPlayer mii hex: {placement.getPlayer().mii_hex}")
-
-        #We have a memory leak, and it's not incredibly clear how BS4 objects work and if
-        #Python's automatic garbage collection can figure out how to collect
-        while len(tableLines) > 0:
-            del tableLines[0]
-        
-
-        seen_race_id_numbering = defaultdict(lambda:[{}, 0])
-        for race in races:
-            race:Race.Race
-            rxx_numbering = seen_race_id_numbering[race.get_rxx()]
-            if race.get_race_id() not in rxx_numbering:
-                rxx_numbering[1] += 1
-                rxx_numbering[0][race.get_race_id()] = rxx_numbering[1]
-            race.set_race_number(rxx_numbering[0][race.get_race_id()])
-        
-        return races
     
 
     #Soup level functions    
     async def update_room(self, database_call, is_vr_command, mii_dict=None):
         if self.is_initialized():
-            soups = []
-            rLIDs = []
-            for rLID in self.rLIDs:
+            all_races = []
+            rxxs = []
+            for rxx in self.rxxs:
                 
-                _, rLID_temp, tempSoup = await WiimmfiSiteFunctions.getRoomData(rLID)
-                soups.append(tempSoup)
-                rLIDs.append(rLID_temp)
-                
-            tempSoup = WiimmfiSiteFunctions.combineSoups(soups)
+                new_races = await WiimmfiSiteFunctions.get_races_for_rxx(rxx)
+                if new_races is None or len(new_races) == 0:
+                    return False
+
+                all_races.extend(new_races)
+                rxxs.append(rxx)
+
             
             to_return = False
             if tempSoup is not None:
-                self.initialize(rLIDs, tempSoup, mii_dict)
+                self.initialize(rxxs, tempSoup, mii_dict)
                 
                 #Make call to database to add data
                 if not is_vr_command:
@@ -628,9 +459,6 @@ class Room(object):
                 del tempSoup
                 to_return = True
                     
-            while len(soups) > 0:
-                soups[0].decompose()
-                del soups[0]
             return to_return
         return False
     
@@ -750,7 +578,7 @@ class Room(object):
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
         save_state['dc_on_or_before'] = self.dc_on_or_before.copy()
         save_state['forcedRoomSize'] = self.forcedRoomSize.copy()
-        save_state['rLIDs'] = self.rLIDs.copy()
+        save_state['rxxs'] = self.rxxs.copy()
         save_state['races'] = deepcopy(self.races)
         save_state['placement_history'] = copy(self.placement_history)
         save_state['sub_ins'] = deepcopy(self.sub_ins)
@@ -767,32 +595,34 @@ class Room(object):
 
 
 
-'''
-Created on Jul 13, 2020
 
-@author: willg
-'''
-from typing import Dict, Tuple, List, Set, DefaultDict, Any, Union
-import ErrorChecker
-from collections import defaultdict
-import random
-import TableBotExceptions
-import UtilityFunctions
-import UserDataProcessing
 
-TWO_TEAM_TABLE_COLOR_PAIRS = [("#244f96", "#cce7e8"),
-                            ("#D11425", "#E8EE28"),
-                            ("#E40CA6", "#ADCFCD"),
-                            ("#2EFF04", "#FF0404"),
-                            ("#193FFF", "#FF0404"),
-                            ("#ff8cfd", "#fdff8c"),
-                            ("#96c9ff", "#ffbe96"),
-                            ("#ffbbb1", "#b1ffd9"),
-                            ("#ff69b4", "#b4ff69"),
-                            ("#95eefa", "#58cede"),
-                            ("#54ffc9", "#54e3ff"),
-                            ("#a1ff3d", "#fcff3d"),
-                            ("#8d8ce6", "#cfceff")]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class War(object):

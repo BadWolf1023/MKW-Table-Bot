@@ -90,7 +90,7 @@ TABLE_TEXT_TERMS = {"tt", "tabletext"}
 WAR_PICTURE_TERMS = {"wp", "warpicture", "wo", "w;", "w["}
 RACE_RESULTS_TERMS = {"rr", "raceresults"}
 RACES_TERMS = {"races"}
-RXX_TERMS = {"rxx", "rlid"}
+RXX_TERMS = {"rxx"}
 ALL_PLAYERS_TERMS = {"allplayers", "ap"}
 FCS_TERMS = {"fcs"}
 

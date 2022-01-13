@@ -4,7 +4,6 @@ Created on Jul 12, 2020
 @author: willg
 '''
 import UtilityFunctions
-import UserDataProcessing
 from Placement import DISCONNECTION_TIME, Placement
 from collections import defaultdict
 from typing import List
@@ -373,7 +372,25 @@ class Race:
     
     def multipleBlankTimes(self):
         return not self.entireRoomBlankTimes() and sum(1 for placement in self.getPlacements() if placement.is_disconnected()) > 1
-        
+    
+
+    def self_str(self):
+        return f"""Match time: {self.matchTime}
+Match ID: {self.matchID}
+Race number: {self.raceNumber}
+Room ID: {self.roomID}
+rxx: {self.rxx}
+Track URL: {self.trackURL}
+Race ID: {self.raceID}
+Room type: {self.roomType}
+Track: {self.track}
+CC: {self.cc}
+Number of placements: {len(self.placements)}
+Region: {self.region}
+Is CT: {self.is_ct}
+Is Wiimmfi RaceD: {self.is_wiimmfi_race}
+MKWX Race Number: {self.mkwxRaceNumber}"""
+
     def __str__(self):
         curStr = "Race #" + str(self.raceNumber) + " - " + UtilityFunctions.filter_text(self.getTrackNameWithoutAuthor()) + " - " + str(self.cc) + "cc" + \
          "\nMatch end time: " + str(self.matchTime)

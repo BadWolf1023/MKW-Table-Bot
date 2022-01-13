@@ -59,6 +59,7 @@ is_beta = properties['mode'] == 'beta'
 is_prod = properties['mode'] == 'prod'
 
 in_testing_server = is_dev
+fast_boot = in_testing_server and True # When turned on, skips some of the things that lengthen the boot time, like populating the FC player table
 running_beta = is_beta
 beta_is_real = False
 
@@ -455,7 +456,10 @@ async def safe_send(message:discord.Message, content=None, embed=None, delete_af
 def run_async_function_no_loop(function_to_call):
     import asyncio
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(function_to_call)
+    try:
+        return loop.run_until_complete(function_to_call)
+    finally:
+        loop.close()
     
 async def safe_delete(message):
     try:

@@ -90,4 +90,4 @@ QUICK_EDIT_TERMS = {'quickedit', 'qe'}
 TABLE_TEXT_TERMS = {"tt", "tabletext"}
 WAR_PICTURE_TERMS = {"wp", "warpicture"}
 RACE_RESULTS_TERMS = {"rr", "raceresults"}
-RXX_TERMS = {"rxx", "rlid"}
+RXX_TERMS = {"rxx"}
