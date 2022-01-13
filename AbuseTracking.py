@@ -86,7 +86,7 @@ def create_notification_embed(message: discord.Message, messages_sent, ban):
                               icon_url=message.author.display_avatar.url)
     except:
         send_embed.set_author(name=str(message.author) + ' - ' + ('WARNED' if not ban else 'BANNED'),
-                              icon_url=message.author.default_avatar_url)
+                              icon_url=message.author.avatar_url)
 
     send_embed.add_field(name='User', value=message.author.mention)
     send_embed.add_field(name='Display Name', value=message.author.display_name)
