@@ -47,12 +47,12 @@ class ChannelBot(object):
     '''
     classdocs
     '''
-    def __init__(self, prev_command_sw=False, room: Table.Room=None, war: Table.War=None, manualWarSetup=False, server_id=None, channel_id=None):
+    def __init__(self, server_id=None, channel_id=None):
         self.loungeFinishTime = None
-        self.set_room(room)
-        self.set_war(war)
-        self.prev_command_sw = prev_command_sw
-        self.manualWarSetUp = manualWarSetup
+        self.set_room(None)
+        self.set_war(None)
+        self.prev_command_sw = False
+        self.manualWarSetUp = False
         self.last_used = datetime.now()
         self.lastWPTime = None
         self.roomLoadTime = None
