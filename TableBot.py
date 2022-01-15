@@ -376,34 +376,21 @@ class ChannelBot(object):
     
     
     async def load_room_smart(self, load_me, is_vr_command=False, message_id=None, setup_discord_id=0, setup_display_name=""):
-        rxxs = []
-        soups = []
         success = False
-
-        _, rxx, roomSoup = await WiimmfiSiteFunctions.get_races_smart(item)
-        rxxs.append(rxx)
-        soups.append(roomSoup)
-        
-        if roomSoup is None: #wrong roomID or no races played
+        rxx, room_races = await WiimmfiSiteFunctions.get_races_smart(load_me)
+        if room_races is None: # Couldn't find room or no races played (hasn't finished first race)
             return False
-
-        roomSoup = WiimmfiSiteFunctions.combine_soups(soups)
-        temp = Table.Room(rxxs, roomSoup, setup_discord_id, setup_display_name)
+        rxxs = [rxx]
+        room = Table.Room(rxxs, room_races, setup_discord_id, setup_display_name)
         
-        
-        if temp.is_initialized():
-            self.set_room(temp)
+        if room.is_initialized():
+            self.set_room(room)
             self.event_id = message_id
             success = True
             #Make call to database to add data
             if not is_vr_command:
                 await DataTracker.RoomTracker.add_data(self)
             self.get_room().apply_tabler_adjustments()
-        
-        while len(soups) > 0:
-            if soups[0] is not None:
-                soups[0].decompose()
-            del soups[0]
         
         return success
             

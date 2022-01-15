@@ -52,7 +52,7 @@ class Room(object):
     '''
     classdocs
     '''
-    def __init__(self, rxxs, roomSoup, setup_discord_id, setup_display_name):
+    def __init__(self, rxxs, races: List[Race.Race], setup_discord_id, setup_display_name):
         self.name_changes = {}
         self.removed_races = []
         
@@ -72,7 +72,7 @@ class Room(object):
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         self.sub_ins = {}
         
-        self.initialize(rxxs, roomSoup)
+        self.initialize(rxxs, races)
         self.is_freed = False
     
     def get_set_up_user_discord_id(self):
@@ -84,19 +84,18 @@ class Room(object):
     def get_subs(self):
         return self.sub_ins
     
-    def initialize(self, rxxs, roomSoup, mii_dict=None):
+    def initialize(self, rxxs, races, mii_dict=None):
         self.rxxs = rxxs
         
-        if roomSoup is None:
+        if races is None:
             raise Exception
         if self.rxxs is None or len(self.rxxs) == 0:
             #TODO: Here? Caller should?
-            roomSoup.decompose()
             raise Exception
             
             
 
-        self.races = self.getRacesList(roomSoup, mii_dict)
+        self.races = self.getRacesList(races, mii_dict)
         
         if len(self.races) > 0:
             self.roomID = self.races[0].roomID
