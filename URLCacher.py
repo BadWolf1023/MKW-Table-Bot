@@ -14,7 +14,7 @@ PRINT_REQUESTS = True
 class URLCacher():
     """Class for asynchronous requests that caches the response"""
 
-    def __init__(self, default_cache_length=timedelta(seconds=45), allow_hanging=True, hang_seconds=7):
+    def __init__(self, default_cache_length=timedelta(seconds=45), allow_hanging:bool=True, hang_seconds:int=7):
         self.url_cache = defaultdict(URLCacher.__default_cache_entry__)
         self.default_cache_length = default_cache_length
         self.allow_hanging = allow_hanging
@@ -25,21 +25,21 @@ class URLCacher():
 
     @staticmethod
     def __default_cache_entry__():
-        return {"currently_pulling":False,
-                "time_sent":None,
-                "time_received":None,
-                "response_text":None}
+        return {"currently_pulling": False,
+                "time_sent": None,
+                "time_received": None,
+                "response_text": None}
 
-    def __prepare_fetch__(self, url):
+    def __prepare_fetch__(self, url: str):
         self.url_cache[url]["currently_pulling"] = True
         self.url_cache[url]["time_sent"] = datetime.now()
 
-    def __finish_fetch__(self, url, response_text):
+    def __finish_fetch__(self, url: str, response_text: str):
         self.url_cache[url]["response_text"] = response_text
         self.url_cache[url]["time_received"] = datetime.now()
         self.url_cache[url]["currently_pulling"] = False
         
-    async def __fetch_url__(self, url):
+    async def __fetch_url__(self, url: str) -> str:
         '''Sends an asychronous request for the given url, caches the response text, and returns the response text'''
         response_text = None
         self.__prepare_fetch__(url)
@@ -52,7 +52,7 @@ class URLCacher():
         return response_text
 
 
-    def is_url_expired(self, url, cache_length:timedelta=None, current_time=None):
+    def is_url_expired(self, url: str, cache_length:timedelta=None, current_time:datetime=None) -> bool:
         '''Returns True if the given url response in the cache is expired, False is the cached reponse is still valid.
         If a response has never been cached, this function returns True'''
         cache_length = self.default_cache_length if cache_length is None else cache_length
@@ -61,7 +61,7 @@ class URLCacher():
             return True
         return self.__is_expired_time__(time_received, cache_length, current_time)
 
-    def __is_expired_time__(self, last_fetch_time, cache_length, current_time=None):
+    def __is_expired_time__(self, last_fetch_time: datetime, cache_length: timedelta, current_time:datetime=None) -> bool:
         current_time = datetime.now() if current_time is None else current_time
         return (current_time - last_fetch_time) > cache_length
 
@@ -79,20 +79,20 @@ class URLCacher():
             del self.url_cache[url]
 
 
-    async def __can_hit_cache__(self, url, cache_length, allow_hanging):
+    async def __can_hit_cache__(self, url: str, cache_length: timedelta, allow_hanging: bool) -> bool:
         if self.url_cache[url]["currently_pulling"]:
             if allow_hanging:
                 for _ in range(self.hang_seconds):
                     await asyncio.sleep(1)
-                    if not self.url_cache[url]["currently_pulling"]: #check if url is being pulled
-                        break #if it is, stop polling and break down to final return statement
-                else: #URL is still pulling, so we cannot hit the cache
+                    if not self.url_cache[url]["currently_pulling"]:  # check if url is being pulled
+                        break  # if it is, stop polling and break down to final return statement
+                else:  # URL is still pulling, so we cannot hit the cache
                     return False
 
         return not self.is_url_expired(url, cache_length)
 
 
-    async def get_url(self, url, cache_length:timedelta=None, allow_hanging:bool=None):
+    async def get_url(self, url, cache_length:timedelta=None, allow_hanging:bool=None) -> str:
         '''Returns the text response for the specified url by either hitting the cache or sending an asynchronous request for the specified url
         If a request is sent, the response is stored in the cache
         
