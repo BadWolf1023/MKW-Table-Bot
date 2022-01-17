@@ -91,16 +91,8 @@ class Placement:
 
     def get_time_string(self) -> str:
         '''Returns the placement time as a string. Useful for display purposes.'''
-        minutes = str(self.get_time()[0])
-        seconds = str(self.get_time()[1])
-        if len(seconds) == 1:
-            seconds = "0" + seconds
-        milliseconds = str(self.get_time()[2])
-        if len(milliseconds) == 1:
-            milliseconds = "00" + milliseconds
-        elif len(milliseconds) == 2:
-            milliseconds = "0" + milliseconds
-        return minutes + ":" + seconds + "." + milliseconds
+        minutes, seconds, milliseconds = self.get_time()
+        return f"{minutes}:{seconds:02}.{milliseconds:03}"
 
     def get_time_seconds(self) -> float:
         '''Returns the placement time as the total number of seconds, including milliseconds'''
