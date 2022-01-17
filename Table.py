@@ -52,7 +52,7 @@ class Room(object):
     '''
     classdocs
     '''
-    def __init__(self, rxxs, races: List[Race.Race], setup_discord_id, setup_display_name):
+    def __init__(self, rxx: str, races: List[Race.Race], setup_discord_id, setup_display_name: str):
         self.name_changes = {}
         self.removed_races = []
         
@@ -72,21 +72,23 @@ class Room(object):
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         self.sub_ins = {}
         
-        self.initialize(rxxs, races)
+        self.set_up([rxx], races)
         self.is_freed = False
     
     def get_set_up_user_discord_id(self):
         return self.set_up_user
+
     def get_set_up_display_name(self):
         return self.set_up_user_display_name
+
     def get_dc_statuses(self):
         return self.dc_on_or_before
+
     def get_subs(self):
         return self.sub_ins
-    
-    def initialize(self, rxxs, races, mii_dict=None):
+
+    def set_up(self, rxxs, races, mii_dict=None):
         self.rxxs = rxxs
-        
         if races is None:
             raise Exception
         if self.rxxs is None or len(self.rxxs) == 0:
@@ -233,7 +235,7 @@ class Room(object):
             endrace = len(self.races)
         for race in self.races[startrace-1:endrace]:
             for placement in race.getPlacements():
-                fcPlacementDict[placement.getPlayer().get_FC()] = placement
+                fcPlacementDict[placement.get_player().get_FC()] = placement
         return fcPlacementDict
 
     
@@ -448,7 +450,7 @@ class Room(object):
             
             to_return = False
             if tempSoup is not None:
-                self.initialize(rxxs, tempSoup, mii_dict)
+                self.set_up(rxxs, tempSoup, mii_dict)
                 
                 #Make call to database to add data
                 if not is_vr_command:
@@ -470,8 +472,8 @@ class Room(object):
         for FC, name_change in self.name_changes.items():
             for race in self.races:
                 for placement in race.getPlacements():
-                    if placement.getPlayer().get_FC() == FC:
-                        placement.getPlayer().set_name(f"{name_change} (Tabler Changed)")
+                    if placement.get_player().get_FC() == FC:
+                        placement.get_player().set_name(f"{name_change} (Tabler Changed)")
         
         #Next, we remove races
         for removed_race_ind, _ in self.removed_races:

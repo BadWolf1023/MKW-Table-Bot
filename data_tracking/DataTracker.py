@@ -223,7 +223,7 @@ class ChannelBotSQLDataValidator(object):
         for player in players:
             self.fc_validation(player.get_FC())
             self.player_id_validation(player.get_player_id())
-            self.player_mkwx_url_validation(player.get_mkwx_url())
+            self.player_mkwx_url_validation(player.get_url())
             
     def track_name_validation(self, track_name, rxx=None):
         self.validate_str(track_name)
@@ -335,7 +335,7 @@ class ChannelBotSQLDataValidator(object):
         for (race_id, fc), placement in placements.items():
             self.race_id_validation(race_id)
             self.fc_validation(fc)
-            player = placement.getPlayer()
+            player = placement.get_player()
             self.fc_validation(player.get_FC())
             self.player_finish_place_validation(placement.get_place())
             self.placement_time_validation(placement.get_time_string())
@@ -365,7 +365,7 @@ class ChannelBotSQLDataValidator(object):
         for (race_id, fc), placement in race_id_fc_placements.items():
             self.race_id_validation(race_id)
             self.fc_validation(fc)
-            self.mii_hex_validation(placement.getPlayer().get_mii_hex())
+            self.mii_hex_validation(placement.get_player().get_mii_hex())
             
     def validate_event_mii_hex_update(self, event_id_fc_miis:Set[Tuple]):
         for (event_id, fc, mii_hex) in event_id_fc_miis:
@@ -404,7 +404,7 @@ class RoomTrackerSQL(object):
     
     def get_race_as_sql_tuple(self, race:Race.Race):
         '''Converts a given table bot race into a tuple that is ready to be inserted into the Race SQL table'''
-        times = [x.get_time_seconds() for x in race.getPlacements() if not (x.is_bogus_time() or x.is_disconnected())]
+        times = [x.get_time_seconds() for x in race.getPlacements() if not (x.is_time_large() or x.is_disconnected())]
         if len(times) == 0:
             times = [-1]
         return (race.get_race_id(),
@@ -437,11 +437,11 @@ class RoomTrackerSQL(object):
         '''Converts a given table bot player into a tuple that is ready to be inserted into the Player SQL table'''
         return (player.get_FC(),
                 int(player.get_player_id()),
-                player.get_mkwx_url())
+                player.get_url())
         
     def get_placement_as_sql_place_tuple(self, race_id, placement:Placement.Placement):
         '''Converts a given table bot Placement into a tuple that is ready to be inserted into the Place SQL table'''
-        player:Placement.Player.Player = placement.getPlayer()
+        player:Placement.Player.Player = placement.get_player()
         return (race_id,
                 player.get_FC(),
                 player.get_name(),
@@ -468,7 +468,7 @@ class RoomTrackerSQL(object):
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted placements (as 2-tuples: race_id, fc) upon success. (An empty list is returned if no placements were inserted.)'''
         
-        race_id_fc_placements = {(race.get_race_id(), placement.getPlayer().get_FC()):placement for race in self.channel_bot.get_room().races for placement in race.getPlacements()}
+        race_id_fc_placements = {(race.get_race_id(), placement.get_player().get_FC()):placement for race in self.channel_bot.get_room().races for placement in race.getPlacements()}
         if len(race_id_fc_placements) == 0:
             return []
         
@@ -483,7 +483,7 @@ class RoomTrackerSQL(object):
         '''Inserts players in all of the races in self.channel_bot.races that are not yet in the database's Player table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted player's fcs (as 1-tuples) upon success. (An empty list is returned if no players were inserted.)'''
-        unique_room_players = [placement.getPlayer() for placement in self.channel_bot.get_room().getFCPlacements().values()]
+        unique_room_players = [placement.get_player() for placement in self.channel_bot.get_room().getFCPlacements().values()]
         if len(unique_room_players) == 0:
             return []
         
@@ -547,14 +547,14 @@ class RoomTrackerSQL(object):
         '''Updates the mii_hex for placements in Place table for placements in self.channel_bot.race's placements who have a mii_hex if that mii_hex in the Place table is null.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns the a list of the race_id, fc (as 2-tuples) of the placements whose mii_hex's were updated. (An empty list is returned if nothing was updated.)'''
-        have_miis_for_placements = {(race.get_race_id(), placement.getPlayer().get_FC()):placement for race in self.channel_bot.get_room().races for placement in race.getPlacements() if placement.getPlayer().get_mii_hex() is not None}
+        have_miis_for_placements = {(race.get_race_id(), placement.get_player().get_FC()):placement for race in self.channel_bot.get_room().races for placement in race.getPlacements() if placement.get_player().get_mii_hex() is not None}
         if len(have_miis_for_placements) == 0:
             return []
         
         self.data_validator.validate_placement_mii_hex_update(have_miis_for_placements)
         
         update_mii_script = QB.update_mii_hex_script()
-        update_mii_args = [(placement.getPlayer().get_mii_hex(), race_id, fc) for (race_id, fc), placement in have_miis_for_placements.items()]
+        update_mii_args = [(placement.get_player().get_mii_hex(), race_id, fc) for (race_id, fc), placement in have_miis_for_placements.items()]
         
         found_race_id_fcs_with_null_miis = await self.get_matching_placements_with_missing_hex(update_mii_args)
 

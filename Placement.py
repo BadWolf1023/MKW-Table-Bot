@@ -3,135 +3,134 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
+from typing import Tuple
 import UserDataProcessing
 import UtilityFunctions
 import Player
 import re
 
 DEBUGGING = False
-DISCONNECTION_TIME = (999,999,999)
-BOGUS_TIME_LIMIT = (5,59,999)
+DISCONNECTION_TIME = (999, 999, 999)
+BOGUS_TIME_LIMIT = (5, 59, 999)
 MINIMUM_DELTA_VALUE = -10
 MAXIMUM_DELTA_VALUE = 10
 
 NO_DELTA_DISPLAY_RANGE = (-.5, .5)
 
+
 def is_valid_time_str(time_str):
     return re.match("^([\d]{1,3}:)?[\d]{1,3}\.[\d]{3}$", time_str.strip()) is not None
-    
+
 
 class Placement:
 
-    def _createTime_(self, time):
-        temp = ""
+    def __init__(self, player: Player.Player, time, delta=None, is_wiimmfi_place=False):
+        self._player = player
+        self._place = -1
+        self._time = Placement._create_time(time)
+        self._delta = Placement._process_delta(delta)
+        self._is_wiimmfi_place = is_wiimmfi_place
+
+    def get_player(self) -> Player.Player:
+        return self._player
+
+    def get_place(self):
+        return self._place
+
+    def get_time(self)  -> Tuple[int, int, int]:
+        return self._time
+
+    def get_delta(self):
+        return self._delta
+
+    def is_from_wiimmfi(self):
+        return self._is_wiimmfi_place
+
+    def get_fc_and_name(self):
+        return self.get_player().get_FC(), self.get_player().name
+
+    def set_place(self, place: int):
+        self._place = place
+
+    @staticmethod
+    def _create_time(time: str) -> Tuple[int, int, int]:
         minute = "-1"
         second = "-1"
         millisecond = "-1"
         if DEBUGGING:
             print(time)
-        if time == u'\u2014':
-            return DISCONNECTION_TIME #Disconnection
+        if time == Player.LONG_DASH:
+            return DISCONNECTION_TIME  # Disconnection
         elif (":" in time):
-            temp = time.split(":")
-            minute = temp[0]
-            temp2 = temp[1].split(".")
-            second, millisecond = temp2[0], temp2[1]
+            digits = time.split(":")
+            minute = digits[0]
+            second, millisecond = digits[1].split(".")
         else:
-            temp2 = time.split(".")
             minute = "0"
-            second, millisecond = temp2[0], temp2[1]
-            
+            second, millisecond = time.split(".")
+
         return (int(minute), int(second), int(millisecond))
-    
-    def _process_delta_(self, delta):
-        new_delta = float(0)
-        if delta is not None and UtilityFunctions.isfloat(delta):
-            return float(delta)
-        return new_delta
-    
+
+    @staticmethod
+    def _process_delta(delta):
+        return float(delta) if UtilityFunctions.isfloat(delta) else float(0)
+
     def is_disconnected(self):
-        return self.time == DISCONNECTION_TIME
-    
-    def is_delta_unlikely(self):
-        if self.delta is None:
+        return self.get_time() == DISCONNECTION_TIME
+
+    def is_delta_unusual(self):
+        if self.get_delta() is None:
             return False
-        return self.delta < MINIMUM_DELTA_VALUE or self.delta > MAXIMUM_DELTA_VALUE
-    
-    def is_bogus_time(self):
+        return self.get_delta() < MINIMUM_DELTA_VALUE or self.get_delta() > MAXIMUM_DELTA_VALUE
+
+    def is_time_large(self):
         if self.is_disconnected():
             return False
-        return self.time > BOGUS_TIME_LIMIT
-    
-    def __init__(self, player, place, time, delta=None, is_wiimmfi_place=False):
-        self.player = player
-        self.place = place
-        self.time = self._createTime_(time)
-        self.delta = self._process_delta_(delta)
-        self.is_wiimmfi_place = is_wiimmfi_place
-    
+        return self.get_time() > BOGUS_TIME_LIMIT
+
     def __lt__(self, other):
-        return self.time < other.time
+        return self.get_time() < other.get_time()
+
     def __gt__(self, other):
-        return self.time > other.time
+        return self.get_time() > other.get_time()
+
     def __cmp__(self, other):
-        if self.time < other.time:
+        if self.get_time() < other.get_time():
             return -1
-        if self.time > other.time:
+        if self.get_time() > other.get_time():
             return 1
         return 0
+
     def __eq__(self, other):
-        return self.time == other.time
-    
-    def get_fc_and_name(self):
-        return self.player.FC, self.player.name
-    
-    def get_time(self):
-        return self.time
-    
-    def get_place(self):
-        return self.place
-        
-    def get_delta(self):
-        return self.delta
-    
-    def getPlayer(self) -> Player.Player:
-        return self.player
-    
-    def is_from_wiimmfi(self):
-        return self.is_wiimmfi_place
-    
+        return self.get_time() == other.get_time()
+
     def should_display_delta(self):
-        return self.delta < NO_DELTA_DISPLAY_RANGE[0] or self.delta > NO_DELTA_DISPLAY_RANGE[1]
-    
+        return self.get_delta() < NO_DELTA_DISPLAY_RANGE[0] or self.get_delta() > NO_DELTA_DISPLAY_RANGE[1]
+
     def get_time_string(self):
-        minutes = str(self.time[0])
-        seconds = str(self.time[1])
+        minutes = str(self.get_time()[0])
+        seconds = str(self.get_time()[1])
         if len(seconds) == 1:
             seconds = "0" + seconds
-        milliseconds = str(self.time[2])
+        milliseconds = str(self.get_time()[2])
         if len(milliseconds) == 1:
             milliseconds = "00" + milliseconds
         elif len(milliseconds) == 2:
             milliseconds = "0" + milliseconds
         return minutes + ":" + seconds + "." + milliseconds
 
-    def get_time_seconds(self):
-        minutes = self.time[0]
-        seconds = self.time[1]
-        milliseconds = self.time[2]
-
+    def get_time_seconds(self) -> float:
+        '''Returns the placement time as the total number of seconds, including milliseconds'''
+        minutes, seconds, milliseconds = self.get_time()
         return minutes*60+seconds+milliseconds/1000
-    
+
     def __str__(self):
-        to_return = f"{self.place}. {UtilityFunctions.filter_text(self.player.name + UserDataProcessing.lounge_add(self.player.FC))} - "
+        to_return = f"{self.get_place()}. {UtilityFunctions.filter_text(self.get_player().name + UserDataProcessing.lounge_add(self.get_player().get_FC()))} - "
         if self.is_disconnected():
             to_return += "DISCONNECTED"
         else:
             to_return += self.get_time_string()
-        
+
         if self.should_display_delta():
-            to_return += f" - **{self.delta}s lag start**"
+            to_return += f" - **{self.get_delta()}s lag start**"
         return to_return
-        
-     
-        

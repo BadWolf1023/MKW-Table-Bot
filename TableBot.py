@@ -118,7 +118,7 @@ class ChannelBot(object):
         self.room = room
         self.updateLoungeFinishTime()
 
-    
+
     def get_room_started_message(self) -> str:
         started_war_str = "FFA started" if self.get_war().is_FFA() else "War started"
         if not self.get_war().should_show_large_time_errors():
@@ -214,17 +214,14 @@ class ChannelBot(object):
     
     def table_is_set(self):
         return self.get_room() is not None and self.get_war() is not None
-    
+
     def get_available_miis_dict(self, FCs) -> Dict[str, Mii.Mii]:
         return {fc: self.miis[fc] for fc in FCs if fc in self.miis}
 
-    
     def remove_miis_with_missing_files(self):
         to_delete = set()
         for fc, mii in self.miis.items():
-            
             if not mii.has_table_picture_file():
-                
                 tier = None
                 if self.channel_id in DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
                     tier = str(DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
@@ -380,8 +377,7 @@ class ChannelBot(object):
         rxx, room_races = await WiimmfiSiteFunctions.get_races_smart(load_me)
         if room_races is None: # Couldn't find room or no races played (hasn't finished first race)
             return False
-        rxxs = [rxx]
-        room = Table.Room(rxxs, room_races, setup_discord_id, setup_display_name)
+        room = Table.Room(rxx, room_races, setup_discord_id, setup_display_name)
         
         if room.is_initialized():
             self.set_room(room)
@@ -467,6 +463,10 @@ class ChannelBot(object):
         time_passed_since_last_used = curTime - self.last_used
         return time_passed_since_last_used > common.inactivity_time_period
     
+
+
+
+    # ========================== Save state functionality ==============================
     def get_save_state(self, command="Unknown Command"):
         save_state = {}
         save_state["War"] = self.get_war().get_recoverable_save_state()
@@ -563,6 +563,8 @@ class ChannelBot(object):
         self.race_size = save_state["race_size"]
         return command
     
+
+    # ======================== Reset / cleaning up / "Deconstruction" ================
     def reset(self, server_id):
         self.destroy()
         self.set_room(None)
@@ -571,9 +573,9 @@ class ChannelBot(object):
         self.manualWarSetUp = False
         self.last_used = datetime.now()
         self.loungeFinishTime = None
-        #Don't reset these, these are needed to prevent abuse to Wiimmfi and Lorenzi's site
-        #self.lastWPTime = None
-        #self.roomLoadTime = None
+        # Don't reset these, these are needed to prevent abuse to Wiimmfi and Lorenzi's site
+        # self.lastWPTime = None
+        # self.roomLoadTime = None
         self.save_states = []
         self.state_pointer = -1
         self.miis = {}

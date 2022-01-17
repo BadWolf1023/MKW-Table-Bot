@@ -133,7 +133,7 @@ class Race:
             self.track = sha_track_name_mappings[self.track]
         self.track_check()
         self.cc = cc
-        self.placements = []
+        self.placements: List[Placement] = []
         self.region = UNKNOWN_REGION
         self.is_ct = is_ct
         self.is_wiimmfi_race = is_wiimmfi_race
@@ -190,7 +190,7 @@ class Race:
     def update_region(self):
         regionCount = defaultdict(int)
         for placement in self.getPlacements():
-            regionCount[placement.getPlayer().region] += 1
+            regionCount[placement.get_player().region] += 1
         if len(regionCount) == 0:
             self.region = UNKNOWN_REGION
         mostCommonRegion = max(regionCount, key=lambda x: regionCount[x])
@@ -199,11 +199,9 @@ class Race:
     def addPlacement(self, placement):
         #I'm seriously lazy, but it doesn't matter if we sort 12 times rather than inserting in the correct place - this is a small list
         self.placements.append(placement)
-        self.placements.sort(key=lambda x: x.time)
-        i = 0
-        while i < len(self.placements):
-            self.placements[i].place = i+1
-            i += 1
+        self.placements.sort(key=lambda x: x.get_time())
+        for place_number, placement in enumerate(self.placements, 1):
+            placement.set_place(place_number)
         self.update_region()
          
     def setRegion(self, region):
@@ -227,7 +225,7 @@ class Race:
     
     def getRoomRating(self):
         roomRating = 0
-        all_ratings =[placement.player.get_player_skill_rating() for placement in self.placements]
+        all_ratings =[placement.get_player().get_player_skill_rating() for placement in self.placements]
         if len(all_ratings) > 0:
             roomRating = sum(all_ratings) // len(all_ratings)
         return roomRating
@@ -239,7 +237,7 @@ class Race:
     def insertPlacement(self, old_position_number, new_position_number):
         self.placements.insert(new_position_number-1, self.placements.pop(old_position_number-1))
         for place, placement in enumerate(self.placements, 1):
-            placement.place = place
+            placement.get_place() = place
 
     
     def getPlacements(self) -> List[Placement]:
@@ -247,19 +245,19 @@ class Race:
     
     def getPlacement(self, fc) -> Placement:
         for p in self.placements:
-            if p.player.FC == fc:
+            if p.get_player().get_FC() == fc:
                 return p
             
     def getPlacementNumber(self, fc):
         for placement_num, p in enumerate(self.placements, 1):
-            if p.player.FC == fc:
+            if p.get_player().get_FC() == fc:
                 return placement_num
     
     def getNumberOfPlayers(self):
         return len(self.placements)
     
     def get_race_FCs(self):
-        return [pl.player.FC for pl in self.placements]
+        return [placement.get_player().get_FC() for placement in self.placements]
     
     
     def getTrackNameWithoutAuthor(self):
@@ -268,7 +266,7 @@ class Race:
     def hasTie(self):
         for placement_1 in self.placements:
             for placement_2 in self.placements:
-                if placement_1.player.FC != placement_2.player.FC and placement_1 == placement_2:
+                if placement_1.get_player().get_FC() != placement_2.get_player().get_FC() and placement_1 == placement_2:
                     return True
         return False
     
@@ -276,13 +274,13 @@ class Race:
         ties = []
         for placement_1 in self.placements:
             for placement_2 in self.placements:
-                if placement_1.player.FC != placement_2.player.FC and placement_1 == placement_2\
-                and not placement_1.is_bogus_time() and not placement_2.is_bogus_time()\
+                if placement_1.get_player().get_FC() != placement_2.get_player().get_FC() and placement_1 == placement_2\
+                and not placement_1.is_time_large() and not placement_2.is_time_large()\
                 and not placement_1.is_disconnected() and not placement_1.is_disconnected():
-                    if placement_1.player.FC not in ties:
-                        ties.append(placement_1.player.FC)
-                    if placement_2.player.FC not in ties:
-                        ties.append(placement_2.player.FC)       
+                    if placement_1.get_player().get_FC() not in ties:
+                        ties.append(placement_1.get_player().get_FC())
+                    if placement_2.get_player().get_FC() not in ties:
+                        ties.append(placement_2.get_player().get_FC())       
         return ties
     
     def get_placement_times_as_set(self) -> set:
@@ -306,18 +304,18 @@ class Race:
         return other_race_times_set.issubset(race_times_set)
     
     def has_unusual_delta_time(self):
-        return any(True for placement in self.placements if placement.is_delta_unlikely())
+        return any(True for placement in self.placements if placement.is_delta_unusual())
         
     
     def getPlayerObjects(self):
         players = []
         for placement in self.placements:
-            players.append(placement.player)
+            players.append(placement.get_player())
         return players
     
     def FCInPlacements(self, FC):
         for placement in self.placements:
-            if placement.player.FC == FC:
+            if placement.get_player().get_FC() == FC:
                 return True
         return False
     

@@ -55,7 +55,7 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
                 errors.append(name + UserDataProcessing.lounge_add(fc, lounge_replace) + " had a blank race time. Disconnected unless mkwx bug. Not giving DC points for this race - use ?changeroomsize if they were not on the results of this race")
                 blank_time_counter += 1
             if show_large_time_errors:
-                if placement.is_bogus_time():
+                if placement.is_time_large():
                     fc, name = placement.get_fc_and_name()
                     errors.append(name + UserDataProcessing.lounge_add(fc, lounge_replace) + " had large finish time: " + placement.get_time_string() + " - use ?cp to change their position")
         
