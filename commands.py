@@ -96,7 +96,7 @@ def getPlayerIndexInRoom(name:str, room:TableBot.Table.Table, server_prefix:str,
     return None, f"Error in `getPlayerIndexInRoom`. Unreachable code hit. Use `{server_prefix}log` to tell me this happened."
 
 
-async def mkwx_check(message, error_message):
+async def mkwx_disabled_check(message, error_message):
     if common.is_bad_wolf(message.author):
         return True
 
@@ -856,7 +856,7 @@ class OtherCommands:
         if common.MII_COMMAND_DISABLED and not common.is_bad_wolf(message.author):
             await message.channel.send("To ensure Table Bot remains stable and can access the website, miis have been disabled at this time.")
             return
-        await mkwx_check(message, "Mii command disabled.")
+        await mkwx_disabled_check(message, "Mii command disabled.")
 
 
         discordIDToLoad = None
@@ -911,7 +911,7 @@ class OtherCommands:
 
     @staticmethod
     async def wws_command(client, this_bot:TableBot.ChannelBot, message:discord.Message, ww_type=Race.RT_WW_REGION):
-        await mkwx_check(message, "WWs command disabled.")
+        await mkwx_disabled_check(message, "WWs command disabled.")
 
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
@@ -920,19 +920,20 @@ class OtherCommands:
         else:
 
             this_bot.updateRLCoolDown()
-            sr = WiimmfiParser.FrontPageParser()
-            await sr._populate_rooms_information()
+            mkwx_soup = await WiimmfiSiteFunctions.get_mkwx_soup()
+            parser = WiimmfiParser.FrontPageParser(mkwx_soup)
+            await parser._populate_rooms_information()
             rooms = []
             if ww_type == Race.RT_WW_REGION:
-                rooms = sr.get_RT_WWs()
+                rooms = parser.get_RT_WWs()
             elif ww_type == Race.CTGP_CTWW_REGION:
-                rooms = sr.get_CTGP_WWs()
+                rooms = parser.get_CTGP_WWs()
             elif ww_type == Race.BATTLE_REGION:
-                rooms = sr.get_battle_WWs()
+                rooms = parser.get_battle_WWs()
             elif ww_type == Race.UNKNOWN_REGION:
-                rooms = sr.get_other_rooms()
+                rooms = parser.get_other_rooms()
             else:
-                rooms = sr.get_private_rooms()
+                rooms = parser.get_private_rooms()
 
 
             if len(rooms) == 0:
@@ -1017,7 +1018,7 @@ class OtherCommands:
 
     @staticmethod
     async def vr_command(this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], old_command:str, temp_bot):
-        await mkwx_check(message, "VR command disabled.")
+        await mkwx_disabled_check(message, "VR command disabled.")
 
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
@@ -2020,7 +2021,7 @@ class TablingCommands:
     #Refactor this method to make it more readable
     @staticmethod
     async def start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str, permission_check:Callable):
-        await mkwx_check(message, "Start war command disabled.")
+        await mkwx_disabled_check(message, "Start war command disabled.")
         server_id = message.guild.id
         author_id = message.author.id
         message_id = message.id
@@ -2165,7 +2166,7 @@ class TablingCommands:
             this_bot.manualWarSetUp = True
             return
 
-        if this_bot.get_table() is None or not this_bot.is_table_loaded():
+        if not this_bot.is_table_loaded():
             await message.channel.send(f"Unexpected error. Somehow, there is no room loaded. War stopped. Recommend the command: {server_prefix}reset")
             this_bot.set_war(None)
             return

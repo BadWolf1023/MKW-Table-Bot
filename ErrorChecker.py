@@ -7,6 +7,7 @@ Created on Jul 23, 2020
 import UserDataProcessing
 from collections import defaultdict
 import common
+from typing import Union, Dict, List
 
 _SINGLE_BLANK_RACE_TIME = 11
 _MULTIPLE_BLANK_RACE_TIMES = 12

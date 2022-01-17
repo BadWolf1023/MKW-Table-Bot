@@ -3,6 +3,7 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
+from typing import Union
 import UtilityFunctions
 
 vehicle_ratings = {"Mach Bike": 10,

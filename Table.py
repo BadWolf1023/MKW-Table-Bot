@@ -6,7 +6,7 @@ Created on Jul 12, 2020
 import random
 from collections import defaultdict
 from copy import copy, deepcopy
-from typing import _T, Any, DefaultDict, Dict, List, Set, SupportsIndex, Tuple, Union
+from typing import Any, DefaultDict, Dict, List, Set, SupportsIndex, Tuple, Union
 
 
 import ErrorChecker
@@ -624,12 +624,12 @@ class Table(List):
                 self.__dict__[save_attr] = save_value
         self.set_races(save_state["races"])
 
-    def insert(self, __index: SupportsIndex, __object: _T) -> None:
+    def insert(self, __index: SupportsIndex, __object: Any) -> None:
         if not isinstance(__object, Race.Race):
             raise TypeError(f"Can only append races, cannot append {type(__object)}")
         return super().insert(__index, __object)
 
-    def append(self, __object: _T) -> None:
+    def append(self, __object: Any) -> None:
         if not isinstance(__object, Race.Race):
             raise TypeError(f"Can only append races, cannot append {type(__object)}")
         return super().append(__object) 

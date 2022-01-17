@@ -213,8 +213,8 @@ class ChannelBot(object):
             self.loungeFinishTime = datetime.now()
 
     async def update_table(self) -> bool:
-        if self.get_table() is None:
-            return False
+        if not self.is_table_loaded():
+            return Table.ROOM_LOAD_STATUS_CODES.NO_ROOM_LOADED
         status = await self.get_table().update()
         if status in Table.ROOM_LOAD_STATUS_CODES.SUCCESS_CODES:
             await DataTracker.RoomTracker.add_data(self)
