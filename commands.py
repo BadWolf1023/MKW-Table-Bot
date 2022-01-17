@@ -922,7 +922,6 @@ class OtherCommands:
             this_bot.updateRLCoolDown()
             mkwx_soup = await WiimmfiSiteFunctions.get_mkwx_soup()
             parser = WiimmfiParser.FrontPageParser(mkwx_soup)
-            await parser._populate_rooms_information()
             rooms = []
             if ww_type == Race.RT_WW_REGION:
                 rooms = parser.get_RT_WWs()

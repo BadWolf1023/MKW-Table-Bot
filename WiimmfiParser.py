@@ -49,7 +49,6 @@ class RoomPageParser(object):
         self._destroyed = destroyed
 
     def _set_soup(self, soup: bs4.BeautifulSoup):
-        print(type(soup))
         self._soup = soup
         self._set_destroyed(False)
 
@@ -274,7 +273,6 @@ class FrontPageParser(object):
         self._destroyed = destroyed
 
     def _set_soup(self, soup: bs4.BeautifulSoup):
-        print(type(soup))
         self._soup = soup
         self._set_destroyed(False)
 
@@ -388,7 +386,6 @@ class FrontPageParser(object):
 
     @staticmethod
     def parse_front_room_into_race(bs4_room_header: Tag) -> Race.Race:
-        print(bs4_room_header)
         rxx = str(bs4_room_header["id"])
         room_info = bs4_room_header.find("th").findAll(text=True)
         match_id = None

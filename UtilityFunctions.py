@@ -144,7 +144,7 @@ def is_float(value):
     try:
         float(value)
         return True
-    except ValueError:
+    except:
         return False
 
 
@@ -152,7 +152,7 @@ def is_int(value):
     try:
         int(value)
         return True
-    except ValueError:
+    except:
         return False
 
 #Takes a list of strings and concatenates them until a new concatenation would push it over the limit given

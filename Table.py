@@ -62,7 +62,7 @@ class Table(List):
     '''
     classdocs
     '''
-    def __init__(self, rxx: str, races: List[Race.Race], setup_discord_id, setup_display_name: str) -> List[Race.Race]:
+    def __init__(self, rxx: str, races: List[Race.Race], event_id, setup_discord_id, setup_display_name: str) -> List[Race.Race]:
         super().__init__()
         self.name_changes = {}
         self.removed_races = []
@@ -86,7 +86,8 @@ class Table(List):
         self.is_freed = False
 
         self.miis: Dict[str, Mii.Mii] = {}
-
+        self.populating = False
+        self._event_id = event_id
         self.set_up([rxx], races)
         
     
@@ -108,6 +109,12 @@ class Table(List):
     def get_races(self) -> List[Race.Race]:
         return self
 
+    def populating_miis(self) -> bool:
+        return self.populating
+
+    def get_event_id(self): # TODO: Add type hinting for this - is event_id an int or a str?
+        return self._event_id
+
 
     def remove_miis_with_missing_files(self):
         to_delete = set()
@@ -127,32 +134,28 @@ class Table(List):
         if common.MIIS_ON_TABLE_DISABLED:
             return
         #print("\n\n\n" + str(self.get_miis()))
-        if self.get_war() is not None:
-            if self.populating:
-                return
-            self.populating = True
-            #print("Start:", datetime.now())
-            try:
-                if self.get_table() is not None:
-                    self.remove_miis_with_missing_files()
-                    all_fcs_in_room = self.get_table().get_room_FCs()
-                                        
-                    if all_fcs_in_room != self.get_miis().keys():
-                        all_missing_fcs = [fc for fc in self.get_table().get_room_FCs() if fc not in self.get_miis()]
-                        result = await MiiPuller.get_miis(all_missing_fcs, self.get_event_id())
-                        if not isinstance(result, (str, type(None))):
-                            for fc, mii_pull_result in result.items():
-                                if not isinstance(mii_pull_result, (str, type(None))):
-                                    self.get_miis()[fc] = mii_pull_result
-                                    mii_pull_result.output_table_mii_to_disc()
-                                    mii_pull_result.__remove_main_mii_picture__()
-                                
-                    for mii in self.get_miis().values():
-                        if mii.lounge_name == "":
-                            mii.update_lounge_name()
-            finally:
-                #print("End:", datetime.now())
-                self.populating = False
+        if self.populating_miis():
+            return
+        self.populating = True
+        #print("Start:", datetime.now())
+        try:
+            self.remove_miis_with_missing_files()
+            all_missing_fcs = [fc for fc in self.get_room_FCs() if fc not in self.get_miis()]
+            if len(all_missing_fcs) > 0:
+                result = await MiiPuller.get_miis(all_missing_fcs, self.get_event_id())
+                if not isinstance(result, (str, type(None))):
+                    for fc, mii_pull_result in result.items():
+                        if not isinstance(mii_pull_result, (str, type(None))):
+                            self.get_miis()[fc] = mii_pull_result
+                            mii_pull_result.output_table_mii_to_disc()
+                            mii_pull_result.__remove_main_mii_picture__()
+    
+            for mii in self.get_miis().values():
+                if mii.lounge_name == "":
+                    mii.update_lounge_name()
+        finally:
+            #print("End:", datetime.now())
+            self.populating = False
 
     def get_available_miis_dict(self, FCs) -> Dict[str, Mii.Mii]:
         return {fc: self.get_miis()[fc] for fc in FCs if fc in self.get_miis()}
@@ -482,7 +485,7 @@ class Table(List):
                 race.update_FC_mii_hex(FC, mii_hex)
 
     #Soup level functions    
-    async def update(self, database_call):
+    async def update(self):
         all_races = []
         for rxx in self.rxxs:
             _, new_races = await WiimmfiSiteFunctions.get_races_for_rxx(rxx)

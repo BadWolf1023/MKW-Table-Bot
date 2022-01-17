@@ -64,6 +64,7 @@ class Placement:
             minute = digits[0]
             second, millisecond = digits[1].split(".")
         else:
+            print(f"Time:{time}EndTime")
             minute = "0"
             second, millisecond = time.split(".")
 

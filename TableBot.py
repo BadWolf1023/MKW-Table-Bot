@@ -58,14 +58,12 @@ class ChannelBot(object):
         self.roomLoadTime = None
         self.save_states = []
         self.state_pointer = -1
-        self.populating = False
         self.should_send_mii_notification = True
         self.set_style_and_graph(server_id)
         self.set_dc_points(server_id)
         self.server_id = server_id
         self.channel_id = channel_id
         self.race_size = 4
-        self.event_id = None
 
     def is_table_loaded(self) -> bool:
         return self.get_table() is not None
@@ -94,16 +92,13 @@ class ChannelBot(object):
         return self.roomLoadTime
     def get_save_states(self) -> List[Tuple[str, Dict[str, Any]]]:
         return self.save_states
-    def get_populating(self) -> bool:
-        return self.populating
+
     def get_should_send_mii_notification(self) -> bool:
         return self.should_send_mii_notification
     def get_server_id(self): # TODO: Add type hinting for this - is server_id an int or a str?
         return self.server_id
     def get_channel_id(self): # TODO: Add type hinting for this - is channel_id an int or a str?
         return self.channel_id
-    def get_event_id(self): # TODO: Add type hinting for this - is event_id an int or a str?
-        return self.event_id
     def get_graph(self): # TODO: Add type hinting for this - is graph an int or a str?
         return self.graph
     def get_style(self): # TODO: Add type hinting for this - is style an int or a str?
@@ -311,9 +306,8 @@ class ChannelBot(object):
             return Table.ROOM_LOAD_STATUS_CODES.DOES_NOT_EXIST
         if len(room_races) == 0: # Couldn't find room or no races played (hasn't finished first race)
             return Table.ROOM_LOAD_STATUS_CODES.HAS_NO_RACES
-        table = Table.Table(rxx, room_races, setup_discord_id, setup_display_name)
+        table = Table.Table(rxx, room_races, message_id, setup_discord_id, setup_display_name)
         self.set_table(table)
-        self.event_id = message_id
         #M ake call to database to add data
         if not is_vr_command:
             await DataTracker.RoomTracker.add_data(self)
