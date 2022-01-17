@@ -199,7 +199,7 @@ class Race:
     def addPlacement(self, placement):
         #I'm seriously lazy, but it doesn't matter if we sort 12 times rather than inserting in the correct place - this is a small list
         self.placements.append(placement)
-        self.placements.sort(key=lambda x: x.get_time())
+        self.placements.sort()
         for place_number, placement in enumerate(self.placements, 1):
             placement.set_place(place_number)
         self.update_region()

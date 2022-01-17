@@ -21,7 +21,6 @@ NO_DELTA_DISPLAY_RANGE = (-.5, .5)
 def is_valid_time_str(time_str):
     return re.match("^([\d]{1,3}:)?[\d]{1,3}\.[\d]{3}$", time_str.strip()) is not None
 
-
 class Placement:
 
     def __init__(self, player: Player.Player, time, delta=None, is_wiimmfi_place=False):
@@ -88,22 +87,6 @@ class Placement:
             return False
         return self.get_time() > BOGUS_TIME_LIMIT
 
-    def __lt__(self, other):
-        return self.get_time() < other.get_time()
-
-    def __gt__(self, other):
-        return self.get_time() > other.get_time()
-
-    def __cmp__(self, other):
-        if self.get_time() < other.get_time():
-            return -1
-        if self.get_time() > other.get_time():
-            return 1
-        return 0
-
-    def __eq__(self, other):
-        return self.get_time() == other.get_time()
-
     def should_display_delta(self):
         return self.get_delta() < NO_DELTA_DISPLAY_RANGE[0] or self.get_delta() > NO_DELTA_DISPLAY_RANGE[1]
 
@@ -123,6 +106,21 @@ class Placement:
         '''Returns the placement time as the total number of seconds, including milliseconds'''
         minutes, seconds, milliseconds = self.get_time()
         return minutes*60+seconds+milliseconds/1000
+
+    def __eq__(self, other):
+        return self.get_time() == other.get_time()
+
+    def __lt__(self, other):
+        return self.get_time() < other.get_time()
+
+    def __gt__(self, other):
+        return self.get_time() > other.get_time()
+
+    def __le__(self, other):
+        return self < other or self == other
+
+    def __ge__(self, other):
+        return self > other or self == other
 
     def __str__(self):
         to_return = f"{self.get_place()}. {UtilityFunctions.filter_text(self.get_player().name + UserDataProcessing.lounge_add(self.get_player().get_FC()))} - "
