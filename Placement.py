@@ -3,13 +3,13 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
-from typing import Tuple
+from typing import Tuple, Union
 import UserDataProcessing
 import UtilityFunctions
 import Player
 import re
 
-DEBUGGING = False
+
 DISCONNECTION_TIME = (999, 999, 999)
 BOGUS_TIME_LIMIT = (5, 59, 999)
 MINIMUM_DELTA_VALUE = -10
@@ -18,12 +18,12 @@ MAXIMUM_DELTA_VALUE = 10
 NO_DELTA_DISPLAY_RANGE = (-.5, .5)
 
 
-def is_valid_time_str(time_str):
+def is_valid_time_str(time_str: str) -> bool:
     return re.match("^([\d]{1,3}:)?[\d]{1,3}\.[\d]{3}$", time_str.strip()) is not None
 
 class Placement:
 
-    def __init__(self, player: Player.Player, time, delta=None, is_wiimmfi_place=False):
+    def __init__(self, player: Player.Player, time: str, delta:str=None, is_wiimmfi_place=False):
         self._player = player
         self._place = -1
         self._time = Placement._create_time(time)
@@ -33,19 +33,20 @@ class Placement:
     def get_player(self) -> Player.Player:
         return self._player
 
-    def get_place(self):
+    def get_place(self) -> int:
         return self._place
 
-    def get_time(self)  -> Tuple[int, int, int]:
+    def get_time(self) -> Tuple[int, int, int]:
         return self._time
 
-    def get_delta(self):
+    def get_delta(self) -> float:
         return self._delta
 
-    def is_from_wiimmfi(self):
+    def is_from_wiimmfi(self) -> bool:
         return self._is_wiimmfi_place
 
-    def get_fc_and_name(self):
+    def get_fc_and_name(self) -> Tuple[str, str]:
+        '''Returns the player's FC and mii name that this placement is for'''
         return self.get_player().get_FC(), self.get_player().name
 
     def set_place(self, place: int):
@@ -56,8 +57,6 @@ class Placement:
         minute = "-1"
         second = "-1"
         millisecond = "-1"
-        if DEBUGGING:
-            print(time)
         if time == Player.LONG_DASH:
             return DISCONNECTION_TIME  # Disconnection
         elif (":" in time):
@@ -71,26 +70,27 @@ class Placement:
         return (int(minute), int(second), int(millisecond))
 
     @staticmethod
-    def _process_delta(delta):
+    def _process_delta(delta: Union[str, None]) -> float:
         return float(delta) if UtilityFunctions.isfloat(delta) else float(0)
 
-    def is_disconnected(self):
+    def is_disconnected(self) -> bool:
         return self.get_time() == DISCONNECTION_TIME
 
-    def is_delta_unusual(self):
+    def is_delta_unusual(self) -> bool:
         if self.get_delta() is None:
             return False
         return self.get_delta() < MINIMUM_DELTA_VALUE or self.get_delta() > MAXIMUM_DELTA_VALUE
 
-    def is_time_large(self):
+    def is_time_large(self) -> bool:
         if self.is_disconnected():
             return False
         return self.get_time() > BOGUS_TIME_LIMIT
 
-    def should_display_delta(self):
+    def should_display_delta(self) -> bool:
         return self.get_delta() < NO_DELTA_DISPLAY_RANGE[0] or self.get_delta() > NO_DELTA_DISPLAY_RANGE[1]
 
-    def get_time_string(self):
+    def get_time_string(self) -> str:
+        '''Returns the placement time as a string. Useful for display purposes.'''
         minutes = str(self.get_time()[0])
         seconds = str(self.get_time()[1])
         if len(seconds) == 1:
