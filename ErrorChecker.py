@@ -42,11 +42,11 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
     if startrace is None:
         startrace = 1
     if endrace is None:
-        endrace = len(room.races)
+        endrace = len(room.get_races())
     startrace -= 1
     
     
-    for raceInd, race in enumerate(room.races[startrace:endrace], startrace):
+    for raceInd, race in enumerate(room.get_races()[startrace:endrace], startrace):
         errors = []
         blank_time_counter = 0
         for placement in race.placements:
@@ -71,7 +71,7 @@ def get_room_errors_players(room, startrace=None, endrace=None, lounge_replace=T
             errors = [EC_Messages_Alternative[_ENTIRE_ROOM_BLANK_RACE_TIMES]]
             
         #Check if this race's times are the same as any of the previous races times (excluding blank times)
-        prior_races = room.races[startrace:raceInd]
+        prior_races = room.get_races()[startrace:raceInd]
         for prior_race in prior_races:
             if race.times_are_subset_of_and_not_all_blank(prior_race):
                 errors.append("This race had the exact same race times as a previous race. Table is incorrect for this GP.")
@@ -99,8 +99,6 @@ def get_war_errors_players(war, room, lounge_replace=True, show_large_time_error
     '''Returns the errors that occurred on each race.
        In the dictionary that is returned, the race number is the key, mapped to a List of strings. Each string is a single error that occurred on that race.
        Returns None if the room is not initialized.'''
-    if room is None or not room.is_initialized():
-        return None
     
     race_errors = {}
     numberOfPlayers = war.get_user_defined_num_players()
@@ -109,7 +107,7 @@ def get_war_errors_players(war, room, lounge_replace=True, show_large_time_error
     startrace = 0
     endrace = war.get_user_defined_num_of_gps()*4
     dc_on_or_before = room.dc_on_or_before
-    for race in room.races[startrace:endrace]:
+    for race in room.get_races()[startrace:endrace]:
         if race.getNumberOfPlayers() != numberOfPlayers:
             race_errors[int(race.raceNumber)] = []
             try:
@@ -145,7 +143,7 @@ def get_war_errors_players(war, room, lounge_replace=True, show_large_time_error
                 
             
     by_gp = defaultdict(list)
-    for race in room.races[startrace:endrace]:
+    for race in room.get_races()[startrace:endrace]:
         race_num = race.raceNumber
         gp_num = int((race_num-1)/4)
         by_gp[gp_num].append(race)

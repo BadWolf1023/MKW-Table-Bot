@@ -111,26 +111,30 @@ async def get_front_race_smart(load_me: Union[str, List[str]]) -> Union[Race, No
         return await get_front_race_by_fc(load_me)
 
 
-async def get_races_for_rxx(rxx: str) -> Union[Tuple[None, None], Tuple[str, List[Race]]]:
+async def get_races_for_rxx(rxx: str) -> Tuple[str, List[Race]]:
     room_page_soup = await get_room_soup(rxx)
     if room_page_soup is None:
-        return None, None
+        return rxx, []
     room_page_parser = WiimmfiParser.RoomPageParser(room_page_soup)
+    if not room_page_parser.has_races():
+        return rxx, []
     return rxx, room_page_parser.get_room_races()
 
 
-async def get_races_by_fcs(fcs: List[str]) -> Union[Tuple[None, None], Tuple[str, List[Race]]]:
+async def get_races_by_fcs(fcs: List[str]) -> Tuple[Union[None, str], List[Race]]:
     front_page_race = await get_front_race_by_fc(fcs)
     if front_page_race is None:
-        return None, None
+        return None, []
     rxx = front_page_race.get_rxx()
-    room_races = await get_races_for_rxx(rxx)
-    return rxx, room_races
+    return await get_races_for_rxx(rxx)
 
 
-# load_me can be an FC, or rxxxxxx number, or discord name. Order of checking is the following:
-# list of FCs, rxxxxxxx, FC, Discord name,
-async def get_races_smart(load_me: Union[str, List[str]]) -> Union[Tuple[None, None], Tuple[str, List[Race]]]:
+# load_me can be an FC, or rxx number, or discord name. Order of checking is the following:
+# list of FCs, rxx, FC, Discord name
+# If no FC or discord name can be found on the front page, (None, []) is returned
+# If the FC or discord name or rxx number is found, but the room page has not played any races yet, (rxx, []) is returned
+# Otherwise, if the lookup was successful and there have been races played, (rxx, [Race]) is returned
+async def get_races_smart(load_me: Union[str, List[str]]) ->  Tuple[Union[None, str], List[Race]]:
     if not isinstance(load_me, list):
         load_me = load_me.strip().lower()
         if UtilityFunctions.is_rxx(load_me):
@@ -152,5 +156,5 @@ if __name__ == '__main__':
 
     #ctgp_wws = sr.get_CTGP_WWs()
     #for ctgp_ww in ctgp_wws:
-    #    print(ctgp_ww.roomID, ctgp_ww.getRoomRating())
+    #    print(ctgp_ww.get_room_name(), ctgp_ww.getRoomRating())
     #print(FrontPageParser.get_embed_text_for_race(ctgp_wws, 0)[1])

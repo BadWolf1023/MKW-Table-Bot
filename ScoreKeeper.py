@@ -49,20 +49,20 @@ def print_scores(fc_score, fc_player):
     
     
 #Calculates the scores from the start race to the end race (eg startRace = 1 and endRace = 4 would be GP1)
-def calculateScoresDCs(curRoom:Table.Room, startRace=1, endRace=12, race_points_when_missing=3, server_id=None):
+def calculateScoresDCs(curRoom:Table.Table, startRace=1, endRace=12, race_points_when_missing=3, server_id=None):
     #disconnections = curRoom.getMissingOnRace()
     fc_score = {}
     fc_player = curRoom.getFCPlayerListStartEnd(startRace, endRace)
     for fc in fc_player:
         fc_score[fc] = []
     #If the races completed is less than the start race, no one has score anything yet - That's in the future!
-    if len(curRoom.getRaces()) < startRace:
+    if len(curRoom.get_races()) < startRace:
         return fc_score
     
     
     
     #Iterating over the splice - no, this isn't an error. Check how splicing works, this won't go out of bounds.
-    for raceNum, race in enumerate(curRoom.getRaces()[startRace-1:endRace], startRace):
+    for raceNum, race in enumerate(curRoom.get_races()[startRace-1:endRace], startRace):
         mkwxNumRacers = race.numRacers()
         if mkwxNumRacers != len(fc_player.keys()):
             #Someone is missing. Need to give them the specified DC points.
@@ -161,7 +161,7 @@ def resizeGPsInto(GPs, new_size_GP):
 
 def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, race_points_when_missing=3, discord_escape=False, step=None, up_to_race=None):
     war = channel_bot.get_war()
-    room = channel_bot.get_room()
+    room = channel_bot.get_table()
     if step is None:
         step = channel_bot.get_race_size()
     numGPs = war.get_user_defined_num_of_gps()
@@ -242,7 +242,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     
     #after GP scores have been determined, if `up_to_race` has been set, set all races after `up_to_race` to 0 pts
     if up_to_race:
-        up_to_race = min(up_to_race, len(room.races)) #`up_to_race` cannot be greater than the maximum number of races
+        up_to_race = min(up_to_race, len(room.get_races())) #`up_to_race` cannot be greater than the maximum number of races
         gp_start = int(up_to_race/4) #GP where first race needs to be reset to 0 
         first_gp_index_start = up_to_race%4 #race in first GP that needs to be reset to 0 (cutoff between races that are kept and races that are reset to 0)
 
@@ -275,7 +275,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             
 
     #build table string
-    numRaces = up_to_race if up_to_race else min( (len(room.races), war.get_user_defined_num_of_gps()*4) )
+    numRaces = up_to_race if up_to_race else min( (len(room.get_races()), war.get_user_defined_num_of_gps()*4) )
     table_str = "#title " + war.get_war_name_for_table(numRaces) + "\n"
     curTeam = None
     teamCounter = 0

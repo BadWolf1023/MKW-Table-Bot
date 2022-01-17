@@ -55,6 +55,7 @@ class WarnedUser(NotAuthorized):
 
 class WarSetupFailure(Exception):
     pass
+
 #Exceptions that might be thrown when war is started
 class InvalidWarFormatException(WarSetupFailure):
     pass

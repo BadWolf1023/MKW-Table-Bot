@@ -8,10 +8,8 @@ import Table
 from datetime import datetime
 import humanize
 from bs4 import NavigableString, Tag
-import MiiPuller
 import common
 from typing import Dict, Tuple, List, Any
-import Mii
 import ServerFunctions
 from data_tracking import DataTracker
 import UtilityFunctions
@@ -41,6 +39,8 @@ graphs = {"1":("None", "default graph"),
           "3":("Difference (Two Teams Only)", "diff")
           }
 
+
+
 DEFAULT_DC_POINTS = 3
 
 class ChannelBot(object):
@@ -49,7 +49,7 @@ class ChannelBot(object):
     '''
     def __init__(self, server_id=None, channel_id=None):
         self.loungeFinishTime = None
-        self.set_room(None)
+        self.set_table(None)
         self.set_war(None)
         self.prev_command_sw = False
         self.manualWarSetUp = False
@@ -58,11 +58,7 @@ class ChannelBot(object):
         self.roomLoadTime = None
         self.save_states = []
         self.state_pointer = -1
-        self.miis: Dict[str, Mii.Mii] = {}
-        
-        
         self.populating = False
-        
         self.should_send_mii_notification = True
         self.set_style_and_graph(server_id)
         self.set_dc_points(server_id)
@@ -71,15 +67,15 @@ class ChannelBot(object):
         self.race_size = 4
         self.event_id = None
 
-        self._races = []
+    def is_table_loaded(self) -> bool:
+        return self.get_table() is not None
         
 
     def get_race_size(self) -> int:
         return self.race_size
-    def get_miis(self) -> Dict[str, Mii.Mii]:
-        return self.miis
-    def get_room(self) -> Table.Room:
-        return self.room
+
+    def get_table(self) -> Table.Table:
+        return self._table
     def set_war(self, war) -> None:
         self.war = war
     def get_war(self) -> Table.War:
@@ -114,8 +110,8 @@ class ChannelBot(object):
         return self.style
     def get_dc_points(self) -> int:
         return self.dc_points
-    def set_room(self, room):
-        self.room = room
+    def set_table(self, table):
+        self._table = table
         self.updateLoungeFinishTime()
 
 
@@ -123,7 +119,7 @@ class ChannelBot(object):
         started_war_str = "FFA started" if self.get_war().is_FFA() else "War started"
         if not self.get_war().should_show_large_time_errors():
             started_war_str += " (ignoring errors for large finish times)"
-        started_war_str += f". {self.get_room().getRXXText()}"
+        started_war_str += f". {self.get_table().getRXXText()}"
         return started_war_str
         
     def set_race_size(self, new_race_size: int):
@@ -205,89 +201,26 @@ class ChannelBot(object):
         
         
     def getBotunlockedInStr(self):
-        if self.get_room() is None or self.get_room().is_freed or self.get_room().races is None or len(self.get_room().races) < 12:
+        if self.get_table() is None or self.get_table().is_freed or self.get_table().get_races() is None or len(self.get_table().get_races()) < 12:
             return None
         
         time_passed_since_lounge_finish = datetime.now() - self.loungeFinishTime
         cooldown_time = time_passed_since_lounge_finish - common.lounge_inactivity_time_period
         return "Bot will become unlocked " + humanize.naturaltime(cooldown_time)
-    
-    def table_is_set(self):
-        return self.get_room() is not None and self.get_war() is not None
 
-    def get_available_miis_dict(self, FCs) -> Dict[str, Mii.Mii]:
-        return {fc: self.miis[fc] for fc in FCs if fc in self.miis}
-
-    def remove_miis_with_missing_files(self):
-        to_delete = set()
-        for fc, mii in self.miis.items():
-            if not mii.has_table_picture_file():
-                tier = None
-                if self.channel_id in DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
-                    tier = str(DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
-                if self.channel_id in DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
-                    tier = str(DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
-                common.log_error(f"{fc} does not have a mii picture - channel {self.channel_id} {'' if tier is None else 'T'+tier}")
-                to_delete.add(fc)
-        for fc in to_delete:
-            try:
-                self.miis[fc].clean_up()
-                del self.miis[fc]
-            except:
-                tier = None
-                if self.channel_id in DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
-                    tier = str(DataTracker.RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
-                if self.channel_id in DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
-                    tier = str(DataTracker.CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[self.channel_id])
-                common.log_error(f"Exception in remove_miis_with_missing_files: {fc} failed to clean up - channel {self.channel_id} {'' if tier is None else 'T'+tier}")
-                pass
-        
-    async def populate_miis(self):
-        if common.MIIS_ON_TABLE_DISABLED:
-            return
-        #print("\n\n\n" + str(self.get_miis()))
-        if self.get_war() is not None:
-            if self.populating:
-                return
-            self.populating = True
-            #print("Start:", datetime.now())
-            try:
-                if self.get_room() is not None:
-                    self.remove_miis_with_missing_files()
-                    all_fcs_in_room = self.get_room().get_room_FCs()
-                                        
-                    if all_fcs_in_room != self.miis.keys():
-                        all_missing_fcs = [fc for fc in self.get_room().get_room_FCs() if fc not in self.miis]
-                        result = await MiiPuller.get_miis(all_missing_fcs, self.get_event_id())
-                        if not isinstance(result, (str, type(None))):
-                            for fc, mii_pull_result in result.items():
-                                if not isinstance(mii_pull_result, (str, type(None))):
-                                    self.miis[fc] = mii_pull_result
-                                    mii_pull_result.output_table_mii_to_disc()
-                                    mii_pull_result.__remove_main_mii_picture__()
-                                
-                    for mii in self.miis.values():
-                        if mii.lounge_name == "":
-                            mii.update_lounge_name()
-            finally:
-                #print("End:", datetime.now())
-                self.populating = False
-            
-        
     def updateLoungeFinishTime(self):
-        if self.loungeFinishTime is None and self.get_room() is not None \
-            and self.get_room().is_initialized() and self.get_room().races is not None and len(self.get_room().races) >= 12:
-                self.loungeFinishTime = datetime.now()
-    
-    
-    async def update_room(self) -> bool:
-        if self.get_room() is None:
+        if self.loungeFinishTime is None and self.is_table_loaded() and len(self.get_table()) >= 12:
+            self.loungeFinishTime = datetime.now()
+
+    async def update_table(self) -> bool:
+        if self.get_table() is None:
             return False
-        async def db_call():
+        status = await self.get_table().update()
+        if status in Table.ROOM_LOAD_STATUS_CODES.SUCCESS_CODES:
             await DataTracker.RoomTracker.add_data(self)
-        success = await self.get_room().update_room(db_call, is_vr_command=False, mii_dict=self.miis)
-        self.updateLoungeFinishTime()
-        return success
+            self.get_table().apply_tabler_adjustments()
+            self.updateLoungeFinishTime()
+        return status
 
         
     async def verify_room(self, load_me):
@@ -373,22 +306,20 @@ class ChannelBot(object):
     
     
     async def load_room_smart(self, load_me, is_vr_command=False, message_id=None, setup_discord_id=0, setup_display_name=""):
-        success = False
         rxx, room_races = await WiimmfiSiteFunctions.get_races_smart(load_me)
-        if room_races is None: # Couldn't find room or no races played (hasn't finished first race)
-            return False
-        room = Table.Room(rxx, room_races, setup_discord_id, setup_display_name)
+        if rxx is None:
+            return Table.ROOM_LOAD_STATUS_CODES.DOES_NOT_EXIST
+        if len(room_races) == 0: # Couldn't find room or no races played (hasn't finished first race)
+            return Table.ROOM_LOAD_STATUS_CODES.HAS_NO_RACES
+        table = Table.Table(rxx, room_races, setup_discord_id, setup_display_name)
+        self.set_table(table)
+        self.event_id = message_id
+        #M ake call to database to add data
+        if not is_vr_command:
+            await DataTracker.RoomTracker.add_data(self)
+        self.get_table().apply_tabler_adjustments()
         
-        if room.is_initialized():
-            self.set_room(room)
-            self.event_id = message_id
-            success = True
-            #Make call to database to add data
-            if not is_vr_command:
-                await DataTracker.RoomTracker.add_data(self)
-            self.get_room().apply_tabler_adjustments()
-        
-        return success
+        return Table.ROOM_LOAD_STATUS_CODES.SUCCESS
             
     
     def updatedLastUsed(self):
@@ -432,10 +363,10 @@ class ChannelBot(object):
         
         
     def isFinishedLounge(self) -> bool:
-        if self.get_room() is None or not self.get_room().is_initialized():
+        if not self.is_table_loaded():
             return True
         
-        if self.get_room().is_freed:
+        if self.get_table().is_freed:
             return True
         
         if self.lastWPTime is not None:
@@ -455,8 +386,8 @@ class ChannelBot(object):
         return time_passed_since_lounge_finish > common.lounge_inactivity_time_period
         
     def freeLock(self):
-        if self.get_room() is not None:
-            self.get_room().is_freed = True
+        if self.get_table() is not None:
+            self.get_table().is_freed = True
 
     def isInactive(self):
         curTime = datetime.now()
@@ -470,7 +401,7 @@ class ChannelBot(object):
     def get_save_state(self, command="Unknown Command"):
         save_state = {}
         save_state["War"] = self.get_war().get_recoverable_save_state()
-        save_state["Room"] = self.get_room().get_recoverable_save_state()
+        save_state["Room"] = self.get_table().get_recoverable_save_state()
         save_state["graph"] = self.graph
         save_state["race_size"] = self.race_size
         save_state["style"] = self.style
@@ -536,7 +467,7 @@ class ChannelBot(object):
         self.state_pointer-=1
 
         
-        self.get_room().restore_save_state(save_state["Room"])
+        self.get_table().restore_save_state(save_state["Room"])
         self.get_war().restore_save_state(save_state["War"])
         self.graph = save_state["graph"]
         self.style = save_state["style"]
@@ -556,18 +487,22 @@ class ChannelBot(object):
 
         command, save_state = self.save_states[self.state_pointer][0], self.save_states[self.state_pointer+1][1]
         
-        self.get_room().restore_save_state(save_state["Room"])
+        self.get_table().restore_save_state(save_state["Room"])
         self.get_war().restore_save_state(save_state["War"])
         self.graph = save_state["graph"]
         self.style = save_state["style"]
         self.race_size = save_state["race_size"]
         return command
+
+    def unload_table(self):
+        if self.get_table() is not None:
+            self.get_table().destroy()
+        self.set_table(None)
     
 
     # ======================== Reset / cleaning up / "Deconstruction" ================
     def reset(self, server_id):
-        self.destroy()
-        self.set_room(None)
+        self.unload_table()
         self.set_war(None)
         self.prev_command_sw = False
         self.manualWarSetUp = False
@@ -578,18 +513,9 @@ class ChannelBot(object):
         # self.roomLoadTime = None
         self.save_states = []
         self.state_pointer = -1
-        self.miis = {}
-        self.populating = False
         self.should_send_mii_notification = True
         self.set_style_and_graph(server_id)
         self.race_size = 4
         
-    def clean_up(self):
-        for mii in self.miis.values():
-            mii.clean_up()
-            
-    def destroy(self):
-        self.populating = True
-        self.clean_up()
-        self.populating = False
+
         

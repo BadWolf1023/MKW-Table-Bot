@@ -123,7 +123,7 @@ class Race:
         self.matchTime = matchTime
         self.matchID = matchID
         self.raceNumber = raceNumber
-        self.roomID = roomID
+        self._room_name = roomID
         self.rxx = rxx
         self.trackURL = trackURL
         self.raceID = raceID
@@ -154,7 +154,7 @@ class Race:
     def set_race_number(self, race_number):
         self.raceNumber = race_number
     def get_room_name(self):
-        return self.roomID
+        return self._room_name
     def get_rxx(self):
         return self.rxx
     def get_track_url(self):
@@ -171,7 +171,13 @@ class Race:
         return self.region
     def is_from_wiimmfi(self):
         return self.is_wiimmfi_race
-        
+
+    def update_FC_mii_hex(self, FC, mii_hex: str):
+        for placement in self.placements:
+            player = placement.get_player()
+            if player.get_FC() == FC:
+                player.set_mii_hex(mii_hex)
+
     
     def track_check(self):
         if len(self.track) > 0 and UtilityFunctions.is_hex(self.track):
@@ -237,7 +243,7 @@ class Race:
     def insertPlacement(self, old_position_number, new_position_number):
         self.placements.insert(new_position_number-1, self.placements.pop(old_position_number-1))
         for place, placement in enumerate(self.placements, 1):
-            placement.get_place() = place
+            placement.set_place(place)
 
     
     def getPlacements(self) -> List[Placement]:
@@ -376,7 +382,7 @@ class Race:
         return f"""Match time: {self.matchTime}
 Match ID: {self.matchID}
 Race number: {self.raceNumber}
-Room ID: {self.roomID}
+Room ID/Name: {self.get_room_name()}
 rxx: {self.rxx}
 Track URL: {self.trackURL}
 Race ID: {self.raceID}

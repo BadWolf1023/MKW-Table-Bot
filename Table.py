@@ -6,19 +6,21 @@ Created on Jul 12, 2020
 import random
 from collections import defaultdict
 from copy import copy, deepcopy
-from typing import Any, DefaultDict, Dict, List, Set, Tuple, Union
+from typing import _T, Any, DefaultDict, Dict, List, Set, SupportsIndex, Tuple, Union
 
-import common
+
 import ErrorChecker
 import Placement
 import Player
+import common
+import MiiPuller
+import Mii
 import Race
 import TableBotExceptions
 import TagAIShell
 import UserDataProcessing
 import UtilityFunctions
 import WiimmfiSiteFunctions
-from UtilityFunctions import is_float, is_int
 
 
 
@@ -36,8 +38,16 @@ TWO_TEAM_TABLE_COLOR_PAIRS = [("#244f96", "#cce7e8"),
                               ("#a1ff3d", "#fcff3d"),
                               ("#8d8ce6", "#cfceff")]
 
+class ROOM_LOAD_STATUS_CODES():
+    DOES_NOT_EXIST = object()
+    HAS_NO_RACES = object()
+    NO_ROOM_LOADED = object()
+    SUCCESS = object()
+    FAILURE_CODES = {DOES_NOT_EXIST, HAS_NO_RACES, NO_ROOM_LOADED}
+    SUCCESS_CODES = {SUCCESS}
+
 # Function takes a default dictionary, the key being a number, and makes any keys that are greater than the threshold one less, then removes that threshold, if it exists
-def generic_dictionary_shifter(old_dict, threshold):
+def generic_dictionary_shifter(old_dict, threshold: int) -> DefaultDict[int, Any]:
     new_dict = defaultdict(old_dict.default_factory)
     for k, v in old_dict.items():
         if k == threshold:
@@ -48,32 +58,37 @@ def generic_dictionary_shifter(old_dict, threshold):
             new_dict[k] = v
     return new_dict
 
-class Room(object):
+class Table(List):
     '''
     classdocs
     '''
-    def __init__(self, rxx: str, races: List[Race.Race], setup_discord_id, setup_display_name: str):
+    def __init__(self, rxx: str, races: List[Race.Race], setup_discord_id, setup_display_name: str) -> List[Race.Race]:
+        super().__init__()
         self.name_changes = {}
         self.removed_races = []
-        
-        #Key will be the race number, value will be a list of all the placements changed for the race
+
+        # Key will be the race number, value will be a list of all the placements changed for the race
         self.placement_history = defaultdict(list)
-        
-        #Dictionary - key is race number, value is the number of players for the race that the tabler specified
-        self.forcedRoomSize = defaultdict(int) #This contains the races that have their size changed by the tabler - when a race is removed, we
-        #need to change all the LATER races (the races that happened after the removed race) down by one race
+
+        # Dictionary - key is race number, value is the number of players for the race that the tabler specified
+        # This contains the races that have their size changed by the tabler - when a race is removed, we
+        # need to change all the LATER races (the races that happened after the removed race) down by one race
+        self.forcedRoomSize = defaultdict(int)
 
         self.playerPenalties = defaultdict(int)
-        
-        #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
+
+        # For each race, holds dict that holds (FC, player_name) with 'on' or 'before' being the value
         self.dc_on_or_before = defaultdict(dict)
         self.set_up_user = setup_discord_id
         self.set_up_user_display_name = setup_display_name
-        #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
+        # dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         self.sub_ins = {}
-        
-        self.set_up([rxx], races)
         self.is_freed = False
+
+        self.miis: Dict[str, Mii.Mii] = {}
+
+        self.set_up([rxx], races)
+        
     
     def get_set_up_user_discord_id(self):
         return self.set_up_user
@@ -87,53 +102,90 @@ class Room(object):
     def get_subs(self):
         return self.sub_ins
 
-    def set_up(self, rxxs, races, mii_dict=None):
-        self.rxxs = rxxs
-        if races is None:
-            raise Exception
-        if self.rxxs is None or len(self.rxxs) == 0:
-            #TODO: Here? Caller should?
-            raise Exception
-            
-            
+    def get_miis(self) -> Dict[str, Mii.Mii]:
+        return self.miis
 
-        self.races = self.getRacesList(races, mii_dict)
+    def get_races(self) -> List[Race.Race]:
+        return self
+
+
+    def remove_miis_with_missing_files(self):
+        to_delete = set()
+        for fc, mii in self.get_miis().items():
+            if not mii.has_table_picture_file():
+                common.log_error(f"{fc} does not have a mii picture - channel {self.channel_id}")
+                to_delete.add(fc)
+
+        for fc in to_delete:
+            try:
+                self.get_miis()[fc].clean_up()
+                del self.get_miis()[fc]
+            except:
+                common.log_error(f"Exception in remove_miis_with_missing_files: {fc} failed to clean up - channel {self.channel_id}")
+
+    async def populate_miis(self):
+        if common.MIIS_ON_TABLE_DISABLED:
+            return
+        #print("\n\n\n" + str(self.get_miis()))
+        if self.get_war() is not None:
+            if self.populating:
+                return
+            self.populating = True
+            #print("Start:", datetime.now())
+            try:
+                if self.get_table() is not None:
+                    self.remove_miis_with_missing_files()
+                    all_fcs_in_room = self.get_table().get_room_FCs()
+                                        
+                    if all_fcs_in_room != self.get_miis().keys():
+                        all_missing_fcs = [fc for fc in self.get_table().get_room_FCs() if fc not in self.get_miis()]
+                        result = await MiiPuller.get_miis(all_missing_fcs, self.get_event_id())
+                        if not isinstance(result, (str, type(None))):
+                            for fc, mii_pull_result in result.items():
+                                if not isinstance(mii_pull_result, (str, type(None))):
+                                    self.get_miis()[fc] = mii_pull_result
+                                    mii_pull_result.output_table_mii_to_disc()
+                                    mii_pull_result.__remove_main_mii_picture__()
+                                
+                    for mii in self.get_miis().values():
+                        if mii.lounge_name == "":
+                            mii.update_lounge_name()
+            finally:
+                #print("End:", datetime.now())
+                self.populating = False
+
+    def get_available_miis_dict(self, FCs) -> Dict[str, Mii.Mii]:
+        return {fc: self.get_miis()[fc] for fc in FCs if fc in self.get_miis()}
+
+    def set_up(self, rxxs: List[str], races: List[Race.Race], mii_dict=None):
+        if not isinstance(rxxs, list) or len(rxxs) == 0 or any(not isinstance(rxx, str) for rxx in rxxs):
+            raise ValueError("Caller must gaurantee that the given rxxs is a non-empty list of strings")
+        if not isinstance(races, list) or len(races) == 0 or any(not isinstance(race, Race.Race) for race in races):
+            raise ValueError("Caller must gaurantee that the given races is a non-empty list of Races")
+        self.rxxs = rxxs
+        self.set_races(races)
+        self.fix_race_numbers()
+        self._room_name = self[0].get_room_name()
         
-        if len(self.races) > 0:
-            self.roomID = self.races[0].roomID
-            
-        else: #Hmmmm, if there are no races, what should we do? We currently unload the room... edge case...
-            self.rxxs = None
-            self.races = None
-            self.roomID = None
-            raise Exception #And this is why the room unloads when that internal error occurs
-        
-        
-    
-    
-    def is_initialized(self):
-        return self.races is not None and self.rxxs is not None and len(self.rxxs) > 0
-        
-    def get_rxxs(self):
+    def get_rxxs(self) -> List[str]:
         return self.rxxs
     
-    def had_positions_changed(self):
-        for changes in self.placement_history.values():
-            if len(changes) > 0:
-                return True
-        return False
+    def had_positions_changed(self) -> bool:
+        '''Returns True if any of the race's placements were changed'''
+        return any(changes for changes in self.placement_history.values())
     
-    def placements_changed_for_racenum(self, race_num):
-        return race_num in self.placement_history and len(self.placement_history[race_num]) > 0
+    def placements_changed_for_racenum(self, race_num: int) -> bool:
+        '''Returns True if race for the given race number's placements were changed'''
+        return race_num in self.placement_history and self.placement_history[race_num]
     
     def changePlacement(self, race_num, player_FC, new_placement):
         #We need to get their original placement on the race
-        original_placement = self.races[race_num-1].getPlacementNumber(player_FC)
+        original_placement = self[race_num-1].getPlacementNumber(player_FC)
         position_change = (original_placement, new_placement)
         self.placement_history[race_num].append(position_change)        
-        self.races[race_num-1].applyPlacementChanges([position_change])
+        self[race_num-1].applyPlacementChanges([position_change])
 
-    
+
     def had_subs(self):
         return len(self.sub_ins) != 0
     
@@ -193,34 +245,27 @@ class Room(object):
     #Outside caller should use this, it will add the removed race to the class' history
     #Okay, final step: when we remove a race, whatever room size changes and quickedits and dc_on_or_before for races after the removed race need to all shift down by one
     def remove_race(self, race_num):
-        raceIndex = race_num-1
-        if raceIndex >= 0 and raceIndex < len(self.races):
-            raceName = self.races[raceIndex].getTrackNameWithoutAuthor()
-            remove_success = self.__remove_race__(raceIndex)
-            if remove_success:
-                self.removed_races.append((raceIndex, raceName))
-                #Update dcs, quickedits, and room size changes, and subin scores
-                self.forcedRoomSize = generic_dictionary_shifter(self.forcedRoomSize, race_num)
-                self.dc_on_or_before = generic_dictionary_shifter(self.dc_on_or_before, race_num)
-                self.placement_history = generic_dictionary_shifter(self.placement_history, race_num)
-                for sub_data in self.sub_ins.values():
-                    subout_start_race = sub_data[4]
-                    subout_end_race = sub_data[5]
-                    if race_num >= subout_start_race and subout_start_race <= subout_end_race: #2, 3, 4
-                        sub_data[6].pop(subout_start_race - race_num)
-                        sub_data[5] -= 1
-                        sub_data[0] -= 1
+        race_index = race_num - 1
+        if race_index >= 0 and race_index < len(self):
+            race_name = self.pop(race_num).getTrackNameWithoutAuthor()
+            self.removed_races.append((race_index, race_name))
+            #Update dcs, quickedits, and room size changes, and subin scores
+            self.forcedRoomSize = generic_dictionary_shifter(self.forcedRoomSize, race_num)
+            self.dc_on_or_before = generic_dictionary_shifter(self.dc_on_or_before, race_num)
+            self.placement_history = generic_dictionary_shifter(self.placement_history, race_num)
+            for sub_data in self.sub_ins.values():
+                subout_start_race = sub_data[4]
+                subout_end_race = sub_data[5]
+                if race_num >= subout_start_race and subout_start_race <= subout_end_race: #2, 3, 4
+                    sub_data[6].pop(subout_start_race - race_num)
+                    sub_data[5] -= 1
+                    sub_data[0] -= 1
                         
-            return remove_success, (raceIndex, raceName)
+            return True, (race_index, race_name)
         return False, None
     
-    def __remove_race__(self, raceIndex, races=None):
-        if races is None:
-            races=self.races
-        if raceIndex >= 0 and raceIndex < len(races):
-            del races[raceIndex]
-            return True
-        return False
+    def __remove_race__(self, index):
+        return self.pop(index)
     
     def get_removed_races_string(self):
         removed_str = ""
@@ -232,8 +277,8 @@ class Room(object):
     def getFCPlacements(self, startrace=1,endrace=None):
         fcPlacementDict = {}
         if endrace is None:
-            endrace = len(self.races)
-        for race in self.races[startrace-1:endrace]:
+            endrace = len(self.get_races())
+        for race in self.get_races()[startrace-1:endrace]:
             for placement in race.getPlacements():
                 fcPlacementDict[placement.get_player().get_FC()] = placement
         return fcPlacementDict
@@ -242,8 +287,8 @@ class Room(object):
     def getFCPlayerList(self, startrace=1,endrace=12):
         fcNameDict = {}
         if endrace is None:
-            endrace = len(self.races)
-        for race in self.races[startrace-1:endrace]:
+            endrace = len(self.get_races())
+        for race in self.get_races()[startrace-1:endrace]:
             for placement in race.getPlacements():
                 FC, name = placement.get_fc_and_name()
                 fcNameDict[FC] = name
@@ -265,7 +310,7 @@ class Room(object):
     
     def getFCPlayerListStartEnd(self, startRace, endRace):
         fcNameDict = {}
-        for raceNumber, race in enumerate(self.races, 1):
+        for raceNumber, race in enumerate(self.get_races(), 1):
             if raceNumber >= startRace and raceNumber <= endRace: 
                 for placement in race.getPlacements():
                     FC, name = placement.get_fc_and_name()
@@ -279,7 +324,7 @@ class Room(object):
         return "no name"
     
     def get_known_region(self):
-        regions = set(race.get_region() for race in self.getRaces())
+        regions = set(race.get_region() for race in self.get_races())
         if len(regions) != 1:
             return Race.UNKNOWN_REGION
         for region in regions:
@@ -316,12 +361,10 @@ class Room(object):
         return self.getFCPlayerList(endrace=None).values()
     
             
-    def setRaces(self, races):
-        self.races = races
-        
-    def getRaces(self, startRace=1, endRace=None):
-        
-        return self.races
+    def set_races(self, races):
+        self.clear()
+        self.extend(races)
+    
     
     def getRXXText(self):
         resultText = ""
@@ -341,13 +384,13 @@ class Room(object):
         return ""
     
     def getMissingPlayersPerRace(self):
-        numGPS = int(len(self.races)/4 + 1)
+        numGPS = int(len(self.get_races())/4 + 1)
         GPPlayers = []
         missingPlayers = []
         for GPNum in range(numGPS):
             GPPlayers.append(self.getFCPlayerListStartEnd((GPNum*4)+1, (GPNum+1)*4))
         
-        for raceNum, race in enumerate(self.races):
+        for raceNum, race in enumerate(self.get_races()):
             thisGPPlayers = GPPlayers[int(raceNum/4)]
             missingPlayersThisRace = []
             if raceNum % 4 != 0: #not the start of the GP:
@@ -364,7 +407,7 @@ class Room(object):
             GPPlayers.append(self.getFCPlayerListStartEnd((GPNum*4)+1, (GPNum+1)*4))
         
         wentMissingThisGP = []
-        for raceNum, race in enumerate(self.races[0:numGPS*4]):
+        for raceNum, race in enumerate(self.get_races()[0:numGPS*4]):
             if raceNum/4 >= len(GPPlayers): #To avoid any issues if they put less GPs than the room has
                 break
             thisGPPlayers = GPPlayers[int(raceNum/4)]
@@ -387,7 +430,7 @@ class Room(object):
         missingPlayersByRace = self.getMissingOnRace(num_of_GPs)
         missingPlayersAmount = sum([len(x) for x in missingPlayersByRace])
         if missingPlayersAmount == 0:
-            last_race = self.races[-1]
+            last_race = self.get_races()[-1]
             return False, "No one has DCed. Last race: " + str(last_race.track) + " (Race #" + str(last_race.raceNumber) + ")"
         else:
             counter = 1
@@ -395,7 +438,7 @@ class Room(object):
             for raceNum, missing_players in enumerate(missingPlayersByRace, 1):
                 for fc, player in sorted(missing_players):
                     build_string += "\t" + str(counter) + ". **"
-                    build_string += UtilityFunctions.filter_text(player) + UserDataProcessing.lounge_add(fc, replace_lounge) + "** disconnected on or before race #" + str(raceNum) + " (" + str(self.races[raceNum-1].getTrackNameWithoutAuthor()) + ")\n"
+                    build_string += UtilityFunctions.filter_text(player) + UserDataProcessing.lounge_add(fc, replace_lounge) + "** disconnected on or before race #" + str(raceNum) + " (" + str(self.get_races()[raceNum-1].getTrackNameWithoutAuthor()) + ")\n"
                     counter+=1
             return True, build_string
     
@@ -433,76 +476,65 @@ class Room(object):
     
     
 
+    def update_mii_hexes(self: List[Race.Race]):
+        for race in self:
+            for FC, mii_hex in self.get_miis().items():
+                race.update_FC_mii_hex(FC, mii_hex)
+
     #Soup level functions    
-    async def update_room(self, database_call, is_vr_command, mii_dict=None):
-        if self.is_initialized():
-            all_races = []
-            rxxs = []
-            for rxx in self.rxxs:
-                
-                new_races = await WiimmfiSiteFunctions.get_races_for_rxx(rxx)
-                if new_races is None or len(new_races) == 0:
-                    return False
+    async def update(self, database_call):
+        all_races = []
+        for rxx in self.rxxs:
+            _, new_races = await WiimmfiSiteFunctions.get_races_for_rxx(rxx)
+            all_races.extend(new_races)
 
-                all_races.extend(new_races)
-                rxxs.append(rxx)
+        if len(all_races) == 0:
+            return ROOM_LOAD_STATUS_CODES.HAS_NO_RACES
+        self.set_races(all_races)
+        self.update_mii_hexes()
+        return ROOM_LOAD_STATUS_CODES.SUCCESS
 
-            
-            to_return = False
-            if tempSoup is not None:
-                self.set_up(rxxs, tempSoup, mii_dict)
-                
-                #Make call to database to add data
-                if not is_vr_command:
-                    await database_call()
-                self.apply_tabler_adjustments()
-                tempSoup.decompose()
-                del tempSoup
-                to_return = True
-                    
-            return to_return
-        return False
+    def fix_race_numbers(self):
+        for race_num, race in enumerate(self.get_races(), 1):
+            race.set_race_number(race_num)
     
     def apply_tabler_adjustments(self):
         #First, we number all races
-        for raceNum, race in enumerate(self.races, 1):
-            race.raceNumber = raceNum
+        self.fix_race_numbers()
             
         #Next, apply name changes
         for FC, name_change in self.name_changes.items():
-            for race in self.races:
+            for race in self.get_races():
                 for placement in race.getPlacements():
                     if placement.get_player().get_FC() == FC:
                         placement.get_player().set_name(f"{name_change} (Tabler Changed)")
         
         #Next, we remove races
         for removed_race_ind, _ in self.removed_races:
-            self.__remove_race__(removed_race_ind, self.races)
+            self.pop(removed_race_ind)
         
-            
         #Next, we need to renumber the races
-        for raceNum, race in enumerate(self.races, 1):
-            race.raceNumber = raceNum
+        self.fix_race_numbers()
         
         #Next, we apply quick edits
-        for race_number, race in enumerate(self.races, 1):
+        for race_number, race in enumerate(self, 1):
             if race_number in self.placement_history:
                 race.applyPlacementChanges(self.placement_history[race_number])
         
     def getRacesPlayed(self):
-        return [r.track for r in self.races]
+        return [r.track for r in self]
     
     def get_races_abbreviated(self, last_x_races=None):
         if last_x_races is None:
             temp = []
-            for ind,race in enumerate(self.races, 1):
+            for ind,race in enumerate(self.get_races(), 1):
                 if race.getAbbreviatedName() is None:
                     return None
                 temp.append(str(ind) + ". " + race.getAbbreviatedName())
             return " | ".join(temp)
         else:
             temp = []
-            for ind,race in enumerate(self.races[-last_x_races:], 1):
+            for ind,race in enumerate(self.get_races()[-last_x_races:], 1):
                 if race.getAbbreviatedName() is None:
                     return None
                 temp.append(str(ind) + ". " + race.getAbbreviatedName())
@@ -580,7 +612,7 @@ class Room(object):
         save_state['dc_on_or_before'] = self.dc_on_or_before.copy()
         save_state['forcedRoomSize'] = self.forcedRoomSize.copy()
         save_state['rxxs'] = self.rxxs.copy()
-        save_state['races'] = deepcopy(self.races)
+        save_state['races'] = deepcopy([race for race in self])
         save_state['placement_history'] = copy(self.placement_history)
         save_state['sub_ins'] = deepcopy(self.sub_ins)
         
@@ -588,7 +620,20 @@ class Room(object):
     
     def restore_save_state(self, save_state):
         for save_attr, save_value in save_state.items():
-            self.__dict__[save_attr] = save_value
+            if save_attr != "races":
+                self.__dict__[save_attr] = save_value
+        self.set_races(save_state["races"])
+
+    def insert(self, __index: SupportsIndex, __object: _T) -> None:
+        if not isinstance(__object, Race.Race):
+            raise TypeError(f"Can only append races, cannot append {type(__object)}")
+        return super().insert(__index, __object)
+
+    def append(self, __object: _T) -> None:
+        if not isinstance(__object, Race.Race):
+            raise TypeError(f"Can only append races, cannot append {type(__object)}")
+        return super().append(__object) 
+
                 
 
 
@@ -888,10 +933,10 @@ class War(object):
             return "Room had no errors. Table should be correct."
 
         for race_num, error_messages in sorted(errors.items(), key=lambda x: x[0]):
-            if race_num > len(room.races):
+            if race_num > len(room.get_races()):
                 build_string += f"   Race #{race_num}:\n"
             else:
-                track_name = room.races[race_num-1].getTrackNameWithoutAuthor()
+                track_name = room.get_races()[race_num-1].getTrackNameWithoutAuthor()
                 build_string += f"   Race #{race_num} ({track_name}):\n"
 
             for error_message in error_messages:
@@ -925,6 +970,15 @@ class War(object):
         else:
             return self.get_user_defined_war_name()
 
+
+    def clean_up(self):
+        for mii in self.get_miis().values():
+            mii.clean_up()
+            
+    def destroy(self):
+        self.populating = True
+        self.clean_up()
+        self.populating = False
 
     # ================ Save state functions ===================
     def get_recoverable_save_state(self) -> Dict[str, Any]:

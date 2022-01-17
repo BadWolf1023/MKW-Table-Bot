@@ -36,6 +36,9 @@ class RoomPageParser(object):
     def get_room_races(self) -> List[Race.Race]:
         return self._room_races
 
+    def has_races(self) -> bool:
+        return isinstance(self.get_room_races(), list) and len(self.get_room_races()) > 0
+
     def _is_destroyed(self) -> bool:
         return self._destroyed
 
@@ -58,7 +61,7 @@ class RoomPageParser(object):
             raise Exception(
                 "This function is a private function and should only be called once internally.")
         try:
-            room_races = self._get_races_list()
+            self._set_room_races(self._get_races_list())
         finally:
             self._get_soup().decompose()
             self._set_destroyed(True)
@@ -103,7 +106,7 @@ class RoomPageParser(object):
         for race in races:
             if RoomPageParser.DEBUG_RACES:
                 print()
-                print(f"Room ID: {race.roomID}")
+                print(f"Room ID: {race.get_room_name()}")
                 print(f"Room rxx: {race.rxx}")
                 print(f"Room Type: {race.roomType}")
                 print(f"Race Match ID: {race.matchID}")
@@ -144,22 +147,15 @@ class RoomPageParser(object):
                         f"\tPlayer Discord name: {placement.get_player().discord_name}")
                     print(
                         f"\tPlayer lounge name: {placement.get_player().lounge_name}")
-                    print(f"\tPlayer mii hex: {placement.get_player().mii_hex}")
+                    print(f"\tPlayer mii hex: {placement.get_player().get_mii_hex()}")
 
         # We have a memory leak, and it's not incredibly clear how BS4 objects work and if
         # Python's automatic garbage collection can figure out how to collect
         while len(table_rows) > 0:
             del table_rows[0]
 
-        # TODO: Could this be a bug now that rxx's can merge with themselves?
-        seen_race_id_numbering = defaultdict(lambda: [{}, 0])
-        for race in races:
-            race: Race.Race
-            rxx_numbering = seen_race_id_numbering[race.get_rxx()]
-            if race.get_race_id() not in rxx_numbering:
-                rxx_numbering[1] += 1
-                rxx_numbering[0][race.get_race_id()] = rxx_numbering[1]
-            race.set_race_number(rxx_numbering[0][race.get_race_id()])
+        for race_num, race in enumerate(races, 1):
+            race.set_race_number(race_num)
 
         return races
 
@@ -576,7 +572,7 @@ class FrontPageParser(object):
             spots_string = f"{spots_available} Free Spot{'s' if spots_available > 1 else ''}"
 
         room_str = f"+ {race.getWWFullName(race.region)} Room Rating (out of 100): {race.getRoomRating()}\n\n" \
-                   f"- Room {race.roomID} - {cur_track} ({race.matchTime}) - {spots_string}"
+                   f"- Room {race.get_room_name()} - {cur_track} ({race.matchTime}) - {spots_string}"
 
         str_msg = "```diff\n" + str(room_str).strip() + "\n\n"
         vr_br_str_full = 'Battle Rating' if race.isBattleWW() else "Versus Rating"

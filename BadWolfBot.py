@@ -220,16 +220,16 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     
     
     if this_bot is not None and this_bot.get_war() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
-        return this_bot.get_room().canModifyTable(message_author.id) #Fixed! Check ALL people who can modify table, not just the person who started it!
+        return this_bot.get_table().canModifyTable(message_author.id) #Fixed! Check ALL people who can modify table, not just the person who started it!
     
     if command not in needPermissionCommands:
         return True
     
-    if this_bot is None or this_bot.get_room() is None or not this_bot.get_room().is_initialized() or not this_bot.get_room().is_freed:
+    if this_bot is None or not this_bot.is_table_loaded() or not this_bot.get_table().is_freed:
         return True
 
     #At this point, we know the command's server is Lounge, it's not staff, and a room has been loaded
-    return this_bot.get_room().canModifyTable(message_author.id)
+    return this_bot.get_table().canModifyTable(message_author.id)
 
     
 def getNumActiveWars():
@@ -281,9 +281,9 @@ def command_is_spam(command:str):
 
 async def send_lounge_locked_message(message, this_bot:TableBot.ChannelBot):
     to_send = "The bot is locked to players in this room only: **"
-    if this_bot.get_room() is not None:
-        if not this_bot.get_room().is_freed:
-            room_lounge_names = this_bot.get_room().get_loungenames_can_modify_table()
+    if this_bot.get_table() is not None:
+        if not this_bot.get_table().is_freed:
+            room_lounge_names = this_bot.get_table().get_loungenames_can_modify_table()
             to_send += ", ".join(room_lounge_names)
             to_send += "**."
         if this_bot.loungeFinishTime is None:

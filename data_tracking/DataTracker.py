@@ -6,7 +6,6 @@ Created on Oct 21, 2021
 This module helps track and store data from Wiimmfi.
 
 '''
-import asyncio
 import json
 import os
 import time
@@ -378,11 +377,11 @@ class ChannelBotSQLDataValidator(object):
     def validate_event_data(self, channel_bot):
         self.event_id_validation(channel_bot.get_event_id())
         self.channel_id_validation(channel_bot.get_channel_id())
-        self.discord_id_validation(channel_bot.get_room().get_set_up_user_discord_id())
-        if not isinstance(channel_bot.get_room().get_known_region(), str):
-            raise SQLTypeWrong(self.wrong_type_message(channel_bot.get_room().get_known_region(), str))
-        if not isinstance(channel_bot.get_room().get_set_up_display_name(), str):
-            raise SQLTypeWrong(self.wrong_type_message(channel_bot.get_room().get_set_up_display_name(), str))
+        self.discord_id_validation(channel_bot.get_table().get_set_up_user_discord_id())
+        if not isinstance(channel_bot.get_table().get_known_region(), str):
+            raise SQLTypeWrong(self.wrong_type_message(channel_bot.get_table().get_known_region(), str))
+        if not isinstance(channel_bot.get_table().get_set_up_display_name(), str):
+            raise SQLTypeWrong(self.wrong_type_message(channel_bot.get_table().get_set_up_display_name(), str))
         self.validate_int(channel_bot.get_war().get_user_defined_num_players())
             
     
@@ -468,7 +467,7 @@ class RoomTrackerSQL(object):
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted placements (as 2-tuples: race_id, fc) upon success. (An empty list is returned if no placements were inserted.)'''
         
-        race_id_fc_placements = {(race.get_race_id(), placement.get_player().get_FC()):placement for race in self.channel_bot.get_room().races for placement in race.getPlacements()}
+        race_id_fc_placements = {(race.get_race_id(), placement.get_player().get_FC()):placement for race in self.channel_bot.get_table().get_races() for placement in race.getPlacements()}
         if len(race_id_fc_placements) == 0:
             return []
         
@@ -480,10 +479,10 @@ class RoomTrackerSQL(object):
         return await db_connection.execute(insert_ignore_script, values_args)
     
     async def insert_missing_players_into_database(self):
-        '''Inserts players in all of the races in self.channel_bot.races that are not yet in the database's Player table.
+        '''Inserts players in all of the races in self.channel_bot.get_races() that are not yet in the database's Player table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted player's fcs (as 1-tuples) upon success. (An empty list is returned if no players were inserted.)'''
-        unique_room_players = [placement.get_player() for placement in self.channel_bot.get_room().getFCPlacements().values()]
+        unique_room_players = [placement.get_player() for placement in self.channel_bot.get_table().getFCPlacements().values()]
         if len(unique_room_players) == 0:
             return []
         
@@ -495,10 +494,10 @@ class RoomTrackerSQL(object):
         return await db_connection.execute(insert_ignore_script, values_args)
     
     async def insert_missing_races_into_database(self):
-        '''Inserts races in self.channel_bot.races are not yet in the database's Race table.
+        '''Inserts races in self.channel_bot.get_races() are not yet in the database's Race table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted race's race_id's (as 1-tuples) upon success. (An empty list is returned if no races were inserted.)'''
-        unique_races = {race.get_race_id():race for race in self.channel_bot.get_room().races}.values()
+        unique_races = {race.get_race_id():race for race in self.channel_bot.get_table().get_races()}.values()
         if len(unique_races) == 0:
             return []
         
@@ -512,7 +511,7 @@ class RoomTrackerSQL(object):
         '''Inserts tracks in self.channel_bot's races are not yet in the database's Track table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns the a list of the inserted track names (as 1-tuples) upon success. (An empty list is returned if no tracks were inserted.)'''
-        races_unique_track_names = {race.get_track_name():race for race in self.channel_bot.get_room().races}.values()
+        races_unique_track_names = {race.get_track_name():race for race in self.channel_bot.get_table().get_races()}.values()
         if len(races_unique_track_names) == 0:
             return []
         
@@ -547,7 +546,7 @@ class RoomTrackerSQL(object):
         '''Updates the mii_hex for placements in Place table for placements in self.channel_bot.race's placements who have a mii_hex if that mii_hex in the Place table is null.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns the a list of the race_id, fc (as 2-tuples) of the placements whose mii_hex's were updated. (An empty list is returned if nothing was updated.)'''
-        have_miis_for_placements = {(race.get_race_id(), placement.get_player().get_FC()):placement for race in self.channel_bot.get_room().races for placement in race.getPlacements() if placement.get_player().get_mii_hex() is not None}
+        have_miis_for_placements = {(race.get_race_id(), placement.get_player().get_FC()):placement for race in self.channel_bot.get_table().get_races() for placement in race.getPlacements() if placement.get_player().get_mii_hex() is not None}
         if len(have_miis_for_placements) == 0:
             return []
         
@@ -566,7 +565,7 @@ class RoomTrackerSQL(object):
         '''Inserts (event_id, race_id) in for each race in self.channel_bot's races that are not yet in the database's Event_Races table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns the a list of the inserted event_ids, race_ids (as 2-tuples) upon success. (An empty list is returned if nothing was inserted.)'''
-        event_id_race_ids = {(self.channel_bot.get_event_id(), race.get_race_id()) for race in self.channel_bot.get_room().races} #Note this is a set of tuples, not a dict
+        event_id_race_ids = {(self.channel_bot.get_event_id(), race.get_race_id()) for race in self.channel_bot.get_table().get_races()} #Note this is a set of tuples, not a dict
         if len(event_id_race_ids) < 1:
             return []
         self.data_validator.validate_event_id_race_ids(event_id_race_ids)
@@ -580,9 +579,9 @@ class RoomTrackerSQL(object):
         return (channel_bot.get_event_id(),
                 channel_bot.get_channel_id(),
                 0,
-                channel_bot.get_room().get_known_region(),
-                channel_bot.get_room().get_set_up_user_discord_id(),
-                channel_bot.get_room().get_set_up_display_name(),
+                channel_bot.get_table().get_known_region(),
+                channel_bot.get_table().get_set_up_user_discord_id(),
+                channel_bot.get_table().get_set_up_display_name(),
                 channel_bot.get_war().get_user_defined_num_players()
                 )
         
@@ -616,7 +615,7 @@ class RoomTrackerSQL(object):
         '''Inserts event_id, fcs in self.channel_bot's races are not yet in the database's Event_FCS table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted placements (as 2-tuples: race_id, fc) upon success. (An empty list is returned if no placements were inserted.)'''
-        event_id_fcs = list({(self.channel_bot.get_event_id(), fc, None) for fc in self.channel_bot.get_room().get_room_FCs()})
+        event_id_fcs = list({(self.channel_bot.get_event_id(), fc, None) for fc in self.channel_bot.get_table().get_room_FCs()})
         if len(event_id_fcs) == 0:
             return []
         
@@ -629,7 +628,7 @@ class RoomTrackerSQL(object):
         '''Updates the mii_hex for fcs for the event in Event_FCs table if the mii is null in Event_FCs and if we have a non-null mii
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns the a list of the event_id, fc (as 2-tuples) of the fcs in the event whose mii_hex's were updated. (An empty list is returned if nothing was updated.)'''
-        have_miis_for_event = list({(self.channel_bot.get_event_id(), fc, mii.mii_data_hex_str) for fc, mii in self.channel_bot.get_miis().items()})
+        have_miis_for_event = list({(self.channel_bot.get_event_id(), fc, mii.mii_data_hex_str) for fc, mii in self.channel_bot.get_table().get_miis().items()})
         if len(have_miis_for_event) == 0:
             return []
         
@@ -644,16 +643,16 @@ class RoomTrackerSQL(object):
     
     def get_event_structure_tuple(self):
         return (self.channel_bot.get_event_id(),
-                json.dumps(self.channel_bot.get_room().getNameChanges()),
-                json.dumps(self.channel_bot.get_room().getRemovedRaces()),
-                json.dumps(self.channel_bot.get_room().getPlacementHistory()),
-                json.dumps(self.channel_bot.get_room().getForcedRoomSize()),
-                json.dumps(self.channel_bot.get_room().getPlayerPenalties()),
+                json.dumps(self.channel_bot.get_table().getNameChanges()),
+                json.dumps(self.channel_bot.get_table().getRemovedRaces()),
+                json.dumps(self.channel_bot.get_table().getPlacementHistory()),
+                json.dumps(self.channel_bot.get_table().getForcedRoomSize()),
+                json.dumps(self.channel_bot.get_table().getPlayerPenalties()),
                 json.dumps(self.channel_bot.get_war().get_team_penalties()),
-                json.dumps(self.channel_bot.get_room().get_dc_statuses()),
-                json.dumps(self.channel_bot.get_room().get_subs()),
+                json.dumps(self.channel_bot.get_table().get_dc_statuses()),
+                json.dumps(self.channel_bot.get_table().get_subs()),
                 json.dumps(self.channel_bot.get_war().get_teams()),
-                json.dumps(self.channel_bot.get_room().get_rxxs()),
+                json.dumps(self.channel_bot.get_table().get_rxxs()),
                 json.dumps(self.channel_bot.get_war().get_edited_scores()),
                 self.channel_bot.get_war().get_show_large_time_errors(),
                 self.channel_bot.get_war().get_race_points_when_missing(),
@@ -706,17 +705,14 @@ class RoomTracker(object):
     
     @staticmethod
     async def add_data(channel_bot):
-        if channel_bot.get_room().is_initialized():
+        if channel_bot.is_table_loaded():
             t0 = time.perf_counter()
-
-            
-            #Make a deep copy to avoid asyncio switching current task to a tabler command and modifying our data in the middle of us validating it or adding it
+            # Make a deep copy to avoid asyncio switching current task to a tabler command and modifying our data in the middle of us validating it or adding it
             deepcopied_channel_bot = deepcopy(channel_bot)
-            if deepcopied_channel_bot.get_room().is_initialized(): #This check might seem unnecessary, but we'll leave it in case we convert things to asyncio that aren't currently asynchronous (making it necessary)
-                try:
-                    await RoomTracker.add_everything_to_database(deepcopied_channel_bot)
-                except:
-                    common.log_traceback(traceback)
+            try:
+                await RoomTracker.add_everything_to_database(deepcopied_channel_bot)
+            except:
+                common.log_traceback(traceback)
             t1 = time.perf_counter()
             if DEBUGGING_SQL:
                 print(f"Total time taken to add everything to SQL DB: {round((t1-t0), 5)}s")

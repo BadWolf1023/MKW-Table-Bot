@@ -62,13 +62,16 @@ class Player(object):
             self.name = "Player"
         self.discord_name = discord_name
         self.lounge_name = lounge_name
-        self.mii_hex = mii_hex
+        self._mii_hex = mii_hex
+
+    def get_FC(self):
+        return self._FC
+
+    def get_mii_hex(self) -> Union[str, None]:
+        return self._mii_hex
 
     def set_mii_hex(self, mii_hex):
-        self.mii_hex = mii_hex
-
-    def get_mii_hex(self):
-        return self.mii_hex
+        self._mii_hex = mii_hex
 
     def get_lounge_name(self):
         return self.lounge_name
@@ -109,8 +112,7 @@ class Player(object):
     def get_name(self):
         return self.name
 
-    def get_FC(self):
-        return self._FC
+
 
     def set_name(self, new_name):
         self.name = new_name
