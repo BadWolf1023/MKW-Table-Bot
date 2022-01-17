@@ -43,7 +43,7 @@ class URLCacher():
         response_text = None
         self._prepare_fetch(url)
         try:
-            timeout = aiohttp.ClientTimeout(total=float(self.request_timeout))
+            timeout = aiohttp.ClientTimeout(total=float(self.request_timeout.total_seconds()))
             async with self._session.get(url, ssl=common.sslcontext, timeout=timeout) as response:
                 response_text = await response.text()
         finally:
