@@ -138,7 +138,7 @@ class Race:
         self.is_ct = is_ct
         self.is_wiimmfi_race = is_wiimmfi_race
         self.mkwxRaceNumber = mkwxRaceNumber
-        if UtilityFunctions.isint(self.mkwxRaceNumber):
+        if UtilityFunctions.is_int(self.mkwxRaceNumber):
             self.mkwxRaceNumber = int(self.mkwxRaceNumber)
         else:
             self.mkwxRaceNumber

@@ -71,7 +71,7 @@ def getPlayerIndexInRoom(name:str, room:TableBot.Table.Room, server_prefix:str, 
     playerNum = None
 
     #If they gave us an integer, check if it's on the list
-    if UtilityFunctions.isint(name):
+    if UtilityFunctions.is_int(name):
         playerNum = int(name)
         if playerNum < 1 or playerNum > len(players):
             return None, f"The player number must be between 1 and {len(players)}. Do `{server_prefix}{command_name}` for an example on how to use this command."
@@ -394,7 +394,7 @@ class StatisticCommands:
         original_arg = arg
         arg = arg.lower().replace("d", "")
         days = None
-        if UtilityFunctions.isint(arg):
+        if UtilityFunctions.is_int(arg):
             days = int(arg)
             if days < 1:
                 None, f"{UtilityFunctions.filter_text(original_arg)} was given as the number of days, but it must be 1 or more"
@@ -1124,7 +1124,7 @@ class LoungeCommands:
 
         to_lookup = None
         lookup_limit = common.WHO_IS_LIMIT
-        if len(args) > 1 and UtilityFunctions.isint(args[1]):
+        if len(args) > 1 and UtilityFunctions.is_int(args[1]):
             to_lookup = int(args[1])
 
         if len(args) > 2 and common.is_bad_wolf(message.author) and args[2].lower() == "all":
@@ -1778,7 +1778,7 @@ class TablingCommands:
         players = this_bot.get_room().get_sorted_player_list()
         playerNum, playerErrorMessage = getPlayerIndexInRoom(args[1], this_bot.get_room(), server_prefix, "pen")
 
-        if UtilityFunctions.isint(amount):
+        if UtilityFunctions.is_int(amount):
             amount = int(amount)
 
         if not isinstance(amount, int):
@@ -1816,7 +1816,7 @@ class TablingCommands:
 
         #If race number isn't a valid number, send error message
         raceNum = args[3]
-        if not UtilityFunctions.isint(raceNum):
+        if not UtilityFunctions.is_int(raceNum):
             await message.channel.send(f"The race number must be a number. {example_error_message}")
             return
         raceNum = int(raceNum)
@@ -2806,13 +2806,13 @@ def get_max_specified_race(args):
             arg = arg.strip().lower()
             start = arg.find('=')+1
             max_race = arg[start:]
-            if arg.startswith(flag) and len(arg)>len(flag) and UtilityFunctions.isint(max_race) and int(max_race)>0:
+            if arg.startswith(flag) and len(arg)>len(flag) and UtilityFunctions.is_int(max_race) and int(max_race)>0:
                 return int(max_race)
 
-    if UtilityFunctions.isint(args[0]) and int(args[0]) > 0: # if either the first or second argument is numeric, then assume that it is to specify a max race
+    if UtilityFunctions.is_int(args[0]) and int(args[0]) > 0: # if either the first or second argument is numeric, then assume that it is to specify a max race
         return int(args[0])
     
-    if len(args)>1 and UtilityFunctions.isint(args[1]) and int(args[1]) > 0:
+    if len(args)>1 and UtilityFunctions.is_int(args[1]) and int(args[1]) > 0:
         return int(args[1])
 
     

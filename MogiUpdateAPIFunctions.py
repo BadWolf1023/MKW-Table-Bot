@@ -66,10 +66,10 @@ def _reverseEngineerResults(lounge_names_mapping: List[Tuple[str, str, int]], js
             return None, []
         #Corrupt data check
         
-        if UtilityFunctions.isint(player_data[player_id_json_name]):
+        if UtilityFunctions.is_int(player_data[player_id_json_name]):
             player_data[player_id_json_name] = int(player_data[player_id_json_name])
             
-        if UtilityFunctions.isint(player_data[current_mmr_json_name]):
+        if UtilityFunctions.is_int(player_data[current_mmr_json_name]):
             player_data[current_mmr_json_name] = int(player_data[current_mmr_json_name])
 
         

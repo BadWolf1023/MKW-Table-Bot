@@ -18,7 +18,7 @@ import TagAIShell
 import UserDataProcessing
 import UtilityFunctions
 import WiimmfiSiteFunctions
-from UtilityFunctions import isfloat, isint
+from UtilityFunctions import is_float, is_int
 
 
 
@@ -746,7 +746,7 @@ class War(object):
             raise TableBotExceptions.InvalidWarFormatException()
         players_per_team = self._war_format_players_per_team[format_]
 
-        if not UtilityFunctions.isint(number_of_teams):
+        if not UtilityFunctions.is_int(number_of_teams):
             raise TableBotExceptions.InvalidNumberOfPlayersException()
         number_of_teams = int(number_of_teams)
 

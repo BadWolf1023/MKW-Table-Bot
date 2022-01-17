@@ -46,7 +46,7 @@ class Player(object):
         self.pid = int(self._url.split("/")[-1].strip('p'))
         self.ol_status = ol_status
         self.positionInRoom = room_position
-        if UtilityFunctions.isint(self.positionInRoom):
+        if UtilityFunctions.is_int(self.positionInRoom):
             self.positionInRoom = int(self.positionInRoom)
         else:
             self.positionInRoom = -1

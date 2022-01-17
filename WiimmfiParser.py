@@ -185,13 +185,13 @@ class RoomPageParser(object):
 
         player_region = str(all_rows[2].string)
         player_conn_fails = str(all_rows[3].string)
-        if not UtilityFunctions.isint(player_conn_fails) and not UtilityFunctions.isfloat(player_conn_fails):
+        if not UtilityFunctions.is_int(player_conn_fails) and not UtilityFunctions.is_float(player_conn_fails):
             player_conn_fails = None
         else:
             player_conn_fails = float(player_conn_fails)
         # TODO: Handle VR?
         vr = str(all_rows[4].string)
-        if not UtilityFunctions.isint(vr):
+        if not UtilityFunctions.is_int(vr):
             vr = None
         else:
             vr = int(vr)
@@ -486,7 +486,7 @@ class FrontPageParser(object):
             race_number = race_number.strip()
             if race_number.startswith("Match #"):
                 race_number = race_number[len("Match #"):]
-            if UtilityFunctions.isint(race_number):
+            if UtilityFunctions.is_int(race_number):
                 race_number = int(race_number)
             else:
                 race_number = None

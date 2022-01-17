@@ -71,7 +71,7 @@ class Placement:
 
     @staticmethod
     def _process_delta(delta: Union[str, None]) -> float:
-        return float(delta) if UtilityFunctions.isfloat(delta) else float(0)
+        return float(delta) if UtilityFunctions.is_float(delta) else float(0)
 
     def is_disconnected(self) -> bool:
         return self.get_time() == DISCONNECTION_TIME
@@ -97,7 +97,7 @@ class Placement:
     def get_time_seconds(self) -> float:
         '''Returns the placement time as the total number of seconds, including milliseconds'''
         minutes, seconds, milliseconds = self.get_time()
-        return minutes*60+seconds+milliseconds/1000
+        return minutes*60 + seconds + milliseconds/1000
 
     def __eq__(self, other):
         return self.get_time() == other.get_time()

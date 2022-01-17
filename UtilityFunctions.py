@@ -138,19 +138,21 @@ def removeBotAdmin(admin_id:str):
         
         common.botAdminsFileIsOpen = False
         return True
-    
-def isfloat(value):
+
+
+def is_float(value):
     try:
         float(value)
         return True
     except ValueError:
         return False
-    
-def isint(value):
+
+
+def is_int(value):
     try:
         int(value)
         return True
-    except:
+    except ValueError:
         return False
 
 #Takes a list of strings and concatenates them until a new concatenation would push it over the limit given
