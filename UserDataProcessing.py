@@ -302,13 +302,7 @@ def addIDsLounges(to_add: Dict[str,str]):
     discordId_lounges.update(to_add)
 
     for DID, lounge_name in to_add.items():
-        lounge_name = process_lounge_name(lounge_name)
-
-        if lounge_name in lounges_discordId and lounges_discordId[lounge_name] != DID:
-            if get_last_used_fc_time(DID) > get_last_used_fc_time(lounges_discordId[lounge_name]):
-                lounges_discordId[lounge_name] = DID
-        else:
-            lounges_discordId[lounge_name] = DID
+        lounges_discordId[process_lounge_name(lounge_name)] = DID
 
 def addFCsIDs(to_add: Dict[str,Tuple[str,datetime]]):
     global fc_discordId
