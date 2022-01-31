@@ -14,7 +14,6 @@ import TagAIShell
 import LoungeAPIFunctions
 import ScoreKeeper as SK
 import UserDataProcessing
-from UserDataProcessing import lounge_add
 import TableBot
 from TableBot import ChannelBot
 import UtilityFunctions
@@ -706,8 +705,8 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             player[0] = UserDataProcessing.get_lounge(player[0])
             player[0] = f"{str(i) + ('. ' if i < 10 else '.')} {player[0]}"
 
-            secs = player[3]
-            player[3] = f'{int(secs // 60)}:{round(secs % 60):02}'
+            secs = int(player[3])
+            player[3] = f'{int(secs // 60)}:{int(secs % 60):02}'
 
         headers = ['+ Player', 'Avg Pts', 'Avg Place', 'Best Time', "# Plays"]
 
@@ -1712,7 +1711,7 @@ class TablingCommands:
             break
 
         player_fc = missing_per_race[race-1][index][0]
-        player_name = UtilityFunctions.process_name(str(missing_per_race[race-1][index][1]) + lounge_add(player_fc))
+        player_name = UtilityFunctions.process_name(str(missing_per_race[race-1][index][1]) + UserDataProcessing.lounge_add(player_fc))
         if on_or_before in ["on", "during", "midrace", "results", "onresults"]:
             this_bot.add_save_state(message.content)
             this_bot.getRoom().edit_dc_status(player_fc, race, 'on')
@@ -1760,7 +1759,7 @@ class TablingCommands:
 
         this_bot.add_save_state(message.content)
         this_bot.getRoom().addPlayerPenalty(players[playerNum-1][0], amount)
-        await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty."))
+        await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty."))
 
     @staticmethod
     async def get_subs_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
@@ -1844,7 +1843,7 @@ class TablingCommands:
         this_bot.add_save_state(message.content)
         this_bot.getRoom().add_sub(subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores)
         this_bot.getWar().setTeamForFC(subInFC, subOutTag)
-        await message.channel.send(f"Got it. **{UtilityFunctions.process_name(subInMiiName + lounge_add(subInFC))}** subbed in for **{UtilityFunctions.process_name(subOutMiiName + lounge_add(subOutFC))}** on race #{subInStartRace}")
+        await message.channel.send(f"Got it. **{UtilityFunctions.process_name(subInMiiName + UserDataProcessing.lounge_add(subInFC))}** subbed in for **{UtilityFunctions.process_name(subOutMiiName + UserDataProcessing.lounge_add(subOutFC))}** on race #{subInStartRace}")
 
 
     @staticmethod
@@ -1885,7 +1884,7 @@ class TablingCommands:
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.getWar().addEdit(players[playerNum-1][0], GPNum, amount)
-                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points."))
+                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points."))
         else:
             lounge_name = str(copy.copy(playerNum))
             loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
@@ -1901,7 +1900,7 @@ class TablingCommands:
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.getWar().addEdit(players[_playerNum-1][0], GPNum, amount)
-                await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + lounge_add(players[_playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points."))
+                await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + UserDataProcessing.lounge_add(players[_playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points."))
 
 
 
@@ -1929,7 +1928,7 @@ class TablingCommands:
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.getRoom().setNameForFC(players[playerNum-1][0], new_name)
-                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0])) + " name set to: " + UtilityFunctions.process_name(new_name))
+                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0])) + " name set to: " + UtilityFunctions.process_name(new_name))
         else:
             lounge_name = str(copy.copy(playerNum))
             loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
@@ -1945,7 +1944,7 @@ class TablingCommands:
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.getRoom().setNameForFC(players[_playerNum-1][0], new_name)
-                await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + lounge_add(players[_playerNum-1][0])) + " name set to: " + UtilityFunctions.process_name(new_name))
+                await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + UserDataProcessing.lounge_add(players[_playerNum-1][0])) + " name set to: " + UtilityFunctions.process_name(new_name))
 
     @staticmethod
     async def change_player_tag_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
@@ -1976,7 +1975,7 @@ class TablingCommands:
                 else:
                     this_bot.add_save_state(message.content)
                     this_bot.getWar().setTeamForFC(players[playerNum-1][0], new_tag)
-                    await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
+                    await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
             else:
                 lounge_name = str(copy.copy(playerNum))
                 loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
@@ -1992,7 +1991,7 @@ class TablingCommands:
                 else:
                     this_bot.add_save_state(message.content)
                     this_bot.getWar().setTeamForFC(players[_playerNum-1][0], new_tag)
-                    await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + lounge_add(players[_playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
+                    await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + UserDataProcessing.lounge_add(players[_playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
 
 
     #Refactor this method to make it more readable
@@ -2665,11 +2664,11 @@ class TablingCommands:
                                 this_bot.add_save_state(message.content)
                                 #TODO: This needs to call change placement on ROOM, not Race
                                 this_bot.getRoom().changePlacement(raceNum, playerFC, placement)
-                                mes = "Changed " + UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " place to " + str(placement) + " for race #" + str(raceNum) + ".")
+                                mes = "Changed " + UtilityFunctions.process_name(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " place to " + str(placement) + " for race #" + str(raceNum) + ".")
                                 if not dont_send: await message.channel.send(mes)
                                 return mes
                             else:
-                                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " is not in race #" + str(raceNum)))
+                                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " is not in race #" + str(raceNum)))
 
             else:
                 await message.channel.send("Do " + server_prefix + "quickedit to learn how to use this command.")
