@@ -2147,7 +2147,7 @@ class TablingCommands:
                             this_bot.getWar().set_temp_team_tags(tags_player_fcs)
 
                             if not this_bot.getWar().is_ffa():
-                                to_send = f"{this_bot.getWar().get_tags_str()}\n***Is this correct?** Respond `{server_prefix}yes` or `{server_prefix}no`*"
+                                to_send = f"{this_bot.getWar().get_tags_str()}\n***Is this correct?***"
                                 view = Components.ConfirmView(this_bot, server_prefix, is_lounge_server)
                                 await message.channel.send(to_send, view=view)
                                 this_bot.prev_command_sw = True

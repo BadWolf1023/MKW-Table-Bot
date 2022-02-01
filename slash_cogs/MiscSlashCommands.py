@@ -13,6 +13,22 @@ class MiscSlash(ext_commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
+    @slash_command(
+        name='raw',
+        description="Catch-all command to input a raw command (for experienced Table Bot users)",
+        guild_ids=GUILDS
+    )
+    async def _catch_all_command(
+        self,
+        ctx: discord.ApplicationContext,
+        raw_input: Option(str, "Raw command input. You do not need to include your Table Bot server prefix in the command")
+    ):
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        args = raw_input.split() #split the raw string
+
+        await ctx.respond(EMPTY_CHAR)
+        await self.bot.simulate_on_message(message, args, message.content, this_bot, server_prefix, is_lounge)
+    
     setting = SlashCommandGroup("setting", "Change your Table Bot server settings", guild_ids=GUILDS)
     
     @slash_command(name="settings",

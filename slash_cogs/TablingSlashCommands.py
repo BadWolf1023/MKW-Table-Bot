@@ -37,7 +37,7 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         war_format: Option(str, "Format", choices=['FFA', '2v2', '3v3', '4v4', '5v5', '6v6']),
-        num_teams: Option(int, 'Number of teams (defaults to correct teams for 12 players)', required=False, default=None),
+        num_teams: Option(int, 'Number of teams'),
         room_arg: Option(str, 'LoungeName/LoungeMention/rxx/FC', required=False, default=None),
         gps: Option(int, 'Number of GPs', required=False, default=None),
         psb: Option(bool, 'Suppress large finish time warnings', required=False, default=None),
@@ -45,8 +45,8 @@ class Table_Slash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
 
-        if num_teams is None:
-            num_teams = UtilityFunctions.get_max_teams(war_format)
+        # if num_teams is None:
+        #     num_teams = UtilityFunctions.get_max_teams(war_format)
 
         args = [command, war_format, str(num_teams)]
         

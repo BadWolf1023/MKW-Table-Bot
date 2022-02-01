@@ -14,9 +14,10 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
         super().__init__(style=buttonType, label=emoji, row=1)
     
     async def callback(self, interaction: discord.Interaction):
+        self.disabled = True
         for ind, child in enumerate(self.view.children):
             child.disabled = True
-            if child != self: 
+            if child.cat != self.cat: 
                 self.view.children.pop(ind)
         
         self.view.stop()

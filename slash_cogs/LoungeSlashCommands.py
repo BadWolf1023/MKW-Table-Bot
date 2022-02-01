@@ -17,35 +17,41 @@ class LoungeSlash(ext_commands.Cog):
     update = SlashCommandGroup("update", "Submit tables to updaters", guild_ids=GUILDS, permissions=REQUIRED_PERMISSIONS)
 
     @update.command(name='rt',
-    description="Submit an RT table to updaters")
+    description="Submit an RT table to updaters. NO TABLE TEXT SUBMISSIONS")
     async def _rt_update(
         self, 
         ctx: discord.ApplicationContext,
-        tier: Option(str, "Tier of event", choices=['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5', 'Tier 6', 'Tier 7', 'Tier 8', 'squadqueue']),
+        tier: Option(str, "Tier of event", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'squadqueue']),
         races_played: Option(int, "Number of races played in event"),
-        table_text: Option(str, "Table text for manual submissions", required=False, default=None)
+        # table_text: Option(str, "Table text for manual submissions", required=False, default=None)
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, tier, str(races_played)]
-        if table_text: args.append(table_text)
+        # if table_text: args.append(table_text)
 
-        await ctx.respond(EMPTY_CHAR)
+        # await ctx.respond(EMPTY_CHAR)
+        await ctx.respond(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting tables at the present. \
+            Use `{self.bot.user.name} rtupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use this slash command.")
+
         await commands.LoungeCommands.rt_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
         
     @update.command(name='ct',
-    description="Submit a CT table to updaters")
+    description="Submit a CT table to updaters. NO TABLE TEXT SUBMISSIONS")
     async def _ct_update(
         self,
         ctx: discord.ApplicationContext,
         tier: Option(str, "Tier of event", choices=['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5', 'Tier 6', 'Tier 7', 'squadqueue']),
         races_played: Option(int, "Number of races played in event"),
-        table_text: Option(str, "Table text for manual submissions", required=False, default=None)
+        # table_text: Option(str, "Table text for manual submissions", required=False, default=None)
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command, tier, str(races_played)]
-        if table_text: args.append(table_text)
+        # if table_text: args.append(table_text)
 
-        await ctx.respond(EMPTY_CHAR)
+        # await ctx.respond(EMPTY_CHAR)
+        await ctx.respond(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting tables at the present. \
+            Use `{self.bot.user.name} ctupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use this slash command.")
+
         await commands.LoungeCommands.ct_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
     
     @slash_command(name="approve",
