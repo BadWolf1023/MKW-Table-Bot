@@ -743,7 +743,7 @@ class Room(object):
                         race.remove_placement_by_FC(p['payload'])
 
 
-        #Next, we apply quick edits
+        #Next, we apply position changes
         for race_number, race in enumerate(self.races, 1):
             if race_number in self.placement_history:
                 race.applyPlacementChanges(self.placement_history[race_number])

@@ -58,7 +58,6 @@ SELECT event_id, name_changes, removed_races, placement_history, forced_room_siz
     player_setup_amount, number_of_teams, players_per_team 
 FROM Event_Structure;
 
-
 DROP TABLE Event_Structure;
 ALTER TABLE Event_Structure_New RENAME TO Event_Structure;
 

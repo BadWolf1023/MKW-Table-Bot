@@ -58,7 +58,7 @@ is_dev = properties['mode'] == 'dev'
 is_beta = properties['mode'] == 'beta'
 is_prod = properties['mode'] == 'prod'
 
-in_testing_server = False #is_dev
+in_testing_server = is_dev
 running_beta = is_beta
 beta_is_real = False
 
