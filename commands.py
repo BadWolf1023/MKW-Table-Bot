@@ -989,6 +989,7 @@ class OtherCommands:
                 rooms = sr.get_other_rooms()
             else:
                 rooms = sr.get_private_rooms()
+            # rooms = this_bot.getRoom().races
 
             if len(rooms) == 0:
                 await message.channel.send(f"There are no {Race.Race.getWWFullName(ww_type)} rooms playing right now.")
@@ -997,7 +998,6 @@ class OtherCommands:
             room_texts = [SimpleRooms.SimpleRooms.get_embed_text_for_race(rooms, page) for page in range(len(rooms))]
             paginator = ComponentPaginator.MessagePaginator(pages=room_texts, show_disabled=False, timeout=common.embed_page_time.seconds)
             await paginator.send(message)
-    
     
     @staticmethod
     async def vr_command_get_races(rLID:str, temp_bot):

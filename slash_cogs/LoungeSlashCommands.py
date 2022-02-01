@@ -1,6 +1,5 @@
 import discord
-from discord.commands import slash_command, Option, CommandPermission
-from discord.commands.commands import SlashCommandGroup
+from discord.commands import slash_command, Option, CommandPermission, SlashCommandGroup
 from discord.ext import commands as ext_commands
 import commands
 import common

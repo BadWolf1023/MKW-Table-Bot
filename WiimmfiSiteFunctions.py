@@ -7,7 +7,6 @@ import re
 from datetime import timedelta
 from typing import List, Union, Tuple
 
-import aiohttp
 from bs4 import BeautifulSoup, NavigableString
 import common
 import URLCacher

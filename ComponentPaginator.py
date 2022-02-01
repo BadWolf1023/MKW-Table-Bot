@@ -384,7 +384,6 @@ class MessagePaginator(pages.Paginator):
     def __init__(self, pages, show_disabled=True, show_indicator=False, timeout=120):
         super().__init__(pages, show_disabled=show_disabled, show_indicator=show_indicator, timeout=float(timeout))
     
-    
     async def send(
         self,
         ctx: Context,
@@ -404,7 +403,7 @@ class MessagePaginator(pages.Paginator):
 
         Returns
         --------
-        Union[:class:`~discord.Message`]
+        :class:`~discord.Message`
             The message that was sent with the paginator.
         """
         if isinstance(ctx, discord.Message) or hasattr(ctx, 'proxy'):
@@ -417,7 +416,7 @@ class MessagePaginator(pages.Paginator):
             raise TypeError(f"expected abc.Messageable not {target.__class__!r}")
 
         self.update_buttons()
-        page = self.pages[0]
+        page = self.pages[self.current_page]
         page = self.get_page_content(page)
 
         if not self.user:
