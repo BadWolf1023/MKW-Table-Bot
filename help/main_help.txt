@@ -1,5 +1,7 @@
 **Prefix for this server:** {SERVER_PREFIX}
 
+Documentation for all commands: https://bit.ly/3ALntMg
+
 For help with tabling: `{SERVER_PREFIX}help tabling`
 For help with changing MKW TableBot's default settings in your server: `{SERVER_PREFIX}help serverdefaults`
 For help with flags on tables: `{SERVER_PREFIX}help flags`
