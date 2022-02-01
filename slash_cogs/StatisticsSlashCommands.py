@@ -34,7 +34,7 @@ class StatisticsSlash(ext_commands.Cog):
     
     @slash_command(
         name='popular_tracks',
-        description="Show a list of the most popular/most played tracks.",
+        description="Show a list of the most popular/most played tracks",
         guild_ids=GUILDS
     )
     async def _popular_tracks(
@@ -57,7 +57,7 @@ class StatisticsSlash(ext_commands.Cog):
     
     @slash_command(
         name='unpopular_tracks',
-        description="Show a list of the least popular/lease played tracks.",
+        description="Show a list of the least popular/lease played tracks",
         guild_ids=GUILDS
     )
     async def _unpopular_tracks(
@@ -80,7 +80,7 @@ class StatisticsSlash(ext_commands.Cog):
     
     @slash_command(
         name='best_players',
-        description="Show the best players of a particular track.",
+        description="Show the best players of a particular track",
         guild_ids=GUILDS
     )
     async def _best_players(
@@ -106,7 +106,7 @@ class StatisticsSlash(ext_commands.Cog):
     
     @slash_command(
         name="best_tracks",
-        description="Show a player's best tracks.",
+        description="Show a player's best tracks",
         guild_ids=GUILDS
     )
     async def _best_tracks(
@@ -135,7 +135,7 @@ class StatisticsSlash(ext_commands.Cog):
 
     @slash_command(
         name="worst_tracks",
-        description="Show a player's worst tracks.",
+        description="Show a player's worst tracks",
         guild_ids=GUILDS
     )
     async def _worst_tracks(
@@ -161,6 +161,26 @@ class StatisticsSlash(ext_commands.Cog):
         
         await ctx.respond(EMPTY_CHAR)
         await commands.StatisticCommands.player_tracks_command(self.bot, message, args, server_prefix, message.content, sort_asc=True)
+    
+    @slash_command(
+        name='record',
+        description="Show your head-to-head record against another Lounge player",
+        guild_ids=GUILDS
+    )
+    async def _record(
+        self,
+        ctx: discord.ApplicationContext,
+        player: Option(str, "Player to compare against (Lounge name)"),
+        timeframe: Option(int, "Timeframe (in days) to include data for", required=False, default=None)
+    ):
+        command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        args = [command, player]
+
+        if timeframe is not None:
+            args.append(str(timeframe))
+
+        await ctx.respond(EMPTY_CHAR)
+        await commands.StatisticCommands.record_command(self, message, args, server_prefix, message.content)
     
 
 def setup(bot):
