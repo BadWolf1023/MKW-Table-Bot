@@ -494,13 +494,13 @@ class BadWolfBot(ext_commands.Bot):
             else:
                 common.log_traceback(traceback)
                 self.lounge_submissions.clear_user_cooldown(message.author)
-                await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
+                await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: `{server_prefix}reset`")
                 raise err
         else:
             common.log_traceback(traceback)
             self.lounge_submissions.clear_user_cooldown(message.author)
-            await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
-            raise error   
+            await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: `{server_prefix}reset`")
+            raise error
     
     async def on_message(self, message: discord.Message):
         """
@@ -912,7 +912,7 @@ class BadWolfBot(ext_commands.Bot):
         except Exception as e:
             common.log_traceback(traceback)
             self.lounge_submissions.clear_user_cooldown(message.author)
-            await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: {server_prefix}reset")
+            await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: `{server_prefix}reset`")
             raise e
         else:
             pass

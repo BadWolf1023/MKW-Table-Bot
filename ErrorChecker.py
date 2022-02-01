@@ -128,6 +128,9 @@ def get_room_errors_players(war, room, error_types, startrace=None, endrace=None
 
         if blank_time_counter == len(race.placements):
             errors = [EC_Messages_Alternative[_ENTIRE_ROOM_BLANK_RACE_TIMES]]
+            for indx, err in enumerate(error_types[int(race.raceNumber)]):
+                if err['type'] in ['blank_player']:
+                    error_types[int(race.raceNumber)].pop(indx)
         
             
         #Check if this race's times are the same as any of the previous races times (excluding blank times)

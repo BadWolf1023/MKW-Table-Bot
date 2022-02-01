@@ -3,6 +3,8 @@ import commands
 import InteractionUtils
 from discord.ext import tasks
 import UtilityFunctions
+import asyncio
+import time
 
 class ConfirmButton(discord.ui.Button['ConfirmView']):
     def __init__(self, cat):
@@ -74,30 +76,81 @@ class ConfirmView(discord.ui.View):
 
 
 class PictureButton(discord.ui.Button['PictureView']):
-    def __init__(self, bot):
+    def __init__(self, bot, timeout):
         super().__init__(style=discord.ButtonStyle.primary, label='Picture', row=0)
         self.bot = bot
         self.button_number = self.bot.pic_button_count + 1
         self.disabled = self.bot.getWPCooldownSeconds() > 0
-        try:
-            self.check_clickable.start()
-            self.bot.pic_button_count+=1
-        except:
-            pass
+
+        self.timeout = timeout
+        self.__timeout_task = None
+        self.__timeout_expiry = None
+
+        self.cooldown = max(self.bot.getWPCooldownSeconds(), 0.5)
+        self.__cooldown_task = None
+        self.__cooldown_expiry = None
+        self.bot.pic_button_count+=1
+        self.start_timeout_timer()
+        self.start_cooldown_timer()
+        
+    async def __timeout_task_impl(self) -> None:
+        while True:
+            if self.__timeout_expiry is None:
+                return self._dispatch_timeout()
+
+            # Check if we've elapsed our currently set timeout
+            now = time.monotonic()
+            if now >= self.__timeout_expiry:
+                return self._dispatch_timeout()
+
+            # Wait N seconds to see if timeout data has been refreshed
+            await asyncio.sleep(self.__timeout_expiry - now)
     
-    @tasks.loop(seconds=0.5)
+    def start_timeout_timer(self):
+        loop = asyncio.get_running_loop()
+        if self.__timeout_task is not None:
+            self.__timeout_task.cancel()
+
+        self.__timeout_expiry = time.monotonic() + self.timeout
+        self.__timeout_task = loop.create_task(self.__timeout_task_impl())
+        
+    def _dispatch_timeout(self):
+        self.__cooldown_task.cancel()
+        asyncio.create_task(self.view.on_timeout())
+    
+    async def __cooldown_task_impl(self):
+        while True:
+            if self.__cooldown_expiry is None:
+                return
+            
+            await asyncio.sleep(self.__cooldown_expiry - time.monotonic())
+
+            await self.check_clickable()
+            self.cooldown = 0.5
+            self.__cooldown_expiry = time.monotonic() + self.cooldown
+    
+    def start_cooldown_timer(self):
+        loop = asyncio.get_running_loop()
+        if self.__cooldown_task is not None:
+            self.__cooldown_task.cancel()
+
+        self.__cooldown_expiry = time.monotonic() + self.cooldown
+        self.__cooldown_task = loop.create_task(self.__cooldown_task_impl())
+
     async def check_clickable(self):
         if not self.view or not self.view.message: return
         if self.bot.pic_button_count - self.button_number > 2:
             self.view.clear_items()
             self.view.stop()
             await self.view.message.edit(view=self.view)
-            self.check_clickable.cancel()
+            self.__cooldown_task.cancel()
+            self.__timeout_task.cancel()
 
         if self.disabled and self.bot.getWPCooldownSeconds() < 1:
             self.disabled = False
         elif not self.disabled and self.bot.getWPCooldownSeconds() > 0:
             self.disabled = True
+
         await self.view.message.edit(view=self.view)
 
     async def callback(self, interaction: discord.Interaction):
@@ -107,17 +160,20 @@ class PictureButton(discord.ui.Button['PictureView']):
         await commands.TablingCommands.war_picture_command(msg, self.view.bot, ['wp'], self.view.prefix, self.view.lounge)
 
 class PictureView(discord.ui.View):
-    def __init__(self, bot, prefix, is_lounge_server):
-        super().__init__(timeout=600)
+    def __init__(self, bot, prefix, is_lounge_server, timeout=600):
+        super().__init__()
         self.bot = bot
         self.prefix = prefix
         self.lounge = is_lounge_server
         self.message = None
+
+        self.add_item(PictureButton(self.bot, timeout))
     
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, 'wp')
     
     async def on_timeout(self) -> None:
+        # print("picture timeout")
         self.clear_items()
         self.stop()
         await self.message.edit(view=self)
@@ -125,7 +181,6 @@ class PictureView(discord.ui.View):
     async def send(self, messageable, content=None, file=None, embed=None):
         if hasattr(messageable, 'channel'):
             messageable = messageable.channel
-        self.add_item(PictureButton(self.bot))
 
         self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
 
@@ -215,6 +270,7 @@ class SuggestionView(discord.ui.View):
         self.clear_items()
         self.stop()
         await self.message.edit(view=self)
+        await self.message.delete()
     
     async def send(self, messageable, content=None, file=None, embed=None):
         if hasattr(messageable, 'channel'):
