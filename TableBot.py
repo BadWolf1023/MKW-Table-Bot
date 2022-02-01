@@ -66,6 +66,7 @@ class ChannelBot(object):
         
         self.resolved_errors = set()
         self.pic_button_count = 0
+        self.cur_sug_num = 0
         
         self.populating = False
         
@@ -621,6 +622,7 @@ class ChannelBot(object):
         self.state_pointer = -1
         self.resolved_errors = set()
         self.pic_button_count = 0
+        self.cur_sug_num = 0
         self.miis = {}
         self.populating = False
         self.should_send_mii_notification = True

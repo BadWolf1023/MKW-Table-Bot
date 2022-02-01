@@ -174,7 +174,6 @@ class PictureView(discord.ui.View):
         return InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, 'wp')
     
     async def on_timeout(self) -> None:
-        # print("picture timeout")
         self.clear_items()
         self.stop()
         await self.message.edit(view=self)
@@ -198,7 +197,6 @@ class RejectButton(discord.ui.Button['SuggestionView']):
 
         self.view.clear_items() #get rid of all buttons except Picture Button
         await interaction.response.edit_message(view=self.view)
-        
 
 class SuggestionButton(discord.ui.Button['SuggestionView']):
     def __init__(self, error, label, value=None, confirm=False):
@@ -264,18 +262,57 @@ class SuggestionView(discord.ui.View):
         self.index = id if id else self.error['id']
         self.selected_values = None
         self.message = None
+        self.bot.cur_sug_num +=1
+        self.current_num = self.bot.cur_sug_num
+
+        self.__delete_task = None
+        self.__delete_expiry = None
+        self.delete_interval = 1.0
 
         self.create_row()
+
 
     async def on_timeout(self) -> None:
         self.clear_items()
         self.stop()
         await self.message.edit(view=self)
         await self.message.delete()
+        
+    async def __delete_task_impl(self) -> None:
+        '''
+        Delete old suggestion views when new ones are sent.
+        '''
+        while True:
+            if self.__delete_expiry is None:
+                return self._dispatch_del_timeout()
+            
+            if self.current_num < self.bot.cur_sug_num:
+                return self._dispatch_del_timeout()
+
+            # Check if we've elapsed our currently set timeout
+            now = time.monotonic()
+            self.__delete_expiry = now + self.delete_interval
+
+            # Wait N seconds to see if timeout data has been refreshed
+            await asyncio.sleep(self.__delete_expiry - now)
+        
+    def _dispatch_del_timeout(self):
+        self.__delete_task.cancel()
+        asyncio.create_task(self.on_timeout())
+    
+    def start_delete_timer(self):
+        loop = asyncio.get_running_loop()
+        if self.__delete_task is not None:
+            self.__delete_task.cancel()
+
+        self.__delete_expiry = time.monotonic() + self.delete_interval
+        self.__delete_task = loop.create_task(self.__delete_task_impl())
     
     async def send(self, messageable, content=None, file=None, embed=None):
         if hasattr(messageable, 'channel'):
             messageable = messageable.channel
+        
+        self.start_delete_timer()
 
         self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
 
