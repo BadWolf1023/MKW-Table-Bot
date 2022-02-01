@@ -123,11 +123,11 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         player: Option(str, 'Player (playerNumber or LoungeName)'),
-        gp: Option(str, "GP to edit"),
-        score: Option(int, "New score")
+        gp: Option(int, "GP to edit"),
+        score: Option(int, "New GP score")
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
-        args = [command, player, gp, score]
+        args = [command, player, str(gp), str(score)]
 
 
         await ctx.respond(EMPTY_CHAR)
