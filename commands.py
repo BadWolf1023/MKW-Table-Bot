@@ -879,6 +879,56 @@ class OtherCommands:
         else:
             await message.channel.send("Your lounge name is: " + UtilityFunctions.process_name(str(lounge_name)))
 
+    @staticmethod
+    async def cuplayout_command(client, message:discord.Message):
+        track=common.CUPLAYOUT_TRACK_IDS
+        cuplayout_counter=0
+        cuplayout_header=[67, 85, 80, 50, 0, 0, 0]
+        course_values=[]
+        cuplayout_counter+=1
+
+
+        message_str = message.content.lower().lstrip("? ")[len("cuplayout"):].strip()
+        tracks_list = message_str.split("\n")
+        tracks_list.sort()
+
+        for item in tracks_list:
+            item = item.lower()
+            if item in track:
+                course_values.append(track[item])
+            else:
+                await message.channel.send(item+ " is an invalid track. Please double check your spelling and enter the track again or a different track.")
+                msg = await client.wait_for("message")
+                if msg.content.lower() in track:
+                    await message.channel.send("Got it. Replaced " +item+ " with " +msg.content.title()+".")
+                    course_values.append(track[msg.content.lower()])
+                else:
+                    await message.channel.send("Sorry, that is also invalid. Please try typing the command again.")
+                    
+
+        if len(tracks_list) % 4 != 0:
+                x = len(tracks_list) % 4
+                for i in range(1, x+1):
+                    course_values.append(course_values[-1])
+
+        cup = len(course_values) // 4
+        cuplayout_header.append(cup)
+
+        while len(course_values) <216:
+            course_values.append(255)
+
+        cuplayout_path = str(cuplayout_counter)+".cup"
+
+        f = open(cuplayout_path, "w+b")
+        f.seek(0x00)
+        f.write(bytes(cuplayout_header))
+        f.seek(0x08)
+        f.write(bytes(course_values))
+        f.close()
+        await message.channel.send(file=discord.File(cuplayout_path, filename="cuplayout.cup"))
+
+        if os.path.exists(cuplayout_path):
+            os.remove(cuplayout_path)
 
     @staticmethod
     async def fc_command(message:discord.Message, args:List[str], old_command:str):

@@ -75,7 +75,7 @@ MERGE_ROOM_TERMS = {"mr", "mergeroom"}
 SET_WAR_NAME_TERMS = {"setwarname"}
 CHANGE_PLAYER_NAME_TERMS = {'changename', 'cn'}
 CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag', 'setteam', 'settag', 'ct'}
-CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize"}
+CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize", "crs"}
 EARLY_DC_TERMS = {'earlydc'}
 DEPRECATED_QUICK_EDIT_TERMS = {'quickedit', 'qe'}
 QUICK_EDIT_TERMS = DEPRECATED_QUICK_EDIT_TERMS | {"changeplace", "changeposition", "cp"}
@@ -99,6 +99,7 @@ CURRENT_ROOM_TERMS = {"currentroom"}
 
 
 #General commands that do not require a war to be started (stateless commands)
+CUPLAYOUT_TERMS ={"cuplayout"}
 FC_TERMS = {"fc"}
 LOUNGE_NAME_TERMS = {"lounge", "loungename", "ln"}
 GET_FLAG_TERMS = {"getflag", "gf"}
@@ -616,6 +617,9 @@ async def on_message(message: discord.Message):
             
             elif args[0] in MII_TERMS:
                 await commands.OtherCommands.mii_command(message, args, command)
+            
+            elif args[0] in CUPLAYOUT_TERMS:
+                await commands.OtherCommands.cuplayout_command(client, message)
             
             elif args[0] in SET_WAR_NAME_TERMS:
                 await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, is_lounge_server, command)
