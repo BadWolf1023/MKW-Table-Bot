@@ -179,7 +179,8 @@ SLASH_EXTENSIONS = [
     'slash_cogs.AdminSlashCommands', 
     'slash_cogs.PrivateSlashCommands', 
     'slash_cogs.LoungeSlashCommands', 
-    'slash_cogs.MiscSlashCommands'
+    'slash_cogs.MiscSlashCommands',
+    'slash_cogs.StatisticsSlashCommands'
 ] 
 
 switch_status = True
@@ -296,7 +297,7 @@ class BadWolfBot(ext_commands.Bot):
     #in our two dictionaries to local storage and the main dictionaries      
     @tasks.loop(hours=24)
     async def dumpDataAndBackup(self):
-        self.save_data()
+        await self.save_data()
 
     def load_tablebot_pickle(self):
         if os.path.exists(common.TABLE_BOT_PKL_FILE):

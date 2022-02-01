@@ -2077,7 +2077,7 @@ class TablingCommands:
                                     await message.channel.send("Could not find this FC in a room. **Did they finish the first race?**")
                             else:
                                 their_name = ""
-                                for arg in command.split()[3:]:
+                                for arg in args[3:]:
                                     if '=' in arg:
                                         break
                                     their_name += arg + " "
