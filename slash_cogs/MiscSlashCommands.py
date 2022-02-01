@@ -21,10 +21,10 @@ class MiscSlash(ext_commands.Cog):
     async def _catch_all_command(
         self,
         ctx: discord.ApplicationContext,
-        raw_input: Option(str, "Raw command input. You do not need to include your Table Bot server prefix in the command")
+        input: Option(str, "Raw command input. You do not need to include your Table Bot server prefix in the command")
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
-        args = raw_input.split() #split the raw string
+        args = input.split() #split the raw string
 
         await ctx.respond(EMPTY_CHAR)
         await self.bot.simulate_on_message(message, args, message.content, this_bot, server_prefix, is_lounge)

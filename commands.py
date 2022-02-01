@@ -30,7 +30,7 @@ from data_tracking import DataTracker
 #Other library imports, other people codes
 import math
 from tabulate import tabulate
-from typing import List, Set
+from typing import List, Set, Union
 import asyncio
 from collections.abc import Callable
 import urllib
@@ -2426,7 +2426,7 @@ class TablingCommands:
                     await message.channel.send("That's not a race number!")
 
     @staticmethod
-    async def war_picture_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+    async def war_picture_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, requester: Union[discord.Member, discord.User, None] = None):
         server_id = message.guild.id
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
@@ -2529,10 +2529,11 @@ class TablingCommands:
                             temp, error_types = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), this_bot.get_resolved_errors(), lounge_replace, up_to_race=up_to)
                             
 
-                            error_message = "\n\nMore errors occurred. Embed only allows so many errors to display."
-                            if len(temp) + len(error_message) >= 2048:
-                                temp = temp[:2048-len(error_message)] + error_message
-                            embed.set_footer(text=temp)
+                            error_message = "\nMore errors occurred. Embed only allows so many errors to display."
+                            request_message = f"\nPicture requested by {requester}" if requester is not None else ''
+                            if len(temp) + len(error_message) + len(request_message) >= 2048:
+                                temp = temp[:2048-len(error_message)-len(request_message)] + error_message + (request_message if request_message else '')
+                            embed.set_footer(text=temp+(request_message if request_message else ''))
                                 
                             pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
                             # await message.channel.send(file=file, embed=embed, view=pic_view)

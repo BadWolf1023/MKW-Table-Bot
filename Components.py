@@ -156,9 +156,9 @@ class PictureButton(discord.ui.Button['PictureView']):
 
     async def callback(self, interaction: discord.Interaction):
         msg = InteractionUtils.create_proxy_msg(interaction, ['wp'])
-        self.interaction = interaction
-        await interaction.response.edit_message(view=self.view) # view=none? but maybe it's good to allow people to click them whenever (since there is a cooldown on ?wp)
-        await commands.TablingCommands.war_picture_command(msg, self.view.bot, ['wp'], self.view.prefix, self.view.lounge)
+        # self.interaction = interaction
+        await interaction.response.edit_message(view=self.view)
+        await commands.TablingCommands.war_picture_command(msg, self.view.bot, ['wp'], self.view.prefix, self.view.lounge, requester=interaction.user.display_name)
 
 class PictureView(discord.ui.View):
     def __init__(self, bot, prefix, is_lounge_server, timeout=600):
@@ -225,7 +225,7 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
         }
         
         command_mes = await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.lounge, dont_send=True)
-        author_str = interaction.user.mention
+        author_str = interaction.user.display_name
         self.view.stop()
         self.view.clear_items()
         await interaction.response.edit_message(content=f"{author_str} - "+command_mes, view=self.view)
