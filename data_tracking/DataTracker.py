@@ -126,6 +126,11 @@ class DataRetriever(object):
         return await db_connection.execute(tracks_query, [track])
 
     @staticmethod
+    async def get_record(player_did, opponent_did, days):
+        record_query = QB.SQL_Search_Query_Builder.get_record_query(player_did, opponent_did, days)
+        return await db_connection.execute(record_query)
+
+    @staticmethod
     async def get_track_list():
         return await db_connection.execute("SELECT track_name, url, fixed_track_name, is_ct, track_name_lookup "
                                            "FROM Track")
