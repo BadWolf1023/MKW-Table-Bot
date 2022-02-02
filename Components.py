@@ -8,9 +8,8 @@ import time
 class ConfirmButton(discord.ui.Button['ConfirmView']):
     def __init__(self, cat):
         self.cat = cat
-        buttonType = discord.ButtonStyle.success if cat=='yes' else discord.ButtonStyle.danger
-        emoji = "✔" if cat == 'yes' else "✘"
-        super().__init__(style=buttonType, label=emoji, row=1)
+        buttonType = discord.ButtonStyle.success if cat=='Yes' else discord.ButtonStyle.danger
+        super().__init__(style=buttonType, label=cat, row=1)
     
     async def callback(self, interaction: discord.Interaction):
         self.disabled = True
@@ -18,49 +17,13 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
             child.disabled = True
             if child.cat != self.cat: 
                 self.view.children.pop(ind)
-        
         self.view.stop()
 
-        this_bot = self.view.bot
-        server_prefix = self.view.prefix
+        await interaction.response.edit_message(view=self.view)
 
-        if this_bot.prev_command_sw is False:
-            return await interaction.response.edit_message(view=self.view)
+        message = InteractionUtils.create_proxy_msg(interaction, ['wp'])
+        await commands.TablingCommands.after_start_war_command(message, self.view.bot, [self.cat], self.view.prefix, self.view.lounge)
 
-        this_bot.prev_command_sw = False
-        if self.cat == 'no':
-            this_bot.manualWarSetUp = True
-            await interaction.response.edit_message(view=self.view)
-            await interaction.followup.send(content=f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{server_prefix}A 2 3 / B 1 4 / Player 5 6*")
-            
-        else:
-            if this_bot.getRoom() is None or not this_bot.getRoom().is_initialized():
-                await interaction.response.edit_message(view=self.view)
-                await interaction.followup.send(content=f"Unexpected error. Somehow, there is no room loaded. War stopped. Recommend the command: {server_prefix}reset")
-                this_bot.setWar(None)
-                return
-    
-            numGPS = this_bot.getWar().numberOfGPs
-            players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
-            this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
-
-            view = PictureView(this_bot, server_prefix, self.view.lounge)
-                    
-            if len(players) != this_bot.getWar().get_num_players():
-                await interaction.response.edit_message(view=self.view)
-                
-                # return await interaction.followup.send(content=f'''**Warning:** *the number of players in the room doesn't match your war format and teams. **Table started, but teams might be incorrect.***'''
-                #                                 + '\n' + this_bot.get_room_started_message(), view=view)
-                return await view.send(interaction.channel, content='''**Warning:** *the number of players in the room doesn't match your war format and teams. **Table started, but teams might be incorrect.***'''
-                                                + '\n' + this_bot.get_room_started_message())
-
-            try:
-                await interaction.response.edit_message(view=self.view)
-            except:
-                pass 
-            
-            # await interaction.followup.send(content=this_bot.get_room_started_message(), view=view)
-            await view.send(interaction.channel, content=this_bot.get_room_started_message())
 
 class ConfirmView(discord.ui.View):
     def __init__(self, bot, prefix, lounge):
@@ -68,8 +31,8 @@ class ConfirmView(discord.ui.View):
         self.bot = bot
         self.prefix = prefix
         self.lounge = lounge
-        self.add_item(ConfirmButton('yes'))
-        self.add_item(ConfirmButton('no'))
+        self.add_item(ConfirmButton('Yes'))
+        self.add_item(ConfirmButton('No'))
     
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, 'confirm_interaction')
@@ -83,7 +46,7 @@ class ConfirmView(discord.ui.View):
 
 class PictureButton(discord.ui.Button['PictureView']):
     def __init__(self, bot, timeout):
-        super().__init__(style=discord.ButtonStyle.primary, label='Picture', row=0)
+        super().__init__(style=discord.ButtonStyle.primary, label='Update', row=0)
         self.bot = bot
         # self.button_number = self.bot.pic_button_count + 1
         # self.disabled = self.bot.getWPCooldownSeconds() > 0
@@ -98,6 +61,19 @@ class PictureButton(discord.ui.Button['PictureView']):
         # self.bot.pic_button_count+=1
         # self.start_timeout_timer()
         # self.start_cooldown_timer()
+        # self.button_number = self.bot.pic_button_count + 1
+
+        self.disabled = self.bot.getWPCooldownSeconds() > 0
+
+        self.timeout = timeout
+        self.__timeout_task = None
+        self.__timeout_expiry = None
+
+        self.cooldown = self.bot.getWPCooldownSeconds()
+        self.__cooldown_task = None
+        self.__cooldown_expiry = None
+        self.start_timeout_timer()
+        self.start_cooldown_timer()
         
     async def __timeout_task_impl(self) -> None:
         while True:
@@ -161,8 +137,11 @@ class PictureButton(discord.ui.Button['PictureView']):
 
     async def callback(self, interaction: discord.Interaction):
         msg = InteractionUtils.create_proxy_msg(interaction, ['wp'])
-        await interaction.response.edit_message(view=self.view)
-        await commands.TablingCommands.war_picture_command(msg, self.view.bot, ['wp'], self.view.prefix, self.view.lounge, requester=interaction.user.display_name)
+
+        self.view.message = None
+        await interaction.response.edit_message(view=None)
+        await commands.TablingCommands.war_picture_command(msg, self.view.bot, ['wp'], self.view.prefix, self.view.lounge,
+                                                           requester=interaction.user.display_name)
 
 class PictureView(discord.ui.View):
     def __init__(self, bot, prefix, is_lounge_server, timeout=600):
@@ -182,11 +161,11 @@ class PictureView(discord.ui.View):
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
             return False
         
-        cooldown = self.bot.getWPCooldownSeconds()
-        cooldown_active = cooldown > 0
-        if cooldown_active:
-            await interaction.response.send_message(f"This button is on cooldown. Please wait {cooldown} more seconds.", ephemeral=True)
-            return False
+        # cooldown = self.bot.getWPCooldownSeconds()
+        # cooldown_active = cooldown > 0
+        # if cooldown_active:
+        #     await interaction.response.send_message(f"This button is on cooldown. Please wait {cooldown} more seconds.", ephemeral=True)
+        #     return False
 
         return True
     

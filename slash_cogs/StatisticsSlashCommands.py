@@ -33,133 +33,132 @@ class StatisticsSlash(ext_commands.Cog):
         self.bot = bot
     
     @slash_command(
-        name='popular_tracks',
-        description="Show a list of the most popular/most played tracks",
+        name='populartracks',
+        description="Displays the most popular/played played tracks",
         guild_ids=GUILDS
     )
     async def _popular_tracks(
         self,
         ctx: discord.ApplicationContext,
-        category: Option(str, "RT/CT", choices=['RT', 'CT']),
-        timeframe: Option(int, "Timeframe of data to show in days.", required=False, default=None),
-        tier: Option(str, "Specify a tier.", choices=['FFA', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None)
+        type: Option(str, "RT/CT", choices=['RT', 'CT']),
+        days: Option(int,"Timeframe of data to show in days",required=False,default=None),
+        tier: Option(str, "Specify a tier", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
-        args = [command, category.lower()]
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command, type.lower()]
 
-        if timeframe is not None:
-            args.append(timeframe)
+        if days is not None:
+            args.append(days)
         if tier is not None:
             args.append(tier)
         
-        await ctx.respond(EMPTY_CHAR)
+        
         await commands.StatisticCommands.popular_tracks_command(self.bot, message, args, server_prefix, message.content)
     
     @slash_command(
-        name='unpopular_tracks',
-        description="Show a list of the least popular/lease played tracks",
+        name='unpopulartracks',
+        description="Displays the least popular/played tracks",
         guild_ids=GUILDS
     )
     async def _unpopular_tracks(
         self,
         ctx: discord.ApplicationContext,
-        category: Option(str, "RT/CT", choices=['RT', 'CT']),
-        timeframe: Option(str, "Timeframe to show *in days* (ex. \"5d\" or \"5\")", required=False, default=None),
-        tier: Option(str, "Specify a tier.", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None)
+        type: Option(str, "RT/CT", choices=['RT', 'CT']),
+        days: Option(int,"Timeframe of data to show in days",required=False,default=None),
+        tier: Option(str, "Specify a tier", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None)
     ):
-        command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
-        args = [command, category.lower()]
+        command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command, type.lower()]
 
-        if timeframe is not None:
-            args.append(timeframe)
+        if days is not None:
+            args.append(days)
         if tier is not None:
             args.append(tier)
-        
-        await ctx.respond(EMPTY_CHAR)
+
         await commands.StatisticCommands.popular_tracks_command(self.bot, message, args, server_prefix, message.content, is_top_tracks=False)
     
     @slash_command(
-        name='best_players',
-        description="Show the best players of a particular track",
+        name='topplayers',
+        description="Displays the best players of a particular track",
         guild_ids=GUILDS
     )
-    async def _best_players(
+    async def _top_players(
         self,
         ctx: discord.ApplicationContext,
-        track: Option(str, "Track"),
+        track: Option(str, "Track name or abbreviation"),
         tier: Option(str, "Tier", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None),
-        timeframe: Option(int, "Timeframe of data in days.", required=False, default=None),
-        min_plays: Option(int, "Minimum number of plays for a player to be included.", required=False, default=None)
+        days: Option(int,"Timeframe of data in days",required=False,default=None),
+        min_plays: Option(int, "Minimum number of plays for a player to be included", required=False, default=None)
     ):
-        command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, track]
 
         if tier is not None:
             args.append(tier.lower())
-        if timeframe is not None:
-            args.append(str(timeframe))
+        if days is not None:
+            args.append(str(days)+"d")
         if min_plays is not None:
             args.append("min="+str(min_plays))
 
-        await ctx.respond(EMPTY_CHAR)
+        message.content = ' '.join(args).lower()
         await commands.StatisticCommands.top_players_command(self.bot, message, args, server_prefix, message.content)
     
     @slash_command(
-        name="best_tracks",
+        name="besttracks",
         description="Show a player's best tracks",
         guild_ids=GUILDS
     )
     async def _best_tracks(
         self,
         ctx: discord.ApplicationContext,
-        category: Option(str, "RT/CT", choices=['RT/CT']),
+        type: Option(str, "RT/CT", choices=['RT','CT']),
+        player: Option(str,"See another player's best tracks",required=False,default=None),
         tier: Option(str, "Tier", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None),
-        timeframe: Option(int, "Timeframe of data in days.", required=False, default=None),
-        min_plays: Option(int, "Minimum number of plays for a player to be included.", required=False, default=None),
-        player: Option(str, "See another player's best tracks.", required=False, default=None)
+        days: Option(int,"Timeframe of data in days",required=False,default=None),
+        min_plays: Option(int, "Minimum number of plays for a player to be included", required=False, default=None)
     ):
-        command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
-        args = [command, category.lower()]
+        command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command, type.lower()]
 
         if player is not None:
             args.append(player)
         if tier is not None:
             args.append(tier.lower())
-        if timeframe is not None:
-            args.append(str(timeframe))
+        if days is not None:
+            args.append(str(days)+"d")
         if min_plays is not None:
             args.append("min="+str(min_plays))
-        
-        await ctx.respond(EMPTY_CHAR)
+
+        message.content = ' '.join(args).lower()
         await commands.StatisticCommands.player_tracks_command(self.bot, message, args, server_prefix, message.content)
 
     @slash_command(
-        name="worst_tracks",
+        name="worsttracks",
         description="Show a player's worst tracks",
         guild_ids=GUILDS
     )
     async def _worst_tracks(
         self,
         ctx: discord.ApplicationContext,
-        category: Option(str, "RT/CT", choices=['RT/CT']),
+        type: Option(str, "RT/CT", choices=['RT','CT']),
+        player: Option(str,"See another player's worst tracks",required=False,default=None),
         tier: Option(str, "Tier", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None),
-        timeframe: Option(int, "Timeframe of data in days.", required=False, default=None),
-        min_plays: Option(int, "Minimum number of plays for a player to be included.", required=False, default=None),
-        player: Option(str, "See another player's worst tracks.", required=False, default=None)
+        days: Option(int,"Timeframe of data in days",required=False,default=None),
+        min_plays: Option(int, "Minimum number of plays for a player to be included", required=False, default=None)
     ):
-        command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
-        args = [command, category.lower()]
+        command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command, type.lower()]
 
         if player is not None:
             args.append(player)
         if tier is not None:
             args.append(tier.lower())
-        if timeframe is not None:
-            args.append(str(timeframe))
+        if days is not None:
+            args.append(str(days)+"d")
         if min_plays is not None:
             args.append("min="+str(min_plays))
-        
-        await ctx.respond(EMPTY_CHAR)
+
+        message.content = ' '.join(args).lower()
         await commands.StatisticCommands.player_tracks_command(self.bot, message, args, server_prefix, message.content, sort_asc=True)
     
     @slash_command(
@@ -171,15 +170,14 @@ class StatisticsSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         player: Option(str, "Player to compare against (Lounge name)"),
-        timeframe: Option(int, "Timeframe (in days) to include data for", required=False, default=None)
+        days: Option(int,"Timeframe (in days) to include data for",required=False,default=None)
     ):
-        command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, player]
 
-        if timeframe is not None:
-            args.append(str(timeframe))
+        if days is not None:
+            args.append(str(days)+'d')
 
-        await ctx.respond(EMPTY_CHAR)
         await commands.StatisticCommands.record_command(self, message, args, server_prefix, message.content)
     
 

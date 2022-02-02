@@ -32,7 +32,7 @@ class AdminSlash(ext_commands.Cog):
         sha: Option(str, "SHA to add"),
         track: Option(str, "Track name (paste the name exactly as it appears)")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, sha, track]
         
         await ctx.respond(EMPTY_CHAR)
@@ -45,10 +45,9 @@ class AdminSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         sha: Option(str, "SHA to remove")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, sha]
-
-        await ctx.respond(EMPTY_CHAR)
+        
         await commands.BotAdminCommands.remove_sha_track(message, args)
     
     blacklist = SlashCommandGroup("blacklist", "Configure Table Bot's blacklists", guild_ids=common.SLASH_GUILDS, checks=[InteractionUtils.bot_admin_check])
@@ -63,10 +62,9 @@ class AdminSlash(ext_commands.Cog):
         user: Option(int, "User's Discord ID"),
         reason: Option(str, "Reason for blacklist")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, user, reason]
 
-        await ctx.respond(EMPTY_CHAR)
         await commands.BotAdminCommands.blacklist_user_command(message, args, command)
     
     @blacklist_user.command(name="remove",
@@ -76,10 +74,9 @@ class AdminSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         user: Option(int, "User's Discord ID")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, user]
-
-        await ctx.respond(EMPTY_CHAR)
+        
         await commands.BotAdminCommands.blacklist_user_command(message, args, command)
 
     @blacklist_word.command(name="add",
@@ -89,9 +86,9 @@ class AdminSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         word: Option(str, "Word to blacklist")
     ):
-        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, word]
-        await ctx.respond(EMPTY_CHAR)
+        
         await commands.BotAdminCommands.add_blacklisted_word_command(message, args)
     
     @blacklist_word.command(name="remove",
@@ -101,9 +98,9 @@ class AdminSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         word: Option(str, "Word to remove from blacklist")
     ):
-        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, word]
-        await ctx.respond(EMPTY_CHAR)
+        
         await commands.BotAdminCommands.remove_blacklisted_word_command(message, args)
     
     @slash_command(name='global_vr',
@@ -113,9 +110,9 @@ class AdminSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         status: Option(str, "on/off", choices=["on", "off"])
     ):
-        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         status = True if status == 'on' else False
-        await ctx.respond(EMPTY_CHAR)
+        
         await commands.BotAdminCommands.global_vr_command(message, on=status)
     
 

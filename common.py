@@ -100,9 +100,8 @@ LIMITED_CHANNEL_IDS = LIMITED_DONT_INCLUDE_IN_COUNT
 LIMITED_SERVER_IDS = None
 BETA_CATEGORY_IDS = {744842611998588928, 740659739611889765, 895999567894556672}
 
-CW_TESTING_SERVER_ID = 775253594848886785
 MKW_TABLE_BOT_CENTRAL_SERVER_ID = 739733336871665696 #Same as "Bad Wolf's Server", but this is the new name for the server
-SLASH_GUILDS = [MKW_TABLE_BOT_CENTRAL_SERVER_ID] if is_beta else [CW_TESTING_SERVER_ID]
+SLASH_GUILDS = [MKW_TABLE_BOT_CENTRAL_SERVER_ID] if is_beta else [properties['slash_command_server']]
 
 
 current_notification = ""
@@ -231,6 +230,8 @@ BAD_WOLF_ID = 706120725882470460
 CW_ID = 366774710186278914
 ANDREW_ID = 267395889423712258
 
+OWNERS = {BAD_WOLF_ID,CW_ID,ANDREW_ID} if is_dev or is_beta else {BAD_WOLF_ID,ANDREW_ID}
+
 #Lounge stuff
 MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=1&event_data="
 MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=2&event_data="
@@ -350,10 +351,7 @@ lounge_channel_mappings = {
 
 
 def is_bad_wolf(author):
-    if is_dev or is_beta:
-        return author.id in {BAD_WOLF_ID, CW_ID, ANDREW_ID}
-    else:
-        return author.id in {BAD_WOLF_ID, ANDREW_ID}
+    return author.id in OWNERS
 
 def is_bot_admin(author):
     return str(author.id) in botAdmins or is_bad_wolf(author)
