@@ -47,6 +47,34 @@ graphs = {"1":("None", "default graph"),
 
 DEFAULT_DC_POINTS = 3
 
+#TODO: REFACTOR THIS SOMEHOW; THIS ISN'T GOOD
+pic_num = 0
+sug_num = 0
+pic_views = {}
+sug_views = {}
+def add_pic_view(pic_view):
+    global pic_num
+    pic_num+=1
+
+    pic_views[pic_num] = pic_view
+    return pic_num
+    
+def add_sug_view(sug_view):
+    global sug_num
+    sug_num+=1
+    sug_views[sug_num] = sug_view
+    return sug_num
+
+def delete_pic_views(delete):
+    for ind in delete:
+        view = pic_views.pop(ind)
+        asyncio.create_task(view.on_timeout())
+    
+def delete_sug_views(delete):
+    for ind in delete:
+        view = sug_views.pop(ind)
+        asyncio.create_task(view.on_timeout())
+
 class ChannelBot(object):
     '''
     classdocs
@@ -65,8 +93,8 @@ class ChannelBot(object):
         self.miis: Dict[str, Mii.Mii] = {}
         
         self.resolved_errors = set()
-        self.pic_button_count = 0
-        self.cur_sug_num = 0
+        self.pic_views = []
+        self.sug_views = []
         
         self.populating = False
         
@@ -436,6 +464,31 @@ class ChannelBot(object):
     def getWar(self) -> War.War:
         return self.war
     
+    def add_pic_view(self, pic_view):
+        view_ind = add_pic_view(pic_view)
+        self.pic_views.append(view_ind)
+        try:
+            if len(self.pic_views)>3:
+                to_delete = self.pic_views[:-3]
+
+                delete_pic_views(to_delete)
+                self.pic_views = self.pic_views[-3:]
+
+        except IndexError:
+            pass
+
+    def add_sug_view(self, sug_view):
+        view_ind = add_sug_view(sug_view)
+        self.sug_views.append(view_ind)
+        try:
+            if len(self.sug_views)>1:
+                to_delete = self.sug_views[:-1]
+                delete_sug_views(to_delete)
+                self.sug_views = self.sug_views[-1:]
+
+        except IndexError:
+            pass
+    
     def updatedLastUsed(self):
         self.last_used = datetime.now()
         self.updateLoungeFinishTime()
@@ -621,8 +674,6 @@ class ChannelBot(object):
         self.save_states = []
         self.state_pointer = -1
         self.resolved_errors = set()
-        self.pic_button_count = 0
-        self.cur_sug_num = 0
         self.miis = {}
         self.populating = False
         self.should_send_mii_notification = True

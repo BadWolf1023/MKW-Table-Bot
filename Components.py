@@ -85,19 +85,19 @@ class PictureButton(discord.ui.Button['PictureView']):
     def __init__(self, bot, timeout):
         super().__init__(style=discord.ButtonStyle.primary, label='Picture', row=0)
         self.bot = bot
-        self.button_number = self.bot.pic_button_count + 1
-        self.disabled = self.bot.getWPCooldownSeconds() > 0
+        # self.button_number = self.bot.pic_button_count + 1
+        # self.disabled = self.bot.getWPCooldownSeconds() > 0
 
-        self.timeout = timeout
-        self.__timeout_task = None
-        self.__timeout_expiry = None
+        # self.timeout = timeout
+        # self.__timeout_task = None
+        # self.__timeout_expiry = None
 
-        self.cooldown = max(self.bot.getWPCooldownSeconds(), 0.5)
-        self.__cooldown_task = None
-        self.__cooldown_expiry = None
-        self.bot.pic_button_count+=1
-        self.start_timeout_timer()
-        self.start_cooldown_timer()
+        # self.cooldown = max(self.bot.getWPCooldownSeconds(), 0.5)
+        # self.__cooldown_task = None
+        # self.__cooldown_expiry = None
+        # self.bot.pic_button_count+=1
+        # self.start_timeout_timer()
+        # self.start_cooldown_timer()
         
     async def __timeout_task_impl(self) -> None:
         while True:
@@ -122,7 +122,7 @@ class PictureButton(discord.ui.Button['PictureView']):
         
     def _dispatch_timeout(self):
         self.__cooldown_task.cancel()
-        asyncio.create_task(self.view.on_timeout())
+        asyncio.create_task(self.view.on_timeout(), name=f'pic-button-timeout-{time.monotonic()}')
     
     async def __cooldown_task_impl(self):
         while True:
@@ -161,30 +161,40 @@ class PictureButton(discord.ui.Button['PictureView']):
 
     async def callback(self, interaction: discord.Interaction):
         msg = InteractionUtils.create_proxy_msg(interaction, ['wp'])
-        # self.interaction = interaction
         await interaction.response.edit_message(view=self.view)
         await commands.TablingCommands.war_picture_command(msg, self.view.bot, ['wp'], self.view.prefix, self.view.lounge, requester=interaction.user.display_name)
 
 class PictureView(discord.ui.View):
     def __init__(self, bot, prefix, is_lounge_server, timeout=600):
-        super().__init__()
+        super().__init__(timeout=timeout)
         self.bot = bot
         self.prefix = prefix
         self.lounge = is_lounge_server
         self.message = None
 
         self.add_item(PictureButton(self.bot, timeout))
-    
+
+        self.bot.add_pic_view(self)
+
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, 'wp_interaction')
-        if not allowed: 
+        if not allowed:
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
-        return allowed
+            return False
+        
+        cooldown = self.bot.getWPCooldownSeconds()
+        cooldown_active = cooldown > 0
+        if cooldown_active:
+            await interaction.response.send_message(f"This button is on cooldown. Please wait {cooldown} more seconds.", ephemeral=True)
+            return False
+
+        return True
     
     async def on_timeout(self) -> None:
         self.clear_items()
         self.stop()
         await self.message.edit(view=self)
+        self = None
             
     async def send(self, messageable, content=None, file=None, embed=None):
         if hasattr(messageable, 'channel'):
@@ -270,12 +280,13 @@ class SuggestionView(discord.ui.View):
         self.index = id if id else self.error['id']
         self.selected_values = None
         self.message = None
-        self.bot.cur_sug_num +=1
-        self.current_num = self.bot.cur_sug_num
+        self.bot.add_sug_view(self)
+        # self.bot.cur_sug_num +=1
+        # self.current_num = self.bot.cur_sug_num
 
         self.__delete_task = None
         self.__delete_expiry = None
-        self.delete_interval = 1.0
+        self.delete_interval = 0.5
 
         self.create_row()
 
@@ -285,6 +296,7 @@ class SuggestionView(discord.ui.View):
         self.stop()
         await self.message.edit(view=self)
         await self.message.delete()
+        self = None
         
     async def __delete_task_impl(self) -> None:
         '''
@@ -306,7 +318,7 @@ class SuggestionView(discord.ui.View):
         
     def _dispatch_del_timeout(self):
         self.__delete_task.cancel()
-        asyncio.create_task(self.on_timeout())
+        asyncio.create_task(self.on_timeout(), name=f'sug-view-timeout-{time.monotonic()}')
     
     def start_delete_timer(self):
         loop = asyncio.get_running_loop()
@@ -320,7 +332,7 @@ class SuggestionView(discord.ui.View):
         if hasattr(messageable, 'channel'):
             messageable = messageable.channel
         
-        self.start_delete_timer()
+        # self.start_delete_timer()
 
         self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
 

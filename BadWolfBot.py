@@ -246,6 +246,7 @@ class BadWolfBot(ext_commands.Bot):
         UtilityFunctions.initialize()
         TagAIShell.initialize()
     
+    
     #Strips the given prefix from the start of the command
     #Note, the caller must ensure that the given string has a prefix by using has_prefix to ensure proper behaviour
     #lstrip won't work here (go read the documentation and find a scenario that it wouldn't work in)
