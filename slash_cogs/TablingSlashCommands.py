@@ -445,7 +445,7 @@ class Table_Slash(ext_commands.Cog):
     async def _vr(
         self,
         ctx: discord.ApplicationContext,
-        players: Option(str, "Player(s) in the room", required=False, default=None)
+        players: Option(str, "Player(s) in the room (FC/Lounge Name/Discord Mention)", required=False, default=None)
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command]

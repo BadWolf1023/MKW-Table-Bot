@@ -70,6 +70,12 @@ class ConfirmView(discord.ui.View):
         self.lounge = lounge
         self.add_item(ConfirmButton('yes'))
         self.add_item(ConfirmButton('no'))
+    
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, 'confirm_interaction')
+        if not allowed: 
+            await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
+        return allowed
 
 
 ###########################################################################################
@@ -170,7 +176,10 @@ class PictureView(discord.ui.View):
         self.add_item(PictureButton(self.bot, timeout))
     
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, 'wp')
+        allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, 'wp_interaction')
+        if not allowed: 
+            await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
+        return allowed
     
     async def on_timeout(self) -> None:
         self.clear_items()
@@ -316,7 +325,10 @@ class SuggestionView(discord.ui.View):
         self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, InteractionUtils.convert_key_to_command(self.error['type']))
+        allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, InteractionUtils.convert_key_to_command(self.error['type']))
+        if not allowed: 
+            await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
+        return allowed
 
     def create_row(self):
         error = self.error
