@@ -4,7 +4,8 @@ from discord.ext import commands as ext_commands
 import commands
 import common
 
-REQUIRED_PERMISSIONS = [CommandPermission(role, 2, True) for role in list(common.reporter_plus_roles)] # + [Permission(common.CW_ID, 2, True)]
+print(common.properties["admin_id"], type(common.properties["admin_id"]))
+REQUIRED_PERMISSIONS = [CommandPermission(role, 2, True) for role in list(common.reporter_plus_roles)] + [CommandPermission(common.properties["admin_id"], 2, True)]
 # GUILDS = [common.MKW_LOUNGE_SERVER_ID]+common.SLASH_GUILDS
 GUILDS = common.SLASH_GUILDS
 EMPTY_CHAR = "\u200b"
@@ -24,11 +25,11 @@ class LoungeSlash(ext_commands.Cog):
         races_played: Option(int, "Number of races played in event"),
         # table_text: Option(str, "Table text for manual submissions", required=False, default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, tier, str(races_played)]
         # if table_text: args.append(table_text)
 
-        # await ctx.respond(EMPTY_CHAR)
+        # 
         await ctx.respond(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting tables at the present. \
             Use `{self.bot.user.name} rtupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use this slash command.")
 
@@ -43,11 +44,11 @@ class LoungeSlash(ext_commands.Cog):
         races_played: Option(int, "Number of races played in event"),
         # table_text: Option(str, "Table text for manual submissions", required=False, default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, tier, str(races_played)]
         # if table_text: args.append(table_text)
 
-        # await ctx.respond(EMPTY_CHAR)
+        # 
         await ctx.respond(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting tables at the present. \
             Use `{self.bot.user.name} ctupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use this slash command.")
 
@@ -61,10 +62,9 @@ class LoungeSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         id: Option(int, "Submission ID")
     ):
-        command, message, this_bot, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, this_bot, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, str(id)]
-
-        await ctx.respond(EMPTY_CHAR)
+        
         await commands.LoungeCommands.approve_submission_command(self.bot, message, args, self.bot.lounge_submissions)
     
     @slash_command(name="deny",
@@ -76,11 +76,10 @@ class LoungeSlash(ext_commands.Cog):
         id: Option(int, "Submission ID"),
         reason: Option(str, "Reason for denial", required=False, default=None)
     ):
-        command, message, this_bot, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, this_bot, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, str(id)]
         if reason: args.append(reason)
-
-        await ctx.respond(EMPTY_CHAR)
+        
         await commands.LoungeCommands.deny_submission_command(self.bot, message, args, self.bot.lounge_submissions)
     
     @slash_command(name="pending",
@@ -90,9 +89,8 @@ class LoungeSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
-
-        await ctx.respond(EMPTY_CHAR)
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
+        
         await commands.LoungeCommands.pending_submissions_command(message, self.bot.lounge_submissions)
     
 

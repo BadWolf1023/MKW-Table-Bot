@@ -460,8 +460,8 @@ class BadWolfBot(ext_commands.Bot):
 
         await self.process_application_commands(interaction)
     
-    async def slash_interaction_pre_invoke(self, interaction: discord.Interaction):
-        message = InteractionUtils.create_proxy_msg(interaction)
+    async def slash_interaction_pre_invoke(self, ctx: discord.ApplicationContext):
+        message = InteractionUtils.create_proxy_msg(ctx.interaction, ctx=ctx)
 
         is_lounge_server = InteractionUtils.check_lounge_server(message)
         
@@ -470,7 +470,8 @@ class BadWolfBot(ext_commands.Bot):
         if is_lounge_server and this_bot.isFinishedLounge():
             this_bot.freeLock()
 
-        return interaction.data['name'], message, this_bot, '/', is_lounge_server
+        name = ctx.command.full_parent_name + " " + ctx.interaction.data['name']
+        return name.strip(), message, this_bot, '/', is_lounge_server
 
 
     async def on_application_command_error(self, ctx: discord.ApplicationContext, error):

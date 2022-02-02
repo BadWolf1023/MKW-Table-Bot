@@ -338,7 +338,7 @@ class SimpleRooms(object):
 
         str_msg += tabulate(tabular_data=row_strings, headers=header, tablefmt="simple", colalign=["left"], stralign="left")
 
-        str_msg += f"\n\nPage {pageNumber+1}/{len(races)}```"
+        str_msg += f"```"
         return str_msg
 
 

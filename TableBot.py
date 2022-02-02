@@ -454,8 +454,8 @@ class ChannelBot(object):
     def getWPCooldownSeconds(self) -> int:
         if self.should_send_mii_notification:
             self.should_send_mii_notification = False
-        if common.in_testing_server:
-            return -1
+        # if common.in_testing_server:
+        #     return -1
         if self.lastWPTime is None:
             return -1
         curTime = datetime.now()

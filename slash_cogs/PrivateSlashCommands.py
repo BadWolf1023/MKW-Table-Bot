@@ -4,7 +4,8 @@ from discord.ext import commands as ext_commands
 from discord.commands import SlashCommandGroup, slash_command, Option, CommandPermission
 import common
 
-REQUIRED_PERMISSIONS = [CommandPermission(common.BAD_WOLF_ID, 2, True), CommandPermission(common.CW_ID, 2, True)]
+REQUIRED_PERMISSIONS = [CommandPermission(id,2,True) for id in common.OWNERS]
+
 EMPTY_CHAR = '\u200b'
 
 class PrivateSlash(ext_commands.Cog):
@@ -20,10 +21,10 @@ class PrivateSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         user: Option(int, "User Discord ID")
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, user]
 
-        await ctx.respond(EMPTY_CHAR)
+        
         await commands.BadWolfCommands.add_bot_admin_command(message, args)
     
     @admin.command(name="remove",
@@ -33,9 +34,9 @@ class PrivateSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         user: Option(int, "User Discord ID")
     ):
-        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, user]
-        await ctx.respond(EMPTY_CHAR)
+        
         await commands.BadWolfCommands.remove_bot_admin_command(message, args)
     
     @slash_command(name="logs",
@@ -46,8 +47,8 @@ class PrivateSlash(ext_commands.Cog):
         self, 
         ctx: discord.ApplicationContext
     ):
-        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
-        await ctx.respond(EMPTY_CHAR)
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
+        
         await commands.BadWolfCommands.get_logs_command(message)
     
     @slash_command(name="garbage_collect",
@@ -58,8 +59,8 @@ class PrivateSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
-        await ctx.respond(EMPTY_CHAR)
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
+        
         await commands.BadWolfCommands.garbage_collect_command(message)
     
     @slash_command(name="server_usage",
@@ -70,8 +71,8 @@ class PrivateSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        _, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
-        await ctx.respond(EMPTY_CHAR)
+        _, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
+        
         await commands.BadWolfCommands.server_process_memory_command(message)
     
     @slash_command(name='close_bot',

@@ -51,14 +51,56 @@ def convert_key_to_command(key):
     }
     return map[key]
 
-def create_proxy_msg(interaction: discord.Interaction, args=None):
+
+class MessageWrapper():
+    def __init__(self,msg, ctx):
+        self.msg = msg
+        self.ctx = ctx
+
+    async def delete(self):
+        await self.msg.edit("\u200b")
+        if self.ctx:
+            self.ctx.responded = False
+
+    def __getattr__(self,attr):
+        return self.msg.__getattribute__(attr)
+
+class ChannelWrapper():
+    def __init__(self,channel, ctx):
+        self.channel = channel
+        self.ctx = ctx
+        if self.ctx:
+            self.ctx.responded = False
+        self.message = None
+
+    async def send(self,*args,**args2):
+        if self.ctx and not self.ctx.responded:
+            if self.message:
+                await self.message.edit(*args, **args2)
+                return self.message
+
+            self.ctx.responded = True
+            msg = await (await self.ctx.respond(*args,**args2)).original_message()
+            msg = MessageWrapper(msg, self.ctx)
+
+            self.message = msg
+            return msg
+        else:
+            return await self.channel.send(*args,**args2)
+
+    def __getattr__(self,attr):
+        return self.channel.__getattribute__(attr)
+
+def create_proxy_msg(interaction, args=None, ctx=None):
     proxyMsg = discord.Object(id=interaction.id)
-    proxyMsg.channel = interaction.channel
+
+    proxyMsg.channel = ChannelWrapper(interaction.channel, ctx)
     proxyMsg.guild = interaction.guild
     proxyMsg.content = build_msg_content(interaction.data, args)
     proxyMsg.author = interaction.user
     proxyMsg.proxy = True
     proxyMsg.raw_mentions = []
+
     for i in proxyMsg.content:
         if i.startswith('<@') and i.endswith('>'):
             proxyMsg.raw_mentions.append(i)

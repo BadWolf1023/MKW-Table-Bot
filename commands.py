@@ -579,7 +579,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
         # await paginate(message, len(tracks_played)/number_tracks, get_page_callback, client)
         pages = [get_page_callback(page) for page in range(int(num_pages))]
-        paginator = ComponentPaginator.MessagePaginator(pages, show_disabled=False, show_indicator=True, timeout=common.embed_page_time.seconds)
+        paginator = ComponentPaginator.MessagePaginator(pages, show_indicator=True, timeout=common.embed_page_time.seconds)
         await paginator.send(message)
 
     @staticmethod
@@ -652,12 +652,12 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
             message_title = f'{"Worst" if sort_asc else "Best"} {"CTs" if is_ct else "RTs"} for {lounge_name}'
             message_title += filter_descriptor
-            message_title += f' [Min {min_count} Plays] (Page {page+1}/{int(math.ceil(num_pages))})'
+            message_title += f' [Min {min_count} Plays]'
 
             return f'```diff\n- {message_title}\n\n{table}```'
 
         pages = [get_page_callback(page) for page in range(int(num_pages))]
-        paginator = ComponentPaginator.MessagePaginator(pages, show_disabled=False, show_indicator=True, timeout=common.embed_page_time.seconds)
+        paginator = ComponentPaginator.MessagePaginator(pages, show_indicator=True, timeout=common.embed_page_time.seconds)
         await paginator.send(message)
 
     @staticmethod
@@ -719,12 +719,12 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
             message_title = f"Top Lounge {fixed_track_name} Players"
             message_title += filter_descriptor
-            message_title += f' [Min {min_count} Plays] (Page {page + 1}/{int(math.ceil(num_pages))})'
+            message_title += f' [Min {min_count} Plays]'
 
             return f'```diff\n- {message_title}\n\n{table}```'
 
         pages = [get_page_callback(page) for page in range(int(num_pages))]
-        paginator = ComponentPaginator.MessagePaginator(pages, show_disabled=False, show_indicator=True, timeout=common.embed_page_time.seconds)
+        paginator = ComponentPaginator.MessagePaginator(pages, show_indicator=True, timeout=common.embed_page_time.seconds)
         await paginator.send(message)
 
     @staticmethod
@@ -996,7 +996,7 @@ class OtherCommands:
                 return
             
             room_texts = [SimpleRooms.SimpleRooms.get_embed_text_for_race(rooms, page) for page in range(len(rooms))]
-            paginator = ComponentPaginator.MessagePaginator(pages=room_texts, show_disabled=False, timeout=common.embed_page_time.seconds)
+            paginator = ComponentPaginator.MessagePaginator(pages=room_texts, show_indicator=True, timeout=common.embed_page_time.seconds)
             await paginator.send(message)
     
     @staticmethod
@@ -1040,7 +1040,7 @@ class OtherCommands:
             FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
             successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
             if not successful:
-                await message.channel.send("Could not find you in a room. (This could be an error if I couldn't find your FC.)")
+                await message2.edit("Could not find you in a room. (This could be an error if I couldn't find your FC.)")
         elif len(args) > 1:
             if len(message.raw_mentions) > 0:
                 discordIDToLoad = str(message.raw_mentions[0])
@@ -1048,22 +1048,22 @@ class OtherCommands:
                 FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
                 successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
                 if not successful:
-                    await message.channel.send(f"Could not find {UtilityFunctions.process_name(str(message.mentions[0].name))} in a room. (This could be an error if I couldn't find their FC in the database.)")
+                    await message2.edit(f"Could not find {UtilityFunctions.process_name(str(message.mentions[0].name))} in a room. (This could be an error if I couldn't find their FC in the database.)")
             elif UtilityFunctions.is_fc(args[1]):
                 successful, room_data, last_match_str, rLID = await this_bot.verify_room([args[1]])
                 if not successful:
-                    await message.channel.send("Could not find this FC in a room.")
+                    await message2.edit("Could not find this FC in a room.")
             else:
                 await updateData( * await LoungeAPIFunctions.getByLoungeNames([" ".join(old_command.split()[1:])]))
                 FCs = UserDataProcessing.getFCsByLoungeName(" ".join(old_command.split()[1:]))
 
                 successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
                 if not successful:
-                    await message.channel.send(f"Could not find {UtilityFunctions.process_name(' '.join(old_command.split()[1:]))} in a room. (This could be an error if I couldn't their FC in the database.)")
+                    await message2.edit(f"Could not find {UtilityFunctions.process_name(' '.join(old_command.split()[1:]))} in a room. (This could be an error if I couldn't their FC in the database.)")
 
         if not successful or room_data is None or rLID is None:
-            await common.safe_delete(message2)
             return
+
         FC_List = [fc for fc in room_data]
         await updateData(* await LoungeAPIFunctions.getByFCs(FC_List))
 
@@ -1596,8 +1596,7 @@ class ServerDefaultCommands:
             await message.channel.send("Give a prefix. Prefix not changed.")
             return
 
-        end_prefix_cmd = message.content.lower().index("setprefix") + len("setprefix")
-        new_prefix = message.content[end_prefix_cmd:].strip("\n").strip()
+        new_prefix = args[1]
         if len(new_prefix) < 1:
             await message.channel.send("Cannot set an empty prefix. Prefix not changed.")
             return
@@ -2100,7 +2099,7 @@ class TablingCommands:
                             FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
                             successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                             if not successful:
-                                await message.channel.send("Could not find you in a room. **Did you finish the first race?**")
+                                await message2.edit("Could not find you in a room. **Did you finish the first race?**")
                         elif len(args) > 3:
                             if len(message.raw_mentions) > 0:
                                 discordIDToLoad = str(message.raw_mentions[0])
@@ -2109,15 +2108,15 @@ class TablingCommands:
                                 successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
                                     lookup_name = UtilityFunctions.process_name(str(message.mentions[0].name))
-                                    await message.channel.send(f"Could not find {lookup_name} in a room. **Did they finish the first race?**")
+                                    await message2.edit(f"Could not find {lookup_name} in a room. **Did they finish the first race?**")
                             elif UtilityFunctions.is_rLID(args[3]):
                                 successful = await this_bot.load_room_smart([args[3]], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
-                                    await message.channel.send("Could not find this rxx number. Is the room over 24 hours old?")
+                                    await message2.edit("Could not find this rxx number. Is the room over 24 hours old?")
                             elif UtilityFunctions.is_fc(args[3]):
                                 successful = await this_bot.load_room_smart([args[3]], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
-                                    await message.channel.send("Could not find this FC in a room. **Did they finish the first race?**")
+                                    await message2.edit("Could not find this FC in a room. **Did they finish the first race?**")
                             else:
                                 their_name = ""
                                 for arg in args[3:]:
@@ -2130,10 +2129,11 @@ class TablingCommands:
                                 successful = await this_bot.load_room_smart([FCs], message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
                                 if not successful:
                                     processed_lookup_name = UtilityFunctions.process_name(their_name)
-                                    await message.channel.send(f"Could not find {processed_lookup_name} in a room. **Did they finish the first race?**")
+                                    await message2.edit(f"Could not find {processed_lookup_name} in a room. **Did they finish the first race?**")
                     finally:
                         if not successful:
                             this_bot.setWar(None)
+                            return
                     #Room loaded successfully
                     if successful:
                         this_bot.freeLock()
@@ -2148,7 +2148,7 @@ class TablingCommands:
                             if not this_bot.getWar().is_ffa():
                                 to_send = f"{this_bot.getWar().get_tags_str()}\n***Is this correct?***"
                                 view = Components.ConfirmView(this_bot, server_prefix, is_lounge_server)
-                                await message.channel.send(to_send, view=view)
+                                await message2.edit(to_send, view=view)
                                 this_bot.prev_command_sw = True
 
                             else:
@@ -2157,14 +2157,14 @@ class TablingCommands:
                                 for teamNumber in range(0, min(this_bot.getWar().numberOfTeams, len(players))):
                                     dummy_teams[players[teamNumber][0]] = str(teamNumber)
                                 this_bot.getWar().setTeams(dummy_teams)
-                                await message.channel.send(this_bot.get_room_started_message())
+                                await message2.edit(this_bot.get_room_started_message(), view=Components.PictureView(this_bot, server_prefix, is_lounge_server))
 
                             this_bot.setShouldSendNotification(True)
                     else:
                         this_bot.setWar(None)
                         this_bot.setRoom(None)
-                    if message2 is not None:
-                        await common.safe_delete(message2)
+                    # if message2 is not None:
+                    #     await common.safe_delete(message2)
         else:
             await message.channel.send(f"You can only load a room for yourself in Lounge. Do this instead: `{server_prefix}{args[0]} {args[1]} {args[2]}`")
 
@@ -2425,7 +2425,9 @@ class TablingCommands:
                     await message.channel.send("That's not a race number!")
 
     @staticmethod
-    async def war_picture_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, requester: Union[discord.Member, discord.User, None] = None):
+    async def war_picture_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str,
+                                  is_lounge_server:bool, requester: Union[discord.Member, discord.User, None] = None,
+                                  prev_message=None):
         server_id = message.guild.id
         if not this_bot.table_is_set():
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
@@ -2439,7 +2441,11 @@ class TablingCommands:
             else:
 
                 this_bot.updateWPCoolDown()
-                message2 = await message.channel.send("Updating room...")
+                if prev_message:
+                    message2 = prev_message
+                    await prev_message.edit("Updating room", view=None)
+                else:
+                    message2 = await message.channel.send("Updating room...")
                 players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, this_bot.getWar().numberOfGPs*4).items())
                 FC_List = [fc for fc, _ in players]
 
@@ -2528,7 +2534,8 @@ class TablingCommands:
                             temp, error_types = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), this_bot.get_resolved_errors(), lounge_replace, up_to_race=up_to)
 
                             error_message = "\nMore errors occurred. Embed only allows so many errors to display."
-                            request_message = f"\n\nPicture requested by {requester}" if requester is not None else ''
+                            #request_message = f"\n\nPicture requested by {requester}" if requester is not None else ''
+                            request_message = ""
                             if len(temp) + len(error_message) + len(request_message) >= 2048:
                                 temp = temp[:2048-len(error_message)-len(request_message)] + error_message + (request_message if request_message else '')
                             embed.set_footer(text=temp+(request_message if request_message else ''))
@@ -2536,6 +2543,7 @@ class TablingCommands:
                             pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
                             # await message.channel.send(file=file, embed=embed, view=pic_view)
                             await pic_view.send(message, file=file, embed=embed)
+
                             if error_types and len(error_types)>0:
                                 chosen_suggestion = get_suggestion(error_types)
                                 sug_view = Components.SuggestionView(chosen_suggestion, this_bot, server_prefix, is_lounge_server)
