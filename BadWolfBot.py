@@ -230,7 +230,7 @@ class BadWolfBot(ext_commands.Bot):
         self.table_bots = dict()
         self.lounge_submissions = lounge_submissions
         self.user_flag_exceptions = set()
-        self.mention = '<@!923824454293930014>'
+        self.mention = None
 
         if ALLOW_SLASH_COMMANDS:
             for ext in SLASH_EXTENSIONS:
@@ -244,6 +244,8 @@ class BadWolfBot(ext_commands.Bot):
         ServerFunctions.initialize()
         UtilityFunctions.initialize()
         TagAIShell.initialize()
+    
+    
     
     #Strips the given prefix from the start of the command
     #Note, the caller must ensure that the given string has a prefix by using has_prefix to ensure proper behaviour
@@ -300,6 +302,8 @@ class BadWolfBot(ext_commands.Bot):
         
         self.dumpDataAndBackup.start()
         checkBotAbuse.start()
+
+        self.mention = f'<@!{self.user.id}>'
     
         finished_on_ready = True
     

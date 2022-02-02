@@ -22,7 +22,7 @@ sslcontext = ssl.create_default_context(cafile=certifi.where())
 version = "12.0.0" #Final release from Bad Wolf, stabilizing various things and releasing beta commands
 
 PROPERTIES_FILE = f"properties.json"
-properties = json.load(open(PROPERTIES_FILE)) if os.path.exists(PROPERTIES_FILE) else {}
+properties = json.load(open(PROPERTIES_FILE)) if os.path.exists(PROPERTIES_FILE) else {"mode": 'dev'}
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
