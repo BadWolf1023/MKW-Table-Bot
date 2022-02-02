@@ -325,30 +325,32 @@ TESTING_SERVER_LOUNGE_UPDATES = LoungeUpdateChannels(
     preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
     type_text_secondary="CT")
 
-lounge_channel_mappings = {MKW_LOUNGE_SERVER_ID:LoungeUpdateChannels(
-    updater_channel_id_primary=MKW_LOUNGE_RT_UPDATER_CHANNEL,
-    updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
-    preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
-    type_text_primary="RT",
-    updater_channel_id_secondary=MKW_LOUNGE_CT_UPDATER_CHANNEL,
-    updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
-    preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
-    type_text_secondary="CT"),
-    
+lounge_channel_mappings = {
+    MKW_LOUNGE_SERVER_ID:LoungeUpdateChannels(
+            updater_channel_id_primary=MKW_LOUNGE_RT_UPDATER_CHANNEL,
+            updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
+            preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
+            type_text_primary="RT",
+            updater_channel_id_secondary=MKW_LOUNGE_CT_UPDATER_CHANNEL,
+            updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
+            preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
+            type_text_secondary="CT"
+        ),
     BAD_WOLF_SERVER_ID:LoungeUpdateChannels(
-    updater_channel_id_primary=BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID,
-    updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
-    preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
-    type_text_primary="RT",
-    updater_channel_id_secondary=BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID,
-    updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
-    preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
-    type_text_secondary="CT")
+            updater_channel_id_primary=BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID,
+            updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
+            preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
+            type_text_primary="RT",
+            updater_channel_id_secondary=BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID,
+            updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
+            preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
+            type_text_secondary="CT"
+        )
     }
 
 
 def is_bad_wolf(author):
-    if is_dev:
+    if is_dev or is_beta:
         return author.id in {BAD_WOLF_ID, CW_ID, ANDREW_ID}
     else:
         return author.id in {BAD_WOLF_ID, ANDREW_ID}
