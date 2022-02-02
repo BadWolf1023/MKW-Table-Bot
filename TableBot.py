@@ -68,12 +68,14 @@ def add_sug_view(sug_view):
 def delete_pic_views(delete):
     for ind in delete:
         view = pic_views.pop(ind)
-        asyncio.create_task(view.on_timeout())
+        if view:
+            asyncio.create_task(view.on_timeout())
     
 def delete_sug_views(delete):
     for ind in delete:
         view = sug_views.pop(ind)
-        asyncio.create_task(view.on_timeout())
+        if view:
+            asyncio.create_task(view.on_timeout())
 
 class ChannelBot(object):
     '''
@@ -468,11 +470,11 @@ class ChannelBot(object):
         view_ind = add_pic_view(pic_view)
         self.pic_views.append(view_ind)
         try:
-            if len(self.pic_views)>3:
-                to_delete = self.pic_views[:-3]
+            if len(self.pic_views)>1:
+                to_delete = self.pic_views[:-1]
 
                 delete_pic_views(to_delete)
-                self.pic_views = self.pic_views[-3:]
+                self.pic_views = self.pic_views[-1:]
 
         except IndexError:
             pass
@@ -507,8 +509,8 @@ class ChannelBot(object):
     def getWPCooldownSeconds(self) -> int:
         if self.should_send_mii_notification:
             self.should_send_mii_notification = False
-        # if common.in_testing_server:
-        #     return -1
+        if common.in_testing_server:
+            return -1
         if self.lastWPTime is None:
             return -1
         curTime = datetime.now()

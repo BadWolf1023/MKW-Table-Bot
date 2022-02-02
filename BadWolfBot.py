@@ -282,8 +282,8 @@ class BadWolfBot(ext_commands.Bot):
         return message.content.strip().lower() in ["?help"] or (self.user.mentioned_in(message) and 'help' in message.content.strip().lower())
     
     async def on_ready(self):
-        print(f"Logged in as {self.user}")
         global finished_on_ready
+        print("Logging in...")
         
         if not finished_on_ready:
             await self.initialize()
@@ -306,6 +306,7 @@ class BadWolfBot(ext_commands.Bot):
         self.mention = f'<@!{self.user.id}>'
     
         finished_on_ready = True
+        print(f"Logged in as {self.user}")
     
     #This function will run every 1 minute. It will remove any table bots that are
     #"finished" in Lounge - the definition of what is finished can be found in the ChannelBot class

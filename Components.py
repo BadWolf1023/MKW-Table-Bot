@@ -48,32 +48,18 @@ class PictureButton(discord.ui.Button['PictureView']):
     def __init__(self, bot, timeout):
         super().__init__(style=discord.ButtonStyle.primary, label='Update', row=0)
         self.bot = bot
-        # self.button_number = self.bot.pic_button_count + 1
+
         # self.disabled = self.bot.getWPCooldownSeconds() > 0
 
         # self.timeout = timeout
         # self.__timeout_task = None
         # self.__timeout_expiry = None
 
-        # self.cooldown = max(self.bot.getWPCooldownSeconds(), 0.5)
+        # self.cooldown = self.bot.getWPCooldownSeconds()
         # self.__cooldown_task = None
         # self.__cooldown_expiry = None
-        # self.bot.pic_button_count+=1
         # self.start_timeout_timer()
         # self.start_cooldown_timer()
-        # self.button_number = self.bot.pic_button_count + 1
-
-        self.disabled = self.bot.getWPCooldownSeconds() > 0
-
-        self.timeout = timeout
-        self.__timeout_task = None
-        self.__timeout_expiry = None
-
-        self.cooldown = self.bot.getWPCooldownSeconds()
-        self.__cooldown_task = None
-        self.__cooldown_expiry = None
-        self.start_timeout_timer()
-        self.start_cooldown_timer()
         
     async def __timeout_task_impl(self) -> None:
         while True:
@@ -98,14 +84,14 @@ class PictureButton(discord.ui.Button['PictureView']):
         
     def _dispatch_timeout(self):
         self.__cooldown_task.cancel()
-        asyncio.create_task(self.view.on_timeout(), name=f'pic-button-timeout-{time.monotonic()}')
+        asyncio.create_task(self.view.on_timeout())
     
     async def __cooldown_task_impl(self):
         while True:
             if self.__cooldown_expiry is None:
                 return
             
-            await asyncio.sleep(self.__cooldown_expiry - time.monotonic())
+            await asyncio.sleep(max(self.__cooldown_expiry - time.monotonic(), 0.5))
 
             await self.check_clickable()
             self.cooldown = 0.5
@@ -121,12 +107,12 @@ class PictureButton(discord.ui.Button['PictureView']):
 
     async def check_clickable(self):
         if not self.view or not self.view.message: return
-        if self.bot.pic_button_count - self.button_number > 2:
-            self.view.clear_items()
-            self.view.stop()
-            await self.view.message.edit(view=self.view)
-            self.__cooldown_task.cancel()
-            self.__timeout_task.cancel()
+        # if self.bot.pic_button_count - self.button_number > 2:
+        #     self.view.clear_items()
+        #     self.view.stop()
+        #     await self.view.message.edit(view=self.view)
+        #     self.__cooldown_task.cancel()
+        #     self.__timeout_task.cancel()
 
         if self.disabled and self.bot.getWPCooldownSeconds() < 1:
             self.disabled = False
@@ -142,6 +128,7 @@ class PictureButton(discord.ui.Button['PictureView']):
         await interaction.response.edit_message(view=None)
         await commands.TablingCommands.war_picture_command(msg, self.view.bot, ['wp'], self.view.prefix, self.view.lounge,
                                                            requester=interaction.user.display_name)
+        # await self.view.on_timeout()
 
 class PictureView(discord.ui.View):
     def __init__(self, bot, prefix, is_lounge_server, timeout=600):
@@ -161,18 +148,19 @@ class PictureView(discord.ui.View):
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
             return False
         
-        # cooldown = self.bot.getWPCooldownSeconds()
-        # cooldown_active = cooldown > 0
-        # if cooldown_active:
-        #     await interaction.response.send_message(f"This button is on cooldown. Please wait {cooldown} more seconds.", ephemeral=True)
-        #     return False
+        cooldown = self.bot.getWPCooldownSeconds()
+        cooldown_active = cooldown > 0
+        if cooldown_active:
+            await interaction.response.send_message(f"This button is on cooldown. Please wait {cooldown} more seconds.", ephemeral=True)
+            return False
 
         return True
     
     async def on_timeout(self) -> None:
         self.clear_items()
         self.stop()
-        await self.message.edit(view=self)
+        if self.message:
+            await self.message.edit(view=None)
         self = None
             
     async def send(self, messageable, content=None, file=None, embed=None):
