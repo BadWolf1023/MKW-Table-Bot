@@ -1024,7 +1024,6 @@ class OtherCommands:
             await delete_me.delete(delay=5)
             return
 
-
         this_bot.updateRLCoolDown()
         message2 = await message.channel.send("Verifying room...")
         #Case 1: No mention, get FCs for the user - this happens when len(args) = 3
@@ -2527,10 +2526,9 @@ class TablingCommands:
                             embed.set_image(url="attachment://" + table_image_path)
                             
                             temp, error_types = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), this_bot.get_resolved_errors(), lounge_replace, up_to_race=up_to)
-                            
 
                             error_message = "\nMore errors occurred. Embed only allows so many errors to display."
-                            request_message = f"\nPicture requested by {requester}" if requester is not None else ''
+                            request_message = f"\n\nPicture requested by {requester}" if requester is not None else ''
                             if len(temp) + len(error_message) + len(request_message) >= 2048:
                                 temp = temp[:2048-len(error_message)-len(request_message)] + error_message + (request_message if request_message else '')
                             embed.set_footer(text=temp+(request_message if request_message else ''))

@@ -445,14 +445,14 @@ class Table_Slash(ext_commands.Cog):
     async def _vr(
         self,
         ctx: discord.ApplicationContext,
-        players: Option(str, "Player(s) in the room", default=None)
+        players: Option(str, "Player(s) in the room", required=False, default=None)
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx.interaction)
         args = [command]
         if players: args.append(players)
-
+        
         await ctx.respond(EMPTY_CHAR)
-        await commands.OtherCommands.vr_command(this_bot, message, args, message, BWB.createEmptyTableBot())
+        await commands.OtherCommands.vr_command(this_bot, message, args, message.content, BWB.createEmptyTableBot())
     
     @slash_command(name='ww',
     description="Show all active RT worldwide rooms",
