@@ -5,15 +5,14 @@ Created on Sep 23, 2020
 '''
 from typing import List, Set, Dict, Tuple
 from copy import copy
-from datetime import datetime, timedelta
 from collections import defaultdict
 import time
+import BaseTagAI
 
 VALID_CHARS = "/\\*^+abcdefghijklmnopqrstuvwxyz\u03A9\u038F" + "abcdefghijklmnopqrstuvwxyz0123456789".upper()
 UNICODE_MAPPINGS_TO_ALPHA = {"@":"A", "\u00A7":"S", "$":"S", "\u00A2":"c", "\u00A5":"Y", "\u20AC":"E", "\u00A3":"E", "\u00E0":"a", "\u00E1":"a", "\u00E2":"a", "\u00E4":"a", "\u00E5":"a", "\u00E6":"ae", "\u00E3":"a", "\u00E7":"c", "\u00E8":"e", "\u00E9":"e", "\u00EA":"e", "\u00EB":"e", "\u00EC":"i", "\u00ED":"i", "\u00EE":"i", "\u00EF":"i", "\u00F1":"n", "\u00F2":"o", "\u00F3":"o", "\u00F4":"o", "\u00F6":"o", "\u0153":"oe", "\u00F8":"o", "\u00F5":"o", "\u00DF":"B", "\u00F9":"u", "\u00FA":"u", "\u00FB":"u", "\u00FC":"u", "\u00FD":"y", "\u00FF":"y", "\u00C0":"A", "\u00C1":"A", "\u00C2":"A", "\u00C4":"A", "\u00C5":"A", "\u00C6":"AE", "\u00C3":"A", "\u00C7":"C", "\u00C8":"E", "\u00C9":"E", "\u00CA":"E", "\u00CB":"E", "\u00CC":"I", "\u00CD":"I", "\u00CE":"I", "\u00CF":"I", "\u00D1":"N", "\u00D2":"O", "\u00D3":"O", "\u00D4":"O", "\u00D6":"O", "\u0152":"OE", "\u00D8":"O", "\u00D5":"O", "\u00D9":"U", "\u00DA":"U", "\u00DB":"U", "\u00DC":"U", "\u00DD":"Y", "\u0178":"Y", "\u03B1":"a", "\u03B2":"B", "\u03B3":"y", "\u03B4":"o", "\u03B5":"e", "\u03B6":"Z", "\u03B7":"n", "\u03B8":"O", "\u03B9":"i", "\u03BA":"k", "\u03BB":"A", "\u03BC":"u", "\u03BD":"v", "\u03BE":"E", "\u03BF":"o", "\u03C0":"r", "\u03C1":"p", "\u03C3":"o", "\u03C4":"t", "\u03C5":"u", "\u03C6":"O", "\u03C7":"X", "\u03C8":"w", "\u03C9":"W", "\u0391":"A", "\u0392":"B", "\u0393":"r", "\u0394":"A", "\u0395":"E", "\u0396":"Z", "\u0397":"H", "\u0398":"O", "\u0399":"I", "\u039A":"K", "\u039B":"A", "\u039C":"M", "\u039D":"N", "\u039E":"E", "\u039F":"O", "\u03A0":"N", "\u03A1":"P", "\u03A3":"E", "\u03A4":"T", "\u03A5":"Y", "\u03A6":"O", "\u03A7":"X", "\u03A8":"w", "\u0386":"A", "\u0388":"E", "\u0389":"H", "\u038A":"I", "\u038C":"O", "\u038E":"Y", "\u0390":"i", "\u03AA":"I", "\u03AB":"Y", "\u03AC":"a", "\u03AD":"E", "\u03AE":"n", "\u03AF":"i", "\u03B0":"u", "\u03C2":"c", "\u03CA":"i", "\u03CB":"u", "\u03CC":"o", "\u03CD":"u", "\u03CE":"w", "\u2122":"TM", "\u1D49":"e", "\u00A9":"C", "\u00AE":"R", "\u00BA":"o", "\u00AA":"a", "\u266D":"b"}
 #other_players_context is simple a list of other players names
 REMOVE_IF_START_WITH = "/\\*^+"
-import BaseTagAI
 
 #Returns 2 values. The first is the ranking value used by sorting methods, the 2nd is the tag itself
 #This is useful so that we can return lambda as a tag, but make it have the same ranking value as A

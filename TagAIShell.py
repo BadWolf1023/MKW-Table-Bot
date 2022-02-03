@@ -9,12 +9,10 @@ This module will allow easy selection of a specific AI, comparison of AIs, testi
 
 
 import TagAI_Andrew
-import TagAI_BadWolf
 import time
 import os
 import dill
 import common
-from copy import copy
 
 USE_BETA_AI = True
 RUN_ALPHA_AI = False
@@ -25,9 +23,9 @@ LOG_AI_RESULTS = False
 if USE_BETA_AI:
     getTag = lambda tag: TagAI_Andrew._get_tag_value(tag, True, True)
 else:
-    getTag = TagAI_BadWolf.getTagSmart
+    getTag = None
 
-alpha_AI = TagAI_BadWolf.getTagsSmart
+alpha_AI = None
 beta_AI = TagAI_Andrew.get_teams_smart
 
 AI_Results_file_name = "AI_data.pkl"
