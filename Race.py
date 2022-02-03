@@ -196,7 +196,7 @@ class Race:
     def update_region(self):
         regionCount = defaultdict(int)
         for placement in self.getPlacements():
-            regionCount[placement.get_player().region] += 1
+            regionCount[placement.get_player().get_region()] += 1
         if len(regionCount) == 0:
             self.region = UNKNOWN_REGION
         mostCommonRegion = max(regionCount, key=lambda x: regionCount[x])

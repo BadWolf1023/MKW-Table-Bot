@@ -510,7 +510,7 @@ class Table(List):
             for race in self.get_races():
                 for placement in race.getPlacements():
                     if placement.get_player().get_FC() == FC:
-                        placement.get_player().set_name(f"{name_change} (Tabler Changed)")
+                        placement.get_player().set_mii_name(f"{name_change} (Tabler Changed)")
         
         #Next, we remove races
         for removed_race_ind, _ in self.removed_races:

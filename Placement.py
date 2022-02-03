@@ -47,7 +47,7 @@ class Placement:
 
     def get_fc_and_name(self) -> Tuple[str, str]:
         '''Returns the player's FC and mii name that this placement is for'''
-        return self.get_player().get_FC(), self.get_player().name
+        return self.get_player().get_FC(), self.get_player().get_mii_name()
 
     def set_place(self, place: int):
         self._place = place
@@ -57,7 +57,7 @@ class Placement:
         minute = "-1"
         second = "-1"
         millisecond = "-1"
-        if time == Player.LONG_DASH:
+        if time == Player.WIIMMFI_LONG_DASH:
             return DISCONNECTION_TIME  # Disconnection
         elif (":" in time):
             digits = time.split(":")
@@ -116,7 +116,7 @@ class Placement:
         return self > other or self == other
 
     def __str__(self):
-        to_return = f"{self.get_place()}. {UtilityFunctions.filter_text(self.get_player().name + UserDataProcessing.lounge_add(self.get_player().get_FC()))} - "
+        to_return = f"{self.get_place()}. {UtilityFunctions.filter_text(self.get_player().get_mii_name() + UserDataProcessing.lounge_add(self.get_player().get_FC()))} - "
         if self.is_disconnected():
             to_return += "DISCONNECTED"
         else:

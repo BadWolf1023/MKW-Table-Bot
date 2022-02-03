@@ -340,11 +340,11 @@ class ChannelBotSQLDataValidator(object):
             self.placement_time_validation(placement.get_time_string())
             self.placement_delta_validation(placement.get_delta())
             self.player_ol_status_validation(player.get_ol_status())
-            self.player_position_validation(player.get_position())
+            self.player_position_validation(player.get_room_position())
             self.region_validation(player.get_region())
             self.connection_fails_validation(player.get_connection_fails())
             self.player_role_validation(player.get_role())
-            self.player_vr_validation(player.get_VR())
+            self.player_vr_validation(player.get_versus_rating())
             self.player_character_validation(player.get_character())
             self.player_vehicle_validation(player.get_vehicle())
             self.name_validation(player.get_discord_name())
@@ -443,16 +443,16 @@ class RoomTrackerSQL(object):
         player:Placement.Player.Player = placement.get_player()
         return (race_id,
                 player.get_FC(),
-                player.get_name(),
+                player.get_mii_name(),
                 placement.get_place(),
                 placement.get_time_seconds(),
                 placement.get_delta(),
                 player.get_ol_status(),
-                player.get_position(),
+                player.get_room_position(),
                 player.get_region(),
                 player.get_connection_fails(),
                 player.get_role(),
-                player.get_VR(),
+                player.get_versus_rating(),
                 player.get_character(),
                 player.get_vehicle(),
                 player.get_discord_name(),
