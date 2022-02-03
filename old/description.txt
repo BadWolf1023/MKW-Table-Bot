@@ -1,1 +1,1 @@
-This directory contains code that is no longer used by TableBot, but at one point was. Mostly code that was one time use.
+This directory contains code that is no longer used by TableBot.
