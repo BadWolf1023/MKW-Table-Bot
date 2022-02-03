@@ -276,9 +276,9 @@ CUPLAYOUT_TRACK_IDS = {
 #current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
-is_dev = False
-is_beta = False
-is_prod = True
+is_dev = properties['mode'] == 'dev'
+is_beta = properties['mode'] == 'beta'
+is_prod = properties['mode'] == 'prod'
 
 in_testing_server = is_dev
 running_beta = is_beta
