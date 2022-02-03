@@ -6,7 +6,7 @@ Created on Jul 12, 2020
 import UtilityFunctions
 from Placement import DISCONNECTION_TIME, Placement
 from collections import defaultdict
-from typing import List
+from typing import List, Union
 import common
 
 CTGP_CTWW_REGION = 'vs_54'
@@ -16,11 +16,6 @@ PRIVATE_ROOM_REGION = 'priv'
 UNKNOWN_REGION = 'unk'
 VALID_REGIONS = {CTGP_CTWW_REGION, BATTLE_REGION,
                  RT_WW_REGION, PRIVATE_ROOM_REGION, UNKNOWN_REGION}
-
-
-def is_valid_region(region: str):
-    return region in VALID_REGIONS or region.startswith("vs_")
-
 
 # https://tinyurl.com/mkwdictionary
 track_name_abbreviation_mappings = {
@@ -69,49 +64,13 @@ track_name_abbreviation_mappings = {
 sha_track_name_mappings = {}
 
 
-def get_track_name_lookup(track_name):
-    return track_name.replace(" ", "").lower()
-
-
-def remove_author_and_version_from_name(track_name):
-    if track_name is None or track_name == "None":
-        return "No track"
-    tempName = track_name.strip()
-    if "(" in tempName:
-        author_index = tempName.rfind("(")
-        if author_index > 2:
-            tempName = tempName[:author_index-1].strip()
-
-    for i in reversed(range(2, len(tempName))):
-
-        if tempName[i].isnumeric() and tempName[i-1] == 'v':
-            tempName = tempName[:i-1].strip()
-
-            break
-
-    if "beta" in tempName.lower():
-        betaIndex = tempName.lower().rfind("beta")
-        if betaIndex > 0:
-            temp = tempName[:betaIndex].strip()
-            if len(temp) > 0:
-                tempName = temp
-
-    tempOld = tempName.replace(".ctgp", "").strip()
-    if len(tempOld) > 0:
-        return tempOld
-
-    return tempName
-
-
 def initialize():
     sha_track_name_mappings.clear()
-    sha_track_name_mappings.update(common.load_pkl(
-        common.SHA_TRACK_NAMES_FILE, "Could not load in SHA Track names. Using empty dict instead", default=dict))
+    sha_track_name_mappings.update(common.load_pkl(common.SHA_TRACK_NAMES_FILE, "Could not load in SHA Track names. Using empty dict instead", default=dict))
 
 
 def save_data():
-    common.dump_pkl(sha_track_name_mappings, common.SHA_TRACK_NAMES_FILE,
-                    "Could not dump pkl for SHA Track names.", display_data_on_error=True)
+    common.dump_pkl(sha_track_name_mappings, common.SHA_TRACK_NAMES_FILE, "Could not dump pkl for SHA Track names.", display_data_on_error=True)
 
 
 def on_exit():
@@ -123,21 +82,57 @@ def set_ctgp_region(new_region: str):
     CTGP_CTWW_REGION = new_region
 
 
+def is_valid_region(region: str):
+    return region in VALID_REGIONS or region.startswith("vs_")
+
+
+def get_track_name_lookup(track_name: str) -> str:
+    return track_name.replace(" ", "").lower()
+
+
+def remove_author_and_version_from_name(track_name: Union[str, None]) -> str:
+    if track_name is None or track_name == "None":
+        return "No track"
+    fixed_name = track_name.strip()
+    if "(" in fixed_name:
+        author_index = fixed_name.rfind("(")
+        if author_index > 2:
+            fixed_name = fixed_name[:author_index-1].strip()
+
+    for i in reversed(range(2, len(fixed_name))):
+        if fixed_name[i].isnumeric() and fixed_name[i-1] == 'v':
+            fixed_name = fixed_name[:i-1].strip()
+            break
+
+    if "beta" in fixed_name.lower():
+        beta_index = fixed_name.lower().rfind("beta")
+        if beta_index > 0:
+            temp = fixed_name[:beta_index].strip()
+            if len(temp) > 0:
+                fixed_name = temp
+
+    temp_name = fixed_name.replace(".ctgp", "").strip()
+    if len(temp_name) > 0:
+        return temp_name
+
+    return fixed_name
+
+
 class Race:
     '''
     classdocs
     '''
 
-    def __init__(self, matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, mkwxRaceNumber, rxx=None, raceID=None, trackURL=None, placements=None, is_wiimmfi_race=True):
-        self.matchTime = matchTime
-        self.matchID = matchID
-        self.raceNumber = raceNumber
-        self._room_name = roomID
+    def __init__(self, match_time, match_id, race_number, room_id, room_type, cc, track_name, is_ct, mkwx_race_number, rxx=None, race_id=None, track_url=None, placements=None, is_wiimmfi_race=True):
+        self.matchTime = match_time
+        self.matchID = match_id
+        self.raceNumber = race_number
+        self._room_name = room_id
         self.rxx = rxx
-        self.trackURL = trackURL
-        self.raceID = raceID
-        self.roomType = roomType
-        self.track = str(track)
+        self.trackURL = track_url
+        self.raceID = race_id
+        self.roomType = room_type
+        self.track = str(track_name)
         if self.track in sha_track_name_mappings:
             self.track = sha_track_name_mappings[self.track]
         self.track_check()
@@ -146,7 +141,7 @@ class Race:
         self.region = UNKNOWN_REGION
         self.is_ct = is_ct
         self.is_wiimmfi_race = is_wiimmfi_race
-        self.mkwxRaceNumber = mkwxRaceNumber
+        self.mkwxRaceNumber = mkwx_race_number
         if UtilityFunctions.is_int(self.mkwxRaceNumber):
             self.mkwxRaceNumber = int(self.mkwxRaceNumber)
         else:

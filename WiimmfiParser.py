@@ -486,7 +486,7 @@ class FrontPageParser(object):
             track = track.replace('Last track:', '').strip()
         #print(f"RoomID: {roomID}, roomType: {roomType}, cc: {cc}, matchTime: {matchTime}, raceNumber: {raceNumber}, track: {track}")
 
-        return Race.Race(match_time, match_id, race_number, room_id, room_type, cc, track, is_ct=is_ct, mkwxRaceNumber=race_number, rxx=rxx)
+        return Race.Race(match_time, match_id, race_number, room_id, room_type, cc, track, is_ct=is_ct, mkwx_race_number=race_number, rxx=rxx)
 
     def _add_front_room(self, bs4_front_room_header):
         if bs4_front_room_header is None:

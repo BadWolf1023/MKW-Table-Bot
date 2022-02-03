@@ -144,43 +144,43 @@ class SQLDataValidation_tracks(unittest.TestCase):
     '''is_ct not correct type'''
     def test_validate_tracks_data_1(self):
         data_validator = DataTracker.ChannelBotSQLDataValidator()
-        test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=None, trackURL=None)]
+        test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=None, track_url=None)]
         self.assertRaises(DataTracker.SQLTypeWrong, lambda:data_validator.validate_tracks_data(test_races))
     
     '''is_ct is correct type'''
     def test_validate_tracks_data_2(self):
         data_validator = DataTracker.ChannelBotSQLDataValidator()
-        test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=True, trackURL=None)]
+        test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=True, track_url=None)]
         data_validator.validate_tracks_data(test_races)
         
     '''is_ct is correct type #2'''
     def test_validate_tracks_data_3(self):
         data_validator = DataTracker.ChannelBotSQLDataValidator()
-        test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=False, trackURL=None)]
+        test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=False, track_url=None)]
         data_validator.validate_tracks_data(test_races)
     
     '''track_name cannot be blank (or None)'''
     def test_validate_tracks_data_4(self):
         data_validator = DataTracker.ChannelBotSQLDataValidator()
-        test_races = [Race.Race(None, None, 1, None, None, None, None, is_ct=True, trackURL=None)]
+        test_races = [Race.Race(None, None, 1, None, None, None, None, is_ct=True, track_url=None)]
         self.assertRaises(DataTracker.SQLDataBad, lambda:data_validator.validate_tracks_data(test_races))
     
     '''track_name is correct type'''
     def test_validate_tracks_data_5(self):
         data_validator = DataTracker.ChannelBotSQLDataValidator()
-        test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=True, trackURL=None)]
+        test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=True, track_url=None)]
         data_validator.validate_tracks_data(test_races)
         
     '''track_url is not correct type'''
     def test_validate_tracks_data_6(self):
         data_validator = DataTracker.ChannelBotSQLDataValidator()
-        test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=True, trackURL=10)]
+        test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=True, track_url=10)]
         self.assertRaises(DataTracker.SQLTypeWrong, lambda:data_validator.validate_tracks_data(test_races))
         
     '''track_url is correct type'''
     def test_validate_tracks_data_7(self):
         data_validator = DataTracker.ChannelBotSQLDataValidator()
-        test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=True, trackURL="https://wiimmfi.de/test")]
+        test_races = [Race.Race(None, None, 1, None, None, None, "Final Grounds", is_ct=True, track_url="https://wiimmfi.de/test")]
         data_validator.validate_tracks_data(test_races)
     
     
