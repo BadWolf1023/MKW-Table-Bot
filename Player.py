@@ -177,3 +177,6 @@ class Player(object):
     def __str__(self):
         return "Name: " + str(self.get_mii_name()) + " - FC: " + self.get_FC() + " - Role: " + self.get_role()
 
+
+def get_dummy_player() -> Player:
+    return Player("", "/1", "", "", "", 0.0, "", 1, None, "", "")

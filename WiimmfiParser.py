@@ -195,6 +195,7 @@ class RoomPageParser(object):
 
         # Not true delta, but significant delta (above .5)
         delta = str(all_rows[7].string)
+        delta = float(delta) if UtilityFunctions.is_float(delta) else None
         time = str(all_rows[8].string)
         player_name = str(all_rows[9].string)
         while len(all_rows) > 0:
@@ -324,7 +325,7 @@ class FrontPageParser(object):
                         vehicle_combinations = [
                             str(vehicle_combination), str(vehicle_combination)]
 
-                times = [time for time in all_rows[9].findAll(text=True)]
+                times = [str(time) for time in all_rows[9].findAll(text=True)]
 
                 playerNames = [str(name) for name in all_rows[10].findAll(text=True)]
                 if len(playerNames) < 2:

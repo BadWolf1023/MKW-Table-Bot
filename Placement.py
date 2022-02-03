@@ -23,7 +23,8 @@ def is_valid_time_str(time_str: str) -> bool:
 
 class Placement:
 
-    def __init__(self, player: Player.Player, time: str, delta:str=None, is_wiimmfi_place=False):
+    def __init__(self, player: Player.Player, time: str, delta:Union[float, None]=None, is_wiimmfi_place=False):
+        self._validate_data(player, time, delta, is_wiimmfi_place)
         self._player = player
         self._place = -1
         self._time = Placement._create_time(time)
@@ -50,6 +51,8 @@ class Placement:
         return self.get_player().get_FC(), self.get_player().get_mii_name()
 
     def set_place(self, place: int):
+        if not isinstance(place, int):
+            raise TypeError(f'''The given 'place' of type '{type(place).__name__}' is not any of the allowed types: {int.__name__}''')
         self._place = place
 
     @staticmethod
@@ -64,7 +67,6 @@ class Placement:
             minute = digits[0]
             second, millisecond = digits[1].split(".")
         else:
-            print(f"Time:{time}EndTime")
             minute = "0"
             second, millisecond = time.split(".")
 
@@ -88,7 +90,7 @@ class Placement:
         return self.get_time() > BOGUS_TIME_LIMIT
 
     def should_display_delta(self) -> bool:
-        return self.get_delta() < NO_DELTA_DISPLAY_RANGE[0] or self.get_delta() > NO_DELTA_DISPLAY_RANGE[1]
+        return self.get_delta() <= NO_DELTA_DISPLAY_RANGE[0] or self.get_delta() >= NO_DELTA_DISPLAY_RANGE[1]
 
     def get_time_string(self) -> str:
         '''Returns the placement time as a string. Useful for display purposes.'''
@@ -125,3 +127,21 @@ class Placement:
         if self.should_display_delta():
             to_return += f" - **{self.get_delta()}s lag start**"
         return to_return
+
+    def _validate_data(self, player: Player.Player, time: str, delta: Union[float, None], is_wiimmfi_place: bool):
+        validations = [[lambda: player, "player", (Player.Player,)],
+                       [lambda: time, "time", (str,)],
+                       [lambda: delta, "delta", (float, type(None))],
+                       [lambda: is_wiimmfi_place, "is_wiimmfi_place", (bool,)]]
+        for call, var_name, valid_types in validations:
+            if not isinstance(call(), valid_types):
+                raise TypeError(f'''The given '{var_name}' of type '{type(call()).__name__}' is not any of the allowed types: {", ".join(t.__name__ for t in valid_types)}''')
+        
+        try:
+            Placement._create_time(time)
+        except:
+            raise TypeError(f'''The given 'time' '{time}' was not in the correct format. Valid format examples: 1:01.912 and 54.019''')
+
+
+if __name__ == "__main__":
+    Placement(Player.get_dummy_player(), "0.0", 0.0, False)
