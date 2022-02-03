@@ -716,6 +716,50 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
         await paginate(message, num_pages, get_page_callback, client)
 
+    @staticmethod
+    async def record_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str, command:str):
+        error_message = f"Usage: `{server_prefix}record player_name (num_days)`"
+
+        if len(args) == 1:
+            await message.channel.send(error_message)
+            return
+        else:
+            command = " ".join(args[1:])
+
+        days = None
+        matches = [x[0] for x in re.findall('((^|\s)\d+d?($|\s))',command)]
+        if len(matches) > 0:
+            match = matches[-1].strip()
+            if 'd' in match:
+                match = match[:-1]
+            days = int(match)
+            command = command.replace(matches[-1],"")
+        opponent_name = command.strip()
+
+        if len(opponent_name) == 0:
+            await message.channel.send("Please specify a player name. " + error_message)
+            return
+
+        opponent_did = UserDataProcessing.get_DiscordID_By_LoungeName(opponent_name)
+        if not opponent_did:
+            await message.channel.send(f"No player found with name {UtilityFunctions.process_name(opponent_name)}.\n" + error_message)
+            return
+
+        player_did = str(message.author.id)
+
+        if player_did == opponent_did:
+            await message.channel.send(f"You can not compare your record against yourself.\n" + error_message)
+            return
+
+        result = await DataTracker.DataRetriever.get_record(player_did,opponent_did,days)
+        total, wins = result[0]
+        if total == 0:
+            await message.channel.send(f"You have played no races against {UtilityFunctions.process_name(opponent_name)}")
+            return
+
+        losses = total-wins
+        await message.channel.send(f'{wins} Wins — {losses} Losses')
+
 
 """================== Other Commands ===================="""
 #TODO: Refactor these - target the waterfall-like if-statements

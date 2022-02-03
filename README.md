@@ -1,25 +1,18 @@
 # MKW-Table-Bot
 MKW Table Bot is a Discord Bot created by Bad Wolf to automatically create tables for online rooms in Mario Kart Wii. It also played a part in transforming the way Lounge updates rating to a more automated process. MKW Table Bot also provides many other smaller tools for people.  A full documentation of everything TableBot does can be found below.
 
-## Credits:
-Mii.py: Collaboration between [WilliamTX](https://github.com/willsigg) (reading mii data into class) and [BadWolf1023](https://github.com/BadWolf1023) (mii photograph functionality and destruction) 
+## What Can Table Bot Do?
+Visit the Documentation to see all the commands: https://github.com/BadWolf1023/MKW-Table-Bot/wiki
 
-MiiPuller.py: Collaboration between [BadWolf1023](https://github.com/BadWolf1023) and [WilliamTX](https://github.com/willsigg)	
+## Get Started
 
-miirender.py: [WilliamTX](https://github.com/willsigg)
+[**Invite the Bot**](https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=274878031936&scope=bot)
 
-New Tag AI (better and faster):
-TagAI_Andrew.py: [ForestMKW](https://github.com/ForestMKW)
+[**Join the Table Bot Discord Server**]( https://discord.gg/K937DqM)
 
-‎
-‎		
-‎
-‎
-‎
-‎
-‎
-‎
 
-## What can Table Bot do?
-
-I plan on filling this in later! I hate documentation!
+## Credits: 
+* Bad Wolf#1023 (Creator)
+* andrew#9232
+* camelwater#6035
+* liam#8547
