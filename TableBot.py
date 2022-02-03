@@ -52,13 +52,13 @@ pic_num = 0
 sug_num = 0
 pic_views = {}
 sug_views = {}
+
 def add_pic_view(pic_view):
     global pic_num
     pic_num+=1
-
     pic_views[pic_num] = pic_view
     return pic_num
-    
+
 def add_sug_view(sug_view):
     global sug_num
     sug_num+=1
@@ -67,15 +67,21 @@ def add_sug_view(sug_view):
 
 def delete_pic_views(delete):
     for ind in delete:
-        view = pic_views.pop(ind)
-        if view:
-            asyncio.create_task(view.on_timeout())
-    
+        try:
+            view = pic_views.pop(ind)
+            if view:
+                asyncio.create_task(view.on_timeout())
+        except KeyError: 
+            pass
+
 def delete_sug_views(delete):
     for ind in delete:
-        view = sug_views.pop(ind)
-        if view:
-            asyncio.create_task(view.on_timeout())
+        try:
+            view = sug_views.pop(ind)
+            if view:
+                asyncio.create_task(view.on_timeout())
+        except KeyError:
+            pass
 
 class ChannelBot(object):
     '''
@@ -509,8 +515,8 @@ class ChannelBot(object):
     def getWPCooldownSeconds(self) -> int:
         if self.should_send_mii_notification:
             self.should_send_mii_notification = False
-        if common.in_testing_server:
-            return -1
+        # if common.in_testing_server:
+        #     return -1
         if self.lastWPTime is None:
             return -1
         curTime = datetime.now()
@@ -681,7 +687,13 @@ class ChannelBot(object):
         self.should_send_mii_notification = True
         self.set_style_and_graph(server_id)
         self.race_size = 4
-        
+        # self.clear_views()
+    
+    def clear_views(self):
+        pass
+        # self.bot.delete_pic_views(self.pic_views)
+        # self.bot.delete_sug_views(self.sug_views)
+
     def clean_up(self):
         for mii in self.miis.values():
             mii.clean_up()

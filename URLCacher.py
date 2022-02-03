@@ -21,7 +21,7 @@ class URLCacher():
         self.request_timeout = timedelta(seconds=request_timeout)
         self.maximum_cache_storage_length = self.default_cache_length + self.default_cache_length  # Maximum time that responses are stored are two times the cache length
         self._session = aiohttp.ClientSession()
-        
+
     @staticmethod
     def _default_cache_entry():
         return {"currently_pulling": False,

@@ -261,8 +261,8 @@ class SuggestionView(discord.ui.View):
     async def on_timeout(self) -> None:
         self.clear_items()
         self.stop()
-        await self.message.edit(view=self)
-        await self.message.delete()
+        # await self.message.edit(view=self)
+        if self.message: await self.message.delete()
         self = None
         
     async def __delete_task_impl(self) -> None:
@@ -285,7 +285,7 @@ class SuggestionView(discord.ui.View):
         
     def _dispatch_del_timeout(self):
         self.__delete_task.cancel()
-        asyncio.create_task(self.on_timeout(), name=f'sug-view-timeout-{time.monotonic()}')
+        asyncio.create_task(self.on_timeout())
     
     def start_delete_timer(self):
         loop = asyncio.get_running_loop()

@@ -2054,7 +2054,7 @@ class TablingCommands:
                     delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
                     await delete_me.delete(delay=5)
                 else:
-                    this_bot.reset(server_id)                    
+                    this_bot.reset(server_id) 
                     
                     warFormat = UtilityFunctions.convert_to_warFormat(args[1])
                     numTeams = args[2]
@@ -2188,8 +2188,6 @@ class TablingCommands:
             this_bot.setWar(None)
             return
 
-
-
         numGPS = this_bot.getWar().numberOfGPs
         players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
 
@@ -2198,7 +2196,6 @@ class TablingCommands:
 
         this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
         view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
-        # await message.channel.send(this_bot.get_room_started_message(), view=view)
         await view.send(message, this_bot.get_room_started_message())
 
     @staticmethod

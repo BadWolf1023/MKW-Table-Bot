@@ -232,6 +232,10 @@ class BadWolfBot(ext_commands.Bot):
         self.lounge_submissions = lounge_submissions
         self.user_flag_exceptions = set()
         self.mention = None
+        # self.sug_views = {}
+        # self.pic_views = {}
+        # self.pic_num = 0
+        # self.sug_num = 0
 
         if ALLOW_SLASH_COMMANDS:
             for ext in SLASH_EXTENSIONS:
@@ -246,7 +250,29 @@ class BadWolfBot(ext_commands.Bot):
         UtilityFunctions.initialize()
         TagAIShell.initialize()
     
-    
+    # def add_pic_view(self, pic_view):
+    #     self.pic_num+=1
+
+    #     self.pic_views[self.pic_num] = pic_view
+    #     return self.pic_num
+        
+    # def add_sug_view(self, sug_view):
+    #     self.sug_num+=1
+    #     self.sug_views[self.sug_num] = sug_view
+    #     return self.sug_num
+
+    # def delete_pic_views(self, delete):
+    #     for ind in delete:
+    #         view = self.pic_views.pop(ind)
+    #         if view:
+    #             asyncio.create_task(view.on_timeout())
+        
+    # def delete_sug_views(self, delete):
+    #     for ind in delete:
+    #         view = self.sug_views.pop(ind)
+    #         if view:
+    #             asyncio.create_task(view.on_timeout())
+
     #Strips the given prefix from the start of the command
     #Note, the caller must ensure that the given string has a prefix by using has_prefix to ensure proper behaviour
     #lstrip won't work here (go read the documentation and find a scenario that it wouldn't work in)
@@ -292,16 +318,34 @@ class BadWolfBot(ext_commands.Bot):
             commands.load_vr_is_on()
         
         AbuseTracking.set_bot_abuse_report_channel(self)
-        self.updatePresence.start()
-        self.removeInactiveTableBots.start()
-        self.freeFinishedTableBotsLounge.start()
-        self.stay_alive_503.start()
+        try:
+            self.updatePresence.start()
+        except RuntimeError:
+            print("UpdatePresence task has already been started.")
+        try:
+            self.removeInactiveTableBots.start()
+        except RuntimeError:
+            print("removeInactiveTableBots task already started.")
+        try:
+            self.freeFinishedTableBotsLounge.start()
+        except RuntimeError:
+            print("freeFinishedTableBots task already started")
+        try:
+            self.stay_alive_503.start()
+        except RuntimeError:
+            print("stay_alive task already started")
         
         self.user_flag_exceptions.clear()
         self.user_flag_exceptions.update(UserDataProcessing.read_flag_exceptions())
         
-        self.dumpDataAndBackup.start()
-        checkBotAbuse.start()
+        try:
+            self.dumpDataAndBackup.start()
+        except RuntimeError:
+            print("dumpData/Backup task already started")
+        try:
+            checkBotAbuse.start()
+        except RuntimeError:
+            print("checkBotAbuse task already started")
 
         self.mention = f'<@!{self.user.id}>'
     
