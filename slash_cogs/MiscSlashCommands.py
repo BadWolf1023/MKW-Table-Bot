@@ -61,7 +61,7 @@ class MiscSlash(ext_commands.Cog):
     async def _set_large_time_setting(
         self,
         ctx: discord.ApplicationContext,
-        setting: Option(str, "War formats to ignore large time warnings for", choices=commands.LARGE_TIME_OPTIONS.values())
+        setting: Option(str, "War formats to ignore large time warnings for (if more than 1, comma-separate them)") #, choices=commands.LARGE_TIME_OPTIONS.values()
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, setting]

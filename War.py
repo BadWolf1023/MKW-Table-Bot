@@ -271,12 +271,13 @@ class War(object):
             war_string += "FFA"
             war_string += " (" + str(numRaces) + " races)"
             return war_string
-        for teamTag in set(self.teams.values()):
-            war_string += teamTag + " vs "
-        if len(war_string) > 0:
-            war_string = war_string[:-4]
+        # for teamTag in set(self.teams.values()):
+        #     war_string += teamTag + " vs "
+        # if len(war_string) > 0:
+        #     war_string = war_string[:-4]
+        war_string += ' vs '.join(set(self.teams.values()))
         
-        war_string += ": " + self.formatting
+        war_string = self.formatting + ": " + war_string
         war_string += " (" + str(numRaces) + " races)"
         return war_string
     
