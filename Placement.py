@@ -10,6 +10,7 @@ import re
 
 DEBUGGING = False
 DISCONNECTION_TIME = (999,999,999)
+MANUAL_DC_TIME = (1000,0,0)
 BOGUS_TIME_LIMIT = (5,59,999)
 MINIMUM_DELTA_VALUE = -10
 MAXIMUM_DELTA_VALUE = 10
@@ -31,6 +32,8 @@ class Placement:
             print(time)
         if time == u'\u2014':
             return DISCONNECTION_TIME #Disconnection
+        elif time == 'DC':
+            return MANUAL_DC_TIME
         elif (":" in time):
             temp = time.split(":")
             minute = temp[0]
@@ -51,7 +54,10 @@ class Placement:
         return new_delta
     
     def is_disconnected(self):
-        return self.time == DISCONNECTION_TIME
+        return self.time == DISCONNECTION_TIME or self.time == MANUAL_DC_TIME
+    
+    def is_manual_DC(self):
+        return self.time == MANUAL_DC_TIME
     
     def is_delta_unlikely(self):
         if self.delta is None:

@@ -969,7 +969,7 @@ class BadWolfBot(ext_commands.Bot):
     
     async def close(self):
         await self.on_exit()
-        # await super().close()
+        await super().close()
         os._exit(0)
     
     async def on_exit(self):

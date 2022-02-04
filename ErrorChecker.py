@@ -90,7 +90,7 @@ def get_room_errors_players(war, room, error_types, startrace=None, endrace=None
                     errors.append(err_mes + " Not giving DC points for this race - use ?changeroomsize if they were not on the results of this race")
                     
                     # if int(race.raceNumber) == lastRace:
-                    # error_types[int(race.raceNumber)].append({'type': 'blank_player', 'player_name': UserDataProcessing.lounge_get_fill(fc, name, lounge_replace), 'player_fc': fc})
+                    #     error_types[int(race.raceNumber)].append({'type': 'blank_player', 'player_name': UserDataProcessing.lounge_get_fill(fc, name, lounge_replace), 'player_fc': fc})
 
                     blank_time_counter +=1 
             
