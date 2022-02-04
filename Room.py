@@ -376,11 +376,11 @@ class Room(object):
                         wentMissingThisGP.append(fc)
                         missingPlayersThisRace.append((fc, player))
             
-            # for placement in race.placements:
-            #     if placement.is_disconnected() and placement.getFC() not in wentMissingThisGP:
-            #         wentMissingThisGP.append(placement.getFC())
-            #         if include_blank:
-            #             missingPlayersThisRace.append(placement.get_fc_and_name())
+            for placement in race.placements:
+                if placement.is_disconnected() and placement.getFC() not in wentMissingThisGP:
+                    wentMissingThisGP.append(placement.getFC())
+                    if include_blank:
+                        missingPlayersThisRace.append(placement.get_fc_and_name())
 
             missingPlayers.append(missingPlayersThisRace)
 
@@ -400,7 +400,7 @@ class Room(object):
         get a sorted list of the DCs (same order as DCListString) for use by Discord Buttons
         '''
         dc_list = list()
-        missingPlayersByRace = self.getMissingOnRace(numGPs, include_blank=False)
+        missingPlayersByRace = self.getMissingOnRace(numGPs, include_blank=True)
 
         for raceNum, race in enumerate(missingPlayersByRace):
             for dc in race:
@@ -412,7 +412,7 @@ class Room(object):
         # return dc_list
     
     def getDCListString(self, numberOfGPs=3, replace_lounge=True):
-        missingPlayersByRace = self.getMissingOnRace(numberOfGPs, include_blank=False)
+        missingPlayersByRace = self.getMissingOnRace(numberOfGPs, include_blank=True)
         missingPlayersAmount = sum([len(x) for x in missingPlayersByRace])
 
         if missingPlayersAmount == 0:
