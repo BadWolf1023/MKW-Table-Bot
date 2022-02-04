@@ -437,6 +437,31 @@ class ChannelBot(object):
     def getWar(self) -> War.War:
         return self.war
     
+    # def add_pic_view(self, pic_view):
+    #     view_ind = add_pic_view(pic_view)
+    #     self.pic_views.append(view_ind)
+    #     try:
+    #         if len(self.pic_views)>1:
+    #             to_delete = self.pic_views[:-1]
+
+    #             delete_pic_views(to_delete)
+    #             self.pic_views = self.pic_views[-1:]
+
+    #     except IndexError:
+    #         pass
+
+    # def add_sug_view(self, sug_view):
+    #     view_ind = add_sug_view(sug_view)
+    #     self.sug_views.append(view_ind)
+    #     try:
+    #         if len(self.sug_views)>1:
+    #             to_delete = self.sug_views[:-1]
+    #             delete_sug_views(to_delete)
+    #             self.sug_views = self.sug_views[-1:]
+
+    #     except IndexError:
+    #         pass
+    
     def updatedLastUsed(self):
         self.last_used = datetime.now()
         self.updateLoungeFinishTime()

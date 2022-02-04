@@ -376,11 +376,13 @@ class Room(object):
                         wentMissingThisGP.append(fc)
                         missingPlayersThisRace.append((fc, player))
             
-            # for placement in race.placements:
-            #     if placement.is_disconnected() and placement.getFC() not in wentMissingThisGP:
-            #         wentMissingThisGP.append(placement.getFC())
-            #         if include_blank:
-            #             missingPlayersThisRace.append(placement.get_fc_and_name())
+            for placement in race.placements:
+                if placement.is_manual_DC() and placement.getFC() not in wentMissingThisGP:
+                    wentMissingThisGP.append(placement.getFC())
+                # if placement.is_disconnected() and placement.getFC() not in wentMissingThisGP:
+                #     wentMissingThisGP.append(placement.getFC())
+                #     if include_blank:
+                #         missingPlayersThisRace.append(placement.get_fc_and_name())
 
             missingPlayers.append(missingPlayersThisRace)
 
@@ -443,7 +445,7 @@ class Room(object):
         if status in ["on", "during", "midrace", "results", "onresults"]: #STATUS=ON
             if not race.FCInPlacements(player_fc): #player wasn't on results and needs to be added as a placement
                 player_obj = self.get_player_from_FC(player_fc)
-                DC_placement = Placement.Placement(player_obj, -1, u'\u2014')
+                DC_placement = Placement.Placement(player_obj, -1, 'DC')
 
                 add_dict = {'type': 'add', 'payload': DC_placement}
                 self.manual_dc_placements[raceNum].append(add_dict)

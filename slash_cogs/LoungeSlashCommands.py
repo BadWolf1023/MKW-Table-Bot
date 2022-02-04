@@ -29,8 +29,7 @@ class LoungeSlash(ext_commands.Cog):
         # if table_text: args.append(table_text)
 
         # 
-        await ctx.respond(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting tables at the present. \
-            Use `{self.bot.user.name} rtupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use this slash command.")
+        await ctx.respond(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting tables at the present. Use `@{self.bot.user.name} rtupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use this slash command.")
 
         await commands.LoungeCommands.rt_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
         
@@ -48,8 +47,7 @@ class LoungeSlash(ext_commands.Cog):
         # if table_text: args.append(table_text)
 
         # 
-        await ctx.respond(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting tables at the present. \
-            Use `{self.bot.user.name} ctupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use this slash command.")
+        await ctx.respond(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting tables at the present. Use `@{self.bot.user.name} ctupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use this slash command.")
 
         await commands.LoungeCommands.ct_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
     
