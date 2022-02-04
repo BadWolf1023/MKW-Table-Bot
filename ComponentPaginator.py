@@ -240,7 +240,7 @@ class SuggestionsPaginator(discord.ui.View):
         self.bot = view.bot
         self.prefix = view.prefix
         self.error = view.error
-        self.lounge = view.lounge
+        self.lounge = view.is_lounge
         self.index = view.index
         self.selected_values = view.selected_values
 

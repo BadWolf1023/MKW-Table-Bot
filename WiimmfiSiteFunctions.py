@@ -37,7 +37,7 @@ f"{SUB_MKWX_URL}r0000006":("Tag in brackets.", f"{common.SAVED_ROOMS_DIR}tag_in_
 f"{SUB_MKWX_URL}r0000007":("Room with an unknown track name (SHA name).", f"{common.SAVED_ROOMS_DIR}unknown_track.html"),
 f"{SUB_MKWX_URL}r0000008":("Room with email protected tags", f"{common.SAVED_ROOMS_DIR}email_protected.html"),
 f"{SUB_MKWX_URL}r0000009":("Room to test component suggestions with.", f"{common.SAVED_ROOMS_DIR}SuggestionComponentsTesting.html"),
-f"{SUB_MKWX_URL}r00000010":("Room to test component suggestions with (ties).", f"{common.SAVED_ROOMS_DIR}Ties_Testing.html"),
+f"{SUB_MKWX_URL}r0000010":("Room to test component suggestions with (ties).", f"{common.SAVED_ROOMS_DIR}Ties_Testing.html"),
 }
 
 # https://github.com/jslirola/cloudflare-email-decoder/blob/master/ced/lib/processing.py

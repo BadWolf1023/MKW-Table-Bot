@@ -103,7 +103,7 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         dc_number: Option(int, 'Number of player who DCed (check /dcs)'),
-        status: Option(str, 'Was the player on results?', choices=['on results', 'before']) #TODO: add lounge_name and race parameters so don't have to lookup /dcs
+        status: Option(str, 'Was the player on results?', choices=['on', 'before']) #TODO: add lounge_name and race parameters so don't have to lookup /dcs
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
 

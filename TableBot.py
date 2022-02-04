@@ -3,6 +3,8 @@ Created on Jul 30, 2020
 
 @author: willg
 '''
+import discord
+
 import WiimmfiSiteFunctions
 import Room
 import War
@@ -46,6 +48,7 @@ graphs = {"1":("None", "default graph"),
           }
 
 DEFAULT_DC_POINTS = 3
+last_wp_message = {}
 
 class ChannelBot(object):
     '''
@@ -65,8 +68,6 @@ class ChannelBot(object):
         self.miis: Dict[str, Mii.Mii] = {}
         
         self.resolved_errors = set()
-        self.pic_button_count = 0
-        self.cur_sug_num = 0
         
         self.populating = False
         
@@ -606,6 +607,13 @@ class ChannelBot(object):
         self.style = save_state["style"]
         self.race_size = save_state["race_size"]
         return command
+
+    async def clear_last_wp_button(self):
+        try:
+            await last_wp_message[self.channel_id].edit(view=None)
+            last_wp_message.pop(self.channel_id,None)
+        except:
+            pass
     
     def reset(self, server_id):
         self.destroy()
@@ -621,13 +629,13 @@ class ChannelBot(object):
         self.save_states = []
         self.state_pointer = -1
         self.resolved_errors = set()
-        self.pic_button_count = 0
-        self.cur_sug_num = 0
         self.miis = {}
         self.populating = False
         self.should_send_mii_notification = True
         self.set_style_and_graph(server_id)
         self.race_size = 4
+
+        asyncio.create_task(self.clear_last_wp_button())
         
     def clean_up(self):
         for mii in self.miis.values():

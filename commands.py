@@ -564,7 +564,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         tracks_played = await DataTracker.DataRetriever.get_tracks_played_count(is_ct, tier, number_of_days)
         number_tracks = StatisticCommands.ct_number_tracks if is_ct else StatisticCommands.rt_number_tracks
         total_races_played = sum(track_data[2] for track_data in tracks_played)
-        num_pages = len(tracks_played)/number_tracks
+        num_pages = math.ceil(len(tracks_played)/number_tracks)
 
         if not is_top_tracks:
             tracks_played = list(reversed(tracks_played))
@@ -645,7 +645,8 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         headers = ['+ Track Name', 'Avg Pts', 'Avg Place', 'Best Time', "# Plays"]
 
         tracks_per_page = StatisticCommands.ct_number_tracks if is_ct else StatisticCommands.rt_number_tracks
-        num_pages = len(best_tracks)/tracks_per_page
+
+        num_pages = math.ceil(len(best_tracks)/tracks_per_page)
 
         def get_page_callback(page):
             table =  tabulate(best_tracks[page*tracks_per_page:(page+1)*tracks_per_page], headers, tablefmt="simple",floatfmt=".2f",colalign=["left"], stralign="right")
@@ -656,7 +657,9 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
             return f'```diff\n- {message_title}\n\n{table}```'
 
+
         pages = [get_page_callback(page) for page in range(int(num_pages))]
+
         paginator = ComponentPaginator.MessagePaginator(pages, show_indicator=True, timeout=common.embed_page_time.seconds)
         await paginator.send(message)
 
@@ -711,7 +714,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         headers = ['+ Player', 'Avg Pts', 'Avg Place', 'Best Time', "# Plays"]
 
         players_per_page = StatisticCommands.leaderboard_players_per_page
-        num_pages = len(top_players) / players_per_page
+        num_pages = math.ceil(len(top_players) / players_per_page)
 
         def get_page_callback(page):
             table = tabulate(top_players[page*players_per_page: (page+1)*players_per_page],
@@ -1093,8 +1096,8 @@ class OtherCommands:
             else:
                 str_msg += "\n\nFailed"
 
-        await message.channel.send(f"{str_msg}```")
         await common.safe_delete(message2)
+        await message.channel.send(f"{str_msg}```")
 
 
 
@@ -1700,9 +1703,6 @@ class TablingCommands:
             await message.channel.send(UtilityFunctions.process_name(teams[teamNum-1] + " given a " + str(amount) + " point penalty."))
 
 
-
-
-
     @staticmethod
     async def disconnections_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False):
         if not this_bot.table_is_set():
@@ -1721,7 +1721,7 @@ class TablingCommands:
             await message.channel.send("You must give a dc number on the list and if they were on results or not. Run " + server_prefix + "dcs for more information.")
             return
 
-        missing_per_race = this_bot.getRoom().getMissingOnRace(this_bot.getWar().numberOfGPs, include_blank=True)
+        missing_per_race = this_bot.getRoom().getMissingOnRace(this_bot.getWar().numberOfGPs, include_blank=False)
         merged = list(itertools.chain(*missing_per_race))
         disconnection_number = args[1]
         if not disconnection_number.isnumeric():
@@ -2158,7 +2158,7 @@ class TablingCommands:
                                     dummy_teams[players[teamNumber][0]] = str(teamNumber)
                                 this_bot.getWar().setTeams(dummy_teams)
                                 await message2.edit(this_bot.get_room_started_message(), view=Components.PictureView(this_bot, server_prefix, is_lounge_server))
-
+                                TableBot.last_wp_message[this_bot.channel_id] = message2
                             this_bot.setShouldSendNotification(True)
                     else:
                         this_bot.setWar(None)
@@ -2200,6 +2200,7 @@ class TablingCommands:
         view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
         # await message.channel.send(this_bot.get_room_started_message(), view=view)
         await view.send(message, this_bot.get_room_started_message())
+        TableBot.last_wp_message[this_bot.channel_id] = view.message
 
     @staticmethod
     async def merge_room_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2439,8 +2440,9 @@ class TablingCommands:
                 delete_me = await message.channel.send("Wait " + str(wpCooldown) + " more seconds before using this command.")
                 await delete_me.delete(delay=5)
             else:
-
                 this_bot.updateWPCoolDown()
+                await this_bot.clear_last_wp_button()
+
                 if prev_message:
                     message2 = prev_message
                     await prev_message.edit("Updating room", view=None)
@@ -2543,11 +2545,18 @@ class TablingCommands:
                             pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
                             # await message.channel.send(file=file, embed=embed, view=pic_view)
                             await pic_view.send(message, file=file, embed=embed)
+                            TableBot.last_wp_message[this_bot.channel_id] = pic_view.message
 
-                            if error_types and len(error_types)>0:
-                                chosen_suggestion = get_suggestion(error_types)
-                                sug_view = Components.SuggestionView(chosen_suggestion, this_bot, server_prefix, is_lounge_server)
-                                await sug_view.send(message, content='\u200b')
+                            # if error_types and len(error_types)>0:
+                            #     chosen_suggestion = get_suggestion(error_types, numRaces)
+                            #     if chosen_suggestion:
+                            #         sug_view = Components.SuggestionView(chosen_suggestion, this_bot, server_prefix, is_lounge_server)
+                            #         await sug_view.send(message, content='**Quick Fix Suggestion:**')
+
+                            for race,suggestions in error_types:
+                                for chosen_suggestion in suggestions:
+                                    sug_view = Components.SuggestionView(chosen_suggestion, this_bot, server_prefix, is_lounge_server)
+                                    await sug_view.send(message)
 
                             await common.safe_delete(message3)
 
@@ -2818,9 +2827,11 @@ class TablingCommands:
 
 #============== Helper functions ================
 
-def get_suggestion(errors):
+def get_suggestion(errors, last_race):
     chosen_suggestion = None
     race, possible_suggestions = errors[-1]
+    if last_race != race:
+        return None
     for priorityType in ['tie', 'missing_player', 'blank_player', 'gp_missing_1', 'large_time', 'gp_missing']:
         for sug in possible_suggestions:
             if sug['type'] == priorityType:

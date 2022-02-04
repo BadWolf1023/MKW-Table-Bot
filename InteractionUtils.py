@@ -27,7 +27,6 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     if common.author_is_table_bot_support_plus(message_author):
         return True
     
-    
     if this_bot is not None and this_bot.getWar() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
         return this_bot.getRoom().canModifyTable(message_author.id) #Fixed! Check ALL people who can modify table, not just the person who started it!
     

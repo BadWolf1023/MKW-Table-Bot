@@ -4,8 +4,7 @@ from discord.ext import commands as ext_commands
 import commands
 import common
 
-print(common.properties["admin_id"], type(common.properties["admin_id"]))
-REQUIRED_PERMISSIONS = [CommandPermission(role, 2, True) for role in list(common.reporter_plus_roles)] + [CommandPermission(common.properties["admin_id"], 2, True)]
+REQUIRED_PERMISSIONS = [CommandPermission(role, 2, True) for role in list(common.reporter_plus_roles)] #+ [CommandPermission(common.properties["admin_id"], 2, True)]
 # GUILDS = [common.MKW_LOUNGE_SERVER_ID]+common.SLASH_GUILDS
 GUILDS = common.SLASH_GUILDS
 EMPTY_CHAR = "\u200b"
@@ -14,7 +13,7 @@ class LoungeSlash(ext_commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    update = SlashCommandGroup("update", "Submit tables to updaters", guild_ids=GUILDS, permissions=REQUIRED_PERMISSIONS)
+    update = SlashCommandGroup("update", "Submit tables to updaters", guild_ids=GUILDS)
 
     @update.command(name='rt',
     description="Submit an RT table to updaters. NO TABLE TEXT SUBMISSIONS")
@@ -40,7 +39,7 @@ class LoungeSlash(ext_commands.Cog):
     async def _ct_update(
         self,
         ctx: discord.ApplicationContext,
-        tier: Option(str, "Tier of event", choices=['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5', 'Tier 6', 'Tier 7', 'squadqueue']),
+        tier: Option(str, "Tier of event", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'squadqueue']),
         races_played: Option(int, "Number of races played in event"),
         # table_text: Option(str, "Table text for manual submissions", required=False, default=None)
     ):

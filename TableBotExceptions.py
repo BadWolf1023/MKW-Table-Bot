@@ -72,6 +72,9 @@ class WarSetupStillRunning(WarSetupFailure):
 class CommandDisabled(Exception):
     pass
 
+class CommandNotFound(Exception):
+    pass
+
 class WiimmfiSiteFailure(Exception):
     pass
 

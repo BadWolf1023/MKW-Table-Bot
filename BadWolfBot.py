@@ -218,7 +218,7 @@ def createEmptyTableBot(server_id=None, channel_id=None):
     return TableBot.ChannelBot(server_id=server_id, channel_id=channel_id)
 
 
-def prefix_callable(bot, msg: discord.Message) -> str: 
+def get_prefix(bot,msg: discord.Message) -> str:
     prefix = common.default_prefix
     if msg.guild is not None: 
         prefix = ServerFunctions.get_server_prefix(msg.guild.id)
@@ -227,7 +227,7 @@ def prefix_callable(bot, msg: discord.Message) -> str:
 
 class BadWolfBot(ext_commands.Bot):
     def __init__(self):
-        super().__init__(command_prefix=prefix_callable, case_insensitive=True, help_command=None)
+        super().__init__(command_prefix=get_prefix,case_insensitive=True,help_command=None)
         self.table_bots = dict()
         self.lounge_submissions = lounge_submissions
         self.user_flag_exceptions = set()
@@ -236,15 +236,6 @@ class BadWolfBot(ext_commands.Bot):
         if ALLOW_SLASH_COMMANDS:
             for ext in SLASH_EXTENSIONS:
                 self.load_extension(ext)
-
-    #Initialize everything
-    async def initialize(self):
-        Race.initialize()
-        UserDataProcessing.initialize()
-        await DataTracker.initialize()
-        ServerFunctions.initialize()
-        UtilityFunctions.initialize()
-        TagAIShell.initialize()
     
     #Strips the given prefix from the start of the command
     #Note, the caller must ensure that the given string has a prefix by using has_prefix to ensure proper behaviour
@@ -285,7 +276,6 @@ class BadWolfBot(ext_commands.Bot):
         global finished_on_ready
         
         if not finished_on_ready:
-            await self.initialize()
             self.load_tablebot_pickle()
             load_CTGP_region_pickle()
             commands.load_vr_is_on()
@@ -479,64 +469,12 @@ class BadWolfBot(ext_commands.Bot):
         Slash command errors
         """
         message = ctx.message
-        if not message: message = InteractionUtils.create_proxy_msg(ctx.interaction)
+        if not message: message = InteractionUtils.create_proxy_msg(ctx.interaction,ctx=ctx)
         server_prefix = '/'
 
-        if isinstance(error, ext_commands.CommandNotFound):
-            await common.safe_send(message, f"Not a valid command. For more help, do the command: `{server_prefix}help`")
-
-        elif isinstance(error, discord.Forbidden) or isinstance(error, ext_commands.BotMissingPermissions):
-                self.lounge_submissions.clear_user_cooldown(message.author)
-                await common.safe_send(message, "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work.")
-
-        elif isinstance(error, discord.DiscordServerError):
-                await common.safe_send(message, "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
-            
-        elif isinstance(error, discord.ApplicationCommandInvokeError): #not a discord.ext error
-            err = error.original
-
-            if isinstance(err, TableBotExceptions.BlacklistedUser):
-                log_command_sent(message)
-            elif isinstance(err, TableBotExceptions.WarnedUser):
-                log_command_sent(message)
-            elif isinstance(err, TableBotExceptions.NotBadWolf):
-                await common.safe_send(message, f"You are not Bad Wolf: {err}")
-            elif isinstance(err, TableBotExceptions.NotLoungeStaff):
-                await common.safe_send(message, f"Not a valid command. For more help, do the command: {server_prefix}help")
-            elif isinstance(err, TableBotExceptions.NotBotAdmin):
-                await common.safe_send(message, f"You are not a bot admin: {err}")
-            elif isinstance(err, TableBotExceptions.NotServerAdministrator):
-                await common.safe_send(message, f"You are not a server administrator: {err}")
-            elif isinstance(err, TableBotExceptions.NotStaff):
-                await common.safe_send(message, f"You are not staff in this server: {err}")
-            elif isinstance(err, TableBotExceptions.WrongServer):
-                if common.running_beta:
-                    await common.safe_send(message, f"{err}: **I am not <@735782213118853180>. Use <@735782213118853180> in <#389521626645004302> to submit your table.**")
-                else:
-                    await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  
-            elif isinstance(err, TableBotExceptions.WrongUpdaterChannel):
-                await common.safe_send(message, f"Use this command in the appropriate updater channel: {err}")
-            elif isinstance(err, TableBotExceptions.WarSetupStillRunning):
-                await common.safe_send(message, f"I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
-            elif isinstance(err, aiohttp.client_exceptions.ClientOSError):
-                await common.safe_send(message, "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
-                raise
-            elif isinstance(err, TableBotExceptions.WiimmfiSiteFailure):
-                logging_info = log_command_sent(message, extra_text="Error info: MKWX inaccessible, other error.")
-                await common.safe_send(message, "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")    
-                await self.send_to_503_channel(logging_info)
-            elif isinstance(err, TableBotExceptions.CommandDisabled):
-                await common.safe_send(message, "This command has been disabled.")
-            else:
-                common.log_traceback(traceback)
-                self.lounge_submissions.clear_user_cooldown(message.author)
-                await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: `{server_prefix}reset`")
-                raise err
-        else:
-            common.log_traceback(traceback)
-            self.lounge_submissions.clear_user_cooldown(message.author)
-            await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: `{server_prefix}reset`")
-            raise error
+        if isinstance(error,discord.ApplicationCommandInvokeError):
+            error = error.original
+        await self.handle_exception(error,message,server_prefix)
     
     async def simulate_on_message(self, message, args, command, this_bot, server_prefix, is_lounge_server):
         """
@@ -600,49 +538,63 @@ class BadWolfBot(ext_commands.Bot):
                 await send_lounge_locked_message(message, this_bot)
             else:
                 await self.process_message_commands(message, args, command, this_bot, server_prefix, is_lounge_server)
+        except Exception as e:
+            await self.handle_exception(e,message,server_prefix)
 
-        except discord.Forbidden:
+    async def handle_exception(self, error,message: discord.Message,server_prefix):
+        try:
+            raise error
+        except (discord.Forbidden,ext_commands.BotMissingPermissions):
             self.lounge_submissions.clear_user_cooldown(message.author)
-            await common.safe_send(message, "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work.")
+            await common.safe_send(message,
+                                   "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work.")
         except TableBotExceptions.BlacklistedUser:
             log_command_sent(message)
         except TableBotExceptions.WarnedUser:
             log_command_sent(message)
         except TableBotExceptions.NotBadWolf as not_bad_wolf_exception:
-            await common.safe_send(message, f"You are not Bad Wolf: {not_bad_wolf_exception}")
+            await common.safe_send(message,f"You are not Bad Wolf: {not_bad_wolf_exception}")
         except TableBotExceptions.NotLoungeStaff:
-            await common.safe_send(message, f"Not a valid command. For more help, do the command: {server_prefix}help")
+            await common.safe_send(message,f"Not a valid command. For more help, do the command: {server_prefix}help")
         except TableBotExceptions.NotBotAdmin as not_bot_admin_exception:
-            await common.safe_send(message, f"You are not a bot admin: {not_bot_admin_exception}")
+            await common.safe_send(message,f"You are not a bot admin: {not_bot_admin_exception}")
         except TableBotExceptions.NotServerAdministrator as not_admin_failure:
-            await common.safe_send(message, f"You are not a server administrator: {not_admin_failure}")
+            await common.safe_send(message,f"You are not a server administrator: {not_admin_failure}")
         except TableBotExceptions.NotStaff as not_staff_exception:
-            await common.safe_send(message, f"You are not staff in this server: {not_staff_exception}")
+            await common.safe_send(message,f"You are not staff in this server: {not_staff_exception}")
         except TableBotExceptions.WrongServer as wrong_server_exception:
             if common.running_beta:
-                await common.safe_send(message, f"{wrong_server_exception}: **I am not <@735782213118853180>. Use <@735782213118853180> in <#389521626645004302> to submit your table.**")
+                await common.safe_send(message,
+                                       f"{wrong_server_exception}: **I am not <@735782213118853180>. Use <@735782213118853180> in <#389521626645004302> to submit your table.**")
             else:
-                await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  
+                await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")
         except TableBotExceptions.WrongUpdaterChannel as wrong_updater_channel_exception:
-            await common.safe_send(message, f"Use this command in the appropriate updater channel: {wrong_updater_channel_exception}")
+            await common.safe_send(message,
+                                   f"Use this command in the appropriate updater channel: {wrong_updater_channel_exception}")
         except TableBotExceptions.WarSetupStillRunning:
-            await common.safe_send(message, f"I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
+            await common.safe_send(message,
+                                   f"I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
         except discord.DiscordServerError:
-            await common.safe_send(message, "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
+            await common.safe_send(message,
+                                   "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
         except aiohttp.client_exceptions.ClientOSError:
-            await common.safe_send(message, "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
+            await common.safe_send(message,
+                                   "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
             raise
         except TableBotExceptions.WiimmfiSiteFailure:
-            logging_info = log_command_sent(message, extra_text="Error info: MKWX inaccessible, other error.")
-            await common.safe_send(message, "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")    
+            logging_info = log_command_sent(message,extra_text="Error info: MKWX inaccessible, other error.")
+            await common.safe_send(message,
+                                   "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")
             await self.send_to_503_channel(logging_info)
         except TableBotExceptions.CommandDisabled:
-            await common.safe_send(message, "This command has been disabled.")
-
+            await common.safe_send(message,"This command has been disabled.")
+        except (ext_commands.CommandNotFound,TableBotExceptions.CommandNotFound):
+            await common.safe_send(message,f"Not a valid command. For more help, do the command: `{server_prefix}help`")
         except Exception as e:
             common.log_traceback(traceback)
             self.lounge_submissions.clear_user_cooldown(message.author)
-            await common.safe_send(message, f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: `{server_prefix}reset`")
+            await common.safe_send(message,
+                                   f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: `{server_prefix}reset`")
             raise e
         else:
             pass
@@ -963,16 +915,16 @@ class BadWolfBot(ext_commands.Bot):
             await commands.StatisticCommands.record_command(self, message,args,server_prefix,command)
 
         else:
-            await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  
+            raise TableBotExceptions.CommandNotFound
                 
     
     def run(self, key):
         super().run(key, reconnect=True)
     
     async def close(self):
-        await super().close()
         await self.on_exit()
-        os._exit(1)
+        # await super().close()
+        os._exit(0)
     
     async def on_exit(self):
         await self.save_data()
@@ -982,23 +934,23 @@ class BadWolfBot(ext_commands.Bot):
 def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bot:TableBot.ChannelBot, command:str):
     if not isLoungeServer:
         return True
-    
+
     if common.author_is_table_bot_support_plus(message_author):
         return True
-    
+
     if this_bot is not None and this_bot.getWar() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
         return this_bot.getRoom().canModifyTable(message_author.id) #Fixed! Check ALL people who can modify table, not just the person who started it!
-    
+
     if command not in needPermissionCommands:
         return True
-    
+
     if this_bot is None or this_bot.getRoom() is None or not this_bot.getRoom().is_initialized() or not this_bot.getRoom().is_freed:
         return True
 
     #At this point, we know the command's server is Lounge, it's not staff, and a room has been loaded
     return this_bot.getRoom().canModifyTable(message_author.id)
 
-    
+
 def command_is_spam(command:str):
     for c in command:
         if c in common.COMMAND_TRIGGER_CHARS:
@@ -1109,17 +1061,32 @@ def get_size(objct, seen=None):
                 all_objects.append(i)
     return total_size
 
-# def handler(signum, frame):
-#     sys.exit()
 
-# signal.signal(signal.SIGINT, handler)
+# nodemon BadWolfBot.py --signal SIGQUIT
+is_quitting = False
+def handler(signum, frame):
+    global is_quitting
+    if not is_quitting:
+        print("Received SIGQUIT")
+        is_quitting = True
+        asyncio.create_task(bot.close())
+signal.signal(signal.SIGQUIT, handler)
 
 
-if __name__ == "__main__":
+def initialize():
     create_folders()
     private_data_init()
+    Race.initialize()
+    UserDataProcessing.initialize()
+    asyncio.run(DataTracker.initialize())
+    ServerFunctions.initialize()
+    UtilityFunctions.initialize()
+    TagAIShell.initialize()
 
+if __name__ == "__main__":
     bot = BadWolfBot()
+
+    initialize()
 
     if common.is_dev:
         bot.run(testing_bot_key)
@@ -1127,7 +1094,6 @@ if __name__ == "__main__":
         bot.run(beta_bot_key)
     else:
         bot.run(real_bot_key)
-
 
     @atexit.register
     def on_exit():
