@@ -2758,9 +2758,6 @@ class TablingCommands:
             if not channel:
                 return await message.channel.send("The channel you provided could not be found.")
 
-            # if is_lounge_server and not common.author_is_lounge_staff(message.author):
-            #     return await message.channel.send("You don't have permission to transfer a table within the lounge server - you must be Lounge staff.")
-            
             try:
                 copied_instance = copy.deepcopy(table_bots[message.guild.id][channel_id])
             except KeyError:
@@ -2770,11 +2767,11 @@ class TablingCommands:
                 return await message.channel.send("The table you are trying to copy has not been loaded.")
 
             copied_instance.lastWPTime = None
+            copied_instance.channel_id = channel_id
             table_bots[message.guild.id][message.channel.id] = copied_instance #change this instance
 
             pic_view = Components.PictureView(copied_instance, server_prefix, is_lounge_server)
           
-            # return await message.channel.send(f"Table has been copied from <#{channel_id}>.", view=pic_view)
             return await pic_view.send(message, content=f"Table has been copied from <#{channel_id}>.")
         
         # copy from another server
@@ -2786,9 +2783,6 @@ class TablingCommands:
             server_id = int(args[2])
         except:
             return await message.channel.send("Invalid server ID. Use the `Copy ID` function to get a server's ID.")
-
-        # if server_id == common.MKW_LOUNGE_SERVER_ID and not common.author_is_lounge_staff(message.author):
-        #     return await message.channel.send("You don't have permission to transfer a table to the lounge server - you must be Lounge staff.")
 
         guild = client.get_guild(server_id)
         if not guild:
@@ -2810,6 +2804,9 @@ class TablingCommands:
             return await message.channel.send("The table you are trying to copy has not been loaded.")
 
         copied_instance.lastWPTime = None
+        copied_instance.channel_id = channel_id
+        copied_instance.server_id = server_id
+        copied_instance.set_style_and_graph(server_id)
 
         if message.guild.id not in table_bots:
             table_bots[message.guild.id] = {}
@@ -2817,9 +2814,7 @@ class TablingCommands:
         table_bots[message.guild.id][message.channel.id] = copied_instance
 
         pic_view = Components.PictureView(copied_instance, server_prefix, is_lounge_server)
-        # await message.channel.send(f"Table has been copied from <#{channel_id}> in {guild.name}.", view=pic_view)
         await pic_view.send(message, content=f"Table has been copied from <#{channel_id}> in {guild.name}.")
-
 
 
 #============== Helper functions ================
