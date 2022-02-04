@@ -923,7 +923,7 @@ class BadWolfBot(ext_commands.Bot):
     
     async def close(self):
         await self.on_exit()
-        await super().close()
+        #await super().close()
         os._exit(0)
     
     async def on_exit(self):
@@ -1094,10 +1094,4 @@ if __name__ == "__main__":
         bot.run(beta_bot_key)
     else:
         bot.run(real_bot_key)
-
-    @atexit.register
-    def on_exit():
-        bot.save_data()
-        bot.destroy_all_tablebots()
-        print(f"{str(datetime.now())}: All table bots cleaned up.")
     
