@@ -2734,7 +2734,7 @@ class TablingCommands:
     async def transfer_table_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool, table_bots, client):
         if len(args) == 1: #send usage
             return await message.channel.send(f"Usage: `{server_prefix}copyfrom [channelID] (guildID)`\nYou don't need to include the `guildID` if the channel you are transferring from is in this server, otherwise you must include it.")
-        
+
         if len(args)==2: #copy within server
             channel = args[1]
             try:
