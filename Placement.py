@@ -125,8 +125,8 @@ class Placement:
     def getPlayer(self) -> Player.Player:
         return self.player
 
-    def getFC(self):
-        return self.player.FC
+    def get_fc(self):
+        return self.getPlayer().get_FC()
     
     def is_from_wiimmfi(self):
         return self.is_wiimmfi_place
