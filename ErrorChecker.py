@@ -205,9 +205,10 @@ def get_war_errors_players(war, room, error_types, lounge_replace=True, ignoreLa
                             # for _, on_before in dc_on_or_before[race.raceNumber].items():
                             #     if on_before == 'on':
                             #         num_extra_players += 1
-                                    
+
                             if dc_on_or_before[race.raceNumber][missingFC] == 'on':
-                                race_errors[int(race.raceNumber)].append(missingName + UserDataProcessing.lounge_add(missingFC, lounge_replace) + " DCed and was on results. Giving " + str(numberOfDCPtsGivenOn) + " total DC points (3 per missing race). (" + str(len(race.placements)) + " players in room this race)")
+                                pass # already handled earlier
+                                #race_errors[int(race.raceNumber)].append(missingName + UserDataProcessing.lounge_add(missingFC, lounge_replace) + " DCed and was on results. Giving " + str(numberOfDCPtsGivenOn) + " total DC points (3 per missing race). (" + str(len(race.placements)) + " players in room this race)")
                             else:
                                 race_errors[int(race.raceNumber)].append(missingName + UserDataProcessing.lounge_add(missingFC, lounge_replace) + " DCed before this race. Giving " + str(numberOfDCPtsGivenMissing) + " total DC points (3 per missing race). (" + str(len(race.placements)) + " players in room this race)")
     

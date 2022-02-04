@@ -2544,16 +2544,17 @@ class TablingCommands:
                             await pic_view.send(message, file=file, embed=embed)
                             TableBot.last_wp_message[this_bot.channel_id] = pic_view.message
 
-                            # if error_types and len(error_types)>0:
-                            #     chosen_suggestion = get_suggestion(error_types, numRaces)
-                            #     if chosen_suggestion:
-                            #         sug_view = Components.SuggestionView(chosen_suggestion, this_bot, server_prefix, is_lounge_server)
-                            #         await sug_view.send(message, content='**Quick Fix Suggestion:**')
-
-                            for race,suggestions in error_types:
-                                for chosen_suggestion in suggestions:
+                            if error_types and len(error_types)>0:
+                                chosen_suggestion = get_suggestion(error_types, numRaces, this_bot)
+                                if chosen_suggestion:
                                     sug_view = Components.SuggestionView(chosen_suggestion, this_bot, server_prefix, is_lounge_server)
                                     await sug_view.send(message)
+
+                            # if error_types:
+                            #     for race,suggestions in error_types:
+                            #         for chosen_suggestion in suggestions:
+                            #             sug_view = Components.SuggestionView(chosen_suggestion, this_bot, server_prefix, is_lounge_server)
+                            #             await sug_view.send(message)
 
                             await common.safe_delete(message3)
 
@@ -2819,11 +2820,18 @@ class TablingCommands:
 
 #============== Helper functions ================
 
-def get_suggestion(errors, last_race):
+def get_suggestion(errors, last_race, bot):
     chosen_suggestion = None
     race, possible_suggestions = errors[-1]
+
+    # pick only suggestions from the last race
     if last_race != race:
         return None
+
+    # mark all suggestions this race as resolved
+    for sug in possible_suggestions:
+        bot.resolved_errors.add(sug['id'])
+
     for priorityType in ['tie', 'missing_player', 'blank_player', 'gp_missing_1', 'large_time', 'gp_missing']:
         for sug in possible_suggestions:
             if sug['type'] == priorityType:
