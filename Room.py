@@ -376,17 +376,22 @@ class Room(object):
                         wentMissingThisGP.append(fc)
                         missingPlayersThisRace.append((fc, player))
             
-            for placement in race.placements:
-                if placement.is_disconnected() and placement.getFC() not in wentMissingThisGP:
-                    wentMissingThisGP.append(placement.getFC())
-                    if include_blank:
-                        missingPlayersThisRace.append(placement.get_fc_and_name())
+            # for placement in race.placements:
+            #     if placement.is_disconnected() and placement.getFC() not in wentMissingThisGP:
+            #         wentMissingThisGP.append(placement.getFC())
+            #         if include_blank:
+            #             missingPlayersThisRace.append(placement.get_fc_and_name())
 
             missingPlayers.append(missingPlayersThisRace)
 
+        for race, players in self.dc_on_or_before.items():
+            for fc, status in players.items():
+                if status == 'on':
+                    if race-1 < len(missingPlayers):
+                        missingPlayers[race-1].append((fc, self.getFCPlayerList()[fc]))
+
         for missingPlayersOnRace in missingPlayers:
             missingPlayersOnRace.sort()
-  
 
         return missingPlayers
     
@@ -395,7 +400,7 @@ class Room(object):
         get a sorted list of the DCs (same order as DCListString) for use by Discord Buttons
         '''
         dc_list = list()
-        missingPlayersByRace = self.getMissingOnRace(numGPs, include_blank=True)
+        missingPlayersByRace = self.getMissingOnRace(numGPs, include_blank=False)
 
         for raceNum, race in enumerate(missingPlayersByRace):
             for dc in race:
@@ -407,8 +412,9 @@ class Room(object):
         # return dc_list
     
     def getDCListString(self, numberOfGPs=3, replace_lounge=True):
-        missingPlayersByRace = self.getMissingOnRace(numberOfGPs, include_blank=True)
+        missingPlayersByRace = self.getMissingOnRace(numberOfGPs, include_blank=False)
         missingPlayersAmount = sum([len(x) for x in missingPlayersByRace])
+
         if missingPlayersAmount == 0:
             last_race = self.races[-1]
             return False, "No one has DCed. Last race: " + str(last_race.track) + " (Race #" + str(last_race.raceNumber) + ")"
@@ -421,8 +427,8 @@ class Room(object):
                     status_str = "disconnected on or before"
                     confirm_str = ""
                     if raceNum in self.dc_on_or_before and fc in self.dc_on_or_before[raceNum]:
-                        status_str = f"DCed **`{self.dc_on_or_before[raceNum][fc]}`**"
-                        confirm_str = " - *tabler confirmed*"
+                        status_str = f"DCed **{self.dc_on_or_before[raceNum][fc]}**"
+                        confirm_str = " - *Tabler confirmed*"
 
                     build_string += UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, replace_lounge)) + f"** {status_str} race #" + str(raceNum) + " (" + str(self.races[raceNum-1].getTrackNameWithoutAuthor()) + f"){confirm_str}\n"
                     counter+=1

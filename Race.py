@@ -288,9 +288,9 @@ class Race:
                 and not placement_1.is_disconnected() and not placement_1.is_disconnected():
                     if placement_1.time not in ties:
                         ties[placement_1.time] = []
-                    if placement_1.player.FC not in ties:
+                    if placement_1.player.FC not in ties[placement_1.time]:
                         ties[placement_1.time].append(placement_1.player.FC)
-                    if placement_2.player.FC not in ties:
+                    if placement_2.player.FC not in ties[placement_1.time]:
                         ties[placement_1.time].append(placement_2.player.FC)       
         return ties
     

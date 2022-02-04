@@ -1,4 +1,6 @@
 import discord
+
+import TableBot
 import commands
 import InteractionUtils
 import UtilityFunctions
@@ -43,118 +45,53 @@ class ConfirmView(discord.ui.View):
 
 ###########################################################################################
 
-
 class PictureButton(discord.ui.Button['PictureView']):
-    def __init__(self, bot, timeout):
-        super().__init__(style=discord.ButtonStyle.primary, label='Update', row=0)
+    def __init__(self, bot):
+        cooldown = bot.getWPCooldownSeconds()
+        super().__init__(style=discord.ButtonStyle.gray if (cooldown > 1) else discord.ButtonStyle.primary, label='Update', row=0)
         self.bot = bot
+        asyncio.create_task(self.activate())
 
-        # self.disabled = self.bot.getWPCooldownSeconds() > 0
-
-        # self.timeout = timeout
-        # self.__timeout_task = None
-        # self.__timeout_expiry = None
-
-        # self.cooldown = self.bot.getWPCooldownSeconds()
-        # self.__cooldown_task = None
-        # self.__cooldown_expiry = None
-        # self.start_timeout_timer()
-        # self.start_cooldown_timer()
-        
-    async def __timeout_task_impl(self) -> None:
-        while True:
-            if self.__timeout_expiry is None:
-                return self._dispatch_timeout()
-
-            # Check if we've elapsed our currently set timeout
-            now = time.monotonic()
-            if now >= self.__timeout_expiry:
-                return self._dispatch_timeout()
-
-            # Wait N seconds to see if timeout data has been refreshed
-            await asyncio.sleep(self.__timeout_expiry - now)
-    
-    def start_timeout_timer(self):
-        loop = asyncio.get_running_loop()
-        if self.__timeout_task is not None:
-            self.__timeout_task.cancel()
-
-        self.__timeout_expiry = time.monotonic() + self.timeout
-        self.__timeout_task = loop.create_task(self.__timeout_task_impl())
-        
-    def _dispatch_timeout(self):
-        self.__cooldown_task.cancel()
-        asyncio.create_task(self.view.on_timeout())
-    
-    async def __cooldown_task_impl(self):
-        while True:
-            if self.__cooldown_expiry is None:
-                return
-            
-            await asyncio.sleep(max(self.__cooldown_expiry - time.monotonic(), 0.5))
-
-            await self.check_clickable()
-            self.cooldown = 0.5
-            self.__cooldown_expiry = time.monotonic() + self.cooldown
-    
-    def start_cooldown_timer(self):
-        loop = asyncio.get_running_loop()
-        if self.__cooldown_task is not None:
-            self.__cooldown_task.cancel()
-
-        self.__cooldown_expiry = time.monotonic() + self.cooldown
-        self.__cooldown_task = loop.create_task(self.__cooldown_task_impl())
-
-    async def check_clickable(self):
-        if not self.view or not self.view.message: return
-        # if self.bot.pic_button_count - self.button_number > 2:
-        #     self.view.clear_items()
-        #     self.view.stop()
-        #     await self.view.message.edit(view=self.view)
-        #     self.__cooldown_task.cancel()
-        #     self.__timeout_task.cancel()
-
-        if self.disabled and self.bot.getWPCooldownSeconds() < 1:
-            self.disabled = False
-        elif not self.disabled and self.bot.getWPCooldownSeconds() > 0:
-            self.disabled = True
-
-        await self.view.message.edit(view=self.view)
+    async def activate(self):
+        await asyncio.sleep(self.bot.getWPCooldownSeconds())
+        self.style = discord.ButtonStyle.primary
+        try:
+            if self.view.message.channel.id in TableBot.last_wp_message:
+                await self.view.message.edit(view=self.view)
+        except:
+            pass
 
     async def callback(self, interaction: discord.Interaction):
         msg = InteractionUtils.create_proxy_msg(interaction, ['wp'])
 
-        self.view.message = None
         await interaction.response.edit_message(view=None)
-        await commands.TablingCommands.war_picture_command(msg, self.view.bot, ['wp'], self.view.prefix, self.view.lounge,
+        await commands.TablingCommands.war_picture_command(msg,self.view.bot,['wp'],self.view.prefix,self.view.is_lounge,
                                                            requester=interaction.user.display_name)
         # await self.view.on_timeout()
 
 class PictureView(discord.ui.View):
-    def __init__(self, bot, prefix, is_lounge_server, timeout=600):
-        super().__init__(timeout=timeout)
+    def __init__(self, bot, prefix, is_lounge_server):
+        super().__init__(timeout=60*10)
         self.bot = bot
         self.prefix = prefix
-        self.lounge = is_lounge_server
-        self.message = None
+        self.is_lounge = is_lounge_server
+        self.message: discord.Message = None
 
-        self.add_item(PictureButton(self.bot, timeout))
-
-        self.bot.add_pic_view(self)
-
+        self.add_item(PictureButton(self.bot))
+    
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, 'wp_interaction')
-        if not allowed:
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'wp')
+        if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
-            return False
-        
+
         cooldown = self.bot.getWPCooldownSeconds()
         cooldown_active = cooldown > 0
         if cooldown_active:
-            await interaction.response.send_message(f"This button is on cooldown. Please wait {cooldown} more seconds.", ephemeral=True)
+            await interaction.response.send_message(f"This button is on cooldown. Please wait {cooldown} more seconds.",
+                                                    ephemeral=True, delete_after=1)
             return False
 
-        return True
+        return allowed
     
     async def on_timeout(self) -> None:
         self.clear_items()
@@ -180,8 +117,9 @@ class RejectButton(discord.ui.Button['SuggestionView']):
     async def callback(self, interaction: discord.Interaction):
         self.view.bot.resolved_errors.add(self.view.index)
 
-        self.view.clear_items() #get rid of all buttons except Picture Button
-        await interaction.response.edit_message(view=self.view)
+        await self.view.message.delete()
+        # self.view.clear_items() #get rid of all buttons except Picture Button
+        # await interaction.response.edit_message(view=self.view)
 
 class SuggestionButton(discord.ui.Button['SuggestionView']):
     def __init__(self, error, label, value=None, confirm=False):
@@ -205,13 +143,23 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
             "tie": commands.TablingCommands.quick_edit_command,
             "large_time": commands.TablingCommands.quick_edit_command,
             "missing_player": commands.TablingCommands.disconnections_command
+
+            # "gp_missing": commands.TablingCommands.change_room_size_command, CHECKED
+            # "gp_missing_1": commands.TablingCommands.early_dc_command, CHECKED
+            # "tie": commands.TablingCommands.quick_edit_command, BROKEN
+            # "large_time": commands.TablingCommands.quick_edit_command, CHECKED
+            # "missing_player": commands.TablingCommands.disconnections_command CHECKED
         }
         
         command_mes = await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.lounge, dont_send=True)
         author_str = interaction.user.display_name
+
         self.view.stop()
         self.view.clear_items()
-        await interaction.response.edit_message(content=f"{author_str} - "+command_mes, view=self.view)
+
+        await self.view.message.delete()
+        await self.view.message.channel.send(f"{author_str} - "+command_mes)
+        self.view.bot.resolved_errors.add(self.view.index)
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
     def __init__(self, values, name):
@@ -219,7 +167,7 @@ class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
         super().__init__(placeholder=name, options=options)
     
     async def callback(self, interaction: discord.Interaction):
-        self.view.selected_values(interaction.data['values'][0])
+        self.view.selected_values = interaction.data['values'][0]
         self.placeholder = self.view.selected_values 
 
         self.view.enable_confirm()
@@ -229,12 +177,21 @@ class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
             pass
 
 LABEL_BUILDERS = {
-    'missing_player': '{} DCed *{}* race',
-    'blank_player': "{} DCed *{}* race",
-    'tie': '{} placed *{}*',
-    'large_time': '{} {} *{}*', #placed / did not place
+    'missing_player': '{} DCed [{}] race',
+    'blank_player': "{} DCed [{}] race",
+    'tie': '{} placed [{}]',
+    'large_time': '{} {} [{}]', #placed / did not place
     'gp_missing': 'Change Room Size',
-    'gp_missing_1': 'Missing player early DCed *{}* race'
+    'gp_missing_1': 'Player early DCed [{}] race'
+}
+
+ERROR_TYPE_DESCRIPTIONS = {
+    'missing_player': 'Missing Player',
+#    'blank_player': "{} DCed [{}] race",
+    'tie': 'Tie',
+    'large_time': 'Large Finish Time', #placed / did not place
+    'gp_missing': 'Missing Players',
+    'gp_missing_1': 'Early DC'
 }
 
 class SuggestionView(discord.ui.View):
@@ -247,61 +204,24 @@ class SuggestionView(discord.ui.View):
         self.index = id if id else self.error['id']
         self.selected_values = None
         self.message = None
-        self.bot.add_sug_view(self)
-        # self.bot.cur_sug_num +=1
-        # self.current_num = self.bot.cur_sug_num
 
-        self.__delete_task = None
-        self.__delete_expiry = None
-        self.delete_interval = 0.5
-
+        self.bot.resolved_errors.add(self.index) # don't show the same suggestion again
         self.create_row()
-
 
     async def on_timeout(self) -> None:
         self.clear_items()
         self.stop()
         # await self.message.edit(view=self)
-        if self.message: await self.message.delete()
-        self = None
-        
-    async def __delete_task_impl(self) -> None:
-        '''
-        Delete old suggestion views when new ones are sent.
-        '''
-        while True:
-            if self.__delete_expiry is None:
-                return self._dispatch_del_timeout()
-            
-            if self.current_num < self.bot.cur_sug_num:
-                return self._dispatch_del_timeout()
-
-            # Check if we've elapsed our currently set timeout
-            now = time.monotonic()
-            self.__delete_expiry = now + self.delete_interval
-
-            # Wait N seconds to see if timeout data has been refreshed
-            await asyncio.sleep(self.__delete_expiry - now)
-        
-    def _dispatch_del_timeout(self):
-        self.__delete_task.cancel()
-        asyncio.create_task(self.on_timeout())
+        try:
+            await self.message.delete()
+        except:
+            pass
     
-    def start_delete_timer(self):
-        loop = asyncio.get_running_loop()
-        if self.__delete_task is not None:
-            self.__delete_task.cancel()
-
-        self.__delete_expiry = time.monotonic() + self.delete_interval
-        self.__delete_task = loop.create_task(self.__delete_task_impl())
-    
-    async def send(self, messageable, content=None, file=None, embed=None):
+    async def send(self, messageable, file=None, embed=None):
         if hasattr(messageable, 'channel'):
             messageable = messageable.channel
-        
-        # self.start_delete_timer()
 
-        self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
+        self.message = await messageable.send(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.error['type']]}):**", file=file, embed=embed, view=self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, InteractionUtils.convert_key_to_command(self.error['type']))
@@ -338,7 +258,7 @@ class SuggestionView(discord.ui.View):
         
         elif err_type == 'tie':
             for insert in error['placements']:
-                label = label_builder.format(error['player_name'], insert)
+                label = label_builder.format(error['player_name'], UtilityFunctions.place_to_str(insert))
                 self.add_item(SuggestionButton(error, label, value=insert))
         
         self.add_item(RejectButton())

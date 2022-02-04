@@ -3,6 +3,8 @@ Created on Jul 30, 2020
 
 @author: willg
 '''
+import discord
+
 import WiimmfiSiteFunctions
 import Room
 import War
@@ -46,42 +48,43 @@ graphs = {"1":("None", "default graph"),
           }
 
 DEFAULT_DC_POINTS = 3
+last_wp_message = {}
 
 #TODO: REFACTOR THIS SOMEHOW; THIS ISN'T GOOD
-pic_num = 0
-sug_num = 0
-pic_views = {}
-sug_views = {}
+# pic_num = 0
+# sug_num = 0
+# pic_views = {}
+# sug_views = {}
 
-def add_pic_view(pic_view):
-    global pic_num
-    pic_num+=1
-    pic_views[pic_num] = pic_view
-    return pic_num
+# def add_pic_view(pic_view):
+#     global pic_num
+#     pic_num+=1
+#     pic_views[pic_num] = pic_view
+#     return pic_num
 
-def add_sug_view(sug_view):
-    global sug_num
-    sug_num+=1
-    sug_views[sug_num] = sug_view
-    return sug_num
+# def add_sug_view(sug_view):
+#     global sug_num
+#     sug_num+=1
+#     sug_views[sug_num] = sug_view
+#     return sug_num
 
-def delete_pic_views(delete):
-    for ind in delete:
-        try:
-            view = pic_views.pop(ind)
-            if view:
-                asyncio.create_task(view.on_timeout())
-        except KeyError: 
-            pass
+# def delete_pic_views(delete):
+#     for ind in delete:
+#         try:
+#             view = pic_views.pop(ind)
+#             if view:
+#                 asyncio.create_task(view.on_timeout())
+#         except KeyError: 
+#             pass
 
-def delete_sug_views(delete):
-    for ind in delete:
-        try:
-            view = sug_views.pop(ind)
-            if view:
-                asyncio.create_task(view.on_timeout())
-        except KeyError:
-            pass
+# def delete_sug_views(delete):
+#     for ind in delete:
+#         try:
+#             view = sug_views.pop(ind)
+#             if view:
+#                 asyncio.create_task(view.on_timeout())
+#         except KeyError:
+#             pass
 
 class ChannelBot(object):
     '''
@@ -101,8 +104,6 @@ class ChannelBot(object):
         self.miis: Dict[str, Mii.Mii] = {}
         
         self.resolved_errors = set()
-        self.pic_views = []
-        self.sug_views = []
         
         self.populating = False
         
@@ -667,6 +668,13 @@ class ChannelBot(object):
         self.style = save_state["style"]
         self.race_size = save_state["race_size"]
         return command
+
+    async def clear_last_wp_button(self):
+        try:
+            await last_wp_message[self.channel_id].edit(view=None)
+            last_wp_message.pop(self.channel_id,None)
+        except:
+            pass
     
     def reset(self, server_id):
         self.destroy()
@@ -687,13 +695,9 @@ class ChannelBot(object):
         self.should_send_mii_notification = True
         self.set_style_and_graph(server_id)
         self.race_size = 4
-        # self.clear_views()
-    
-    def clear_views(self):
-        pass
-        # self.bot.delete_pic_views(self.pic_views)
-        # self.bot.delete_sug_views(self.sug_views)
 
+        asyncio.create_task(self.clear_last_wp_button())
+        
     def clean_up(self):
         for mii in self.miis.values():
             mii.clean_up()

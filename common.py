@@ -110,7 +110,7 @@ current_notification = ""
 inactivity_time_period = timedelta(hours=2, minutes=30)
 lounge_inactivity_time_period = timedelta(minutes=8)
 inactivity_unlock = timedelta(minutes=30)
-wp_cooldown_seconds = 15
+wp_cooldown_seconds = 10
 mkwx_page_cooldown_seconds = 5
 
 #Mii folder location information
