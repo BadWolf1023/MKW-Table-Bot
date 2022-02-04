@@ -377,10 +377,10 @@ class Room(object):
                         missingPlayersThisRace.append((fc, player))
             
             for placement in race.placements:
-                if placement.is_manual_DC() and placement.getFC() not in wentMissingThisGP:
-                    wentMissingThisGP.append(placement.getFC())
-                # if placement.is_disconnected() and placement.getFC() not in wentMissingThisGP:
-                #     wentMissingThisGP.append(placement.getFC())
+                if placement.is_manual_DC() and placement.get_fc() not in wentMissingThisGP:
+                    wentMissingThisGP.append(placement.get_fc())
+                # if placement.is_disconnected() and placement.get_fc() not in wentMissingThisGP:
+                #     wentMissingThisGP.append(placement.get_fc())
                 #     if include_blank:
                 #         missingPlayersThisRace.append(placement.get_fc_and_name())
 
