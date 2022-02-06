@@ -53,18 +53,32 @@ def backup_files(to_back_up=common.FILES_TO_BACKUP):
 async def prune_backups():
     for folder in os.listdir(backup_folder):
         try:
+            # Fix previously zipped files
+            path = backup_folder + folder
+            if ".zip" in path:
+                print("Unzipping", path)
+                new_path = path.replace(".zip","")
+                await common.run_command_async(f'unzip {path} -d {new_path}')
+                await common.run_command_async(f'rm {path}')
+                os.system(f'mv {new_path}/*/*/* {new_path}/')
+                await common.run_command_async(f'rm -rf {new_path}/backups')
+                path = new_path
+
             create_time = datetime.strptime(folder.replace(".zip", ""),'%Y-%m-%d').date()
             delta = datetime.date(datetime.now()) - create_time
-            path = backup_folder + folder
+
             if delta.days > 14 and create_time.day != 1:
-                if ".zip" in folder:
-                    os.remove(path)
-                else:
-                    shutil.rmtree(path)
-            elif delta.days >= 1 and '.zip' not in folder:
-                print("Zipping", path)
-                await common.run_command_async(f'zip -r {path}.zip {path}')
-                await common.run_command_async(f'rm -rf {path}')
+                print("Deleting", path)
+                shutil.rmtree(path+"/tablebot_data")
+                shutil.rmtree(path + "/discord_server_settings")
+            elif delta.days >= 1:
+                db_path = path+"/tablebot_data/room_data_tracking.db"
+                db_path_zip = db_path + ".zip"
+
+                if not os.path.exists(db_path_zip):
+                    print("Zipping", db_path)
+                    await common.run_command_async(f'zip -r {db_path_zip} {db_path}')
+                    await common.run_command_async(f'rm -rf {db_path}')
         except:
             pass
     
