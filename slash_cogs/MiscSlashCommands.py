@@ -61,7 +61,7 @@ class MiscSlash(ext_commands.Cog):
     async def _set_large_time_setting(
         self,
         ctx: discord.ApplicationContext,
-        setting: Option(str, "War formats to ignore large time warnings for (if more than 1, comma-separate them)") #, choices=commands.LARGE_TIME_OPTIONS.values()
+        setting: Option(str, "Format(s) to ignore large time warnings for (if more than 1, comma-separate them)") #, choices=commands.LARGE_TIME_OPTIONS.values()
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, setting]
@@ -70,7 +70,7 @@ class MiscSlash(ext_commands.Cog):
 
     @setting.command(name="mii",
     description="Change whether table's show miis on picture footers")
-    async def _set_theme(
+    async def _set_mii(
         self,
         ctx: discord.ApplicationContext,
         setting: Option(str, "Default mii setting", choices=['on', 'off'])

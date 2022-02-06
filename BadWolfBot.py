@@ -1116,7 +1116,7 @@ def handler(signum, frame):
         print("Received SIGQUIT")
         is_quitting = True
         asyncio.create_task(bot.close())
-signal.signal(signal.SIGQUIT, handler)
+# signal.signal(signal.SIGQUIT, handler)
 
 
 def initialize():

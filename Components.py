@@ -48,7 +48,7 @@ class ConfirmView(discord.ui.View):
 class PictureButton(discord.ui.Button['PictureView']):
     def __init__(self, bot):
         cooldown = bot.getWPCooldownSeconds()
-        super().__init__(style=discord.ButtonStyle.gray if (cooldown > 1) else discord.ButtonStyle.primary, label='Update', row=0)
+        super().__init__(style=discord.ButtonStyle.gray if (cooldown > 0) else discord.ButtonStyle.primary, label='Update', row=0)
         self.bot = bot
         asyncio.create_task(self.activate())
 
@@ -67,7 +67,6 @@ class PictureButton(discord.ui.Button['PictureView']):
         await interaction.response.edit_message(view=None)
         await commands.TablingCommands.war_picture_command(msg,self.view.bot,['wp'],self.view.prefix,self.view.is_lounge,
                                                            requester=interaction.user.display_name)
-        # await self.view.on_timeout()
 
 class PictureView(discord.ui.View):
     def __init__(self, bot, prefix, is_lounge_server):
@@ -87,8 +86,8 @@ class PictureView(discord.ui.View):
         cooldown = self.bot.getWPCooldownSeconds()
         cooldown_active = cooldown > 0
         if cooldown_active:
-            await interaction.response.send_message(f"This button is on cooldown. Please wait {cooldown} more seconds.",
-                                                    ephemeral=True, delete_after=1)
+            await interaction.response.send_message(f"This button is on cooldown. Please wait {cooldown} more seconds.", 
+                                                        ephemeral=True, delete_after=3.0)
             return False
 
         return allowed
@@ -115,11 +114,10 @@ class RejectButton(discord.ui.Button['SuggestionView']):
         super().__init__(style=discord.ButtonStyle.danger, label="Discard")
     
     async def callback(self, interaction: discord.Interaction):
-        self.view.bot.resolved_errors.add(self.view.index)
+        self.view.bot.resolved_errors.add(self.view.sug_id)
 
-        await self.view.message.delete()
-        # self.view.clear_items() #get rid of all buttons except Picture Button
-        # await interaction.response.edit_message(view=self.view)
+        # await self.view.message.delete()
+        await self.view.on_timeout()
 
 class SuggestionButton(discord.ui.Button['SuggestionView']):
     def __init__(self, error, label, value=None, confirm=False):
@@ -159,7 +157,7 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
 
         await self.view.message.delete()
         await self.view.message.channel.send(f"{author_str} - "+command_mes)
-        self.view.bot.resolved_errors.add(self.view.index)
+        self.view.bot.resolved_errors.add(self.view.sug_id)
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
     def __init__(self, values, name):
@@ -189,7 +187,7 @@ ERROR_TYPE_DESCRIPTIONS = {
     'missing_player': 'Missing Player',
 #    'blank_player': "{} DCed [{}] race",
     'tie': 'Tie',
-    'large_time': 'Large Finish Time', #placed / did not place
+    'large_time': 'Large Finish Time',
     'gp_missing': 'Missing Players',
     'gp_missing_1': 'Early DC'
 }
@@ -201,32 +199,33 @@ class SuggestionView(discord.ui.View):
         self.prefix = prefix
         self.error = error
         self.lounge = lounge
-        self.index = id if id else self.error['id']
+        self.sug_id = id if id else self.error['id']
         self.selected_values = None
         self.message = None
 
-        self.bot.resolved_errors.add(self.index) # don't show the same suggestion again
+        # self.bot.resolved_errors.add(self.sug_id) # don't show the same suggestion again
         self.create_row()
 
     async def on_timeout(self) -> None:
-        self.clear_items()
-        self.stop()
-        # await self.message.edit(view=self)
         try:
             await self.message.delete()
         except:
             pass
-    
+        self.stop()
+        self.clear_items()
+        
     async def send(self, messageable, file=None, embed=None):
         if hasattr(messageable, 'channel'):
             messageable = messageable.channel
+        
+        self.bot.add_sug_view(self)
 
         self.message = await messageable.send(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.error['type']]}):**", file=file, embed=embed, view=self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, InteractionUtils.convert_key_to_command(self.error['type']))
         if not allowed: 
-            await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
+            await interaction.response.send_message("You cannot use these buttons.", ephemeral=True, delete_after=3.0)
         return allowed
 
     def create_row(self):

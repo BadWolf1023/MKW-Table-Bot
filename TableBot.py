@@ -49,6 +49,7 @@ graphs = {"1":("None", "default graph"),
 
 DEFAULT_DC_POINTS = 3
 last_wp_message = {}
+last_sug_view = {}
 
 #TODO: REFACTOR THIS SOMEHOW; THIS ISN'T GOOD
 # pic_num = 0
@@ -672,7 +673,19 @@ class ChannelBot(object):
     async def clear_last_wp_button(self):
         try:
             await last_wp_message[self.channel_id].edit(view=None)
-            last_wp_message.pop(self.channel_id,None)
+            last_wp_message.pop(self.channel_id, None)
+        except:
+            pass
+    
+    def add_sug_view(self, view):
+        # self.clear_last_sug_view()
+        last_sug_view[self.channel_id] = view
+
+    def clear_last_sug_view(self):
+        try:
+            view = last_sug_view.pop(self.channel_id, None)
+            if view: 
+                asyncio.create_task(view.on_timeout())
         except:
             pass
     
@@ -697,6 +710,7 @@ class ChannelBot(object):
         self.race_size = 4
 
         asyncio.create_task(self.clear_last_wp_button())
+        self.clear_last_sug_view()
         
     def clean_up(self):
         for mii in self.miis.values():

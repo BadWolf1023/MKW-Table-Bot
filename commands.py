@@ -2439,6 +2439,7 @@ class TablingCommands:
             else:
                 this_bot.updateWPCoolDown()
                 await this_bot.clear_last_wp_button()
+                this_bot.clear_last_sug_view()
 
                 if prev_message:
                     message2 = prev_message
@@ -2540,7 +2541,6 @@ class TablingCommands:
                             embed.set_footer(text=temp+(request_message if request_message else ''))
                                 
                             pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
-                            # await message.channel.send(file=file, embed=embed, view=pic_view)
                             await pic_view.send(message, file=file, embed=embed)
                             TableBot.last_wp_message[this_bot.channel_id] = pic_view.message
 
@@ -2825,18 +2825,18 @@ def get_suggestion(errors, last_race, bot):
     race, possible_suggestions = errors[-1]
 
     # pick only suggestions from the last race
-    if last_race != race:
-        return None
+    # if last_race != race:
+    #     return None
 
     # mark all suggestions this race as resolved
-    for sug in possible_suggestions:
-        bot.resolved_errors.add(sug['id'])
+    # for sug in possible_suggestions:
+    #     bot.resolved_errors.add(sug['id'])
 
     for priorityType in ['tie', 'missing_player', 'blank_player', 'gp_missing_1', 'large_time', 'gp_missing']:
         for sug in possible_suggestions:
             if sug['type'] == priorityType:
                 chosen_suggestion = sug
-                chosen_suggestion['race'] = race
+                # chosen_suggestion['race'] = race
                 return chosen_suggestion  
     return None
 
