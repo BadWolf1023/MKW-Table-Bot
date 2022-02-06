@@ -301,7 +301,7 @@ def author_has_role_in(message_author, role_ids):
     return False
 
 def author_is_lounge_staff(message_author):
-    return author_has_role_in(message_author, mkw_lounge_staff_roles)
+    return author_has_role_in(message_author, mkw_lounge_staff_roles) or is_bad_wolf(message_author)
 
 def author_is_reporter_plus(message_author):
     return author_has_role_in(message_author, reporter_plus_roles)
@@ -491,12 +491,14 @@ def load_pkl(file_name, error_message, default):
     return default()
 
 async def run_command_async(command:str):
+    # print(command)
     proc = await asyncio.create_subprocess_exec(
         *command.split(" "),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE
     )
     a,b = await proc.communicate()
+    # print(a,b)
     
 def get_utc_time():
     return datetime.now(timezone.utc)
