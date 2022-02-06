@@ -240,29 +240,6 @@ class BadWolfBot(ext_commands.Bot):
         if ALLOW_SLASH_COMMANDS:
             for ext in SLASH_EXTENSIONS:
                 self.load_extension(ext)
-    
-    # def add_pic_view(self, pic_view):
-    #     self.pic_num+=1
-
-    #     self.pic_views[self.pic_num] = pic_view
-    #     return self.pic_num
-        
-    # def add_sug_view(self, sug_view):
-    #     self.sug_num+=1
-    #     self.sug_views[self.sug_num] = sug_view
-    #     return self.sug_num
-
-    # def delete_pic_views(self, delete):
-    #     for ind in delete:
-    #         view = self.pic_views.pop(ind)
-    #         if view:
-    #             asyncio.create_task(view.on_timeout())
-        
-    # def delete_sug_views(self, delete):
-    #     for ind in delete:
-    #         view = self.sug_views.pop(ind)
-    #         if view:
-    #             asyncio.create_task(view.on_timeout())
 
     #Strips the given prefix from the start of the command
     #Note, the caller must ensure that the given string has a prefix by using has_prefix to ensure proper behaviour

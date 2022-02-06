@@ -226,21 +226,23 @@ class War(object):
         errors_large_times = ErrorChecker.get_war_errors_players(self, room, defaultdict(list), replaceLounge, ignoreLargeTimes=False)
         num_errors_no_large_times = sum( [ len(raceErrors) for raceErrors in errors_no_large_times.values()])
         num_errors_large_times = sum( [ len(raceErrors) for raceErrors in errors_large_times.values()])
+
         build_string = "Errors that might affect the table:\n"
+        info_string = ""
         
         removedRaceString = room.get_removed_races_string()
-        build_string += removedRaceString
+        info_string += removedRaceString
         
         if self.ignoreLargeTimes and num_errors_no_large_times < num_errors_large_times:
-            build_string += "- Large times occurred, but are being ignored. Table could be incorrect.\n"
+            info_string += "- Large times occurred, but are being ignored. Table could be incorrect.\n"
         
-
         if up_to_race and up_to_race>0: # only show errors up to specified race if it was provided
             errors = {k: v for (k, v) in errors.items() if k<=up_to_race}
 
-        elif len(errors) == 0 and len(removedRaceString) == 0:
+        elif len(errors) == 0 and len(info_string) == 0:
             return "Room had no errors. Table should be correct.", None
         
+        build_string += info_string
 
         for raceNum, error_messages in sorted(errors.items(), key=lambda x:x[0]):
             if raceNum > len(room.races):

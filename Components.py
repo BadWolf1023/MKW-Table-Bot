@@ -1,11 +1,9 @@
 import discord
-
 import TableBot
 import commands
 import InteractionUtils
 import UtilityFunctions
 import asyncio
-import time
 
 class ConfirmButton(discord.ui.Button['ConfirmView']):
     def __init__(self, cat):
