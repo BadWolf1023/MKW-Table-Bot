@@ -1,10 +1,8 @@
 import discord
-from discord import permissions
 from discord.ext import commands as ext_commands
 from discord.commands import slash_command, SlashCommandGroup, CommandPermission, Option
 
 import TableBot
-import UserDataProcessing
 import commands
 import common
 
