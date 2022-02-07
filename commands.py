@@ -870,7 +870,6 @@ class OtherCommands:
         if len(args) == 1:
             discordIDToLoad = str(message.author.id)
             id_lounge, fc_id = await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad])
-            await updateData(id_lounge, fc_id)
         else:
             if len(message.raw_mentions) > 0:
                 discordIDToLoad = str(message.raw_mentions[0])
@@ -2205,25 +2204,35 @@ class TablingCommands:
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
 
+        to_load = ""
+
         if len(args) < 2:
-            await message.channel.send("Nothing given to mergeroom. No merges nor changes made.")
-            return
-        rxx_given = UtilityFunctions.is_rLID(args[1])
-        if rxx_given and args[1] in this_bot.getRoom().rLIDs:
+            # return await message.channel.send("Nothing given to mergeroom. No merges nor changes made.")
+            discord_id = str(message.author.id)
+            await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discord_id]))
+            FCs = UserDataProcessing.get_all_fcs(discord_id)
+            to_load = FCs
+        else:
+            to_load = args[1]
+            
+        rxx_given = UtilityFunctions.is_rLID(to_load)
+        if rxx_given and to_load in this_bot.getRoom().rLIDs:
             await message.channel.send("The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `?undo`.")
 
-        roomLink, rLID, rLIDSoup = await WiimmfiSiteFunctions.getRoomDataSmart(args[1])
+        roomLink, rLID, rLIDSoup = await WiimmfiSiteFunctions.getRoomDataSmart(to_load)
         rLIDSoupWasNone = rLIDSoup is None
         if not rLIDSoupWasNone:
             rLIDSoup.decompose()
             del rLIDSoup
 
         if roomLink is None or rLID is None or rLIDSoupWasNone:
-            await message.channel.send("Either the FC given to mergeroom isn't in a room, or the rLID given to mergeroom doesn't exist. No merges nor changes made. **Make sure the new room has finished the first race before using this command.**")
-            return
+            if len(args) < 2: #using author discord ID
+                return await message.channel.send("Couldn't find you in a room. No merges nor changes made. **Make sure the new room has finished the first race before using this command.**")
+
+            return await message.channel.send("Either the player given to mergeroom isn't in a room, or the rLID given to mergeroom doesn't exist. No merges nor changes made. **Make sure the new room has finished the first race before using this command.**")
 
         if not rxx_given and rLID in this_bot.getRoom().rLIDs:
-            await message.channel.send("The room you are currently in has already been merge in this war. No changes made.")
+            await message.channel.send("The room you are currently in has already been merged in this war. No changes made.")
             return
 
         this_bot.add_save_state(message.content)
@@ -2234,7 +2243,7 @@ class TablingCommands:
         else:
             this_bot.setWar(None)
             this_bot.setRoom(None)
-            await message.channel.send("**Failed to merge. War has been stopped and room has unloaded**")
+            await message.channel.send("**Failed to merge. War has been stopped and room has unloaded. You must reset.**")
 
     @staticmethod
     async def table_theme_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
