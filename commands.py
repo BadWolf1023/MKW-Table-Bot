@@ -1688,7 +1688,7 @@ class TablingCommands:
         channel_id = message.channel.id
         if server_id in table_bots and channel_id in table_bots[server_id]:
             table_bots[server_id][channel_id].destroy()
-        del(table_bots[server_id][channel_id])
+            del(table_bots[server_id][channel_id])
         await message.channel.send("Reset successful.")
 
     @staticmethod

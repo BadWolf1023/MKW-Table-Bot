@@ -100,6 +100,7 @@ OTHER_SERVER_CHANNEL_IDS = {747290182096650332,#RT T5, RT T4, RT T3, RT T2, RT T
 LIMITED_CHANNEL_IDS = LIMITED_DONT_INCLUDE_IN_COUNT
 LIMITED_SERVER_IDS = None
 BETA_CATEGORY_IDS = {744842611998588928, 740659739611889765, 895999567894556672}
+SQUAD_QUEUE_CATEGORY_ID = 791199067232272404
 
 current_notification = ""
 
@@ -350,7 +351,7 @@ lounge_channel_mappings = {MKW_LOUNGE_SERVER_ID:LoungeUpdateChannels(
 
 
 def is_bad_wolf(author):
-    if is_dev:
+    if is_dev or is_beta:
         return author.id in {BAD_WOLF_ID, CW_ID, ANDREW_ID}
     else:
         return author.id in {BAD_WOLF_ID, ANDREW_ID}
