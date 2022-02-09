@@ -15,6 +15,20 @@ import UtilityFunctions
 # import WiimmfiParser
 from Race import Race
 
+class ROOM_LOAD_STATUS_CODES():
+    DOES_NOT_EXIST = object()
+    HAS_NO_RACES = object()
+    NO_ROOM_LOADED = object()
+    SUCCESS = object()
+    FAILURE_CODES = {DOES_NOT_EXIST, HAS_NO_RACES, NO_ROOM_LOADED}
+    SUCCESS_CODES = {SUCCESS}
+    def __init__(self, status):
+        self.status = status
+    def was_success(self):
+        return self.status in ROOM_LOAD_STATUS_CODES.SUCCESS_CODES
+    def was_failure(self):
+        return self.status in ROOM_LOAD_STATUS_CODES.FAILURE_CODES
+
 cache_length = timedelta(seconds=30)
 long_cache_length = timedelta(seconds=45)
 url_cacher = URLCacher.URLCacher()
