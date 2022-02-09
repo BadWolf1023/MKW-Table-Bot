@@ -1,5 +1,6 @@
 '''
 Created on May 6, 2021
+
 @author: willg
 '''
 
@@ -168,27 +169,25 @@ class RoomPageParser(object):
 
         room_position = -1
 
-        role = "-1"
+        role = "Unknown"
         if (all_rows[1].find("b") is not None):
             room_position = 1
             role = "host"
         else:
             temp = str(all_rows[1].string).strip().split()
             room_position = temp[0].strip(".")
+            room_position = int(room_position) if UtilityFunctions.is_int(room_position) else -1
             role = temp[1].strip()
 
         player_region = str(all_rows[2].string)
         player_conn_fails = str(all_rows[3].string)
-        if not UtilityFunctions.is_int(player_conn_fails) and not UtilityFunctions.is_float(player_conn_fails):
-            player_conn_fails = None
-        else:
+        if UtilityFunctions.is_int(player_conn_fails) or UtilityFunctions.is_float(player_conn_fails):
             player_conn_fails = float(player_conn_fails)
+        else:
+            player_conn_fails = 0.0
         # TODO: Handle VR?
         vr = str(all_rows[4].string)
-        if not UtilityFunctions.is_int(vr):
-            vr = None
-        else:
-            vr = int(vr)
+        vr = int(vr) if UtilityFunctions.is_int(vr) else None
 
         character_vehicle = None
         if all_rows[5].has_attr(common.TOOLTIP_NAME):
@@ -196,6 +195,7 @@ class RoomPageParser(object):
 
         # Not true delta, but significant delta (above .5)
         delta = str(all_rows[7].string)
+        delta = float(delta) if UtilityFunctions.is_float(delta) else None
         time = str(all_rows[8].string)
         player_name = str(all_rows[9].string)
         while len(all_rows) > 0:
@@ -303,10 +303,7 @@ class FrontPageParser(object):
                 room_position, role = ''.join(all_rows[1].findAll(
                     text=True)).strip('\u2007').split('.')
                 room_position = room_position.strip()
-                if not room_position.isnumeric():
-                    room_position = -1
-                else:
-                    room_position = int(room_position)
+                room_position = int(room_position) if UtilityFunctions.is_int(room_position) else -1
                 role = role.strip().lower()
 
                 roomPositions = [room_position, room_position]
@@ -316,6 +313,7 @@ class FrontPageParser(object):
                 regions = [region, region]
 
                 vrs = [all_rows[5].string.strip(), 5000]
+                vrs[0] = int(vrs[0]) if UtilityFunctions.is_int(vrs[0]) else None
 
                 vehicle_combinations = [None, None]
                 if all_rows[6].has_attr(common.TOOLTIP_NAME):
@@ -325,21 +323,20 @@ class FrontPageParser(object):
                         vehicle_combinations = [combo1, combo2]
                     else:
                         vehicle_combinations = [
-                            vehicle_combination, vehicle_combination]
+                            str(vehicle_combination), str(vehicle_combination)]
 
-                times = [time for time in all_rows[9].findAll(text=True)]
+                times = [str(time) for time in all_rows[9].findAll(text=True)]
 
-                playerNames = [
-                    name for name in all_rows[10].findAll(text=True)]
+                playerNames = [str(name) for name in all_rows[10].findAll(text=True)]
                 if len(playerNames) < 2:
                     playerNames.append('no name')
                     playerNames.append('no name')
                 index = 0
                 plyr1 = Player.Player(FC=FCs[index], player_url=player_url, ol_status=ol_status, room_position=roomPositions[index], region=regions[index],
-                                      connection_fails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], mii_name=playerNames[index])
+                                      connection_fails=0.0, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], mii_name=playerNames[index])
                 index = 1
                 plyr2 = Player.Player(FC=FCs[index], player_url=player_url, ol_status=ol_status, room_position=roomPositions[index], region=regions[index],
-                                      connection_fails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], mii_name=playerNames[index])
+                                      connection_fails=0.0, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], mii_name=playerNames[index])
 
                 placements.append(Placement.Placement(plyr1, times[0]))
                 placements.append(Placement.Placement(plyr2, times[1]))
@@ -354,16 +351,18 @@ class FrontPageParser(object):
                 room_position, role = ''.join(all_rows[1].findAll(
                     text=True)).strip('\u2007').split('.')
                 room_position = room_position.strip()
+                room_position = int(room_position) if UtilityFunctions.is_int(room_position) else -1
                 role = role.strip().lower()
 
                 region = all_rows[3].string.strip()
 
                 # TODO: Handle VR?
                 vr = all_rows[5].string.strip()
+                vr = int(vr) if UtilityFunctions.is_int(vr) else None
 
                 vehicle_combination = None
                 if 'title' in all_rows[6].attrs:
-                    vehicle_combination = all_rows[6]['title']
+                    vehicle_combination = str(all_rows[6]['title'])
 
                 #roomType is 4
 
@@ -375,9 +374,10 @@ class FrontPageParser(object):
                     del all_rows[0]
 
                 plyr = Player.Player(FC=FC, player_url=player_url, ol_status=ol_status, room_position=room_position, region=region,
-                                     connection_fails=None, role=role, vr=vr, character_vehicle=vehicle_combination, mii_name=playerName)
+                                     connection_fails=0.0, role=role, vr=vr, character_vehicle=vehicle_combination, mii_name=playerName)
                 p = Placement.Placement(plyr, time)
                 placements.append(p)
+
         except Exception as e:
             print(e)
             raise
