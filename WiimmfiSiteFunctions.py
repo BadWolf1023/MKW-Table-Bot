@@ -24,6 +24,16 @@ class ROOM_LOAD_STATUS_CODES():
     SUCCESS_CODES = {SUCCESS}
     def __init__(self, status):
         self.status = status
+        
+    def __bool__(self):
+        # The sets of error codes might not be mutually exclusive in the future, so we'll do a standard if else check
+        if self.was_success():
+            return True
+        elif self.was_failure():
+            return False
+        else:
+            return False
+
     def was_success(self):
         return self.status in ROOM_LOAD_STATUS_CODES.SUCCESS_CODES
     def was_failure(self):
