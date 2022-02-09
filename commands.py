@@ -975,32 +975,29 @@ class OtherCommands:
         if rlCooldown > 0:
             delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
             await delete_me.delete(delay=5)
+            return
 
+        this_bot.updateRLCoolDown()
+        parser = WiimmfiParser.FrontPageParser(await WiimmfiSiteFunctions.get_mkwx_soup())
+        rooms = []
+        if ww_type == Race.RT_WW_REGION:
+            rooms = parser.get_RT_WWs()
+        elif ww_type == Race.CTGP_CTWW_REGION:
+            rooms = parser.get_CTGP_WWs()
+        elif ww_type == Race.BATTLE_REGION:
+            rooms = parser.get_battle_WWs()
+        elif ww_type == Race.UNKNOWN_REGION:
+            rooms = parser.get_other_rooms()
         else:
+            rooms = parser.get_private_rooms()
 
-            this_bot.updateRLCoolDown()
-            sr = SimpleRooms.SimpleRooms()
-            await sr.populate_rooms_information()
-            rooms = []
-            if ww_type == Race.RT_WW_REGION:
-                rooms = sr.get_RT_WWs()
-            elif ww_type == Race.CTGP_CTWW_REGION:
-                rooms = sr.get_CTGP_WWs()
-            elif ww_type == Race.BATTLE_REGION:
-                rooms = sr.get_battle_WWs()
-            elif ww_type == Race.UNKNOWN_REGION:
-                rooms = sr.get_other_rooms()
-            else:
-                rooms = sr.get_private_rooms()
-            # rooms = this_bot.getRoom().races
-
-            if len(rooms) == 0:
-                await message.channel.send(f"There are no {Race.Race.getWWFullName(ww_type)} rooms playing right now.")
-                return
-            
-            room_texts = [SimpleRooms.SimpleRooms.get_embed_text_for_race(rooms, page) for page in range(len(rooms))]
-            paginator = ComponentPaginator.MessagePaginator(pages=room_texts, show_indicator=True, timeout=common.embed_page_time.seconds)
-            await paginator.send(message)
+        if len(rooms) == 0:
+            await message.channel.send(f"There are no {Race.Race.getWWFullName(ww_type)} rooms playing right now.")
+            return
+        
+        room_texts = [WiimmfiParser.FrontPageParser.get_embed_text_for_race(rooms, page) for page in range(len(rooms))]
+        paginator = ComponentPaginator.MessagePaginator(pages=room_texts, show_indicator=True, timeout=common.embed_page_time.seconds)
+        await paginator.send(message)
     
     @staticmethod
     async def vr_command_get_races(rLID:str, temp_bot):
