@@ -6,7 +6,6 @@ Created on May 6, 2021
 
 import itertools
 from typing import List, Tuple
-from collections import defaultdict
 
 from bs4 import NavigableString
 import bs4
@@ -322,8 +321,7 @@ class FrontPageParser(object):
                         combo1, combo2 = vehicle_combination.split('<br>')
                         vehicle_combinations = [combo1, combo2]
                     else:
-                        vehicle_combinations = [
-                            str(vehicle_combination), str(vehicle_combination)]
+                        vehicle_combinations = [str(vehicle_combination), str(vehicle_combination)]
 
                 times = [str(time) for time in all_rows[9].findAll(text=True)]
 
@@ -467,11 +465,14 @@ class FrontPageParser(object):
             print(f"RoomID: {room_id}, roomType: {room_type}, cc: {cc}, matchTime: {match_time}, raceNumber: {race_number}, track: {track}")
 
         if cc is not None:
+            cc = str(cc)
             cc = cc[3:].strip()
         if match_time is not None:
-            if '(' in match_time and ')' in match_time:
-                match_time = match_time[match_time.index(
-                    '(')+1:match_time.index(')')]
+            match_time = str(match_time)
+            if "last start" not in match_time:
+                match_time = None
+            elif '(' in match_time and ')' in match_time:
+                match_time = match_time[match_time.index('(')+1:match_time.index(')')]
             if '(' in race_number:
                 race_number = race_number[:race_number.index('(')].strip()
         if race_number is not None:
@@ -483,10 +484,18 @@ class FrontPageParser(object):
             else:
                 race_number = None
         if track is not None:
+            track = str(track)
             track = track.replace('Last track:', '').strip()
-        #print(f"RoomID: {roomID}, roomType: {roomType}, cc: {cc}, matchTime: {matchTime}, raceNumber: {raceNumber}, track: {track}")
 
-        return Race.Race(match_time, match_id, race_number, room_id, room_type, cc, track, is_ct=is_ct, mkwxRaceNumber=race_number, rxx=rxx)
+        #Fix data types, avoid bs4 data types at all cost:
+        if room_id is not None:
+            room_id = str(room_id)
+        if room_type is not None:
+            room_type = str(room_type)
+        #print(f"RoomID: {roomID}, roomType: {roomType}, cc: {cc}, matchTime: {matchTime}, raceNumber: {raceNumber}, track: {track}")
+        print(type(match_time), type(match_id), type(race_number), type(room_id), type(room_type), type(cc), type(track), type(is_ct), type(race_number), type(rxx))
+        print(match_time, match_id, race_number, room_id, room_type, cc, track, is_ct, race_number, rxx)
+        return Race.Race(match_time, match_id, race_number, room_id, room_type, cc, track, is_ct, race_number, rxx=rxx)
 
     def _add_front_room(self, bs4_front_room_header):
         if bs4_front_room_header is None:
@@ -589,3 +598,4 @@ class FrontPageParser(object):
 
         str_msg += f"\nPage {pageNumber+1}/{len(races)}```"
         return str_msg
+
