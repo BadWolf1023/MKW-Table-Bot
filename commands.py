@@ -18,7 +18,6 @@ import TableBot
 from TableBot import ChannelBot
 import UtilityFunctions
 import MiiPuller
-import SimpleRooms
 import Race
 import MogiUpdate
 import Lounge

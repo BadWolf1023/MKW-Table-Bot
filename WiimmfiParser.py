@@ -516,7 +516,7 @@ class FrontPageParser(object):
             if total_players != len(front_room_race.placements):
                 print(total_players, len(front_room_race.placements))
                 print(
-                    "Mismatch of placements and number of players, check code for bugs. Line #253 in SimpleRooms.py")
+                    "Mismatch of placements and number of players, check code for bugs. Line #253 in FrontPageParser.py")
         front_room_race.update_region()
         self.get_front_room_races().append(front_room_race)
 
