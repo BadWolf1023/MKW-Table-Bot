@@ -26,9 +26,11 @@ properties = json.load(open(PROPERTIES_FILE)) if os.path.exists(PROPERTIES_FILE)
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
-ON_WINDOWS = os.name == 'nt' and "mkwx_proxy_url" not in properties
-HREF_HTML_NAME = 'href' if ON_WINDOWS else 'data-href'
-TOOLTIP_NAME = "data-tooltip" if ON_WINDOWS else "title"
+USING_LINUX_PROXY = "mkwx_proxy_url" in properties
+ON_WINDOWS = os.name == 'nt'
+
+HREF_HTML_NAME = 'data-href' if (USING_LINUX_PROXY or not ON_WINDOWS) else 'href'
+TOOLTIP_NAME = "title" if (USING_LINUX_PROXY or not ON_WINDOWS) else "data-tooltip"
 SAVED_ROOMS_DIR = "testing_rooms/windows/" if ON_WINDOWS else "testing_rooms/linux/"
 
 default_prefix = "?"
