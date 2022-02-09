@@ -428,7 +428,7 @@ class Table_Slash(ext_commands.Cog):
         if players: args.append(players)
         
         
-        await commands.OtherCommands.vr_command(this_bot, message, args, message.content, BWB.createEmptyTableBot())
+        await commands.OtherCommands.vr_command(this_bot, message, args, message.content)
     
     @slash_command(name='wws',
     description="Show all active RT Worldwide rooms",

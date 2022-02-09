@@ -6,7 +6,10 @@ Created on Jun 26, 2021
 
 #Bot internal imports - stuff I coded
 import ComponentPaginator
+from Placement import Placement
+import WiimmfiSiteFunctions_old
 import WiimmfiSiteFunctions
+import Room
 import ServerFunctions
 import ImageCombine
 import War
@@ -977,7 +980,7 @@ class OtherCommands:
             return
 
         this_bot.updateRLCoolDown()
-        parser = WiimmfiParser.FrontPageParser(await WiimmfiSiteFunctions.get_mkwx_soup())
+        parser = WiimmfiSiteFunctions.WiimmfiParser.FrontPageParser(await WiimmfiSiteFunctions.get_mkwx_soup())
         rooms = []
         if ww_type == Race.RT_WW_REGION:
             rooms = parser.get_RT_WWs()
@@ -994,27 +997,14 @@ class OtherCommands:
             await message.channel.send(f"There are no {Race.Race.getWWFullName(ww_type)} rooms playing right now.")
             return
         
-        room_texts = [WiimmfiParser.FrontPageParser.get_embed_text_for_race(rooms, page) for page in range(len(rooms))]
+        room_texts = [WiimmfiSiteFunctions.WiimmfiParser.FrontPageParser.get_embed_text_for_race(rooms, page) for page in range(len(rooms))]
         paginator = ComponentPaginator.MessagePaginator(pages=room_texts, show_indicator=True, timeout=common.embed_page_time.seconds)
         await paginator.send(message)
-    
-    @staticmethod
-    async def vr_command_get_races(rLID:str, temp_bot):
-        successful = await temp_bot.load_room_smart([rLID], is_vr_command=True, message_id=None)
-        if not successful:
-            return None
-        return temp_bot.getRoom().get_races_abbreviated(last_x_races=12)
 
-    @staticmethod
-    def vr_command_get_data(data_piece):
-        place = -1
-        if data_piece[1][0].isnumeric():
-            place = int(data_piece[1][0])
-        return  place, data_piece[0], str(data_piece[1][1]), UserDataProcessing.lounge_get(data_piece[0])
 
 
     @staticmethod
-    async def vr_command(this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], old_command:str, temp_bot):
+    async def vr_command(this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], old_command:str):
         await mkwx_check(message, "VR command disabled.")
 
         rlCooldown = this_bot.getRLCooldownSeconds()
@@ -1030,67 +1020,61 @@ class OtherCommands:
         #Case 3: FC: No mention, len(args) > 3, and is FC
         #Case 4: rLID: No mention, len(args) > 3, is rLID
         #Case 5: Lounge name: No mention, len(args) > 3, neither rLID nor FC
-        successful = False
-        room_data = None
-        rLID = None
+        status = False
+        front_race = None
         if len(args) == 1:
             discordIDToLoad = str(message.author.id)
             await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]) )
             FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-            successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
-            if not successful:
+            status, front_race = await this_bot.verify_room([FCs])
+            if not status:
                 await message2.edit("Could not find you in a room. (This could be an error if I couldn't find your FC.)")
         elif len(args) > 1:
             if len(message.raw_mentions) > 0:
                 discordIDToLoad = str(message.raw_mentions[0])
                 await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
                 FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-                successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
-                if not successful:
+                status, front_race = await this_bot.verify_room([FCs])
+                if not status:
                     await message2.edit(f"Could not find {UtilityFunctions.process_name(str(message.mentions[0].name))} in a room. (This could be an error if I couldn't find their FC in the database.)")
             elif UtilityFunctions.is_fc(args[1]):
-                successful, room_data, last_match_str, rLID = await this_bot.verify_room([args[1]])
-                if not successful:
+                status, front_race = await this_bot.verify_room([args[1]])
+                if not status:
                     await message2.edit("Could not find this FC in a room.")
             else:
                 await updateData( * await LoungeAPIFunctions.getByLoungeNames([" ".join(old_command.split()[1:])]))
                 FCs = UserDataProcessing.getFCsByLoungeName(" ".join(old_command.split()[1:]))
 
-                successful, room_data, last_match_str, rLID = await this_bot.verify_room([FCs])
-                if not successful:
+                status, front_race = await this_bot.verify_room([FCs])
+                if not status:
                     await message2.edit(f"Could not find {UtilityFunctions.process_name(' '.join(old_command.split()[1:]))} in a room. (This could be an error if I couldn't their FC in the database.)")
 
-        if not successful or room_data is None or rLID is None:
+        if not status:
             return
 
-        FC_List = [fc for fc in room_data]
-        await updateData(* await LoungeAPIFunctions.getByFCs(FC_List))
-
-
-        tuple_data = [OtherCommands.vr_command_get_data(item) for item in room_data.items()]
-        tuple_data.sort()
-
-        str_msg =  f"```diff\n- {last_match_str.strip()} -\n\n"
+        await updateData(* await LoungeAPIFunctions.getByFCs(front_race.get_race_FCs()))
+        #return  place, data_piece[0], str(data_piece[1][1]), UserDataProcessing.lounge_get(data_piece[0])
+        last_match_str = front_race.get_match_start_time()
+        str_msg =  f"```diff\n- {'No Race Started Yet' if last_match_str is None else last_match_str} -\n\n"
         # str_msg += '+{:>3} {:<13}| {:<13}| {:<1}\n'.format("#.", "Lounge Name", "Mii Name", "FC")
         header = ["#.", "Lounge Name", "Mii Name", "FC"]
         rows = []
-        for place, FC, mii_name, lounge_name in tuple_data:
+        for placement in front_race.getPlacements():
+            placement:Placement
+            FC, mii_name = placement.get_fc_and_name
+            lounge_name = UserDataProcessing.lounge_get(FC)
             if lounge_name == "":
                 lounge_name = "UNKNOWN"
-            rows.append([str(place)+".", lounge_name, mii_name, FC])
+            rows.append([f'{placement.place}.', lounge_name, mii_name, FC])
             # str_msg += "{:>4} {:<13}| {:<13}| {:<1}\n".format(str(place)+".",lounge_name, mii_name, FC)
         
         str_msg += tabulate(tabular_data=rows, headers=header, tablefmt="simple", colalign=["left"], stralign="left")
 
-        #string matching isn't the safest way here, but this is an add-on feature, and I don't want to change
-        #the verify_room function
-        if "(last start" in last_match_str:
+        if last_match_str is not None:
             #go get races from room
-            races_str = await OtherCommands.vr_command_get_races(rLID, temp_bot)
-            if races_str is not None:
-                str_msg += "\n\nRaces (Last 12): " + races_str
-            else:
-                str_msg += "\n\nFailed"
+            _, races = await WiimmfiSiteFunctions.get_races_for_rxx(front_race.get_rxx(()))
+            races_str = Room.Room.get_race_names_abbreviated(races, 12)
+            str_msg += "\n\nFailed" if races_str is None else f"\n\nRaces (Last 12): {races_str}"
 
         await common.safe_delete(message2)
         await message.channel.send(f"{str_msg}```")
@@ -2211,7 +2195,7 @@ class TablingCommands:
         if rxx_given and args[1] in this_bot.getRoom().rLIDs:
             await message.channel.send("The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `?undo`.")
 
-        roomLink, rLID, rLIDSoup = await WiimmfiSiteFunctions.getRoomDataSmart(args[1])
+        roomLink, rLID, rLIDSoup = await WiimmfiSiteFunctions_old.getRoomDataSmart(args[1])
         rLIDSoupWasNone = rLIDSoup is None
         if not rLIDSoupWasNone:
             rLIDSoup.decompose()

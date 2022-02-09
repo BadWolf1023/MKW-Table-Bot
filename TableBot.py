@@ -3,24 +3,20 @@ Created on Jul 30, 2020
 
 @author: willg
 '''
-import discord
-
+import WiimmfiParser
 import WiimmfiSiteFunctions
+import WiimmfiSiteFunctions_old
 import Room
 import War
 from datetime import datetime
 import humanize
-from bs4 import NavigableString, Tag
 import MiiPuller
-#import concurrent.futures
 import common
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 import Mii
 import ServerFunctions
 import asyncio
 from data_tracking import DataTracker
-import UtilityFunctions
-import copy
 
 
 lorenzi_style_key = "#style"
@@ -310,86 +306,17 @@ class ChannelBot(object):
         return success
 
         
-    async def verify_room(self, load_me):
-        to_find = load_me[0]
-
-        beautiful_soup_room_top = await WiimmfiSiteFunctions.getRoomHTMLDataSmart(to_find)
-        if beautiful_soup_room_top is None:
-            del beautiful_soup_room_top
-            return False, None, None, None
-        
-        
-        temp_test_before = beautiful_soup_room_top.find_all('th')
-        temp_test = temp_test_before[0]
-        while len(temp_test_before) > 0:
-            del temp_test_before[0]
-        
-        
-        created_when = str(temp_test.contents[2].string).strip()
-        rLID = str(temp_test.contents[1][common.HREF_HTML_NAME]).split("/")[4]
-        created_when = created_when[:created_when.index("ago)")+len("ago)")].strip()
-        room_str = "Room " + str(temp_test.contents[1].text) + ": " + created_when + " - "
-        last_match = str(temp_test.contents[6].string).strip("\n\t ")
-        
-        if len(last_match) == 0:
-            room_str += "Not started"
-        else:
-            room_str += last_match
-            
-        player_data = {}
-        correctLevel = beautiful_soup_room_top.next_sibling
-        while isinstance(correctLevel, NavigableString):
-            correctLevel = correctLevel.next_sibling
-        
-        
-        
-        if correctLevel is None:
-            return False, None, None, None
-        
-        
-        while True:
-            correctLevel = correctLevel.next_sibling
-            
-            if correctLevel is None:
-                break
-            if isinstance(correctLevel, NavigableString):
-                continue
-            if 'id' in correctLevel.attrs:
-                break
-            player_items = correctLevel.find_all('td')
-            
-            player_items_iterable = iter(player_items)
-            FC_data_str = str(next(player_items_iterable).contents[0].text).strip()
-            
-            
-            place_in_room = next(player_items_iterable).contents[0]
-            place_in_room_str = ""
-            if isinstance(place_in_room, NavigableString):
-                place_in_room_str = str(place_in_room.string)
-            elif isinstance(place_in_room, Tag):
-                place_in_room_str = str(place_in_room.text)
-        
-            place_in_room_str = place_in_room_str.lower().strip("\u2007. hostviewrgu\n\t")
-            del place_in_room
-            
-            mii_classes = correctLevel.find_all(class_="mii-font")
-            if len(place_in_room_str) == 0 or len(mii_classes) != 1 or not UtilityFunctions.is_fc(FC_data_str):
-                player_data[FC_data_str] = ("bad data", "bad data")
-                common.log_text(str(place_in_room_str), common.ERROR_LOGGING_TYPE)
-                common.log_text(str(mii_classes), common.ERROR_LOGGING_TYPE)
-                common.log_text(str(FC_data_str), common.ERROR_LOGGING_TYPE)
-                
-            else:
-                if mii_classes[0] is None or len(mii_classes[0]) < 1:
-                    player_data[FC_data_str] = ("bad data", "bad data")
-                    common.log_text(str(mii_classes), common.ERROR_LOGGING_TYPE)
-                    common.log_text(str(mii_classes[0]), common.ERROR_LOGGING_TYPE)
-                else:
-                    player_data[FC_data_str] = (place_in_room_str, str(mii_classes[0].contents[0]))
-            
-            while len(mii_classes) > 0:
-                del mii_classes[0]
-        return True, player_data, room_str, rLID
+    async def verify_room(self, load_me) -> Tuple[WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES, Union[None, Room.Race.Race]]:
+        parser = WiimmfiParser.FrontPageParser(await WiimmfiSiteFunctions.get_mkwx_soup())
+        player_room = None
+        for room in parser.get_front_room_races():
+            for FC in load_me:
+                if room.hasFC(FC):
+                    player_room = room
+                    break
+        if player_room is None:
+            return WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES(WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES.DOES_NOT_EXIST), None
+        return  WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES(WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES.SUCCESS), player_room
     
     
     async def load_room_smart(self, load_me, is_vr_command=False, message_id=None, setup_discord_id=0, setup_display_name=""):
@@ -397,14 +324,14 @@ class ChannelBot(object):
         soups = []
         success = False
         for item in load_me:
-            _, rLID, roomSoup = await WiimmfiSiteFunctions.getRoomDataSmart(item)
+            _, rLID, roomSoup = await WiimmfiSiteFunctions_old.getRoomDataSmart(item)
             rLIDs.append(rLID)
             soups.append(roomSoup)
             
             if roomSoup is None: #wrong roomID or no races played
                 break
         else:
-            roomSoup = WiimmfiSiteFunctions.combineSoups(soups)
+            roomSoup = WiimmfiSiteFunctions_old.combineSoups(soups)
             temp = Room.Room(rLIDs, roomSoup, setup_discord_id, setup_display_name)
             
             

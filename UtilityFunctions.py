@@ -140,6 +140,9 @@ def isfloat(value):
         return True
     except ValueError:
         return False
+
+def is_float(value):
+    return isfloat(value)
     
 def isint(value):
     try:
@@ -147,6 +150,10 @@ def isint(value):
         return True
     except:
         return False
+
+def is_int(value):
+    return isint(value)
+
 
 def place_to_str(place):
     append = "th"

@@ -6,7 +6,7 @@ Created on Jul 12, 2020
 import Race
 import Placement
 import Player
-import WiimmfiSiteFunctions
+import WiimmfiSiteFunctions_old
 import UserDataProcessing
 import common
 
@@ -697,11 +697,11 @@ class Room(object):
             rLIDs = []
             for rLID in self.rLIDs:
                 
-                _, rLID_temp, tempSoup = await WiimmfiSiteFunctions.getRoomData(rLID)
+                _, rLID_temp, tempSoup = await WiimmfiSiteFunctions_old.getRoomData(rLID)
                 soups.append(tempSoup)
                 rLIDs.append(rLID_temp)
                 
-            tempSoup = WiimmfiSiteFunctions.combineSoups(soups)
+            tempSoup = WiimmfiSiteFunctions_old.combineSoups(soups)
             
             to_return = False
             if tempSoup is not None:
@@ -759,21 +759,23 @@ class Room(object):
     def getRacesPlayed(self):
         return [r.track for r in self.races]
     
-    def get_races_abbreviated(self, last_x_races=None):
+    @staticmethod
+    def get_race_names_abbreviated(races: List[Race.Race], last_x_races=None):
         if last_x_races is None:
             temp = []
-            for ind,race in enumerate(self.races, 1):
+            for ind,race in enumerate(races, 1):
                 if race.getAbbreviatedName() is None:
                     return None
                 temp.append(str(ind) + ". " + race.getAbbreviatedName())
             return " | ".join(temp)
         else:
             temp = []
-            for ind,race in enumerate(self.races[-last_x_races:], 1):
+            for ind,race in enumerate(races[-last_x_races:], 1):
                 if race.getAbbreviatedName() is None:
                     return None
                 temp.append(str(ind) + ". " + race.getAbbreviatedName())
             return " | ".join(temp)
+        
         
     
     def get_races_string(self, races=None):

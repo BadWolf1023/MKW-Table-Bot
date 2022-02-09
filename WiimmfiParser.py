@@ -330,11 +330,11 @@ class FrontPageParser(object):
                     playerNames.append('no name')
                     playerNames.append('no name')
                 index = 0
-                plyr1 = Player.Player(FC=FCs[index], player_url=player_url, ol_status=ol_status, room_position=roomPositions[index], region=regions[index],
-                                      connection_fails=0.0, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], mii_name=playerNames[index])
+                plyr1 = Player.Player(FCs[index], player_url, ol_status, roomPositions[index], regions[index],
+                                      0.0, roles[index], vrs[index], vehicle_combinations[index], playerNames[index])
                 index = 1
-                plyr2 = Player.Player(FC=FCs[index], player_url=player_url, ol_status=ol_status, room_position=roomPositions[index], region=regions[index],
-                                      connection_fails=0.0, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], mii_name=playerNames[index])
+                plyr2 = Player.Player(FCs[index], player_url, ol_status, roomPositions[index], regions[index],
+                                      0.0, roles[index], vrs[index], vehicle_combinations[index], playerNames[index])
 
                 placements.append(Placement.Placement(plyr1, times[0]))
                 placements.append(Placement.Placement(plyr2, times[1]))
@@ -371,8 +371,8 @@ class FrontPageParser(object):
                 while len(all_rows) > 0:
                     del all_rows[0]
 
-                plyr = Player.Player(FC=FC, player_url=player_url, ol_status=ol_status, room_position=room_position, region=region,
-                                     connection_fails=0.0, role=role, vr=vr, character_vehicle=vehicle_combination, mii_name=playerName)
+                plyr = Player.Player(FC, player_url, ol_status, room_position, region,
+                                     0.0, role, vr, vehicle_combination, playerName)
                 p = Placement.Placement(plyr, time)
                 placements.append(p)
 

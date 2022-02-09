@@ -845,7 +845,7 @@ class BadWolfBot(ext_commands.Bot):
         
         elif args[0] in VERIFY_ROOM_TERMS:
             if commands.vr_is_on:
-                await commands.OtherCommands.vr_command(this_bot, message, args, command, createEmptyTableBot()) #create a new one so it won't interfere with any room they might have loaded (like a table)
+                await commands.OtherCommands.vr_command(this_bot, message, args, command)
         
         elif args[0] in WORLDWIDE_TERMS:
             await commands.OtherCommands.wws_command(self, this_bot, message, ww_type=Race.RT_WW_REGION)
