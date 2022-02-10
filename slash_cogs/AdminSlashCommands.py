@@ -14,13 +14,6 @@ class AdminSlash(ext_commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    # @ext_commands.Cog.listener()
-    # async def on_application_command_error(self, ctx, error):
-    #     if isinstance(error, discord.ApplicationCommandInvokeError):
-    #         orig = error.original
-    #         if isinstance(orig, (InteractionExceptions.NoPermission, TableBotExceptions.NotBotAdmin)):
-    #             await ctx.send("You don't have permission to use this command - you must be at least a Table Bot Admin.")
-    
     sha = SlashCommandGroup("sha", "Configure Table Bot's SHA mappings", guild_ids=common.SLASH_GUILDS, checks=[InteractionUtils.bot_admin_check])
 
     @sha.command(name="add",

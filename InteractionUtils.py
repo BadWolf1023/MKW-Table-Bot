@@ -90,7 +90,7 @@ class ChannelWrapper():
     def __getattr__(self,attr):
         return self.channel.__getattribute__(attr)
 
-def create_proxy_msg(interaction, args=None, ctx=None):
+def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
     proxyMsg = discord.Object(id=interaction.id)
 
     proxyMsg.channel = ChannelWrapper(interaction.channel, ctx)
@@ -100,7 +100,7 @@ def create_proxy_msg(interaction, args=None, ctx=None):
     proxyMsg.proxy = True
     proxyMsg.raw_mentions = []
 
-    for i in proxyMsg.content:
+    for i in proxyMsg.content.split(' '):
         if i.startswith('<@') and i.endswith('>'):
             proxyMsg.raw_mentions.append(i)
     

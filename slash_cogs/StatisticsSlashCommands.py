@@ -10,7 +10,7 @@ import Race
 EMPTY_CHAR = "\u200b"
 GUILDS = common.SLASH_GUILDS
 
-ALL_TRACK_LOOKUPS = ['LC']
+ALL_TRACK_LOOKUPS = []
 # for track_name, value in Race.track_name_abbreviation_mappings.items():
 #     try:
 #         if isinstance(value, tuple):

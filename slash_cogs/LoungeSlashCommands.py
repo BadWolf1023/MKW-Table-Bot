@@ -4,8 +4,8 @@ from discord.ext import commands as ext_commands
 import commands
 import common
 
-REQUIRED_PERMISSIONS = [CommandPermission(role, 2, True) for role in list(common.reporter_plus_roles)] #+ [CommandPermission(common.properties["admin_id"], 2, True)]
-# GUILDS = [common.MKW_LOUNGE_SERVER_ID]+common.SLASH_GUILDS
+REQUIRED_PERMISSIONS = [CommandPermission(role, 2, True, common.MKW_LOUNGE_SERVER_ID) for role in list(common.reporter_plus_roles)] #+ [CommandPermission(common.properties["admin_id"], 2, True)]
+# GUILDS = [common.MKW_LOUNGE_SERVER_ID]
 GUILDS = common.SLASH_GUILDS
 EMPTY_CHAR = "\u200b"
 
@@ -13,7 +13,7 @@ class LoungeSlash(ext_commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    update = SlashCommandGroup("update", "Submit tables to updaters", guild_ids=GUILDS)
+    update = SlashCommandGroup("update", "Submit tables to updaters", guild_ids=GUILDS) 
 
     @update.command(name='rt',
     description="Submit an RT table to updaters. NO TABLE TEXT SUBMISSIONS")

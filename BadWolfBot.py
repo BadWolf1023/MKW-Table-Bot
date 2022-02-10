@@ -179,7 +179,7 @@ ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | I
 SLASH_EXTENSIONS = [
     'slash_cogs.TablingSlashCommands', 
     'slash_cogs.AdminSlashCommands', 
-    'slash_cogs.PrivateSlashCommands', 
+    # 'slash_cogs.PrivateSlashCommands', 
     'slash_cogs.LoungeSlashCommands', 
     'slash_cogs.MiscSlashCommands',
     'slash_cogs.StatisticsSlashCommands'
@@ -234,8 +234,6 @@ class BadWolfBot(ext_commands.Bot):
         self.mention = None
         # self.sug_views = {}
         # self.pic_views = {}
-        # self.pic_num = 0
-        # self.sug_num = 0
 
         if ALLOW_SLASH_COMMANDS:
             for ext in SLASH_EXTENSIONS:
@@ -473,6 +471,12 @@ class BadWolfBot(ext_commands.Bot):
 
         await self.process_application_commands(interaction)
     
+    async def on_connect(self):
+        try:
+            return await super().on_connect()
+        except discord.errors.Forbidden: # bot doesn't have application commands scope; this should be retroactively given in the future, so we ignore any 403 Forbidden - Missing Access errors
+            pass
+    
     async def slash_interaction_pre_invoke(self, ctx: discord.ApplicationContext):
         message = InteractionUtils.create_proxy_msg(ctx.interaction, ctx=ctx)
 
@@ -567,7 +571,7 @@ class BadWolfBot(ext_commands.Bot):
     async def handle_exception(self, error,message: discord.Message,server_prefix):
         try:
             raise error
-        except (discord.Forbidden,ext_commands.BotMissingPermissions):
+        except (discord.errors.Forbidden,ext_commands.BotMissingPermissions):
             self.lounge_submissions.clear_user_cooldown(message.author)
             await common.safe_send(message,
                                    "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work.")
@@ -597,7 +601,7 @@ class BadWolfBot(ext_commands.Bot):
         except TableBotExceptions.WarSetupStillRunning:
             await common.safe_send(message,
                                    f"I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
-        except discord.DiscordServerError:
+        except discord.errors.DiscordServerError:
             await common.safe_send(message,
                                    "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
         except aiohttp.client_exceptions.ClientOSError:

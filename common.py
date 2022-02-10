@@ -256,13 +256,14 @@ BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID = 863238405269749760
 
 #Rather than using the builtin set declaration {}, I did an iterable because BadWolfBot.py kept giving an error in Eclipse, even though everything ran fine - this seems to have suppressed the error which was giving me major OCD
 mkw_lounge_staff_roles = set([387347888935534593, #Boss
-                              792805904047276032, #CT Admin
+                            #   792805904047276032, #CT Admin
                               399382503825211393, #HT RT Arb
                               399384750923579392, #LT RT Arb
                               521149807994208295, #HT CT Arb
                               792891432301625364, #LT CT Arb
                               521154917675827221, #Developer Access
-                              BAD_WOLF_SERVER_ADMIN_ID]) #Admin in test server
+                            ])
+                            #   BAD_WOLF_SERVER_ADMIN_ID]) #Admin in test server
 
 reporter_plus_roles = set([393600567781621761, #RT Updater
                               520808645252874240, #CT Updater
