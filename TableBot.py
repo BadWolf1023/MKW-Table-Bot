@@ -307,16 +307,10 @@ class ChannelBot(object):
 
         
     async def verify_room(self, fcs: List[str]) -> Tuple[WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES, Union[None, Room.Race.Race]]:
-        parser = WiimmfiParser.FrontPageParser(await WiimmfiSiteFunctions.get_mkwx_soup())
-        player_room = None
-        for room in parser.get_front_room_races():
-            for FC in fcs:
-                if room.hasFC(FC):
-                    player_room = room
-                    break
-        if player_room is None:
+        front_race = await WiimmfiSiteFunctions.get_front_race_by_fc(fcs)
+        if front_race is None:
             return WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES(WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES.DOES_NOT_EXIST), None
-        return  WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES(WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES.SUCCESS), player_room
+        return  WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES(WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES.SUCCESS), front_race
     
     
     async def load_room_smart(self, load_me, is_vr_command=False, message_id=None, setup_discord_id=0, setup_display_name=""):
