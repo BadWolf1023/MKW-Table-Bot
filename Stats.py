@@ -68,14 +68,15 @@ async def prune_backups():
             delta = datetime.date(datetime.now()) - create_time
 
             if delta.days > 14 and create_time.day != 1:
-                print("Deleting", path)
-                shutil.rmtree(path+"/tablebot_data")
-                shutil.rmtree(path + "/discord_server_settings")
+                if os.path.exists(path+"/tablebot_data"):
+                    print("Deleting", path)
+                    shutil.rmtree(path+"/tablebot_data")
+                    shutil.rmtree(path + "/discord_server_settings")
             elif delta.days >= 1:
                 db_path = path+"/tablebot_data/room_data_tracking.db"
                 db_path_zip = db_path + ".zip"
 
-                if not os.path.exists(db_path_zip):
+                if not os.path.exists(db_path_zip) and os.path.exists(db_path):
                     print("Zipping", db_path)
                     await common.run_command_async(f'zip -r {db_path_zip} {db_path}')
                     await common.run_command_async(f'rm -rf {db_path}')

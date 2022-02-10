@@ -329,7 +329,10 @@ def check_create_channel_bot(message:discord.Message):
     if server_id not in table_bots:
         table_bots[server_id] = {}
     if channel_id not in table_bots[server_id]:
-        table_bots[server_id][channel_id] = createEmptyTableBot(server_id, channel_id)
+        if message.channel.category and message.channel.category.id == common.SQUAD_QUEUE_CATEGORY_ID:
+            table_bots[server_id][channel_id] = createEmptyTableBot(server_id,common.SQUAD_QUEUE_CATEGORY_ID)
+        else:
+            table_bots[server_id][channel_id] = createEmptyTableBot(server_id, channel_id)
     table_bots[server_id][channel_id].updatedLastUsed()
     return table_bots[server_id][channel_id]
     
