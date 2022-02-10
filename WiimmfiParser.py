@@ -392,6 +392,7 @@ class FrontPageParser(object):
         room_id = None
         cc = None
         track = None
+        created_when = None
         is_ct = room_info[-1] != 'n'
         if len(room_info) == 12:
             match_id = None
@@ -399,6 +400,7 @@ class FrontPageParser(object):
             room_type = room_info[3]
             race_number = room_info[5]
             room_id = room_info[1]
+            created_when = room_info[2]
             cc = room_info[4]
             track = room_info[9]
         elif len(room_info) == 11:
@@ -407,6 +409,7 @@ class FrontPageParser(object):
             room_type = room_info[3]
             race_number = room_info[5]
             room_id = room_info[1]
+            created_when = room_info[2]
             cc = room_info[4]
             track = room_info[8]
         elif len(room_info) == 8:
@@ -415,11 +418,13 @@ class FrontPageParser(object):
             room_type = room_info[3]
             race_number = room_info[5]
             room_id = room_info[1]
+            created_when = room_info[2]
             cc = room_info[4]
             track = None
         elif len(room_info) == 7:
             match_id = None
             room_id = room_info[1]
+            created_when = room_info[2]
             room_type = room_info[3]
             track = None
             if room_info[4].endswith('0cc') or room_info[4].endswith('Mirror'):
@@ -436,11 +441,13 @@ class FrontPageParser(object):
             room_type = room_info[3]
             race_number = None
             room_id = room_info[1]
+            created_when = room_info[2]
             cc = None
             track = None
         elif len(room_info) == 9:
             match_id = None
             room_id = room_info[1]
+            created_when = room_info[2]
             room_type = room_info[3]
             cc = room_info[4]
             race_number = room_info[5]
@@ -449,6 +456,7 @@ class FrontPageParser(object):
         elif len(room_info) == 10:
             match_id = None
             room_id = room_info[1]
+            created_when = room_info[2]
             room_type = room_info[3]
             cc = room_info[4]
             if room_info[5].strip() != "":
@@ -460,6 +468,7 @@ class FrontPageParser(object):
                 match_time = None
                 track = room_info[7]
         else:
+            common.log_error(f"A room was found with an unknown length in the WiimmfiParser.FrontPageParser class. See the following data:\nList length: {len(room_info)}\nList data: {room_info}\nTypes: {[type(d) for d in room_info]}")
             print(len(room_info))
             print(room_info)
             print(f"RoomID: {room_id}, roomType: {room_type}, cc: {cc}, matchTime: {match_time}, raceNumber: {race_number}, track: {track}")
@@ -486,6 +495,14 @@ class FrontPageParser(object):
         if track is not None:
             track = str(track)
             track = track.replace('Last track:', '').strip()
+        if created_when is not None:
+            created_when = str(created_when)
+            if "created" not in created_when:
+                created_when = None
+            elif '(' in created_when and ')' in created_when:
+                created_when = created_when[created_when.index('(')+1:created_when.index(')')]
+            else:
+                created_when = None
 
         #Fix data types, avoid bs4 data types at all cost:
         if room_id is not None:
@@ -493,9 +510,14 @@ class FrontPageParser(object):
         if room_type is not None:
             room_type = str(room_type)
         #print(f"RoomID: {roomID}, roomType: {roomType}, cc: {cc}, matchTime: {matchTime}, raceNumber: {raceNumber}, track: {track}")
-        print(type(match_time), type(match_id), type(race_number), type(room_id), type(room_type), type(cc), type(track), type(is_ct), type(race_number), type(rxx))
-        print(match_time, match_id, race_number, room_id, room_type, cc, track, is_ct, race_number, rxx)
-        return Race.Race(match_time, match_id, race_number, room_id, room_type, cc, track, is_ct, race_number, rxx=rxx)
+        #print(type(match_time), type(match_id), type(race_number), type(room_id), type(room_type), type(cc), type(track), type(is_ct), type(race_number), type(rxx))
+        #print(match_time, match_id, race_number, room_id, room_type, cc, track, is_ct, race_number, rxx)
+        #print(len(room_info))
+        #print(room_info)
+        race = Race.Race(match_time, match_id, race_number, room_id, room_type, cc, track, is_ct, race_number, rxx=rxx)
+        race.created_when_str = created_when
+        race.last_start_str = match_time
+        return race
 
     def _add_front_room(self, bs4_front_room_header):
         if bs4_front_room_header is None:

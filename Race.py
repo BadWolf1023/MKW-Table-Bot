@@ -141,6 +141,9 @@ class Race:
             self.mkwxRaceNumber = int(self.mkwxRaceNumber)
         else:
             self.mkwxRaceNumber
+
+        self.created_when_str = None
+        self.last_start_str = None
     
     def get_mkwx_race_number(self):
         return self.mkwxRaceNumber
