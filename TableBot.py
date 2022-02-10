@@ -12,7 +12,7 @@ from datetime import datetime
 import humanize
 import MiiPuller
 import common
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple, Union, List
 import Mii
 import ServerFunctions
 import asyncio
@@ -306,11 +306,11 @@ class ChannelBot(object):
         return success
 
         
-    async def verify_room(self, load_me) -> Tuple[WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES, Union[None, Room.Race.Race]]:
+    async def verify_room(self, fcs: List[str]) -> Tuple[WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES, Union[None, Room.Race.Race]]:
         parser = WiimmfiParser.FrontPageParser(await WiimmfiSiteFunctions.get_mkwx_soup())
         player_room = None
         for room in parser.get_front_room_races():
-            for FC in load_me:
+            for FC in fcs:
                 if room.hasFC(FC):
                     player_room = room
                     break

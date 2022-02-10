@@ -1066,7 +1066,7 @@ is_quitting = False
 def handler(signum, frame):
     global is_quitting
     if not is_quitting:
-        print(f"Received {'SIGINT' if common.ON_WINDOWS else 'SIGQUIT'}")
+        print(f"Received {'SIGINT' if common.ON_WINDOWS else 'SIGQUIT'}\n")
         is_quitting = True
         asyncio.create_task(bot.close())
 end_signal = signal.SIGINT

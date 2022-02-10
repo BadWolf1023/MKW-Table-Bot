@@ -176,7 +176,6 @@ if __name__ == '__main__':
     soup = common.run_async_function_no_loop(get_mkwx_soup())
     parser_obj = WiimmfiParser.FrontPageParser(soup)
     #sleep(int(cache_length.total_seconds())+1)
-    print()
 
     #ctgp_wws = sr.get_CTGP_WWs()
     #for ctgp_ww in ctgp_wws:
