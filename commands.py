@@ -1042,37 +1042,39 @@ class OtherCommands:
                 if not status:
                     await message2.edit("Could not find this FC in a room.")
             else:
-                await updateData( * await LoungeAPIFunctions.getByLoungeNames([" ".join(old_command.split()[1:])]))
-                FCs = UserDataProcessing.getFCsByLoungeName(" ".join(old_command.split()[1:]))
-
-                status, front_race = await this_bot.verify_room([FCs])
+                lookup_name = " ".join(old_command.split()[1:])
+                await updateData( * await LoungeAPIFunctions.getByLoungeNames([lookup_name]))
+                FCs = UserDataProcessing.getFCsByLoungeName(lookup_name)
+                status, front_race = await this_bot.verify_room(FCs)
+                #front_race:Race.Race
                 if not status:
-                    await message2.edit(f"Could not find {UtilityFunctions.process_name(' '.join(old_command.split()[1:]))} in a room. (This could be an error if I couldn't their FC in the database.)")
+                    await message2.edit(f"Could not find {UtilityFunctions.process_name(lookup_name)} in a room. (This could be an error if I couldn't their FC in the database.)")
 
         if not status:
             return
-
-        await updateData(* await LoungeAPIFunctions.getByFCs(front_race.get_race_FCs()))
+        await updateData(* await LoungeAPIFunctions.getByFCs(front_race.getFCs()))
         #return  place, data_piece[0], str(data_piece[1][1]), UserDataProcessing.lounge_get(data_piece[0])
-        last_match_str = front_race.get_match_start_time()
-        str_msg =  f"```diff\n- {'No Race Started Yet' if last_match_str is None else last_match_str} -\n\n"
+        last_match_str = front_race.last_start_str
+        match_num = front_race.get_mkwx_race_number()
+        match_num_str = '' if match_num is None else f"Match #{match_num} "
+        str_msg =  f"""```diff\n- Room {front_race.get_room_name()}: {front_race.created_when_str} - {match_num_str}{'No Race Started Yet' if last_match_str is None else f'({last_match_str})'} -\n\n"""
         # str_msg += '+{:>3} {:<13}| {:<13}| {:<1}\n'.format("#.", "Lounge Name", "Mii Name", "FC")
         header = ["#.", "Lounge Name", "Mii Name", "FC"]
         rows = []
         for placement in front_race.getPlacements():
             placement:Placement
-            FC, mii_name = placement.get_fc_and_name
+            FC, mii_name = placement.get_fc_and_name()
             lounge_name = UserDataProcessing.lounge_get(FC)
             if lounge_name == "":
                 lounge_name = "UNKNOWN"
-            rows.append([f'{placement.place}.', lounge_name, mii_name, FC])
+            rows.append([f'{placement.get_player().get_position()}.', lounge_name, mii_name, FC])
             # str_msg += "{:>4} {:<13}| {:<13}| {:<1}\n".format(str(place)+".",lounge_name, mii_name, FC)
         
         str_msg += tabulate(tabular_data=rows, headers=header, tablefmt="simple", colalign=["left"], stralign="left")
 
         if last_match_str is not None:
             #go get races from room
-            _, races = await WiimmfiSiteFunctions.get_races_for_rxx(front_race.get_rxx(()))
+            _, races = await WiimmfiSiteFunctions.get_races_for_rxx(front_race.get_rxx())
             races_str = Room.Room.get_race_names_abbreviated(races, 12)
             str_msg += "\n\nFailed" if races_str is None else f"\n\nRaces (Last 12): {races_str}"
 

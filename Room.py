@@ -445,7 +445,7 @@ class Room(object):
         if status in ["on", "during", "midrace", "results", "onresults"]: #STATUS=ON
             if not race.FCInPlacements(player_fc): #player wasn't on results and needs to be added as a placement
                 player_obj = self.get_player_from_FC(player_fc)
-                DC_placement = Placement.Placement(player_obj, -1, 'DC')
+                DC_placement = Placement.Placement(player_obj, 'DC')
 
                 add_dict = {'type': 'add', 'payload': DC_placement}
                 self.manual_dc_placements[raceNum].append(add_dict)
@@ -624,7 +624,7 @@ class Room(object):
                     if mii_dict is not None and FC in mii_dict:
                         mii_hex = mii_dict[FC].mii_data_hex_str
                     plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, playerName, mii_hex=mii_hex)
-                    p = Placement.Placement(plyr, -1, time, delta)
+                    p = Placement.Placement(plyr, time, delta)
                     races[0].addPlacement(p)
         
             
