@@ -35,6 +35,13 @@ class RoomPageParser(object):
     def get_room_races(self) -> List[Race.Race]:
         return self._room_races
 
+    def get_all_fcs(self) -> List[str]:
+        all_fcs = set()
+        for race in self.get_room_races():
+            all_fcs.update(race.getFCs())
+        return list(all_fcs)
+
+
     def has_races(self) -> bool:
         return isinstance(self.get_room_races(), list) and len(self.get_room_races()) > 0
 

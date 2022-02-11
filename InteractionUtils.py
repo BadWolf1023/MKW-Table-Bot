@@ -1,7 +1,6 @@
 import discord
 import common
 import InteractionExceptions
-import BadWolfBot
 
 def check_lounge_server(message):
     return message.guild.id == common.MKW_LOUNGE_SERVER_ID
@@ -30,10 +29,10 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     if this_bot is not None and this_bot.getWar() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
         return this_bot.getRoom().canModifyTable(message_author.id) #Fixed! Check ALL people who can modify table, not just the person who started it!
     
-    if command not in BadWolfBot.needPermissionCommands:
+    if command not in common.needPermissionCommands:
         return True
     
-    if this_bot is None or this_bot.getRoom() is None or not this_bot.getRoom().is_initialized() or not this_bot.getRoom().is_freed:
+    if this_bot is None or this_bot.is_table_loaded() or not this_bot.getRoom().is_freed:
         return True
 
     #At this point, we know the command's server is Lounge, it's not staff, and a room has been loaded

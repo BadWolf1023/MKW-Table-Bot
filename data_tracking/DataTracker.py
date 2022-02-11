@@ -25,6 +25,7 @@ import UserDataProcessing
 import UtilityFunctions
 import common
 from data_tracking import Data_Tracker_SQL_Query_Builder as QB
+import TimerDebuggers
 
 DEBUGGING_DATA_TRACKER = False
 DEBUGGING_SQL = False
@@ -711,21 +712,16 @@ class RoomTracker(object):
     
     
     @staticmethod
+    @TimerDebuggers.timer_coroutine
     async def add_data(channel_bot):
-        if channel_bot.getRoom().is_initialized():
-            t0 = time.perf_counter()
-
-            
+        if channel_bot.is_table_loaded():
             #Make a deep copy to avoid asyncio switching current task to a tabler command and modifying our data in the middle of us validating it or adding it
             deepcopied_channel_bot = deepcopy(channel_bot)
-            if deepcopied_channel_bot.getRoom().is_initialized(): #This check might seem unnecessary, but we'll leave it in case we convert things to asyncio that aren't currently asynchronous (making it necessary)
+            if deepcopied_channel_bot.is_table_loaded(): #This check might seem unnecessary, but we'll leave it in case we convert things to asyncio that aren't currently asynchronous (making it necessary)
                 try:
                     await RoomTracker.add_everything_to_database(deepcopied_channel_bot)
                 except:
                     common.log_traceback(traceback)
-            t1 = time.perf_counter()
-            if DEBUGGING_SQL:
-                print(f"Total time taken to add everything to SQL DB: {round((t1-t0), 5)}s")
 
 def load_room_data():
     if not os.path.exists(common.ROOM_DATA_TRACKING_DATABASE_FILE):

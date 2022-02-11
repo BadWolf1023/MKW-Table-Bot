@@ -11,7 +11,7 @@ import help_documentation
 import commands
 import common
 
-import BadWolfBot as BWB
+import TimerDebuggers
 
 EMPTY_CHAR = '\u200b'
 
@@ -33,6 +33,7 @@ class Table_Slash(ext_commands.Cog):
     @slash_command(name='sw',
     description= 'Load a room and start tabling a war',
     guild_ids=common.SLASH_GUILDS)
+    @TimerDebuggers.timer_coroutine
     async def _start_war(
         self,
         ctx: discord.ApplicationContext,

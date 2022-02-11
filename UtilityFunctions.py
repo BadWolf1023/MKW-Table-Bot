@@ -256,9 +256,15 @@ def is_rLID(roomID):
 
 def is_fc(fc):
     return re.match("^[0-9]{4}[-][0-9]{4}[-][0-9]{4}(-2)?$", fc.strip()) is not None
+
+def is_discord_mention(discord_mention_str):
+    return re.match("^<@(!)?\d{7,20}>$", discord_mention_str.strip()) is not None
+
+
     
 def initialize():
     common.botAdmins.clear()
     common.botAdmins.update(readBotAdminsFile())
     common.blackListedWords.clear()
     common.blackListedWords.update(readBlackListedWordsFile())
+

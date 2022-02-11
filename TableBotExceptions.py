@@ -68,6 +68,9 @@ class InvalidNumPlayersInputException(WarSetupFailure):
 class WarSetupStillRunning(WarSetupFailure):
     pass
 
+class TableNotLoaded(Exception):
+    pass
+
 
 class CommandDisabled(Exception):
     pass

@@ -180,28 +180,31 @@ def format_sake_xml_response(sake_response):
     except SyntaxError:
         print("Malformed XML message:", repr(sake_response))
         return None
-   
+
+mii_puller_session = aiohttp.ClientSession() 
 async def get_mii_data_for_pids(pids:Dict[int, str]) -> str:
+    global mii_puller_session
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(pids), ssl=common.sslcontext, timeout=REQUEST_TIME_OUT_SECONDS) as data:
-                sake_response = await data.content.read()
-                sake_response = format_sake_xml_response(sake_response)
-                result_check = parse_sake_xml_check_corrupt(sake_response)
-                if result_check is False:
-                    update_pulling_mii_failed()
-                    return None
-                return result_check
-                
-                #miidatahex = base64.b64decode(miidatab64[399:527])
-                #encode = binascii.hexlify(miidatahex)
-                
-                #if mii_data_is_corrupt(encode):
-                #    update_pulling_mii_failed()
-                #    return None
-                #return (miidatahex, str(encode)[2:-1])
+        async with mii_puller_session.post(wiimmfi_sake, headers=SAKE_HEADERS, data=get_sake_post_data(pids), ssl=common.sslcontext, timeout=REQUEST_TIME_OUT_SECONDS) as data:
+            sake_response = await data.content.read()
+            sake_response = format_sake_xml_response(sake_response)
+            result_check = parse_sake_xml_check_corrupt(sake_response)
+            if result_check is False:
+                update_pulling_mii_failed()
+                return None
+            return result_check
+            
+            #miidatahex = base64.b64decode(miidatab64[399:527])
+            #encode = binascii.hexlify(miidatahex)
+            
+            #if mii_data_is_corrupt(encode):
+            #    update_pulling_mii_failed()
+            #    return None
+            #return (miidatahex, str(encode)[2:-1])
     except:
         update_pulling_mii_failed()
+        await mii_puller_session.close()
+        mii_puller_session = aiohttp.ClientSession()
         return None
 
 async def get_mii_data_for_fcs(fcs:Set[str]):

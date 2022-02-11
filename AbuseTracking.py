@@ -58,7 +58,7 @@ async def abuse_track_check(message:discord.Message):
     messages_sent = bot_abuse_tracking[author_id][1]
 
     if is_hitting_ban_rate(author_id) and bot_abuse_tracking[author_id][3] >= 2: #certain spam and we already warned them
-        UserDataProcessing.add_Blacklisted_user(str(author_id), "Automated ban - you spammed the bot. This hurts users everywhere because it slows down the bot for everyone. You can appeal in 1 week to a bot admin or in Bad Wolf's server - to join the server, use the invite code: K937DqM")
+        UserDataProcessing.add_Blacklisted_user(str(author_id), f"Automated ban - you spammed the bot. This hurts users everywhere because it slows down the bot for everyone. You can appeal in 1 week to a bot admin or in Bad Wolf's server - to join the server, use the invite code: {common.TABLEBOT_SERVER_INVITE_CODE}")
         if BOT_ABUSE_REPORT_CHANNEL is not None:
             embed = create_notification_embed(message, messages_sent, ban=True)
             await BOT_ABUSE_REPORT_CHANNEL.send(embed=embed)
