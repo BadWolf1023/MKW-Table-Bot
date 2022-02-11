@@ -2146,7 +2146,7 @@ class TablingCommands:
 
                             if not this_bot.getWar().is_ffa():
                                 to_send = f"{this_bot.getWar().get_tags_str()}\n***Is this correct?***"
-                                view = Components.ConfirmView(this_bot, server_prefix, is_lounge_server)
+                                view = Components.ConfirmView(this_bot, server_prefix, is_lounge_server, message=message2)
                                 await message2.edit(to_send, view=view)
                                 this_bot.prev_command_sw = True
 

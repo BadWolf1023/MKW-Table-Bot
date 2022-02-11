@@ -10,6 +10,7 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
         self.cat = cat
         buttonType = discord.ButtonStyle.success if cat=='Yes' else discord.ButtonStyle.danger
         super().__init__(style=buttonType, label=cat, row=1)
+
     
     async def callback(self, interaction: discord.Interaction):
         self.disabled = True
@@ -26,19 +27,34 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
 
 
 class ConfirmView(discord.ui.View):
-    def __init__(self, bot, prefix, lounge):
+    def __init__(self, bot, prefix, lounge, message=None):
         super().__init__()
         self.bot = bot
         self.prefix = prefix
         self.lounge = lounge
+        self.message = message
         self.add_item(ConfirmButton('Yes'))
         self.add_item(ConfirmButton('No'))
+    
+    async def delete(self): 
+        for ind, child in enumerate(self.children):
+            child.disabled = True
+            if child.cat != self.cat: 
+                self.children.pop(ind)
+        self.stop()
+        await self.message.edit(view=self)
     
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, 'confirm_interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
         return allowed
+    
+    async def send(self, messageable, content=None, file=None, embed=None):
+        if hasattr(messageable, 'channel'):
+            messageable = messageable.channel
+
+        self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
 
 
 ###########################################################################################

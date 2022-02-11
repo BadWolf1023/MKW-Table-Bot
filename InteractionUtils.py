@@ -17,8 +17,9 @@ def check_beta_server_id(id):
 
 def bot_admin_check(ctx: discord.ApplicationContext):
     can = common.is_bot_admin(ctx.author)
-    if not can:
-        raise InteractionExceptions.NoPermission() 
+    return can
+    # if not can:
+    #     raise InteractionExceptions.NoPermission() 
 
 def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bot, command:str):
     if not isLoungeServer:
@@ -28,7 +29,7 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
         return True
     
     if this_bot is not None and this_bot.getWar() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
-        return this_bot.getRoom().canModifyTable(message_author.id) #Fixed! Check ALL people who can modify table, not just the person who started it!
+        return this_bot.getRoom().canModifyTable(message_author.id) #Check ALL people who can modify table
     
     if command not in BadWolfBot.needPermissionCommands:
         return True
