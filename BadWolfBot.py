@@ -14,7 +14,6 @@ import common
 import MogiUpdate
 import URLShortener
 import AbuseTracking
-import WiimmfiSiteFunctions
 import TagAIShell
 from data_tracking import DataTracker
 import InteractionUtils
@@ -29,7 +28,6 @@ import atexit
 import signal
 import dill as p
 import psutil
-import random
 from bs4 import NavigableString
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -173,7 +171,7 @@ ADD_SHA_TERMS = {"addsha", "sha"}
 REMOVE_SHA_TERMS = {"removesha", "delsha"}
 
 needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REDO_TERMS | LIST_REDOS_TERMS | LIST_UNDOS_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS | GET_SUBSTITUTIONS_TERMS | INTERACTIONS
-
+common.needPermissionCommands.update(needPermissionCommands)
 ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS | POPULAR_TRACKS_TERMS | UNPOPULAR_TRACKS_TERMS | TOP_PLAYERS_TERMS | BEST_TRACK_TERMS | WORST_TRACK_TERMS | RECORD_TERMS
 
 SLASH_EXTENSIONS = [
@@ -483,7 +481,6 @@ class BadWolfBot(ext_commands.Bot):
         is_lounge_server = InteractionUtils.check_lounge_server(message)
         
         this_bot = self.check_create_channel_bot(message)
-        this_bot.updatedLastUsed()
         if is_lounge_server and this_bot.isFinishedLounge():
             this_bot.freeLock()
 
@@ -557,7 +554,6 @@ class BadWolfBot(ext_commands.Bot):
             log_command_sent(message)
             
             this_bot:TableBot.ChannelBot = self.check_create_channel_bot(message)
-            this_bot.updatedLastUsed()
             if is_lounge_server and this_bot.isFinishedLounge():
                 this_bot.freeLock()
             
@@ -579,6 +575,8 @@ class BadWolfBot(ext_commands.Bot):
             log_command_sent(message)
         except TableBotExceptions.WarnedUser:
             log_command_sent(message)
+        except TableBotExceptions.TableNotLoaded as not_loaded:
+            await common.safe_send(message,f"{not_loaded}")
         except TableBotExceptions.NotBadWolf as not_bad_wolf_exception:
             await common.safe_send(message,f"You are not Bad Wolf: {not_bad_wolf_exception}")
         except TableBotExceptions.NotLoungeStaff:
@@ -632,7 +630,7 @@ class BadWolfBot(ext_commands.Bot):
             await commands.TablingCommands.reset_command(message, self.table_bots)          
 
         elif this_bot.manualWarSetUp:
-            await commands.TablingCommands.manual_war_setup(message, this_bot, command)
+            await commands.TablingCommands.manual_war_setup(message, this_bot, server_prefix, is_lounge_server, command)
         
         elif this_bot.prev_command_sw:
             await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix, is_lounge_server)
@@ -873,7 +871,7 @@ class BadWolfBot(ext_commands.Bot):
         
         elif args[0] in VERIFY_ROOM_TERMS:
             if commands.vr_is_on:
-                await commands.OtherCommands.vr_command(this_bot, message, args, command, createEmptyTableBot()) #create a new one so it won't interfere with any room they might have loaded (like a table)
+                await commands.OtherCommands.vr_command(this_bot, message, args, command)
         
         elif args[0] in WORLDWIDE_TERMS:
             await commands.OtherCommands.wws_command(self, this_bot, message, ww_type=Race.RT_WW_REGION)
@@ -971,7 +969,7 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     if command not in needPermissionCommands:
         return True
 
-    if this_bot is None or this_bot.getRoom() is None or not this_bot.getRoom().is_initialized() or not this_bot.getRoom().is_freed:
+    if this_bot is None or not this_bot.is_table_loaded() or not this_bot.getRoom().is_freed:
         return True
 
     #At this point, we know the command's server is Lounge, it's not staff, and a room has been loaded
@@ -1094,11 +1092,13 @@ is_quitting = False
 def handler(signum, frame):
     global is_quitting
     if not is_quitting:
-        print("Received SIGQUIT")
+        print(f"Received {'SIGINT' if common.ON_WINDOWS else 'SIGQUIT'}\n")
         is_quitting = True
         asyncio.create_task(bot.close())
-if common.properties['dev'] != 'Ryan':
-    signal.signal(signal.SIGQUIT, handler)
+end_signal = signal.SIGINT
+if not common.ON_WINDOWS:
+    end_signal = signal.SIGQUIT
+signal.signal(end_signal, handler)
 
 
 def initialize():

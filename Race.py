@@ -141,6 +141,9 @@ class Race:
             self.mkwxRaceNumber = int(self.mkwxRaceNumber)
         else:
             self.mkwxRaceNumber
+
+        self.created_when_str = None
+        self.last_start_str = None
     
     def get_mkwx_race_number(self):
         return self.mkwxRaceNumber
@@ -180,7 +183,12 @@ class Race:
     def hasFC(self, FC):
         return False if self.getPlacement(FC) is None else True
         
-        
+    def update_FC_mii_hex(self, FC, mii_hex: str):
+        for placement in self.placements:
+            player = placement.get_player()
+            if player.get_FC() == FC:
+                player.set_mii_hex(mii_hex)
+
     def numRacers(self):
         if (self.placements is None):
             return 0

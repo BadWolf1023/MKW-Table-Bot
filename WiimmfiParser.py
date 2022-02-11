@@ -1,11 +1,11 @@
 '''
 Created on May 6, 2021
+
 @author: willg
 '''
 
 import itertools
 from typing import List, Tuple
-from collections import defaultdict
 
 from bs4 import NavigableString
 import bs4
@@ -34,6 +34,13 @@ class RoomPageParser(object):
 
     def get_room_races(self) -> List[Race.Race]:
         return self._room_races
+
+    def get_all_fcs(self) -> List[str]:
+        all_fcs = set()
+        for race in self.get_room_races():
+            all_fcs.update(race.getFCs())
+        return list(all_fcs)
+
 
     def has_races(self) -> bool:
         return isinstance(self.get_room_races(), list) and len(self.get_room_races()) > 0
@@ -168,27 +175,25 @@ class RoomPageParser(object):
 
         room_position = -1
 
-        role = "-1"
+        role = "Unknown"
         if (all_rows[1].find("b") is not None):
             room_position = 1
             role = "host"
         else:
             temp = str(all_rows[1].string).strip().split()
             room_position = temp[0].strip(".")
+            room_position = int(room_position) if UtilityFunctions.is_int(room_position) else -1
             role = temp[1].strip()
 
         player_region = str(all_rows[2].string)
         player_conn_fails = str(all_rows[3].string)
-        if not UtilityFunctions.is_int(player_conn_fails) and not UtilityFunctions.is_float(player_conn_fails):
-            player_conn_fails = None
-        else:
+        if UtilityFunctions.is_int(player_conn_fails) or UtilityFunctions.is_float(player_conn_fails):
             player_conn_fails = float(player_conn_fails)
+        else:
+            player_conn_fails = 0.0
         # TODO: Handle VR?
         vr = str(all_rows[4].string)
-        if not UtilityFunctions.is_int(vr):
-            vr = None
-        else:
-            vr = int(vr)
+        vr = int(vr) if UtilityFunctions.is_int(vr) else None
 
         character_vehicle = None
         if all_rows[5].has_attr(common.TOOLTIP_NAME):
@@ -196,6 +201,7 @@ class RoomPageParser(object):
 
         # Not true delta, but significant delta (above .5)
         delta = str(all_rows[7].string)
+        delta = float(delta) if UtilityFunctions.is_float(delta) else None
         time = str(all_rows[8].string)
         player_name = str(all_rows[9].string)
         while len(all_rows) > 0:
@@ -303,10 +309,7 @@ class FrontPageParser(object):
                 room_position, role = ''.join(all_rows[1].findAll(
                     text=True)).strip('\u2007').split('.')
                 room_position = room_position.strip()
-                if not room_position.isnumeric():
-                    room_position = -1
-                else:
-                    room_position = int(room_position)
+                room_position = int(room_position) if UtilityFunctions.is_int(room_position) else -1
                 role = role.strip().lower()
 
                 roomPositions = [room_position, room_position]
@@ -316,6 +319,7 @@ class FrontPageParser(object):
                 regions = [region, region]
 
                 vrs = [all_rows[5].string.strip(), 5000]
+                vrs[0] = int(vrs[0]) if UtilityFunctions.is_int(vrs[0]) else None
 
                 vehicle_combinations = [None, None]
                 if all_rows[6].has_attr(common.TOOLTIP_NAME):
@@ -324,22 +328,20 @@ class FrontPageParser(object):
                         combo1, combo2 = vehicle_combination.split('<br>')
                         vehicle_combinations = [combo1, combo2]
                     else:
-                        vehicle_combinations = [
-                            vehicle_combination, vehicle_combination]
+                        vehicle_combinations = [str(vehicle_combination), str(vehicle_combination)]
 
-                times = [time for time in all_rows[9].findAll(text=True)]
+                times = [str(time) for time in all_rows[9].findAll(text=True)]
 
-                playerNames = [
-                    name for name in all_rows[10].findAll(text=True)]
+                playerNames = [str(name) for name in all_rows[10].findAll(text=True)]
                 if len(playerNames) < 2:
                     playerNames.append('no name')
                     playerNames.append('no name')
                 index = 0
-                plyr1 = Player.Player(FC=FCs[index], player_url=player_url, ol_status=ol_status, room_position=roomPositions[index], region=regions[index],
-                                      connection_fails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], mii_name=playerNames[index])
+                plyr1 = Player.Player(FCs[index], player_url, ol_status, roomPositions[index], regions[index],
+                                      0.0, roles[index], vrs[index], vehicle_combinations[index], playerNames[index])
                 index = 1
-                plyr2 = Player.Player(FC=FCs[index], player_url=player_url, ol_status=ol_status, room_position=roomPositions[index], region=regions[index],
-                                      connection_fails=None, role=roles[index], vr=vrs[index], character_vehicle=vehicle_combinations[index], mii_name=playerNames[index])
+                plyr2 = Player.Player(FCs[index], player_url, ol_status, roomPositions[index], regions[index],
+                                      0.0, roles[index], vrs[index], vehicle_combinations[index], playerNames[index])
 
                 placements.append(Placement.Placement(plyr1, times[0]))
                 placements.append(Placement.Placement(plyr2, times[1]))
@@ -354,16 +356,18 @@ class FrontPageParser(object):
                 room_position, role = ''.join(all_rows[1].findAll(
                     text=True)).strip('\u2007').split('.')
                 room_position = room_position.strip()
+                room_position = int(room_position) if UtilityFunctions.is_int(room_position) else -1
                 role = role.strip().lower()
 
                 region = all_rows[3].string.strip()
 
                 # TODO: Handle VR?
                 vr = all_rows[5].string.strip()
+                vr = int(vr) if UtilityFunctions.is_int(vr) else None
 
                 vehicle_combination = None
                 if 'title' in all_rows[6].attrs:
-                    vehicle_combination = all_rows[6]['title']
+                    vehicle_combination = str(all_rows[6]['title'])
 
                 #roomType is 4
 
@@ -374,10 +378,11 @@ class FrontPageParser(object):
                 while len(all_rows) > 0:
                     del all_rows[0]
 
-                plyr = Player.Player(FC=FC, player_url=player_url, ol_status=ol_status, room_position=room_position, region=region,
-                                     connection_fails=None, role=role, vr=vr, character_vehicle=vehicle_combination, mii_name=playerName)
+                plyr = Player.Player(FC, player_url, ol_status, room_position, region,
+                                     0.0, role, vr, vehicle_combination, playerName)
                 p = Placement.Placement(plyr, time)
                 placements.append(p)
+
         except Exception as e:
             print(e)
             raise
@@ -394,6 +399,7 @@ class FrontPageParser(object):
         room_id = None
         cc = None
         track = None
+        created_when = None
         is_ct = room_info[-1] != 'n'
         if len(room_info) == 12:
             match_id = None
@@ -401,6 +407,7 @@ class FrontPageParser(object):
             room_type = room_info[3]
             race_number = room_info[5]
             room_id = room_info[1]
+            created_when = room_info[2]
             cc = room_info[4]
             track = room_info[9]
         elif len(room_info) == 11:
@@ -409,6 +416,7 @@ class FrontPageParser(object):
             room_type = room_info[3]
             race_number = room_info[5]
             room_id = room_info[1]
+            created_when = room_info[2]
             cc = room_info[4]
             track = room_info[8]
         elif len(room_info) == 8:
@@ -417,11 +425,13 @@ class FrontPageParser(object):
             room_type = room_info[3]
             race_number = room_info[5]
             room_id = room_info[1]
+            created_when = room_info[2]
             cc = room_info[4]
             track = None
         elif len(room_info) == 7:
             match_id = None
             room_id = room_info[1]
+            created_when = room_info[2]
             room_type = room_info[3]
             track = None
             if room_info[4].endswith('0cc') or room_info[4].endswith('Mirror'):
@@ -438,11 +448,13 @@ class FrontPageParser(object):
             room_type = room_info[3]
             race_number = None
             room_id = room_info[1]
+            created_when = room_info[2]
             cc = None
             track = None
         elif len(room_info) == 9:
             match_id = None
             room_id = room_info[1]
+            created_when = room_info[2]
             room_type = room_info[3]
             cc = room_info[4]
             race_number = room_info[5]
@@ -451,6 +463,7 @@ class FrontPageParser(object):
         elif len(room_info) == 10:
             match_id = None
             room_id = room_info[1]
+            created_when = room_info[2]
             room_type = room_info[3]
             cc = room_info[4]
             if room_info[5].strip() != "":
@@ -462,16 +475,20 @@ class FrontPageParser(object):
                 match_time = None
                 track = room_info[7]
         else:
+            common.log_error(f"A room was found with an unknown length in the WiimmfiParser.FrontPageParser class. See the following data:\nList length: {len(room_info)}\nList data: {room_info}\nTypes: {[type(d) for d in room_info]}")
             print(len(room_info))
             print(room_info)
             print(f"RoomID: {room_id}, roomType: {room_type}, cc: {cc}, matchTime: {match_time}, raceNumber: {race_number}, track: {track}")
 
         if cc is not None:
+            cc = str(cc)
             cc = cc[3:].strip()
         if match_time is not None:
-            if '(' in match_time and ')' in match_time:
-                match_time = match_time[match_time.index(
-                    '(')+1:match_time.index(')')]
+            match_time = str(match_time)
+            if "last start" not in match_time:
+                match_time = None
+            elif '(' in match_time and ')' in match_time:
+                match_time = match_time[match_time.index('(')+1:match_time.index(')')]
             if '(' in race_number:
                 race_number = race_number[:race_number.index('(')].strip()
         if race_number is not None:
@@ -483,10 +500,31 @@ class FrontPageParser(object):
             else:
                 race_number = None
         if track is not None:
+            track = str(track)
             track = track.replace('Last track:', '').strip()
-        #print(f"RoomID: {roomID}, roomType: {roomType}, cc: {cc}, matchTime: {matchTime}, raceNumber: {raceNumber}, track: {track}")
+        if created_when is not None:
+            created_when = str(created_when)
+            if "created" not in created_when:
+                created_when = None
+            elif '(' in created_when and ')' in created_when:
+                created_when = created_when[created_when.index('(')+1:created_when.index(')')]
+            else:
+                created_when = None
 
-        return Race.Race(match_time, match_id, race_number, room_id, room_type, cc, track, is_ct=is_ct, mkwxRaceNumber=race_number, rxx=rxx)
+        #Fix data types, avoid bs4 data types at all cost:
+        if room_id is not None:
+            room_id = str(room_id)
+        if room_type is not None:
+            room_type = str(room_type)
+        #print(f"RoomID: {roomID}, roomType: {roomType}, cc: {cc}, matchTime: {matchTime}, raceNumber: {raceNumber}, track: {track}")
+        #print(type(match_time), type(match_id), type(race_number), type(room_id), type(room_type), type(cc), type(track), type(is_ct), type(race_number), type(rxx))
+        #print(match_time, match_id, race_number, room_id, room_type, cc, track, is_ct, race_number, rxx)
+        #print(len(room_info))
+        #print(room_info)
+        race = Race.Race(match_time, match_id, race_number, room_id, room_type, cc, track, is_ct, race_number, rxx=rxx)
+        race.created_when_str = created_when
+        race.last_start_str = match_time
+        return race
 
     def _add_front_room(self, bs4_front_room_header):
         if bs4_front_room_header is None:
@@ -516,7 +554,7 @@ class FrontPageParser(object):
             if total_players != len(front_room_race.placements):
                 print(total_players, len(front_room_race.placements))
                 print(
-                    "Mismatch of placements and number of players, check code for bugs. Line #253 in SimpleRooms.py")
+                    "Mismatch of placements and number of players, check code for bugs. Line #253 in FrontPageParser.py")
         front_room_race.update_region()
         self.get_front_room_races().append(front_room_race)
 
@@ -589,3 +627,4 @@ class FrontPageParser(object):
 
         str_msg += f"\nPage {pageNumber+1}/{len(races)}```"
         return str_msg
+

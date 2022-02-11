@@ -79,9 +79,9 @@ class Placement:
         reconstructed_time = (int(str(self.time[0])[1:]), self.time[1], self.time[2])
         return reconstructed_time
     
-    def __init__(self, player, place, time, delta=None, is_wiimmfi_place=False):
+    def __init__(self, player, time, delta=None, is_wiimmfi_place=False):
         self.player = player
-        self.place = place
+        self.place = -1
         self.time = self._createTime_(time)
         self.delta = self._process_delta_(delta)
         self.is_wiimmfi_place = is_wiimmfi_place
@@ -123,6 +123,9 @@ class Placement:
         return self.delta
     
     def getPlayer(self) -> Player.Player:
+        return self.player
+    
+    def get_player(self) -> Player.Player:
         return self.player
 
     def get_fc(self):

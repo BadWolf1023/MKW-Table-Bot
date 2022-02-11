@@ -16,6 +16,7 @@ from pathlib import Path
 import ssl
 import certifi
 import dill
+import TimerDebuggers
 
 sslcontext = ssl.create_default_context(cafile=certifi.where())
 
@@ -26,9 +27,11 @@ properties = json.load(open(PROPERTIES_FILE)) if os.path.exists(PROPERTIES_FILE)
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
-ON_WINDOWS = os.name == 'nt' and "mkwx_proxy_url" not in properties
-HREF_HTML_NAME = 'href' if ON_WINDOWS else 'data-href'
-TOOLTIP_NAME = "data-tooltip" if ON_WINDOWS else "title"
+USING_LINUX_PROXY = "mkwx_proxy_url" in properties
+ON_WINDOWS = os.name == 'nt'
+
+HREF_HTML_NAME = 'data-href' if (USING_LINUX_PROXY or not ON_WINDOWS) else 'href'
+TOOLTIP_NAME = "title" if (USING_LINUX_PROXY or not ON_WINDOWS) else "data-tooltip"
 SAVED_ROOMS_DIR = "testing_rooms/windows/" if ON_WINDOWS else "testing_rooms/linux/"
 
 default_prefix = "?"
@@ -103,6 +106,7 @@ BETA_CATEGORY_IDS = {744842611998588928, 740659739611889765, 895999567894556672}
 MKW_TABLE_BOT_CENTRAL_SERVER_ID = 739733336871665696 #Same as "Bad Wolf's Server", but this is the new name for the server
 SLASH_GUILDS = [MKW_TABLE_BOT_CENTRAL_SERVER_ID] if is_beta else [properties['slash_command_server']]
 
+needPermissionCommands = set()
 
 current_notification = ""
 
@@ -110,7 +114,7 @@ current_notification = ""
 inactivity_time_period = timedelta(hours=2, minutes=30)
 lounge_inactivity_time_period = timedelta(minutes=8)
 inactivity_unlock = timedelta(minutes=30)
-wp_cooldown_seconds = 10
+wp_cooldown_seconds = 13
 mkwx_page_cooldown_seconds = 5
 
 #Mii folder location information
@@ -230,7 +234,9 @@ BAD_WOLF_ID = 706120725882470460
 CW_ID = 366774710186278914
 ANDREW_ID = 267395889423712258
 
-OWNERS = {BAD_WOLF_ID,CW_ID,ANDREW_ID} if is_dev or is_beta else {BAD_WOLF_ID,ANDREW_ID}
+TABLEBOT_SERVER_INVITE_CODE = "K937DqM"
+
+OWNERS = {BAD_WOLF_ID,CW_ID,ANDREW_ID} if is_dev else {BAD_WOLF_ID,ANDREW_ID}
 
 #Lounge stuff
 MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=1&event_data="
@@ -402,17 +408,20 @@ def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
         except:
             pass
     return text
-        
+
+image_downloader_session = aiohttp.ClientSession()
+@TimerDebuggers.timer_coroutine
 async def download_image(image_url, image_path):
+    global image_downloader_session
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(image_url, ssl=sslcontext) as resp:
-                if resp.status == 200:
-                    with open(image_path, mode='wb+') as f:
-                        f.write(await resp.read())
-                        return True
+        async with image_downloader_session.get(image_url, ssl=sslcontext) as resp:
+            if resp.status == 200:
+                with open(image_path, mode='wb+') as f:
+                    f.write(await resp.read())
+                    return True
     except:
-        pass
+        await image_downloader_session.close()
+        image_downloader_session = aiohttp.ClientSession()
     return False
 
 

@@ -5,18 +5,19 @@ Created on Jul 12, 2020
 '''
 import Race
 import Placement
-import Player
 import WiimmfiSiteFunctions
 import UserDataProcessing
 import common
+import MiiPuller
 
 from collections import defaultdict
 import UtilityFunctions
 import TagAIShell
 from copy import copy, deepcopy
 from UtilityFunctions import isint, isfloat
-from itertools import chain
+import Mii
 from typing import List, Any, Dict
+import TimerDebuggers
 
 DEBUG_RACES = False
 DEBUG_PLACEMENTS = False
@@ -37,7 +38,7 @@ class Room(object):
     '''
     classdocs
     '''
-    def __init__(self, rLIDs, roomSoup, setup_discord_id, setup_display_name):
+    def __init__(self, rxx: str, races: List[Race.Race], event_id, setup_discord_id, setup_display_name: str):
         self.name_changes = {}
         self.removed_races = []
         
@@ -58,9 +59,25 @@ class Room(object):
         self.set_up_user_display_name = setup_display_name
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         self.sub_ins = {}
-        
-        self.initialize(rLIDs, roomSoup)
+        # TODO: is_freed indicates if a Lounge table lock is freed or not
         self.is_freed = False
+        
+        self.miis: Dict[str, Mii.Mii] = {}
+        self.populating = False
+        self.event_id = event_id
+        self.rLIDs: List[str] = []
+        self.races: List[Race.Race] = []
+        
+        self.add_races(rxx, races)
+
+    def add_races(self, rxx: str, races: List[Race.Race]):
+        if not isinstance(rxx, str):
+            raise ValueError("Caller must gaurantee that the given rxx is a string")
+        if not isinstance(races, list) or len(races) == 0 or any(not isinstance(race, Race.Race) for race in races):
+            raise ValueError("Caller must gaurantee that the given races is a non-empty list of Races")
+        self.rLIDs.append(rxx)
+        self.races.extend(races)
+        self.fix_race_numbers()
     
     def get_set_up_user_discord_id(self):
         return self.set_up_user
@@ -72,28 +89,20 @@ class Room(object):
         return self.sub_ins
     def get_manual_dc_placements(self):
         return self.manual_dc_placements
+    def get_event_id(self):
+        return self.event_id
     
-    def initialize(self, rLIDs, roomSoup, mii_dict=None):
-        self.rLIDs = rLIDs
-        
-        if roomSoup is None:
-            raise Exception
-        if self.rLIDs is None or len(self.rLIDs) == 0:
-            #TODO: Here? Caller should?
-            roomSoup.decompose()
-            raise Exception
-            
-            
-        self.races: List[Race.Race] = self.getRacesList(roomSoup, mii_dict)
-        
-        if len(self.races) > 0:
-            self.roomID = self.races[0].roomID
-            
-        else: #Hmmmm, if there are no races, what should we do? We currently unload the room... edge case...
-            self.rLIDs = None
-            self.races = None
-            self.roomID = None
-            raise Exception #And this is why the room unloads when that internal error occurs
+
+
+
+    def set_races(self, races: List[Race.Race]):
+        #In case any outsiders have a reference to our race list, we want to update their reference
+        self.races.clear()
+        self.races.extend(races)
+
+    def fix_race_numbers(self):
+        for race_num, race in enumerate(self.races, 1):
+            race.set_race_number(race_num)
         
 
     def is_initialized(self):
@@ -327,13 +336,13 @@ class Room(object):
             resultText = f"**Room URL:** https://wiimmfi.de/stats/mkwx/list/{rxx}  |  **rxx number:** {rxx}\n"
         else:
             resultText = "**?mergeroom** was used, so there are multiple rooms:\n\n"
-            for i, rxx in enumerate(self.rLIDs[::-1], 1):
+            for i, rxx in enumerate(self.rLIDs, 1):
                 resultText += f"**- Room #{i} URL:** https://wiimmfi.de/stats/mkwx/list/{rxx}  |  **rxx number:** {rxx}\n"
         return resultText
     
     def getLastRXXString(self):
         if len(self.rLIDs) > 0:
-            last_rxx = self.rLIDs[0]
+            last_rxx = self.rLIDs[-1]
             return f"**Room URL:** https://wiimmfi.de/stats/mkwx/list/{last_rxx}  |  **rxx number:** {last_rxx}"
         return ""
     
@@ -445,7 +454,7 @@ class Room(object):
         if status in ["on", "during", "midrace", "results", "onresults"]: #STATUS=ON
             if not race.FCInPlacements(player_fc): #player wasn't on results and needs to be added as a placement
                 player_obj = self.get_player_from_FC(player_fc)
-                DC_placement = Placement.Placement(player_obj, -1, 'DC')
+                DC_placement = Placement.Placement(player_obj, 'DC')
 
                 add_dict = {'type': 'add', 'payload': DC_placement}
                 self.manual_dc_placements[raceNum].append(add_dict)
@@ -494,237 +503,95 @@ class Room(object):
             if lounge_replace:
                 build_str += UtilityFunctions.process_name(UserDataProcessing.lounge_add(fc, lounge_replace))
             build_str += "\n"
-        return build_str
-    
-    #SOUP LEVEL FUNCTIONS
-    
-    @staticmethod
-    def getPlacementInfo(line):
-        allRows = line.find_all("td")
-        playerPageLink = str(allRows[0].find("a")[common.HREF_HTML_NAME])
-        
-        
-        FC = str(allRows[0].find("span").string)
-        ol_status = str(allRows[1][common.TOOLTIP_NAME]).split(":")[1].strip()
-    
-        roomPosition = -1
-        
-        role = "-1"
-        if (allRows[1].find("b") is not None):
-            roomPosition = 1
-            role = "host"
-        else:
-            temp = str(allRows[1].string).strip().split()
-            roomPosition = temp[0].strip(".")
-            role = temp[1].strip()
-        
-        playerRegion = str(allRows[2].string)
-        playerConnFails = str(allRows[3].string)
-        if not isint(playerConnFails) and not isfloat(playerConnFails):
-            playerConnFails = None
-        else:
-            playerConnFails = float(playerConnFails)
-        #TODO: Handle VR?
-        vr = str(allRows[4].string)
-        if not isint(vr):
-            vr = None
-        else:
-            vr = int(vr)
-        
-        character_vehicle = None
-        if allRows[5].has_attr(common.TOOLTIP_NAME):
-            character_vehicle = str(allRows[5][common.TOOLTIP_NAME])
-        
-        
-        delta = str(allRows[7].string).strip() #Not true delta, but significant delta (above .5)
-        
-        time = str(allRows[8].string)
-        
-        playerName = str(allRows[9].string)
-        while len(allRows) > 0:
-            del allRows[0]
-        
-        return FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, delta, time, playerName
-    
-    def getRaceInfoFromList(self, textList):
-        '''Utility Function'''
-        raceTime = str(textList[0])
-        UTCIndex = raceTime.index("UTC")
-        raceTime = raceTime[:UTCIndex+3]
-        
-        matchID = str(textList[1])
-        
-        raceNumber = str(textList[2]).strip().strip("(").strip(")").strip("#")
-        
-        roomID = str(textList[4])
-        
-        roomType = str(textList[6])
-        
-        cc = str(textList[7])[3:-2] #strip white spaces, the star, and the cc
-        is_ct = str(textList[-1]) in {'u', 'c'}
-        track = "Unknown_Track (Bad HTML, mkwx messed up)"
-        try:
-            if len(textList) == 12:
-                track = str(textList[9])
-            elif len(textList) == 10:
-                track = str(textList[8]).split(":")[-1].strip()
-            else:
-                track = str(textList[9]).strip()
-        except IndexError:
-            pass
-        
-        placements = []
-        
-        while len(textList) > 0:
-            del textList[0]
-        
-        return raceTime, matchID, raceNumber, roomID, roomType, cc, track, placements, is_ct
-    
-    def getRXXFromHTMLLine(self, line):
-        roomLink = line.find_all('a')[1][common.HREF_HTML_NAME]
-        return roomLink.split("/")[-1]
-        
-    def getRaceIDFromHTMLLine(self, line):
-        return line.get('id')
-    
-    def getTrackURLFromHTMLLine(self, line):
-        try:
-            return line.find_all('a')[2][common.HREF_HTML_NAME]
-        except IndexError:
-            return "No Track Page"
-        
-      
-    def getRacesList(self, roomSoup, mii_dict=None):
-        #Utility function
-        tableLines = roomSoup.find_all("tr")
-        
-        foundRaceHeader = False
-        races = []
-        for line in tableLines:
-            if foundRaceHeader:
-                foundRaceHeader = False
-            else:
-                if (line.get('id') is not None): #Found Race Header
-                    #_ used to be the racenumber, but mkwx deletes races 24 hours after being played. This leads to rooms getting races removed, and even though
-                    #they have race numbers, the number doesn't match where they actually are on the page
-                    #This was leading to out of bounds exceptions.
-                    raceTime, matchID, mkwxRaceNumber, roomID, roomType, cc, track, placements, is_ct = self.getRaceInfoFromList(line.findAll(text=True))
-                    room_rxx = self.getRXXFromHTMLLine(line)
-                    race_id = self.getRaceIDFromHTMLLine(line)
-                    trackURL = self.getTrackURLFromHTMLLine(line)
-                    raceNumber = None
-                    races.insert(0, Race.Race(raceTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, mkwxRaceNumber, room_rxx, race_id, trackURL))
-                    foundRaceHeader = True
-                    
-                else:
-                    FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, delta, time, playerName = self.getPlacementInfo(line)
-                    if races[0].hasFC(FC):
-                        FC = FC + "-2"
-                    mii_hex = None
-                    if mii_dict is not None and FC in mii_dict:
-                        mii_hex = mii_dict[FC].mii_data_hex_str
-                    plyr = Player.Player(FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, playerName, mii_hex=mii_hex)
-                    p = Placement.Placement(plyr, -1, time, delta)
-                    races[0].addPlacement(p)
-        
-            
-        for race in races:
-            if DEBUG_RACES:
-                print()
-                print(f"Room ID: {race.roomID}")
-                print(f"Room rxx: {race.rxx}")
-                print(f"Room Type: {race.roomType}")
-                print(f"Race Match ID: {race.matchID}")
-                print(f"Race ID: {race.raceID}")
-                print(f"Race Time: {race.matchTime}")
-                print(f"Race Number: {race.raceNumber}")
-                print(f"Race Track: {race.track}")
-                print(f"Track URL: {race.trackURL}")
-                print(f"Race cc: {race.cc}")
-                print(f"Is CT? {race.is_ct}")
-            if DEBUG_PLACEMENTS:
-                for placement in race.getPlacements():
-                    print()
-                    print(f"\tPlayer Name: {placement.getPlayer().name}")
-                    print(f"\tPlayer FC: {placement.getPlayer().FC}")
-                    print(f"\tPlayer Page: {placement.getPlayer().playerPageLink}")
-                    print(f"\tPlayer ID: {placement.getPlayer().pid}")
-                    print(f"\tFinish Time: {placement.get_time_string()}")
-                    print(f"\tPlace: {placement.place}")
-                    print(f"\tol_status: {placement.getPlayer().ol_status}")
-                    print(f"\tPosition in Room: {placement.getPlayer().positionInRoom}")
-                    print(f"\tPlayer Region: {placement.getPlayer().region}")
-                    print(f"\tPlayer Conn Fails: {placement.getPlayer().playerConnFails}")
-                    print(f"\tRole: {placement.getPlayer().role}")
-                    print(f"\tVR: {placement.getPlayer().vr}")
-                    print(f"\tCharacter: {placement.getPlayer().character}")
-                    print(f"\tVehicle: {placement.getPlayer().vehicle}")
-                    print(f"\tDiscord name: {placement.getPlayer().discord_name}")
-                    print(f"\tLounge name: {placement.getPlayer().lounge_name}")
-                    print(f"\tCharacter: {placement.getPlayer().character}")
-                    print(f"\tVehicle: {placement.getPlayer().vehicle}")
-                    print(f"\tPlayer Discord name: {placement.getPlayer().discord_name}")
-                    print(f"\tPlayer lounge name: {placement.getPlayer().lounge_name}")
-                    print(f"\tPlayer mii hex: {placement.getPlayer().mii_hex}")
-
-        #We have a memory leak, and it's not incredibly clear how BS4 objects work and if
-        #Python's automatic garbage collection can figure out how to collect
-        while len(tableLines) > 0:
-            del tableLines[0]
-        
-
-        seen_race_id_numbering = defaultdict(lambda:[{}, 0])
-        for race in races:
-            race:Race.Race
-            rxx_numbering = seen_race_id_numbering[race.get_rxx()]
-            if race.get_race_id() not in rxx_numbering:
-                rxx_numbering[1] += 1
-                rxx_numbering[0][race.get_race_id()] = rxx_numbering[1]
-            race.set_race_number(rxx_numbering[0][race.get_race_id()])
-
-        return races
-
-    
-
-    #Soup level functions
+        return build_str     
     
     def getNumberOfGPS(self):
         return int((len(self.races)-1)/4)+1
+
+    def get_miis(self) -> Dict[str, Mii.Mii]:
+        return self.miis
+
+    def get_available_miis_dict(self, FCs) -> Dict[str, Mii.Mii]:
+        return {fc: self.get_miis()[fc] for fc in FCs if fc in self.get_miis()}
+
+    def remove_miis_with_missing_files(self):
+        to_delete = set()
+        for fc, mii in self.get_miis().items():
+            if not mii.has_table_picture_file():
+                common.log_error(f"{fc} does not have a mii picture - table id {self.event_id}")
+                to_delete.add(fc)
+
+        for fc in to_delete:
+            try:
+                self.get_miis()[fc].clean_up()
+                del self.get_miis()[fc]
+            except:
+                common.log_error(f"Exception in remove_miis_with_missing_files: {fc} failed to clean up - table id {self.event_id}")
+
+    def update_mii_hexes(self):
+        for race in self.races:
+            for FC, mii_hex in self.get_miis().items():
+                race.update_FC_mii_hex(FC, mii_hex)
+
+    def populating_miis(self) -> bool:
+        return self.populating
+
+    def set_populating_miis(self, populating: bool) -> bool:
+        self.populating = populating
+
+    def get_room_FCs(self):
+        return self.getFCPlayerList(endrace=None).keys()
     
-    async def update_room(self, database_call, is_vr_command, mii_dict=None):
-        if self.is_initialized():
-            soups = []
-            rLIDs = []
-            for rLID in self.rLIDs:
-                
-                _, rLID_temp, tempSoup = await WiimmfiSiteFunctions.getRoomData(rLID)
-                soups.append(tempSoup)
-                rLIDs.append(rLID_temp)
-                
-            tempSoup = WiimmfiSiteFunctions.combineSoups(soups)
-            
-            to_return = False
-            if tempSoup is not None:
-                self.initialize(rLIDs, tempSoup, mii_dict)
-                
-                #Make call to database to add data
-                if not is_vr_command:
-                    await database_call()
-                self.apply_tabler_adjustments()
-                tempSoup.decompose()
-                del tempSoup
-                to_return = True
-                    
-            while len(soups) > 0:
-                soups[0].decompose()
-                del soups[0]
-            return to_return
-        return False
+    def getPlayers(self):
+        return self.getFCPlayerList(endrace=None).values()
+
+
+    async def populate_miis(self):
+        if common.MIIS_ON_TABLE_DISABLED:
+            return
+        #print("\n\n\n" + str(self.get_miis()))
+        if self.populating_miis():
+            return
+        self.set_populating_miis(True)
+        #print("Start:", datetime.now())
+        try:
+            self.remove_miis_with_missing_files()
+            all_missing_fcs = [fc for fc in self.get_room_FCs() if fc not in self.get_miis()]
+            if len(all_missing_fcs) > 0:
+                result = await MiiPuller.get_miis(all_missing_fcs, self.get_event_id())
+                if not isinstance(result, (str, type(None))):
+                    for fc, mii_pull_result in result.items():
+                        if not isinstance(mii_pull_result, (str, type(None))):
+                            self.get_miis()[fc] = mii_pull_result
+                            mii_pull_result.output_table_mii_to_disc()
+                            mii_pull_result.__remove_main_mii_picture__()
     
+            for mii in self.get_miis().values():
+                if mii.lounge_name == "":
+                    mii.update_lounge_name()
+        finally:
+            #print("End:", datetime.now())
+            self.set_populating_miis(False)
+        self.update_mii_hexes()
+
+    @TimerDebuggers.timer_coroutine
+    async def update(self):
+        all_races = []
+        status_codes = []
+        for rxx in self.rLIDs:
+            status_code, _, new_races = await WiimmfiSiteFunctions.get_races_for_rxx(rxx)
+            all_races.extend(new_races)
+            status_codes.append(status_code)
+
+        if len(all_races) == 0:
+            return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.HAS_NO_RACES)
+        self.set_races(all_races)
+        return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS)
+
+
     def apply_tabler_adjustments(self):
         #First, we number all races
-        for raceNum, race in enumerate(self.races, 1):
-            race.raceNumber = raceNum
+        self.fix_race_numbers()
             
         #Next, apply name changes
         for FC, name_change in self.name_changes.items():
@@ -735,13 +602,13 @@ class Room(object):
         
         #Next, we remove races
         for removed_race_ind, _ in self.removed_races:
-            self.__remove_race__(removed_race_ind, self.races)
+            self.races.pop(removed_race_ind)
         
-            
-        #Next, we need to renumber the races + add/remove manual DC placements
+        #Next, we need to renumber the races
+        self.fix_race_numbers()
+
+        #Next, add/remove manual DC placements
         for raceNum, race in enumerate(self.races, 1):
-            race.raceNumber = raceNum
-            
             if raceNum in self.manual_dc_placements: #manual DC placements found for this race
                 items = self.manual_dc_placements[raceNum]
                 for p in items:
@@ -759,21 +626,23 @@ class Room(object):
     def getRacesPlayed(self):
         return [r.track for r in self.races]
     
-    def get_races_abbreviated(self, last_x_races=None):
+    @staticmethod
+    def get_race_names_abbreviated(races: List[Race.Race], last_x_races=None):
         if last_x_races is None:
             temp = []
-            for ind,race in enumerate(self.races, 1):
+            for ind,race in enumerate(races, 1):
                 if race.getAbbreviatedName() is None:
                     return None
                 temp.append(str(ind) + ". " + race.getAbbreviatedName())
             return " | ".join(temp)
         else:
             temp = []
-            for ind,race in enumerate(self.races[-last_x_races:], 1):
+            for ind,race in enumerate(races[-last_x_races:], 1):
                 if race.getAbbreviatedName() is None:
                     return None
                 temp.append(str(ind) + ". " + race.getAbbreviatedName())
             return " | ".join(temp)
+        
         
     
     def get_races_string(self, races=None):
@@ -824,7 +693,7 @@ class Room(object):
         return self.set_up_user
     
     def setSetupUser(self, setupUser, displayName:str):
-        self.freed = False
+        self.is_freed = False
         self.set_up_user = setupUser
         self.set_up_user_display_name = displayName
     
@@ -835,7 +704,16 @@ class Room(object):
     def getRoomSize(self, raceNum):
         if raceNum in self.forcedRoomSize:
             return self.forcedRoomSize[raceNum]
-       
+    
+    def clean_up(self):
+        for mii in self.get_miis().values():
+            mii.clean_up()
+            
+    def destroy(self):
+        self.set_populating_miis(True)
+        self.clean_up()
+        self.set_populating_miis(False)
+
     #This is not the entire save state of the class, but rather, the save state for edits made by the user 
     def get_recoverable_save_state(self):
         save_state = {}

@@ -4,6 +4,7 @@ import commands
 import InteractionUtils
 import UtilityFunctions
 import asyncio
+import TimerDebuggers
 
 class ConfirmButton(discord.ui.Button['ConfirmView']):
     def __init__(self, cat):
@@ -75,6 +76,7 @@ class PictureButton(discord.ui.Button['PictureView']):
         except:
             pass
 
+    @TimerDebuggers.timer_coroutine
     async def callback(self, interaction: discord.Interaction):
         msg = InteractionUtils.create_proxy_msg(interaction, ['wp'])
 
@@ -207,6 +209,7 @@ ERROR_TYPE_DESCRIPTIONS = {
 }
 
 class SuggestionView(discord.ui.View):
+    @TimerDebuggers.timer
     def __init__(self, error, bot, prefix, lounge, id=None):
         super().__init__(timeout=120)
         self.bot = bot

@@ -1,5 +1,6 @@
 '''
 Created on Jul 30, 2020
+
 @author: willg
 '''
 import codecs
@@ -7,22 +8,48 @@ import re
 from datetime import timedelta
 from typing import List, Union, Tuple
 
-from bs4 import BeautifulSoup, NavigableString
+from bs4 import BeautifulSoup
+
 import common
 import URLCacher
-import UserDataProcessing
-import UtilityFunctions
-# import WiimmfiParser
+import WiimmfiParser
 from Race import Race
+import SmartTypes as ST
+import TimerDebuggers
+
+class RoomLoadStatus:
+    DOES_NOT_EXIST = object()
+    NO_KNOWN_FCS = object()
+    HAS_NO_RACES = object()
+    NO_ROOM_LOADED = object()
+    SUCCESS = object()
+    SUCCESS_BUT_NO_WAR = object()
+    FAILURE_CODES = {DOES_NOT_EXIST, HAS_NO_RACES, NO_ROOM_LOADED, NO_KNOWN_FCS}
+    SUCCESS_CODES = {SUCCESS, SUCCESS_BUT_NO_WAR}
+    def __init__(self, status):
+        self.status = status
+        
+    def __bool__(self):
+        # The sets of error codes might not be mutually exclusive in the future, so we'll do a standard if else check
+        if self.was_success():
+            return True
+        elif self.was_failure():
+            return False
+        else:
+            return False
+
+    def was_success(self):
+        return self.status in RoomLoadStatus.SUCCESS_CODES
+    def was_failure(self):
+        return self.status in RoomLoadStatus.FAILURE_CODES
 
 cache_length = timedelta(seconds=30)
-long_cache_length = timedelta(seconds=45)
 url_cacher = URLCacher.URLCacher()
 
 
 WIIMMFI_URL = 'https://wiimmfi.de'
 MKWX_URL = 'https://wiimmfi.de/stats/mkwx'
-if "mkwx_proxy_url" in common.properties:
+if common.USING_LINUX_PROXY:
     MKWX_URL = common.properties['mkwx_proxy_url']
 SUB_MKWX_URL = f"{MKWX_URL}/list/"
 
@@ -35,9 +62,7 @@ f"{SUB_MKWX_URL}r0000004":("Table Bot Remove Race Test w/ quickedit, 2nd room to
 f"{SUB_MKWX_URL}r0000005":("Clean room with no errors.", f"{common.SAVED_ROOMS_DIR}clean_room.html"),
 f"{SUB_MKWX_URL}r0000006":("Tag in brackets.", f"{common.SAVED_ROOMS_DIR}tag_in_brackets.html"),
 f"{SUB_MKWX_URL}r0000007":("Room with an unknown track name (SHA name).", f"{common.SAVED_ROOMS_DIR}unknown_track.html"),
-f"{SUB_MKWX_URL}r0000008":("Room with email protected tags", f"{common.SAVED_ROOMS_DIR}email_protected.html"),
-f"{SUB_MKWX_URL}r0000009":("Room to test component suggestions with.", f"{common.SAVED_ROOMS_DIR}SuggestionComponentsTesting.html"),
-f"{SUB_MKWX_URL}r0000010":("Room to test component suggestions with (ties).", f"{common.SAVED_ROOMS_DIR}Ties_Testing.html"),
+f"{SUB_MKWX_URL}r0000008":("Room with email protected tags", f"{common.SAVED_ROOMS_DIR}email_protected.html")
 }
 
 # https://github.com/jslirola/cloudflare-email-decoder/blob/master/ced/lib/processing.py
@@ -57,175 +82,104 @@ def fix_cloudflare_email(text: str) -> str:
         out.append(line)
     return "\n".join(out)
 
-async def getRoomHTML(roomLink):
-    if roomLink in special_test_cases:
-        description, local_file_path = special_test_cases[roomLink]
-        fp = codecs.open(local_file_path, "r", "utf-8")
-        html_data = fp.read()
-        fp.close()
-        return fix_cloudflare_email(html_data)
-        
-    temp = await url_cacher.get_url(roomLink, cache_length=long_cache_length)
+
+async def get_room_HTML(room_link: str) -> str:
+    if room_link in special_test_cases:
+        description, local_file_path = special_test_cases[room_link]
+        with codecs.open(local_file_path, "r", "utf-8") as fp:
+            return fix_cloudflare_email(fp.read())
+
+    temp = await url_cacher.get_url(room_link, cache_length)
     return fix_cloudflare_email(temp)
 
 
-async def __getMKWXSoupCall__():
-    mkwxHTML = await url_cacher.get_url(MKWX_URL, cache_length=long_cache_length)
-    return BeautifulSoup(fix_cloudflare_email(mkwxHTML), "html.parser")
+async def _get_mkwx_soup() -> BeautifulSoup:
+    mkwx_HTML = await url_cacher.get_url(MKWX_URL, cache_length)
+    return BeautifulSoup(fix_cloudflare_email(mkwx_HTML), "html.parser")
 
-async def getMKWXSoup():
+
+async def get_mkwx_soup() -> BeautifulSoup:
     if common.STUB_MKWX:
-        fp = codecs.open(common.STUB_MKWX_FILE_NAME, "r", "utf-8")
-        html_data = fp.read()
-        fp.close()
-        return BeautifulSoup(fix_cloudflare_email(html_data), "html.parser")
-    return await __getMKWXSoupCall__()
+        with codecs.open(common.STUB_MKWX_FILE_NAME, "r", "utf-8") as fp:
+            return BeautifulSoup(fix_cloudflare_email(fp.read()), "html.parser")
+    return await _get_mkwx_soup()
 
-async def getrLIDSoup(rLID):
-    roomHTML = await getRoomHTML(SUB_MKWX_URL + rLID)
-    temp = BeautifulSoup(roomHTML, "html.parser")
+
+async def get_room_soup(rxx: str) -> Union[BeautifulSoup, None]:
+    room_HTML = await get_room_HTML(SUB_MKWX_URL + rxx)
+    temp = BeautifulSoup(room_HTML, "html.parser")
     if temp.find(text="No match found!") is None:
         return temp
-    return None
-        
 
 
-#getRoomLink old name
-async def getRoomData(rid_or_rlid):
-    if UtilityFunctions.is_rLID(rid_or_rlid): #It is a unique rxxxxxxx number given
-        #Check if the rLID is a valid link (bogus input check, or the link may have expired)
-        rLIDSoup = await getrLIDSoup(rid_or_rlid)
-        if rLIDSoup is not None:
-            return SUB_MKWX_URL + rid_or_rlid, rid_or_rlid, rLIDSoup
-        else:
-            return None, None, None
-        
-    #Normal room ID given, go find the link for the list
-    mkwxSoup = await getMKWXSoup()
-        
-    roomIDSpot = mkwxSoup.find(text=rid_or_rlid)
-    if roomIDSpot is None:
-        return None, None, None
-    link = str(roomIDSpot.find_previous('a')[common.HREF_HTML_NAME])
-    rLID = link.split("/")[-1]
-    rLIDSoup = await getrLIDSoup(rLID)
-    return WIIMMFI_URL + link, rLID, rLIDSoup #link example: /stats/mkwx/list/r1279851
+async def get_front_race_by_fc(fcs: List[str]) -> Tuple[RoomLoadStatus, Union[Race, None]]:
+    parser = WiimmfiParser.FrontPageParser(await get_mkwx_soup())
+    for front_page_race in parser.get_front_room_races():
+        for fc in fcs:
+            if front_page_race.hasFC(fc):
+                return RoomLoadStatus(RoomLoadStatus.SUCCESS), front_page_race
+    return RoomLoadStatus(RoomLoadStatus.DOES_NOT_EXIST), None
 
 
-
-async def getMKWXHTMLDataByFC(fcs):
-    soup = await getMKWXSoup()
-    fcSpot = None
-    for fc in fcs:
-        fcSpot = soup.find(text=fc)
-        if fcSpot is not None:
-            break
-        
-    if fcSpot is None:
-        return None
-    #found the FC, now go get the room
-    levels = [fcSpot.parent.parent.parent]
-    del fcSpot
-    #should run until we hit the roomID, but in cases of corrupt HTML, we don't want an infinite loop. So eventually, this will stop when there is no previous siblings
-    returnNone = False
-    while True:
-        #print("\n\n=====================================================\n")
-        
-        levels.append(levels[-1].previous_sibling)
-        #print(correctLevel)
-        if levels[-1] is None:
-            returnNone = True
-            break
-        if isinstance(levels[-1], NavigableString):
-            continue
-        if 'id' in levels[-1].attrs:
-            break
-    
-    while len(levels) > 1:
-        del levels[0]
-        
-    if returnNone:
-        del levels[0]
-        return None
-    return levels.pop()
+async def get_front_race_smart(needle: Union[str, List[str]], hit_lounge_api=False) -> Tuple[RoomLoadStatus, Union[Race, None], ST.SmartLookupTypes]:
+    smart_type = ST.SmartLookupTypes(needle, allowed_types=ST.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
+    if hit_lounge_api:
+        await smart_type.lounge_api_update()
+    fcs = smart_type.get_fcs()
+    if fcs is None:
+        return RoomLoadStatus(RoomLoadStatus.NO_KNOWN_FCS), None, smart_type
+    status_code, front_race = await get_front_race_by_fc(fcs)
+    if status_code and hit_lounge_api:
+        await ST.SmartLookupTypes(front_race.getFCs(), allowed_types=ST.SmartLookupTypes.PLAYER_LOOKUP_TYPES).lounge_api_update()
+    return status_code, front_race, smart_type
 
 
-
-#getRoomLinkByFC old name
-async def getRoomDataByFC(fcs):
-    soup = await getMKWXSoup()
-    fcSpot = None
-    for fc in fcs:
-        fcSpot = soup.find(text=fc)
-        if fcSpot is not None:
-            break
-        
-    if fcSpot is None:
-        return None, None, None
-    
-    #found the FC, now go get the room
-    correctLevel = fcSpot.parent.parent.parent
-    #print(correctLevel)
-    #should run until we hit the roomID, but in cases of corrupt HTML, we don't want an infinite loop. So eventually, this will stop when there is no previous siblings
-    while True:
-        #print("\n\n=====================================================\n")
-        correctLevel = correctLevel.previous_sibling
-        #print(correctLevel)
-        if correctLevel is None:
-            return None, None, None
-        if isinstance(correctLevel, NavigableString):
-            continue
-        if 'id' in correctLevel.attrs:
-            break
-    link = correctLevel.find('a')[common.HREF_HTML_NAME]
-    rLID = link.split("/")[-1]
-    rLIDSoup = await getrLIDSoup(rLID)
-    return WIIMMFI_URL + link, rLID, rLIDSoup #link example: /stats/mkwx/list/r1279851
-
-#load_me can be an FC, roomID or rxxxxxx number, or discord name. Order of checking is the following: 
-#Discord name, rxxxxxxx, FC, roomID
-async def getRoomDataSmart(load_me):
-    if not isinstance(load_me, list):
-        load_me = load_me.strip().lower()
-        if UtilityFunctions.is_rLID(load_me):
-            return await getRoomData(load_me)
-        
-        if UtilityFunctions.is_fc(load_me):
-            return await getRoomDataByFC([load_me])
-        
-        FCs = UserDataProcessing.getFCsByLoungeName(load_me)
-        return await getRoomDataByFC(FCs)
-        
-    if isinstance(load_me, list):
-        return await getRoomDataByFC(load_me)
-    
-
-async def getRoomHTMLDataSmart(load_me):
-    if not isinstance(load_me, list):
-        load_me = load_me.strip().lower()
-        
-        if UtilityFunctions.is_fc(load_me):
-            return await getMKWXHTMLDataByFC([load_me])
-        
-        
-        FCs = UserDataProcessing.getFCsByLoungeName(load_me)
-        return await getMKWXHTMLDataByFC(FCs)
-        
-    if isinstance(load_me, list):
-        return await getMKWXHTMLDataByFC(load_me)
+async def get_races_for_rxx(rxx: str, hit_lounge_api=False) -> Tuple[RoomLoadStatus, str, List[Race]]:
+    room_page_soup = await get_room_soup(rxx)
+    if room_page_soup is None:
+        return RoomLoadStatus(RoomLoadStatus.DOES_NOT_EXIST), rxx, []
+    room_page_parser = WiimmfiParser.RoomPageParser(room_page_soup)
+    if not room_page_parser.has_races():
+        return RoomLoadStatus(RoomLoadStatus.HAS_NO_RACES), rxx, []
+    if hit_lounge_api:
+        await ST.SmartLookupTypes(room_page_parser.get_all_fcs(), allowed_types=ST.SmartLookupTypes.PLAYER_LOOKUP_TYPES).lounge_api_update()
+    return RoomLoadStatus(RoomLoadStatus.SUCCESS), rxx, room_page_parser.get_room_races()
 
 
-#soups is a list of beautiful soup objects
-def combineSoups(soups):
-    last_soup = None
-    for soup_num, soup in enumerate(soups):
-        if soup_num == 0:
-            last_soup = soup
-        else:
-            table_body = last_soup.find('table')
-            table_body.append(soup.find('table'))
-            
-    while len(soups) > 0:
-        del soups[0]
-    
-    return last_soup
+async def get_races_by_fcs(fcs: List[str], hit_lounge_api=False) -> Tuple[RoomLoadStatus, Union[None, str], List[Race]]:
+    status_code, front_page_race = await get_front_race_by_fc(fcs)
+    if not status_code:
+        return status_code, None, []
+    rxx = front_page_race.get_rxx()
+    return await get_races_for_rxx(rxx, hit_lounge_api)
+
+
+# load_me can be an FC, or rxx number, or discord name. Order of checking is the following:
+# list of FCs, rxx, FC, Discord name
+# If no FC or discord name can be found on the front page, (None, []) is returned
+# If the FC or discord name or rxx number is found, but the room page has not played any races yet, (rxx, []) is returned
+# Otherwise, if the lookup was successful and there have been races played, (rxx, [Race]) is returned
+@TimerDebuggers.timer_coroutine
+async def get_races_smart(load_me: Union[str, List[str]], hit_lounge_api=False) ->  Tuple[RoomLoadStatus, Union[None, str], List[Race], ST.SmartLookupTypes]:
+    smart_type = ST.SmartLookupTypes(load_me, allowed_types=ST.SmartLookupTypes.ROOM_LOOKUP_TYPES)
+    if smart_type.is_rxx():
+        return *await get_races_for_rxx(load_me, hit_lounge_api), smart_type
+    if hit_lounge_api:
+        await smart_type.lounge_api_update()
+    fcs = smart_type.get_fcs()
+    if fcs is None:
+        return RoomLoadStatus(RoomLoadStatus.NO_KNOWN_FCS), None, [], smart_type
+    return *await get_races_by_fcs(fcs, hit_lounge_api), smart_type
+
+
+if __name__ == '__main__':
+    from time import sleep
+    #for i in range(100):
+    soup = common.run_async_function_no_loop(get_mkwx_soup())
+    parser_obj = WiimmfiParser.FrontPageParser(soup)
+    #sleep(int(cache_length.total_seconds())+1)
+
+    #ctgp_wws = sr.get_CTGP_WWs()
+    #for ctgp_ww in ctgp_wws:
+    #    print(ctgp_ww.get_room_name(), ctgp_ww.getRoomRating())
+    #print(FrontPageParser.get_embed_text_for_race(ctgp_wws, 0)[1])
