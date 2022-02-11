@@ -1732,18 +1732,15 @@ class TablingCommands:
         scores=[]
         player_ids=["","","","","","","","","","","","",]
         event_format=len(table_sorted_data)
-        for x in range(0, 12):
+        for x in range(0, 12): #parsing table sorted data
             try:
                 for i in range(0,6):
                     names.append(table_sorted_data[x][1][i][1][0].rsplit(" ", 1)[0])
                     scores.append(table_sorted_data[x][1][i][1][1])
             except:
                 continue
-        print(names)
         request_data=f'https://mkwlounge.gg/api/ladderplayer.php?ladder_id={ladder_id}&player_names={",".join(names)}'
-        print(request_data)
         r=requests.get(request_data) #Requests all the player IDs
-        print(r.json())
         for player in r.json()["results"]: #sorts the player ids into order
             player_id = player["player_id"]
             for x in range(1, len(names)+1):
