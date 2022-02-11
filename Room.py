@@ -6,16 +6,17 @@ Created on Jul 12, 2020
 import Race
 import Placement
 import Player
-import WiimmfiSiteFunctions_old
+import WiimmfiSiteFunctions
 import UserDataProcessing
 import common
+import MiiPuller
 
 from collections import defaultdict
 import UtilityFunctions
 import TagAIShell
 from copy import copy, deepcopy
 from UtilityFunctions import isint, isfloat
-from itertools import chain
+import Mii
 from typing import List, Any, Dict
 
 DEBUG_RACES = False
@@ -58,9 +59,14 @@ class Room(object):
         self.set_up_user_display_name = setup_display_name
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         self.sub_ins = {}
-        
+
+        self.miis: Dict[str, Mii.Mii] = {}
+        self.populating = False
+        self.event_id = None
         self.initialize(rLIDs, roomSoup)
         self.is_freed = False
+
+        
     
     def get_set_up_user_discord_id(self):
         return self.set_up_user
@@ -72,7 +78,29 @@ class Room(object):
         return self.sub_ins
     def get_manual_dc_placements(self):
         return self.manual_dc_placements
+    def get_event_id(self):
+        return self.event_id
     
+
+    def set_up(self, rxxs: List[str], races: List[Race.Race], mii_dict=None):
+        if not isinstance(rxxs, list) or len(rxxs) == 0 or any(not isinstance(rxx, str) for rxx in rxxs):
+            raise ValueError("Caller must gaurantee that the given rxxs is a non-empty list of strings")
+        if not isinstance(races, list) or len(races) == 0 or any(not isinstance(race, Race.Race) for race in races):
+            raise ValueError("Caller must gaurantee that the given races is a non-empty list of Races")
+        self.rLIDs = rxxs
+        self.set_races(races)
+        self.fix_race_numbers()
+        self._room_name = self[0].get_room_name()
+
+    def set_races(self, races: List[Race.Race]):
+        #In case any outsiders have a reference to our race list, we want to update their reference
+        self.races.clear()
+        self.races.extend(races)
+
+    def fix_race_numbers(self):
+        for race_num, race in enumerate(self.races, 1):
+            race.set_race_number(race_num)
+
     def initialize(self, rLIDs, roomSoup, mii_dict=None):
         self.rLIDs = rLIDs
         
@@ -690,41 +718,88 @@ class Room(object):
     
     def getNumberOfGPS(self):
         return int((len(self.races)-1)/4)+1
+
+    def get_miis(self) -> Dict[str, Mii.Mii]:
+        return self.miis
+
+    def get_available_miis_dict(self, FCs) -> Dict[str, Mii.Mii]:
+        return {fc: self.get_miis()[fc] for fc in FCs if fc in self.get_miis()}
+
+    def remove_miis_with_missing_files(self):
+        to_delete = set()
+        for fc, mii in self.get_miis().items():
+            if not mii.has_table_picture_file():
+                common.log_error(f"{fc} does not have a mii picture - channel {self.channel_id}")
+                to_delete.add(fc)
+
+        for fc in to_delete:
+            try:
+                self.get_miis()[fc].clean_up()
+                del self.get_miis()[fc]
+            except:
+                common.log_error(f"Exception in remove_miis_with_missing_files: {fc} failed to clean up - channel {self.channel_id}")
+
+    def update_mii_hexes(self):
+        for race in self.races:
+            for FC, mii_hex in self.get_miis().items():
+                race.update_FC_mii_hex(FC, mii_hex)
+
+    def populating_miis(self) -> bool:
+        return self.populating
+
+    def set_populating_miis(self, populating: bool) -> bool:
+        self.populating = populating
+
+    def get_room_FCs(self):
+        return self.getFCPlayerList(endrace=None).keys()
     
-    async def update_room(self, database_call, is_vr_command, mii_dict=None):
-        if self.is_initialized():
-            soups = []
-            rLIDs = []
-            for rLID in self.rLIDs:
-                
-                _, rLID_temp, tempSoup = await WiimmfiSiteFunctions_old.getRoomData(rLID)
-                soups.append(tempSoup)
-                rLIDs.append(rLID_temp)
-                
-            tempSoup = WiimmfiSiteFunctions_old.combineSoups(soups)
-            
-            to_return = False
-            if tempSoup is not None:
-                self.initialize(rLIDs, tempSoup, mii_dict)
-                
-                #Make call to database to add data
-                if not is_vr_command:
-                    await database_call()
-                self.apply_tabler_adjustments()
-                tempSoup.decompose()
-                del tempSoup
-                to_return = True
-                    
-            while len(soups) > 0:
-                soups[0].decompose()
-                del soups[0]
-            return to_return
-        return False
+    def getPlayers(self):
+        return self.getFCPlayerList(endrace=None).values()
+
+
+    async def populate_miis(self):
+        if common.MIIS_ON_TABLE_DISABLED:
+            return
+        #print("\n\n\n" + str(self.get_miis()))
+        if self.populating_miis():
+            return
+        self.set_populating_miis(True)
+        #print("Start:", datetime.now())
+        try:
+            self.remove_miis_with_missing_files()
+            all_missing_fcs = [fc for fc in self.get_room_FCs() if fc not in self.get_miis()]
+            if len(all_missing_fcs) > 0:
+                result = await MiiPuller.get_miis(all_missing_fcs, self.get_event_id())
+                if not isinstance(result, (str, type(None))):
+                    for fc, mii_pull_result in result.items():
+                        if not isinstance(mii_pull_result, (str, type(None))):
+                            self.get_miis()[fc] = mii_pull_result
+                            mii_pull_result.output_table_mii_to_disc()
+                            mii_pull_result.__remove_main_mii_picture__()
     
+            for mii in self.get_miis().values():
+                if mii.lounge_name == "":
+                    mii.update_lounge_name()
+        finally:
+            #print("End:", datetime.now())
+            self.set_populating_miis(False)
+
+    async def update_room(self):
+        all_races = []
+        for rxx in self.rLIDs:
+            _, new_races = await WiimmfiSiteFunctions.get_races_for_rxx(rxx)
+            all_races.extend(new_races)
+
+        if len(all_races) == 0:
+            return WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES(WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES.HAS_NO_RACES)
+        self.set_races(all_races)
+        self.update_mii_hexes()
+        return WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES(WiimmfiSiteFunctions.ROOM_LOAD_STATUS_CODES.SUCCESS)
+
+
     def apply_tabler_adjustments(self):
         #First, we number all races
-        for raceNum, race in enumerate(self.races, 1):
-            race.raceNumber = raceNum
+        self.fix_race_numbers()
             
         #Next, apply name changes
         for FC, name_change in self.name_changes.items():
@@ -735,13 +810,13 @@ class Room(object):
         
         #Next, we remove races
         for removed_race_ind, _ in self.removed_races:
-            self.__remove_race__(removed_race_ind, self.races)
+            self.races.pop(removed_race_ind)
         
-            
-        #Next, we need to renumber the races + add/remove manual DC placements
+        #Next, we need to renumber the races
+        self.fix_race_numbers()
+
+        #Next, add/remove manual DC placements
         for raceNum, race in enumerate(self.races, 1):
-            race.raceNumber = raceNum
-            
             if raceNum in self.manual_dc_placements: #manual DC placements found for this race
                 items = self.manual_dc_placements[raceNum]
                 for p in items:
@@ -837,7 +912,16 @@ class Room(object):
     def getRoomSize(self, raceNum):
         if raceNum in self.forcedRoomSize:
             return self.forcedRoomSize[raceNum]
-       
+    
+    def clean_up(self):
+        for mii in self.get_miis().values():
+            mii.clean_up()
+            
+    def destroy(self):
+        self.set_populating_miis(True)
+        self.clean_up()
+        self.set_populating_miis(False)
+
     #This is not the entire save state of the class, but rather, the save state for edits made by the user 
     def get_recoverable_save_state(self):
         save_state = {}

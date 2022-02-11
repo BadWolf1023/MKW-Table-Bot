@@ -147,14 +147,14 @@ def get_footer_with_miis(channel_bot:ChannelBot, team_scores:List[Tuple[str, Lis
     if channel_bot.getWar().is_ffa():
         all_miis = {}
         for team_tag, team_players in team_scores:
-            available_miis = channel_bot.get_available_miis_dict([player_data[0] for player_data in team_players])
+            available_miis = channel_bot.room.get_available_miis_dict([player_data[0] for player_data in team_players])
             for mii_key, mii_value in available_miis.items():
                 all_miis[mii_key] = mii_value
         if len(all_miis) > 0:
             team_footers.append(("FFA", generate_footer_section_for_team(all_miis, "FFA")))
     else:
         for team_tag, team_players in team_scores:
-            available_miis = channel_bot.get_available_miis_dict([player_data[0] for player_data in team_players])
+            available_miis = channel_bot.room.get_available_miis_dict([player_data[0] for player_data in team_players])
             should_add_left_border = len(team_footers) > 0 #There's already one team footer, so add left border
             if len(available_miis) > 0:
                 team_footers.append((team_tag, generate_footer_section_for_team(available_miis, team_tag, add_left_border=should_add_left_border)))
