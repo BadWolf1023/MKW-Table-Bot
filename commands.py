@@ -1720,6 +1720,9 @@ class TablingCommands:
         # if not this_bot.is_table_loaded():
         #     await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
         #     return
+        if not this_bot.is_table_loaded():
+            await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+            return
         table_text, table_sorted_data = SK.get_war_table_DCS(this_bot)
         print(args)
         if args[1] == "rt":
