@@ -89,6 +89,7 @@ DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
 
 #Commands that require a war to be started, but don't modify the war/room/table in any way
 TABLE_TEXT_TERMS = {"tt", "tabletext"}
+PREDICT_TERMS = {"predict", "preview"}
 WAR_PICTURE_TERMS = {"wp", "warpicture", "wo", "w;", "w["}
 RACE_RESULTS_TERMS = {"rr", "raceresults"}
 RACES_TERMS = {"races"}
@@ -574,6 +575,9 @@ async def on_message(message: discord.Message):
                 
             elif args[0] in RXX_TERMS:
                 await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge_server)
+
+            elif args[0] in PREDICT_TERMS:
+                await commands.TablingCommands.predict_command(message, this_bot, args, server_prefix, is_lounge_server)
                     
             elif args[0] in SERVER_USAGE_TERMS:
                 await commands.BadWolfCommands.server_process_memory_command(message)

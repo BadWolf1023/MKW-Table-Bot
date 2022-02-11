@@ -27,6 +27,7 @@ from data_tracking import DataTracker
 
 #Other library imports, other people codes
 import math
+import requests
 from tabulate import tabulate
 from typing import List, Set
 import asyncio
@@ -1714,6 +1715,72 @@ class TablingCommands:
         else:
             await message.channel.send(this_bot.getRoom().getRXXText())
 
+    @staticmethod
+    async def predict_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        # if not this_bot.is_table_loaded():
+        #     await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
+        #     return
+        table_text, table_sorted_data = SK.get_war_table_DCS(this_bot)
+        print(args)
+        if args[1] == "rt":
+            ladder_id="1"
+        elif args[1] == "ct":
+            ladder_id="2"
+        else:
+            return
+        names=[]
+        scores=[]
+        player_ids=["","","","","","","","","","","","",]
+        event_format=len(table_sorted_data)
+        for x in range(0, 12):
+            try:
+                for i in range(0,6):
+                    names.append(table_sorted_data[x][1][i][1][0].rsplit(" ", 1)[0])
+                    scores.append(table_sorted_data[x][1][i][1][1])
+            except:
+                continue
+        print(names)
+        request_data=f'https://mkwlounge.gg/api/ladderplayer.php?ladder_id={ladder_id}&player_names={",".join(names)}'
+        print(request_data)
+        r=requests.get(request_data) #Requests all the player IDs
+        print(r.json())
+        for player in r.json()["results"]: #sorts the player ids into order
+            player_id = player["player_id"]
+            for x in range(1, len(names)+1):
+                if names[x-1].lower()==player["player_name"].lower():
+                    player_ids[x-1:x]=[player_id]
+        
+        s_quote="'"
+        d_quote='"' # I didnt know how to replace single quotations with double quotations and this is the solution I came up with
+
+        p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12=player_ids #p=player
+        s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12=scores
+        if event_format==12:
+            event_data={"races":12,"format":"1","tier":"Tier 1","teams":[{"players":[{"player_id":p1,"score":s1}]},{"players":[{"player_id":p2,"score":s2}]},{"players":[{"player_id":p3,"score":s3}]},{"players":[{"player_id":p4,"score":s4}]},{"players":[{"player_id":p5,"score":s5}]},{"players":[{"player_id":p6,"score":s6}]},{"players":[{"player_id":p7,"score":s7}]},{"players":[{"player_id":p8,"score":s8}]},{"players":[{"player_id":p9,"score":s9}]},{"players":[{"player_id":p10,"score":s10}]},{"players":[{"player_id":p11,"score":s11}]},{"players":[{"player_id":p12,"score":s12}]}]}
+        elif event_format==6:
+            event_data={"races":12,"format":"2","tier":"Tier 1","teams":[{"players":[{"player_id":p1,"score":s1},{"player_id":p2,"score":s2}]},{"players":[{"player_id":p3,"score":s3},{"player_id":p4,"score":s4}]},{"players":[{"player_id":p5,"score":s5},{"player_id":p6,"score":s6}]},{"players":[{"player_id":p7,"score":s7},{"player_id":p8,"score":s8}]},{"players":[{"player_id":p9,"score":s9},{"player_id":p10,"score":s10}]},{"players":[{"player_id":p11,"score":s11},{"player_id":p12,"score":s12}]}]}
+        elif format==4:
+            event_data={"races":12,"format":"3","tier":"Tier 1","teams":[{"players":[{"player_id":p1,"score":s1},{"player_id":p2,"score":s2},{"player_id":p3,"score":s3}]},{"players":[{"player_id":p4,"score":s4},{"player_id":p5,"score":s5},{"player_id":p6,"score":s6}]},{"players":[{"player_id":p7,"score":s7},{"player_id":p8,"score":s8},{"player_id":p9,"score":s9}]},{"players":[{"player_id":p10,"score":s10},{"player_id":p11,"score":s11},{"player_id":p12,"score":s12}]}]}
+        elif format==3:
+            event_data={"races":12,"format":"4","tier":"Tier 1","teams":[{"players":[{"player_id":p1,"score":s1},{"player_id":p2,"score":s2},{"player_id":p3,"score":s3},{"player_id":p4,"score":s4}]},{"players":[{"player_id":p5,"score":s5},{"player_id":p6,"score":s6},{"player_id":p7,"score":s7},{"player_id":p8,"score":s8}]},{"players":[{"player_id":p9,"score":s9},{"player_id":p10,"score":s10},{"player_id":p11,"score":s11},{"player_id":p12,"score":s12}]}]}
+        elif format==2:
+            event_data={"races":12,"format":"6","tier":"Tier 1","teams":[{"players":[{"player_id":p1,"score":s1},{"player_id":p2,"score":s2},{"player_id":p3,"score":s3},{"player_id":p4,"score":s4},{"player_id":p5,"score":s5},{"player_id":p6,"score":s6}]},{"players":[{"player_id":p7,"score":s7},{"player_id":p8,"score":s8},{"player_id":p9,"score":s9},{"player_id":p10,"score":s10},{"player_id":p11,"score":s11},{"player_id":p12,"score":s12}]}]}
+        else:
+            await message.channel.send("Something went wrong.")
+
+        link = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id="+ladder_id+"&event_data="+str(event_data).replace(s_quote, d_quote)
+        URL = "http://tinyurl.com/api-create.php"
+        try:
+            url = URL + "?" + urllib.parse.urlencode({"url": link})
+            res = requests.get(url)
+        except Exception:
+            raise
+        embedVar = discord.Embed(title="Prediction Link",url=res.text,colour=discord.Color.blue())
+        embedVar.set_author(
+            name='MMR/LR Prediction',
+            icon_url='https://www.mkwlounge.gg/images/logo.png'
+        )
+        await message.channel.send(embed=embedVar) 
 
     @staticmethod
     async def team_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
