@@ -1724,6 +1724,7 @@ class TablingCommands:
             await sendRoomWarNotLoaded(message, server_prefix, is_lounge_server)
             return
         table_text, table_sorted_data = SK.get_war_table_DCS(this_bot)
+        print(args)
         if args[1] == "rt":
             ladder_id="1"
         elif args[1] == "ct":
@@ -1741,11 +1742,13 @@ class TablingCommands:
                     scores.append(table_sorted_data[x][1][i][1][1])
             except:
                 continue
-                
+        for name in names:
+            if "/" in name:
+                await message.channel.send("Tables with subs are not currently supported.")
+                return
         if len(names) != 12:
             await message.channel.send("Lounge website only supports 12 player predictions.")
             return
-                
         request_data=f'https://mkwlounge.gg/api/ladderplayer.php?ladder_id={ladder_id}&player_names={",".join(names)}'
         r=requests.get(request_data) #Requests all the player IDs
         for player in r.json()["results"]: #sorts the player ids into order
