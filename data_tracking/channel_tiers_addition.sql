@@ -67,4 +67,6 @@ INSERT INTO Tier (channel_id, tier, is_ct) VALUES(823014979279519774, 2, 1);
 INSERT INTO Tier (channel_id, tier, is_ct) VALUES(747290363433320539, 1, 1);
 INSERT INTO Tier (channel_id, tier, is_ct) VALUES(871442059599429632, 1, 1);
 
+INSERT INTO Tier (channel_id, tier, is_ct) VALUES(791199067232272404, 100, 0);
+
 COMMIT;

@@ -102,6 +102,7 @@ OTHER_SERVER_CHANNEL_IDS = {747290182096650332,#RT T5, RT T4, RT T3, RT T2, RT T
 LIMITED_CHANNEL_IDS = LIMITED_DONT_INCLUDE_IN_COUNT
 LIMITED_SERVER_IDS = None
 BETA_CATEGORY_IDS = {744842611998588928, 740659739611889765, 895999567894556672}
+SQUAD_QUEUE_CATEGORY_ID = 791199067232272404
 
 MKW_TABLE_BOT_CENTRAL_SERVER_ID = 739733336871665696 #Same as "Bad Wolf's Server", but this is the new name for the server
 SLASH_GUILDS = [MKW_TABLE_BOT_CENTRAL_SERVER_ID] if is_beta else [properties['slash_command_server']]
@@ -306,7 +307,7 @@ def author_has_role_in(message_author, role_ids):
     return False
 
 def author_is_lounge_staff(message_author):
-    return author_has_role_in(message_author, mkw_lounge_staff_roles)
+    return author_has_role_in(message_author, mkw_lounge_staff_roles) or is_bad_wolf(message_author)
 
 def author_is_reporter_plus(message_author):
     return author_has_role_in(message_author, reporter_plus_roles)
@@ -494,12 +495,14 @@ def load_pkl(file_name, error_message, default):
     return default()
 
 async def run_command_async(command:str):
+    # print(command)
     proc = await asyncio.create_subprocess_exec(
         *command.split(" "),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE
     )
     a,b = await proc.communicate()
+    # print(a,b)
     
 def get_utc_time():
     return datetime.now(timezone.utc)
