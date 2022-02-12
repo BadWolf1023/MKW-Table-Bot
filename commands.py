@@ -2172,7 +2172,8 @@ class TablingCommands:
             # await message.channel.send("Nothing given to mergeroom. No merges nor changes made.")
             # return
             discord_id = str(message.author.id)
-            await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discord_id]))
+            id_lounge, fc_id = await LoungeAPIFunctions.getByDiscordIDs([discord_id])
+            updateData(id_lounge, fc_id)
             to_load = UserDataProcessing.get_all_fcs(discord_id)
         else:
             to_load = ' '.join(args[1:])
