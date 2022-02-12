@@ -65,7 +65,7 @@ class MessageWrapper():
         return self.msg.__getattribute__(attr)
 
 class ChannelWrapper():
-    def __init__(self,channel, ctx):
+    def __init__(self,channel, ctx: discord.ApplicationContext):
         self.channel = channel
         self.ctx = ctx
         if self.ctx:
@@ -81,7 +81,6 @@ class ChannelWrapper():
             self.ctx.responded = True
             msg = await (await self.ctx.respond(*args,**args2)).original_message()
             msg = MessageWrapper(msg, self.ctx)
-
             self.message = msg
             return msg
         else:

@@ -60,9 +60,7 @@ class ChannelBot(object):
         self.roomLoadTime = None
         self.save_states = []
         self.state_pointer = -1
-        
         self.resolved_errors = set()
-        
         
         self.should_send_mii_notification = True
         self.set_style_and_graph(server_id)

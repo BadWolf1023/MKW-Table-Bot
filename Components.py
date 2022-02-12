@@ -130,10 +130,10 @@ class RejectButton(discord.ui.Button['SuggestionView']):
         super().__init__(style=discord.ButtonStyle.danger, label="Discard")
     
     async def callback(self, interaction: discord.Interaction):
-        self.view.bot.resolved_errors.add(self.view.sug_id)
+        self.view.bot.resolved_errors.add(self.view.current_error['id'])
 
-        # await self.view.message.delete()
-        await self.view.on_timeout()
+        # await self.view.on_timeout()
+        await self.view.next_suggestion()
 
 class SuggestionButton(discord.ui.Button['SuggestionView']):
     def __init__(self, error, label, value=None, confirm=False):
@@ -168,12 +168,13 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
         command_mes = await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.lounge, dont_send=True)
         author_str = interaction.user.display_name
 
-        self.view.stop()
-        self.view.clear_items()
+        # self.view.stop()
+        # self.view.clear_items()
 
-        await self.view.message.delete()
+        # await self.view.message.delete()
         await self.view.message.channel.send(f"{author_str} - "+command_mes)
-        self.view.bot.resolved_errors.add(self.view.sug_id)
+        self.view.bot.resolved_errors.add(self.view.current_error['id'])
+        await self.view.next_suggestion()
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
     def __init__(self, values, name):
@@ -210,18 +211,18 @@ ERROR_TYPE_DESCRIPTIONS = {
 
 class SuggestionView(discord.ui.View):
     @TimerDebuggers.timer
-    def __init__(self, error, bot, prefix, lounge, id=None):
+    def __init__(self, errors, bot, prefix, lounge, id=None):
         super().__init__(timeout=120)
         self.bot = bot
         self.prefix = prefix
-        self.error = error
+        self.errors = errors
         self.lounge = lounge
-        self.sug_id = id if id else self.error['id']
         self.selected_values = None
         self.message = None
 
         # self.bot.resolved_errors.add(self.sug_id) # don't show the same suggestion again
-        self.create_row()
+        self.current_error = self.errors.pop()
+        self.create_suggestion()
 
     async def on_timeout(self) -> None:
         try:
@@ -237,16 +238,25 @@ class SuggestionView(discord.ui.View):
         
         self.bot.add_sug_view(self)
 
-        self.message = await messageable.send(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.error['type']]}):**", file=file, embed=embed, view=self)
+        self.message: discord.Message = await messageable.send(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", file=file, embed=embed, view=self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, InteractionUtils.convert_key_to_command(self.error['type']))
+        allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, InteractionUtils.convert_key_to_command(self.current_error['type']))
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True, delete_after=3.0)
         return allowed
+    
+    async def next_suggestion(self):
+        if len(self.errors) > 0:
+            self.current_error = self.errors.pop()
+            self.clear_items()
+            self.create_suggestion()
+            await self.message.edit(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", view=self)
+        else:
+            await self.on_timeout()
 
-    def create_row(self):
-        error = self.error
+    def create_suggestion(self):
+        error = self.current_error
         err_type = error['type']
         label_builder = LABEL_BUILDERS[err_type]
 

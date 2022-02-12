@@ -32,7 +32,7 @@ ON_WINDOWS = os.name == 'nt'
 
 HREF_HTML_NAME = 'data-href' if (USING_LINUX_PROXY or not ON_WINDOWS) else 'href'
 TOOLTIP_NAME = "title" if (USING_LINUX_PROXY or not ON_WINDOWS) else "data-tooltip"
-SAVED_ROOMS_DIR = "testing_rooms/windows/" if ON_WINDOWS else "testing_rooms/linux/"
+SAVED_ROOMS_DIR = "testing_rooms/windows/" if (ON_WINDOWS and not USING_LINUX_PROXY) else "testing_rooms/linux/"
 
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
@@ -182,7 +182,6 @@ FULL_LOGGING_FILE_NAME = "full_logging"
 FULL_MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}/{FULL_LOGGING_FILE_NAME}.txt"
 
 WHO_IS_LIMIT = 100
-
 
 DEFAULT_LARGE_TIME_FILE = f"{SERVER_SETTINGS_PATH}server_large_time_defaults.txt"
 DEFAULT_PREFIX_FILE = f"{SERVER_SETTINGS_PATH}server_prefixes.txt"

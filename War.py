@@ -3,6 +3,7 @@ Created on Jul 13, 2020
 @author: willg
 '''
 
+import itertools
 import ErrorChecker
 from collections import defaultdict
 import random
@@ -193,10 +194,12 @@ class War(object):
     
     def get_num_players(self):
         return self.numberOfTeams*self.playersPerTeam
-            
-    def clear_resolved_errors(self, errors, resolved):
 
-        errors = [(k,v) for k, v in errors.items() if len(v)>0]
+    def clear_resolved_errors(self, errors, resolved):
+        def error_priority(err_type):
+            return ['tie', 'missing_player', 'blank_player', 'gp_missing_1', 'large_time', 'gp_missing'].index(err_type)
+
+        errors = [[k,v] for k, v in errors.items() if len(v)>0]
 
         for race_indx in range(len(errors)-1, -1, -1):
             race_errors = errors[race_indx][1]
@@ -207,9 +210,13 @@ class War(object):
                 err['id'] = err['type'] + str(players) + str(err['race'])
                 if err['id'] in resolved:
                     race_errors.pop(err_indx)
-            if len(race_errors) == 0: errors.pop(race_indx)
+            if len(race_errors) == 0: 
+                errors.pop(race_indx)
+            else:
+                errors[race_indx][1] = sorted(race_errors, key=lambda l: error_priority(l['type']), reverse=True)
 
         errors = sorted(errors, key=lambda l: l[0])
+        errors = list(itertools.chain.from_iterable([race[1] for race in errors]))
         return errors
 
 

@@ -2394,6 +2394,7 @@ class TablingCommands:
         should_send_notification = this_bot.shouldSendNoticiation()
         this_bot.updateWPCoolDown()
         await this_bot.clear_last_wp_button()
+        this_bot.clear_last_sug_view()
 
         if prev_message:
             message2 = prev_message
@@ -2505,14 +2506,16 @@ class TablingCommands:
                     pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
                     await pic_view.send(message, file=file, embed=embed)
                     TableBot.last_wp_message[this_bot.channel_id] = pic_view.message
+
                 await pic_view_func(this_bot, server_prefix, is_lounge_server)
-                # await message.channel.send(file=file, embed=embed, view=pic_view)
 
                 if error_types and len(error_types)>0:
-                    chosen_suggestion = get_suggestion(error_types, numRaces, this_bot)
-                    if chosen_suggestion:
-                        sug_view = Components.SuggestionView(chosen_suggestion, this_bot, server_prefix, is_lounge_server)
-                        await sug_view.send(message)
+                    # chosen_suggestion = get_suggestion(error_types, numRaces, this_bot)
+                    # if chosen_suggestion:
+                    #     sug_view = Components.SuggestionView(chosen_suggestion, this_bot, server_prefix, is_lounge_server)
+                    #     await sug_view.send(message)
+                    sug_view = Components.SuggestionView(error_types, this_bot, server_prefix, is_lounge_server)
+                    await sug_view.send(message)
 
                 # if error_types:
                 #     for race,suggestions in error_types:
