@@ -6,6 +6,7 @@ Created on Oct 21, 2021
 This module helps track and store data from Wiimmfi.
 
 '''
+import asyncio
 import json
 import os
 import time
@@ -123,6 +124,11 @@ class DataRetriever(object):
         #await db_connection.execute("WITH RECURSIVE cnt(x) AS (SELECT 1 UNION ALL SELECT x+1 FROM cnt lIMIT 20000000) SELECT avg(x) FROM cnt;")
         tracks_query = QB.SQL_Search_Query_Builder.get_top_players_query(tier, in_last_days, min_count)
         return await db_connection.execute(tracks_query, [track])
+
+    @staticmethod
+    async def get_record(player_did, opponent_did, days):
+        record_query = QB.SQL_Search_Query_Builder.get_record_query(player_did, opponent_did, days)
+        return await db_connection.execute(record_query)
 
     @staticmethod
     async def get_track_list():
@@ -404,6 +410,8 @@ class RoomTrackerSQL(object):
     def get_race_as_sql_tuple(self, race:Race.Race):
         '''Converts a given table bot race into a tuple that is ready to be inserted into the Race SQL table'''
         times = [x.get_time_seconds() for x in race.getPlacements() if not (x.is_bogus_time() or x.is_disconnected())]
+        if len(times) == 0:
+            times = [-1]
         return (race.get_race_id(),
                 race.get_rxx(),
                 UtilityFunctions.get_wiimmfi_utc_time(race.get_match_start_time()),
@@ -750,16 +758,20 @@ async def populate_score_matrix_table():
 async def populate_player_fcs_table():
     rows = []
 
-    fc_map = UserDataProcessing.FC_DiscordID
-    if len(fc_map) == 0:
+    fc_map = UserDataProcessing.fc_discordId
+    existing_count = (await db_connection.execute("SELECT count(*) FROM Player_FCs;"))[0][0]
+
+    if len(fc_map) == 0 or len(fc_map) == existing_count:
+        print("Not changing FC table")
         return
+
+    start = time.time()
+    print(f'Populating FC table in database...')
 
     for fc in fc_map:
         discord_id = fc_map[fc][0]
         rows.append((fc, discord_id))
 
-    start = time.time()
-    print(f'Populating FC table in database...')
     await db_connection.execute("DELETE FROM Player_FCs;")
     await db_connection.executemany("insert into Player_FCs values (?, ?)", rows)
     print(f'FC table population finished in {time.time()-start} seconds')
@@ -779,6 +791,20 @@ async def database_maintenance():
     maintenance_script = common.read_sql_file(common.ROOM_DATA_TRACKING_DATABASE_MAINTENANCE_SQL)
     await db_connection.executescript(maintenance_script)
 
+async def vacuum():
+    await db_connection.executescript("VACUUM;")
+
+async def fix_shas(shas:Dict):
+    for sha, track_name in shas.items():
+        no_author_name = Race.remove_author_and_version_from_name(track_name)
+        lookup = Race.get_track_name_lookup(no_author_name)
+        script =     f"""
+            INSERT OR IGNORE INTO Track VALUES("{track_name}", "No Track Page", "{no_author_name}", 1, "{lookup}");
+            UPDATE Race SET track_name = "{track_name}" WHERE Race.track_name = "{sha}";
+            DELETE FROM Track WHERE track.track_name = "{sha}";
+        """
+        await db_connection.executescript(script)
+
 async def initialize():
     load_room_data()
     await start_database()
@@ -786,7 +812,11 @@ async def initialize():
     await populate_tier_table()
     await populate_score_matrix_table()
     await populate_player_fcs_table()
-    await database_maintenance()
+
+    # Race.initialize needs to be called first
+    await fix_shas(Race.sha_track_name_mappings)
+    if common.is_prod or common.is_beta:
+        await vacuum()
 
 def save_data():
     pass

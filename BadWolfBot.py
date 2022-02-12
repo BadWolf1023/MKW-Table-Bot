@@ -118,6 +118,7 @@ UNPOPULAR_TRACKS_TERMS = {"unpopulartracks", "unpopulartrack", "upt", "upts", "u
 BEST_TRACK_TERMS = {"besttrack", "besttracks", "bt", "bts", "toptrack", "toptracks"}
 WORST_TRACK_TERMS = {"worsttrack", "worsttracks", "wt"}
 TOP_PLAYERS_TERMS = {"topplayers", "topplayer", "tp"}
+RECORD_TERMS = {"record"}
 
 #Informative, getting started/tutorial commands
 QUICK_START_TERMS = {"quickstart"}
@@ -175,7 +176,7 @@ REMOVE_SHA_TERMS = {"removesha", "delsha"}
 
 needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REDO_TERMS | LIST_REDOS_TERMS | LIST_UNDOS_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS
 
-ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS
+ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS | POPULAR_TRACKS_TERMS | UNPOPULAR_TRACKS_TERMS | TOP_PLAYERS_TERMS | BEST_TRACK_TERMS | WORST_TRACK_TERMS | RECORD_TERMS
 
 
 switch_status = True
@@ -328,7 +329,10 @@ def check_create_channel_bot(message:discord.Message):
     if server_id not in table_bots:
         table_bots[server_id] = {}
     if channel_id not in table_bots[server_id]:
-        table_bots[server_id][channel_id] = createEmptyTableBot(server_id, channel_id)
+        if message.channel.category and message.channel.category.id == common.SQUAD_QUEUE_CATEGORY_ID:
+            table_bots[server_id][channel_id] = createEmptyTableBot(server_id,common.SQUAD_QUEUE_CATEGORY_ID)
+        else:
+            table_bots[server_id][channel_id] = createEmptyTableBot(server_id, channel_id)
     table_bots[server_id][channel_id].updatedLastUsed()
     return table_bots[server_id][channel_id]
     
@@ -535,8 +539,8 @@ async def on_message(message: discord.Message):
                 await commands.TablingCommands.change_room_size_command(message, this_bot, args, server_prefix, is_lounge_server)
             
             elif args[0] in QUICK_EDIT_TERMS:
-                if args[0] in DEPRECATED_QUICK_EDIT_TERMS:
-                    await message.channel.send(f"**NOTE: The command `{server_prefix}{args[0]}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")                      
+                # if args[0] in DEPRECATED_QUICK_EDIT_TERMS:
+                #     await message.channel.send(f"**NOTE: The command `{server_prefix}{args[0]}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")
                 await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge_server, command)
             
             elif args[0] in CHANGE_PLAYER_TAG_TERMS:
@@ -584,19 +588,15 @@ async def on_message(message: discord.Message):
                 print(f"get_size: Lounge table reports size (KiB):")
                 size_str += "Lounge submission tracking size (KiB): " + str(get_size(lounge_submissions)//1024)
                 print(f"get_size: FC_DiscordID:")
-                size_str += "\nFC_DiscordID (KiB): " + str(get_size(UserDataProcessing.FC_DiscordID)//1024)
+                size_str += "\nFC_DiscordID (KiB): " + str(get_size(UserDataProcessing.fc_discordId) // 1024)
                 print(f"get_size: discordID_Lounges:")
-                size_str += "\ndiscordID_Lounges (KiB): " + str(get_size(UserDataProcessing.discordID_Lounges)//1024)
+                size_str += "\ndiscordID_Lounges (KiB): " + str(get_size(UserDataProcessing.discordId_lounges) // 1024)
                 print(f"get_size: discordID_Flags (KiB):")
-                size_str += "\ndiscordID_Flags (KiB): " + str(get_size(UserDataProcessing.discordID_Flags)//1024)
+                size_str += "\ndiscordID_Flags (KiB): " + str(get_size(UserDataProcessing.discordId_flags) // 1024)
                 print(f"get_size: blacklisted_Users (KiB):")
-                size_str += "\nblacklisted_Users (KiB): " + str(get_size(UserDataProcessing.blacklisted_Users)//1024)
+                size_str += "\nblacklisted_Users (KiB): " + str(get_size(UserDataProcessing.blacklisted_users) // 1024)
                 print(f"get_size: valid_flag_codes (KiB):")
                 size_str += "\nvalid_flag_codes (KiB): " + str(get_size(UserDataProcessing.valid_flag_codes)//1024)
-                print(f"get_size: to_add_lounge (KiB):")
-                size_str += "\nto_add_lounge (KiB): " + str(get_size(UserDataProcessing.to_add_lounge)//1024)
-                print(f"get_size: to_add_fc (KiB):")
-                size_str += "\nto_add_fc (KiB): " + str(get_size(UserDataProcessing.to_add_fc)//1024)
                 print(f"get_size: bot_abuse_tracking (KiB):")
                 size_str += "\nbot_abuse_tracking (KiB): " + str(get_size(AbuseTracking.bot_abuse_tracking)//1024)
                 print(f"get_size: table_bots (KiB):")
@@ -730,7 +730,10 @@ async def on_message(message: discord.Message):
                 await commands.StatisticCommands.player_tracks_command(client, message, args, server_prefix, command, sort_asc=True)
 
             elif args[0] in TOP_PLAYERS_TERMS:
-                await commands.StatisticCommands.top_players_command(client, message, args, server_prefix)
+                await commands.StatisticCommands.top_players_command(client, message, args, server_prefix, command)
+
+            elif args[0] in RECORD_TERMS:
+                await commands.StatisticCommands.record_command(client,message,args,server_prefix,command)
 
             else:
                 await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")  
@@ -1015,12 +1018,17 @@ def destroy_all_tablebots():
         for channel_id in table_bots[server_id]:
             table_bots[server_id][channel_id].destroy()
 
-def on_exit():
-    save_data()
+@client.event
+async def close():
+    await on_exit()
+    os._exit(1)
+
+async def on_exit():
+    await save_data()
     destroy_all_tablebots()
     print(f"{str(datetime.now())}: All table bots cleaned up.")
      
-def save_data():
+async def save_data():
     print(f"{str(datetime.now())}: Saving data")
     successful = UserDataProcessing.non_async_dump_data()
     if not successful:
@@ -1032,10 +1040,13 @@ def save_data():
     pickle_CTGP_region()
     pickle_lounge_updates()
     pkl_bad_wolf_facts()
-    Stats.backup_files()
-    Stats.dump_to_stats_file()
-    #do_lounge_name_matching()
-    
+
+    if common.is_prod:
+        Stats.backup_files()
+        await Stats.prune_backups()
+        Stats.dump_to_stats_file()
+        #do_lounge_name_matching()
+
     print(f"{str(datetime.now())}: Finished saving data")
     
 
@@ -1079,20 +1090,17 @@ def log_command_sent(message:discord.Message, extra_text=""):
 #in our two dictionaries to local storage and the main dictionaries      
 @tasks.loop(hours=24)
 async def dumpDataAndBackup():
-    save_data()
+    await save_data()
 
-
-def handler(signum, frame):
-    sys.exit()
-
-signal.signal(signal.SIGINT, handler)
-
-atexit.register(on_exit)
+# def handler(signum, frame):
+#     sys.exit()
+# signal.signal(signal.SIGINT, handler)
+# atexit.register(on_exit)
 
 initialize()
-if common.in_testing_server:
+if common.is_dev:
     client.run(testing_bot_key)
-elif common.running_beta:
+elif common.is_beta:
     client.run(beta_bot_key)
 else:
     client.run(real_bot_key)

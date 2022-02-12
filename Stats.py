@@ -3,8 +3,10 @@ Created on Aug 4, 2020
 
 @author: willg
 '''
+import asyncio
 import fnmatch
 import os
+import subprocess
 from datetime import datetime
 import humanize
 from pathlib import Path
@@ -31,6 +33,10 @@ def backup_files(to_back_up=common.FILES_TO_BACKUP):
             
             temp_file_n = file_name
             if os.path.exists(todays_backup_path + temp_file_n):
+                # don't backup the database more than once, otherwise server will run out of disk
+                if file_name == common.ROOM_DATA_TRACKING_DATABASE_FILE:
+                    continue
+
                 for i in range(50):
                     temp_file_n = file_name + "_" + str(i) 
                     if not os.path.exists(todays_backup_path + temp_file_n):
@@ -41,7 +47,41 @@ def backup_files(to_back_up=common.FILES_TO_BACKUP):
         else:
             if file_name == common.FULL_MESSAGE_LOGGING_FILE:
                 os.remove(common.FULL_MESSAGE_LOGGING_FILE)   
-                common.check_create(common.FULL_MESSAGE_LOGGING_FILE) 
+                common.check_create(common.FULL_MESSAGE_LOGGING_FILE)
+
+
+async def prune_backups():
+    for folder in os.listdir(backup_folder):
+        try:
+            # Fix previously zipped files
+            path = backup_folder + folder
+            if ".zip" in path:
+                print("Unzipping", path)
+                new_path = path.replace(".zip","")
+                await common.run_command_async(f'unzip {path} -d {new_path}')
+                await common.run_command_async(f'rm {path}')
+                os.system(f'mv {new_path}/*/*/* {new_path}/')
+                await common.run_command_async(f'rm -rf {new_path}/backups')
+                path = new_path
+
+            create_time = datetime.strptime(folder.replace(".zip", ""),'%Y-%m-%d').date()
+            delta = datetime.date(datetime.now()) - create_time
+
+            if delta.days > 14 and create_time.day != 1:
+                if os.path.exists(path+"/tablebot_data"):
+                    print("Deleting", path)
+                    shutil.rmtree(path+"/tablebot_data")
+                    shutil.rmtree(path + "/discord_server_settings")
+            elif delta.days >= 1:
+                db_path = path+"/tablebot_data/room_data_tracking.db"
+                db_path_zip = db_path + ".zip"
+
+                if not os.path.exists(db_path_zip) and os.path.exists(db_path):
+                    print("Zipping", db_path)
+                    await common.run_command_async(f'zip -r {db_path_zip} {db_path}')
+                    await common.run_command_async(f'rm -rf {db_path}')
+        except:
+            pass
     
 def get_commands_from_txt(to_find, needle_function, log_file, limit=None):
     results = []

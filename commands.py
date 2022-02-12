@@ -13,7 +13,6 @@ import TagAIShell
 import LoungeAPIFunctions
 import ScoreKeeper as SK
 import UserDataProcessing
-from UserDataProcessing import lounge_add
 import TableBot
 from TableBot import ChannelBot
 import UtilityFunctions
@@ -214,7 +213,7 @@ class BotAdminCommands:
 
     @staticmethod
     async def add_sha_track(message:discord.Message, args:List[str], command):
-        BotAdminCommands.is_bot_admin_check(message.author, "cannot add sha track")
+        BotAdminCommands.is_sha_adder_check(message.author, "cannot add sha track")
         if len(args) < 3:
             await message.channel.send("Requires 2 args `SHA, track_name`")
             return
@@ -229,7 +228,7 @@ class BotAdminCommands:
 
     @staticmethod
     async def remove_sha_track(message:discord.Message, args:List[str]):
-        BotAdminCommands.is_bot_admin_check(message.author, "cannot remove sha track")
+        BotAdminCommands.is_sha_adder_check(message.author, "cannot remove sha track")
         if len(args) != 2:
             await message.channel.send("Requires 1 args `SHA`")
             return
@@ -246,6 +245,12 @@ class BotAdminCommands:
     @staticmethod
     def is_bot_admin_check(author, failure_message):
         if not common.is_bot_admin(author):
+            raise TableBotExceptions.NotBotAdmin(failure_message)
+        return True
+
+    @staticmethod
+    def is_sha_adder_check(author, failure_message):
+        if not (common.is_bot_admin(author) or common.is_sha_adder(author)):
             raise TableBotExceptions.NotBotAdmin(failure_message)
         return True
 
@@ -346,6 +351,9 @@ class BotAdminCommands:
 class StatisticCommands:
     """This class houses all the commands relating to getting data for the meta and players"""
 
+    valid_rt_options = {"rt","rts","regular","regulars","regulartrack","regulartracks"}
+    valid_ct_options = {"ct","cts","custom","customs","customtrack","customtracks"}
+
     valid_rt_tiers = ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
     valid_ct_tiers = ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
 
@@ -367,12 +375,10 @@ class StatisticCommands:
 
     @staticmethod
     def validate_rts_cts_arg(arg):
-        valid_rt_options = {"rt", "rts", "regular", "regulars", "regulartrack", "regulartracks"}
-        valid_ct_options = {"ct", "cts", "custom", "customs", "customtrack", "customtracks"}
         is_ct = None
-        if arg.lower() in valid_rt_options:
+        if arg.lower() in StatisticCommands.valid_rt_options:
             is_ct = False
-        elif arg.lower() in valid_ct_options:
+        elif arg.lower() in StatisticCommands.valid_ct_options:
             is_ct = True
 
         if is_ct is None:
@@ -398,7 +404,7 @@ class StatisticCommands:
     @staticmethod
     def validate_days_arg(arg):
         original_arg = arg
-        arg = arg.lower()
+        arg = arg.lower().replace("d", "")
         days = None
         if UtilityFunctions.isint(arg):
             days = int(arg)
@@ -447,45 +453,53 @@ class StatisticCommands:
         raise TableBotExceptions.UnreachableCode()
 
     @staticmethod
-    def validate_track_name_args(input_args):
-        args = " ".join(input_args).split("\"")
-        if len(args) == 3:
-            args = [args[1]] + args[2].split()
-        else:
-            args = input_args
+    def parse_track_type(command):
+        is_ct = None
+        rt_regex = f"\s({'|'.join(StatisticCommands.valid_rt_options)})(\s|$)"
+        ct_regex = f"\s({'|'.join(StatisticCommands.valid_ct_options)})(\s|$)"
 
-        if len(args) < 1:
-            return None, None, None, "Please specify a track name or abbreviation"
+        if re.search(rt_regex,command):
+            is_ct = False
+            command = re.sub(rt_regex," ",command)
 
-        track_name = args[0]
+        if re.search(ct_regex,command):
+            is_ct = True
+            command = re.sub(ct_regex," ",command)
 
-        if len(args) == 1:
-            return track_name, None, None, None
+        return is_ct, command
 
-        if len(args) == 2:
-            tier, tier_error_message = StatisticCommands.validate_tier_arg(args[1], True)
-            days = None
-            if tier is None:
-                days, _ = StatisticCommands.validate_days_arg(args[1])
+    @staticmethod
+    def parse_track_args(command, is_ct=False):
+        min_leaderboard_count = 0
+        min_regex = '(min|min_count|min_races|min_plays)=(\d+)'
+        if m := re.search(min_regex,command):
+            min_leaderboard_count = int(m.group(2))
+            command = re.sub(min_regex,"",command)
 
-            if tier is None and days is None:
-                return track_name, None, None, f"{UtilityFunctions.process_name(args[1])} is not a tier nor is it a number of days."
+        tier = None
+        valid_tiers =  StatisticCommands.valid_ct_tiers if (is_ct) else StatisticCommands.valid_rt_tiers
+        tiers_regex = f"({'|'.join(valid_tiers)})"
 
-            if tier is not None:
-                return track_name, tier, None, None
-            if days is not None:
-                return track_name, None, days, None
+        if m := re.search(tiers_regex,command):
+            tier = int(m.group()[1:])
+            command = re.sub(tiers_regex,"",command)
 
-        if len(args) >= 3:  # They specified a tier and a days filter
-            tier, tier_error_message = StatisticCommands.validate_tier_arg(args[1], track_name)
-            if tier is None:
-                return track_name, None, None, tier_error_message
-            days, days_error_message = StatisticCommands.validate_days_arg(args[2])
-            if days is None:
-                return track_name, tier, None, days_error_message
-            return track_name, tier, days, None
+        days_regex = '\s\d+d'
+        days = None
+        matches = re.findall(days_regex,command)
+        if len(matches) > 0:
+            match = matches[-1].strip()
+            if 'd' in match:
+                match = match[:-1]
+            days = int(match)
+            command = command.replace(matches[-1],"")
 
-        raise TableBotExceptions.UnreachableCode()
+        rest = None
+        split = command.split(" ")
+        if len(split) > 1:
+            rest = " ".join(split[1:])
+
+        return tier, days, min_leaderboard_count, rest
 
     @staticmethod
     def format_tracks_played_result(result:list, offset, total_races_played, is_ct:bool, is_top_tracks:bool, tier:int, number_of_days:int) -> str:
@@ -515,7 +529,7 @@ class StatisticCommands:
                     abbrevs = [value]
                 abbrevs = [x.lower() for x in abbrevs]
                 if track_lookup in abbrevs:
-                    return track_name, track_name.replace("(Nintendo)", "").replace("Wii", ""), False
+                    return track_name, track_name.replace("(Nintendo)", "").strip(), False
             except:
                 pass
 
@@ -537,8 +551,8 @@ class StatisticCommands:
                     latest_version = v
                     latest_track = [track_name, fixed_track_name, True]
 
-        if latest_track[0] and "(" in latest_track[0]:
-            latest_track[1] = latest_track[0][:latest_track[0].index("(")].strip()
+        # if latest_track[0] and "(" in latest_track[0]:
+        #     latest_track[1] = latest_track[0][:latest_track[0].index("(")].strip()
 
         return latest_track
 
@@ -546,8 +560,8 @@ class StatisticCommands:
     async def popular_tracks_command(client, message:discord.Message, args:List[str], server_prefix:str, command:str, is_top_tracks=True):
         error_message = f"""Here are 3 examples of how to use this command:
 Most played CTs of all time: `{server_prefix}{args[0]} ct`
-Most played RTs in the past week: `{server_prefix}{args[0]} rt 7`
-Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t4 5`"""
+Most played RTs in the past week: `{server_prefix}{args[0]} rt 7d`
+Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t4 5d`"""
 
         is_ct, tier, number_of_days, specific_error = StatisticCommands.validate_tracks_args(command)
 
@@ -575,25 +589,36 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
     @staticmethod
     async def player_tracks_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str, command: str, sort_asc=False):
-        adjective = "Worst" if sort_asc else "Best"
-        error_message = f"""Here are 3 examples of how to use this command:
-- Your {adjective} CTs of all time: `{server_prefix}{args[0]} ct`
-- Your {adjective} RTs in the past week: `{server_prefix}{args[0]} rt 7`
-- Your {adjective} RTs in Tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t4 5`"""
+        adjective = "worst" if sort_asc else "best"
+        error_message = f"""Here are examples of how to use this command:
+- Your {adjective} RTs: `{server_prefix}{args[0]} rt`
+- Somebody else's {adjective} RTs: `{server_prefix}{args[0]} rt [player_name]`
+- Your {adjective} RTs in the past week: `{server_prefix}{args[0]} rt 7d`
+- Your {adjective} RTs in Tier 4: `{server_prefix}{args[0]} rt t4`
+- Your {adjective} CTs with at least 10 plays: `{server_prefix}{args[0]} ct min=10`
+"""
 
-        min_count = 0
-        if m := re.search('^(min|min_count|min_races|min_plays)=(\d+)$', args[-1]):
-            min_count = int(m.group(2))
-            command = command.replace(m.group(0), '')
+        is_ct, rest = StatisticCommands.parse_track_type(command.lower())
+        # if is_ct is None:
+        #     is_ct = False
+        tier, number_of_days, min_count, rest = StatisticCommands.parse_track_args(rest, is_ct)
 
-        is_ct, tier, number_of_days, specific_error = StatisticCommands.validate_tracks_args(command)
+        specific_error = None
+        if is_ct is None:
+            specific_error = "Please specify for **rts** or **cts**."
+
+        if rest:
+            discordIDToLoad = UserDataProcessing.get_DiscordID_By_LoungeName(rest)
+            if not discordIDToLoad:
+                specific_error = f"No FCs found for {UtilityFunctions.process_name(rest)}"
+        else:
+            discordIDToLoad = str(message.author.id)
 
         if specific_error is not None:
             full_error_message = f"**Error:** {specific_error}\n\n{error_message}"
             await message.channel.send(full_error_message)
             return
 
-        discordIDToLoad = str(message.author.id)
         await update_data(*await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
 
         fcs = UserDataProcessing.get_all_fcs(discordIDToLoad)
@@ -605,7 +630,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
         filter_descriptor = ""
         if tier is not None:
-            filter_descriptor += f" in Tier {tier}"
+            filter_descriptor += f" in T{tier}"
         if number_of_days is not None:
             filter_descriptor += f" in the Last {number_of_days} Day{'' if number_of_days == 1 else 's'}"
 
@@ -617,12 +642,12 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         for i, track in enumerate(best_tracks,1):
             if not is_ct and track[0].startswith("Wii "):
                 track[0] = track[0][4:]
-            track[0] = f'{i}. {track[0]}'
+            track[0] = f"{str(i) + ('. ' if i < 10 else '.')} {track[0]}"
 
             secs = track[3]
-            track[3] = f'{secs:.2f}s'
+            track[3] = f'{int(secs // 60)}:{round(secs % 60):02}'
 
-        headers = ['+ Track Name', 'Avg Pts', 'Avg Place', 'Avg Behind 1st', "# Plays"]
+        headers = ['+ Track Name', 'Avg Pts', 'Avg Place', 'Best Time', "# Plays"]
 
         tracks_per_page = StatisticCommands.ct_number_tracks if is_ct else StatisticCommands.rt_number_tracks
         num_pages = len(best_tracks)/tracks_per_page
@@ -639,34 +664,34 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         await paginate(message, num_pages, get_page_callback, client)
 
     @staticmethod
-    async def top_players_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str):
-        error_message = f"""Here are 3 examples of how to use this command:
-- Top Final Grounds players: `{server_prefix}topplayers \"final grounds\"` or `{server_prefix}topplayers finalgrounds`
-- Top Bowser's Castle 3 players in Tier 5: `{server_prefix}topplayers bc3 t5`
-- Top Bowser's Castle 3 players in Tier 5 during the last week: `{server_prefix}topplayers bc3 t5 7`
+    async def top_players_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str, command:str):
+        error_message = f"""Here are examples of how to use this command:
+- Top Maple Treeway players: `{server_prefix}topplayers treeway`
+- Top BC3 players in Tier 5: `{server_prefix}topplayers bc3 t5`
+- Top BC3 players with at least 20 plays: `{server_prefix}topplayers bc3 min=20`
+- Top BC3 players during the last week: `{server_prefix}topplayers bc3 7d`
 """
 
-        min_leaderboard_count = 0
-        if m := re.search('^(min|min_count|min_races|min_plays)=(\d+)$', args[-1]):
-            min_leaderboard_count = int(m.group(2))
-            args = args[:-1]
+        tier,number_of_days,min_count,track_lookup_name = StatisticCommands.parse_track_args(command.lower())
 
-        track_lookup_name, tier, number_of_days, specific_error = StatisticCommands.validate_track_name_args(args[1:])
-        if specific_error is not None:
-            full_error_message = f"**Error:** {specific_error}\n\n{error_message}"
-            await message.channel.send(full_error_message)
+        if not track_lookup_name:
+            await message.channel.send(
+                f"Please specify a track name. \n\n" + error_message)
             return
 
         track_name, fixed_track_name, is_ct = await StatisticCommands.get_track_name(track_lookup_name.lower().replace(" ", ""))
+
         if not track_name:
             await message.channel.send(f"No track named `{UtilityFunctions.process_name(track_lookup_name)}` found. \n\n" + error_message)
             return
-        fixed_track_name = fixed_track_name.replace("Wii", "").strip()
 
-        if not min_leaderboard_count:
-            min_leaderboard_count = StatisticCommands.min_leaderboard_count_ct if is_ct else StatisticCommands.min_leaderboard_count_rt
+        if not min_count:
+            min_count = StatisticCommands.min_leaderboard_count_ct if is_ct else StatisticCommands.min_leaderboard_count_rt
 
-        top_players = await DataTracker.DataRetriever.get_top_players(track_name, tier, number_of_days, min_leaderboard_count)
+        top_players = await DataTracker.DataRetriever.get_top_players(fixed_track_name, tier, number_of_days, min_count)
+
+        fixed_track_name = fixed_track_name.replace("Wii","").strip()
+
         filter_descriptor = ""
         if tier is not None:
             filter_descriptor += f" in T{tier}"
@@ -674,19 +699,19 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             filter_descriptor += f" in the Last {number_of_days} Day{'' if number_of_days == 1 else 's'}"
 
         if len(top_players) == 0:
-            await message.channel.send(f"No qualifying players were found for track `{fixed_track_name}`{filter_descriptor.lower()} "
-                                       f"(minimum {min_leaderboard_count} races played).\n\n" + error_message)
+            await message.channel.send(f"No qualifying players were found for track `{fixed_track_name}`{filter_descriptor} "
+                                       f"(minimum {min_count} races played).\n\n" + error_message)
             return
 
         top_players = [list(t) for t in top_players]
         for i, player in enumerate(top_players, 1):
             player[0] = UserDataProcessing.get_lounge(player[0])
-            player[0] = f'{i}. {player[0]}'
+            player[0] = f"{str(i) + ('. ' if i < 10 else '.')} {player[0]}"
 
-            secs = player[3]
-            player[3] = f'{secs:.2f}s'
+            secs = int(player[3])
+            player[3] = f'{int(secs // 60)}:{int(secs % 60):02}'
 
-        headers = ['+ Player', 'Avg Pts', 'Avg Place', 'Avg Delta', "# Plays"]
+        headers = ['+ Player', 'Avg Pts', 'Avg Place', 'Best Time', "# Plays"]
 
         players_per_page = StatisticCommands.leaderboard_players_per_page
         num_pages = len(top_players) / players_per_page
@@ -697,11 +722,55 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
             message_title = f"Top Lounge {fixed_track_name} Players"
             message_title += filter_descriptor
-            message_title += f' [Min {min_leaderboard_count} Plays] (Page {page + 1}/{int(math.ceil(num_pages))})'
+            message_title += f' [Min {min_count} Plays] (Page {page + 1}/{int(math.ceil(num_pages))})'
 
             return f'```diff\n- {message_title}\n\n{table}```'
 
         await paginate(message, num_pages, get_page_callback, client)
+
+    @staticmethod
+    async def record_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str, command:str):
+        error_message = f"Usage: `{server_prefix}record player_name (num_days)`"
+
+        if len(args) == 1:
+            await message.channel.send(error_message)
+            return
+        else:
+            command = " ".join(args[1:])
+
+        days = None
+        matches = [x[0] for x in re.findall('((^|\s)\d+d?($|\s))',command)]
+        if len(matches) > 0:
+            match = matches[-1].strip()
+            if 'd' in match:
+                match = match[:-1]
+            days = int(match)
+            command = command.replace(matches[-1],"")
+        opponent_name = command.strip()
+
+        if len(opponent_name) == 0:
+            await message.channel.send("Please specify a player name. " + error_message)
+            return
+
+        opponent_did = UserDataProcessing.get_DiscordID_By_LoungeName(opponent_name)
+        if not opponent_did:
+            await message.channel.send(f"No player found with name {UtilityFunctions.process_name(opponent_name)}.\n" + error_message)
+            return
+
+        player_did = str(message.author.id)
+
+        if player_did == opponent_did:
+            await message.channel.send(f"You can not compare your record against yourself.\n" + error_message)
+            return
+
+        result = await DataTracker.DataRetriever.get_record(player_did,opponent_did,days)
+        total, wins = result[0]
+        if total == 0:
+            await message.channel.send(f"You have played no races against {UtilityFunctions.process_name(opponent_name)}")
+            return
+
+        losses = total-wins
+        await message.channel.send(f'{wins} Wins — {losses} Losses')
 
 
 """================== Other Commands ===================="""
@@ -1598,7 +1667,7 @@ class TablingCommands:
         channel_id = message.channel.id
         if server_id in table_bots and channel_id in table_bots[server_id]:
             table_bots[server_id][channel_id].destroy()
-        del(table_bots[server_id][channel_id])
+            del(table_bots[server_id][channel_id])
         await message.channel.send("Reset successful.")
 
     @staticmethod
@@ -1729,7 +1798,7 @@ class TablingCommands:
             break
 
         player_fc = missing_per_race[race-1][index][0]
-        player_name = UtilityFunctions.process_name(str(missing_per_race[race-1][index][1]) + lounge_add(player_fc))
+        player_name = UtilityFunctions.process_name(str(missing_per_race[race-1][index][1]) + UserDataProcessing.lounge_add(player_fc))
         if on_or_before in ["on", "during", "midrace", "results", "onresults"]:
             this_bot.add_save_state(message.content)
             this_bot.getRoom().dc_on_or_before[race][player_fc] = 'on'
@@ -1775,7 +1844,7 @@ class TablingCommands:
 
         this_bot.add_save_state(message.content)
         this_bot.getRoom().addPlayerPenalty(players[playerNum-1][0], amount)
-        await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty."))
+        await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " given a " + str(amount) + " point penalty."))
 
     @staticmethod
     async def substitue_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -1850,7 +1919,7 @@ class TablingCommands:
         this_bot.add_save_state(message.content)
         this_bot.getRoom().add_sub(subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores)
         this_bot.getWar().setTeamForFC(subInFC, subOutTag)
-        await message.channel.send(f"Got it. **{UtilityFunctions.process_name(subInMiiName + lounge_add(subInFC))}** subbed in for **{UtilityFunctions.process_name(subOutMiiName + lounge_add(subOutFC))}** on race #{subInStartRace}")
+        await message.channel.send(f"Got it. **{UtilityFunctions.process_name(subInMiiName + UserDataProcessing.lounge_add(subInFC))}** subbed in for **{UtilityFunctions.process_name(subOutMiiName + UserDataProcessing.lounge_add(subOutFC))}** on race #{subInStartRace}")
 
 
     @staticmethod
@@ -1891,7 +1960,7 @@ class TablingCommands:
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.getWar().addEdit(players[playerNum-1][0], GPNum, amount)
-                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points."))
+                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points."))
         else:
             lounge_name = str(copy.copy(playerNum))
             loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
@@ -1907,7 +1976,7 @@ class TablingCommands:
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.getWar().addEdit(players[_playerNum-1][0], GPNum, amount)
-                await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + lounge_add(players[_playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points."))
+                await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + UserDataProcessing.lounge_add(players[_playerNum-1][0]) + " GP" + str(GPNum) + " score edited to " + str(amount) + " points."))
 
 
 
@@ -1935,7 +2004,7 @@ class TablingCommands:
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.getRoom().setNameForFC(players[playerNum-1][0], new_name)
-                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0])) + " name set to: " + UtilityFunctions.process_name(new_name))
+                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0])) + " name set to: " + UtilityFunctions.process_name(new_name))
         else:
             lounge_name = str(copy.copy(playerNum))
             loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
@@ -1951,7 +2020,7 @@ class TablingCommands:
             else:
                 this_bot.add_save_state(message.content)
                 this_bot.getRoom().setNameForFC(players[_playerNum-1][0], new_name)
-                await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + lounge_add(players[_playerNum-1][0])) + " name set to: " + UtilityFunctions.process_name(new_name))
+                await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + UserDataProcessing.lounge_add(players[_playerNum-1][0])) + " name set to: " + UtilityFunctions.process_name(new_name))
 
     @staticmethod
     async def change_player_tag_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
@@ -1982,7 +2051,7 @@ class TablingCommands:
                 else:
                     this_bot.add_save_state(message.content)
                     this_bot.getWar().setTeamForFC(players[playerNum-1][0], new_tag)
-                    await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
+                    await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
             else:
                 lounge_name = str(copy.copy(playerNum))
                 loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
@@ -1998,7 +2067,7 @@ class TablingCommands:
                 else:
                     this_bot.add_save_state(message.content)
                     this_bot.getWar().setTeamForFC(players[_playerNum-1][0], new_tag)
-                    await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + lounge_add(players[_playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
+                    await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + UserDataProcessing.lounge_add(players[_playerNum-1][0])) + " tag set to: " + UtilityFunctions.process_name(new_tag))
 
     @staticmethod
     async def start_war_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str,
@@ -2523,9 +2592,9 @@ class TablingCommands:
                                 this_bot.add_save_state(message.content)
                                 #TODO: This needs to call change placement on ROOM, not Race
                                 this_bot.getRoom().changePlacement(raceNum, playerFC, placement)
-                                await message.channel.send("Changed " + UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " place to " + str(placement) + " for race #" + str(raceNum) + "."))
+                                await message.channel.send("Changed " + UtilityFunctions.process_name(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " place to " + str(placement) + " for race #" + str(raceNum) + "."))
                             else:
-                                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + lounge_add(players[playerNum-1][0]) + " is not in race #" + str(raceNum)))
+                                await message.channel.send(UtilityFunctions.process_name(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " is not in race #" + str(raceNum)))
 
             else:
                 await message.channel.send("Do " + server_prefix + "quickedit to learn how to use this command.")

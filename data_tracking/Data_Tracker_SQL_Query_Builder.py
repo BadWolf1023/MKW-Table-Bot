@@ -225,22 +225,20 @@ class SQL_Search_Query_Builder(object):
 
     @staticmethod
     def get_best_tracks(fcs, is_ct, tier, last_x_days, min_count):
-        tier_filter_clause = ""
-        days_filter_clause = ""
-        if tier is not None:
-            tier_filter_clause = f"""
-            AND Place.race_id IN (
-                SELECT race_id
-                FROM Event_Races
-                         JOIN Event ON Event_Races.event_id = Event.event_id
-                         JOIN Tier ON Event.channel_id = Tier.channel_id
-                    
-                    WHERE Event.player_setup_amount = 12
-                    AND tier = {tier}
-                    {SQL_Search_Query_Builder.get_event_valid_filter()}
-            )
-            """
+        tier_filter_clause = f"""
+        AND Place.race_id IN (
+            SELECT race_id
+            FROM Event_Races
+                     JOIN Event ON Event_Races.event_id = Event.event_id
+                     JOIN Tier ON Event.channel_id = Tier.channel_id
+                
+                WHERE Event.player_setup_amount = 12
+                {f"AND tier = {tier}" if (tier is not None) else ""}
+                {SQL_Search_Query_Builder.get_event_valid_filter()}
+        )
+        """
 
+        days_filter_clause = ""
         if last_x_days is not None:
             days_filter_clause = "AND " + SQL_Search_Query_Builder.get_sql_days_filter(last_x_days)
 
@@ -251,7 +249,7 @@ class SQL_Search_Query_Builder(object):
             SELECT Track.fixed_track_name,
                    AVG(pts)         AS avg_pts,
                    AVG(Place.place) AS avg_place,
-                   AVG(time-Race.first_place_time) AS avg_delta,
+                   MIN(time) AS avg_delta,
                    COUNT(*)         AS count
             FROM Place
                      JOIN Race ON Place.race_id = Race.race_id
@@ -283,7 +281,7 @@ class SQL_Search_Query_Builder(object):
                discord_id,
                AVG(pts)         AS avg_pts,
                AVG(Place.place) AS avg_place,
-               AVG(time-Race.first_place_time) AS avg_delta,
+               MIN(time) AS avg_delta,
                COUNT(*) AS count
         FROM Place
                  JOIN Race ON Place.race_id = Race.race_id
@@ -300,7 +298,7 @@ class SQL_Search_Query_Builder(object):
                     JOIN Track ON Race.track_name = Track.track_name
         
             WHERE Event.player_setup_amount = 12
-                AND Track.track_name = ?
+                AND Track.fixed_track_name = ?
                 {tier_filter_clause}
                 {SQL_Search_Query_Builder.get_event_valid_filter()}
         )
@@ -314,6 +312,34 @@ class SQL_Search_Query_Builder(object):
         LIMIT 100
         """
 
-#print(get_fcs_not_in_Player_table([1, 2, 3]))
+    @staticmethod
+    def get_player_races(did, days):
+        days_filter_clause = f"AND Event.time_added > date('now','-{days} days')" if (days is not None) else ""
+
+        return f"""
+        SELECT race_id, place
+                 FROM Place
+                     JOIN Player_FCs ON Place.fc = Player_FCs.fc
+                 WHERE Place.race_id IN (
+                     SELECT race_id
+                     FROM Event_Races
+                              JOIN Event ON Event_Races.event_id = Event.event_id
+                              JOIN Tier ON Event.channel_id = Tier.channel_id
+                     WHERE player_setup_amount == 12
+                       {days_filter_clause}
+                       {SQL_Search_Query_Builder.get_event_valid_filter()}
+                 )
+                   AND discord_id = {did}
+                   AND time < 6 * 60
+        """
+
+    @staticmethod
+    def get_record_query(player_did, opponent_did, days):
+        return f"""
+        SELECT COUNT(*), SUM(CASE WHEN a.place < b.place THEN 1 ELSE 0 END) as wins
+        FROM ({SQL_Search_Query_Builder.get_player_races(player_did, days)}) as a 
+        JOIN ({SQL_Search_Query_Builder.get_player_races(opponent_did, days)}) as b 
+        ON a.race_id = b.race_id
+        """
 
 

@@ -7,7 +7,7 @@ from datetime import datetime
 import common
 
 async def getOnlineData(full_url):
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as session:
         async with session.get(full_url, ssl=common.sslcontext) as r:
             if r.status == 200:
                 js = await r.json()
