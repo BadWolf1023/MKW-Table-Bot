@@ -12,7 +12,7 @@ import UtilityFunctions
 import War
 import common
 from TableBot import ChannelBot
-from commands.shared import mkwx_check, send_room_war_not_loaded, update_data
+from commands_pkg.shared import mkwx_check, send_room_war_not_loaded, update_data
 
 
 async def start_war_command(

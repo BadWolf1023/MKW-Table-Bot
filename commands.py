@@ -24,8 +24,8 @@ import MogiUpdate
 import Lounge
 import TableBotExceptions
 import common
-from commands.shared import mkwx_check, send_room_war_not_loaded, update_data
-from commands.start_war.start_war_command import start_war_command
+from commands_pkg.shared import mkwx_check, send_room_war_not_loaded, update_data
+from commands_pkg.start_war.start_war_command import start_war_command
 from data_tracking import DataTracker
 
 #Other library imports, other people codes
