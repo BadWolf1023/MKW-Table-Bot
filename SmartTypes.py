@@ -16,6 +16,7 @@ class SmartLookupTypes:
     ALL_TYPES = {FC, FC_LIST, SELF_DISCORD_ID, DISCORD_ID, RXX, LOUNGE_NAME, RAW_DISCORD_MENTION, UNKNOWN}
     PLAYER_LOOKUP_TYPES = {FC, FC_LIST, SELF_DISCORD_ID, DISCORD_ID, LOUNGE_NAME, RAW_DISCORD_MENTION}
     ROOM_LOOKUP_TYPES = {RXX} | PLAYER_LOOKUP_TYPES
+    
     def __init__(self, data, allowed_types=None):
         self.original = data
         self.modified_original = data

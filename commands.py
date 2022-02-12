@@ -2175,7 +2175,7 @@ class TablingCommands:
             await updateData(* await LoungeAPIFunctions.getByDiscordIDs([discord_id]))
             to_load = UserDataProcessing.get_all_fcs(discord_id)
         else:
-            to_load = args[1]
+            to_load = ' '.join(args[1:])
 
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
@@ -2184,7 +2184,6 @@ class TablingCommands:
             return
         this_bot.updateRLCoolDown()
         
-        to_load = ' '.join(args[1:])
         rxx_given = UtilityFunctions.is_rLID(to_load)
         if to_load in this_bot.getRoom().rLIDs:
             await message.channel.send(f"The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `{server_prefix}undo`.")
@@ -2205,6 +2204,9 @@ class TablingCommands:
         else:
             this_bot.remove_last_save_state()
             if success_status is WiimmfiSiteFunctions.RoomLoadStatus.DOES_NOT_EXIST or success_status is WiimmfiSiteFunctions.RoomLoadStatus.HAS_NO_RACES:
+                if len(args) < 2:
+                    return await message.channel.send(f"Could not find you in a room. **Make sure the new room has finished the first race before using this command.**")
+
                 str_addition = " the rxx "
                 await message.channel.send(f"Could not find {str_addition}{UtilityFunctions.process_name(to_load)}. **Make sure the new room has finished the first race before using this command.**")
             else:
