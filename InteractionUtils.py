@@ -33,7 +33,7 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     if command not in common.needPermissionCommands:
         return True
     
-    if this_bot is None or this_bot.is_table_loaded() or not this_bot.getRoom().is_freed:
+    if this_bot is None or not this_bot.is_table_loaded() or not this_bot.getRoom().is_freed:
         return True
 
     #At this point, we know the command's server is Lounge, it's not staff, and a room has been loaded
