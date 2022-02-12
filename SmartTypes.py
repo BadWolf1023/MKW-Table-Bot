@@ -1,6 +1,7 @@
 import UtilityFunctions
 import UserDataProcessing
 import LoungeAPIFunctions
+from typing import List, Union
 
 class SmartLookupTypes:
     FC = object()
@@ -70,13 +71,36 @@ class SmartLookupTypes:
     def get_type(self):
         return self._original_type
 
+    def get_country_flag(self, suppress_exception=False) -> Union[str, None]:
+        return UserDataProcessing.get_flag(self.get_discord_id())
 
-    def get_lounge_name(self, suppress_exception=False):
+    def get_discord_id(self, suppress_exception=False) -> Union[int, None]:
+        if self._original_type not in SmartLookupTypes.PLAYER_LOOKUP_TYPES:
+            if suppress_exception:
+                return None
+            raise ValueError("Cannot get discord id for unsupported type")
+        discord_id = None
+        if self._original_type is SmartLookupTypes.FC:
+            discord_id = UserDataProcessing.get_discord_id_from_fc(self.modified_original)
+        elif self._original_type is SmartLookupTypes.FC_LIST:
+            for fc in self.modified_original:
+                discord_id = UserDataProcessing.get_discord_id_from_fc(fc)
+                if discord_id is not None and discord_id != '':
+                    break
+        elif self._original_type is SmartLookupTypes.DISCORD_ID or self._original_type is SmartLookupTypes.RAW_DISCORD_MENTION or self._original_type is SmartLookupTypes.SELF_DISCORD_ID:
+            discord_id = self.modified_original
+        elif self._original_type is SmartLookupTypes.LOUNGE_NAME:
+            discord_id = UserDataProcessing.get_DiscordID_By_LoungeName(self.modified_original)
+
+        return None if discord_id == '' else discord_id
+
+
+    def get_lounge_name(self, suppress_exception=False) -> Union[str, None]:
         if self._original_type not in SmartLookupTypes.PLAYER_LOOKUP_TYPES:
             if suppress_exception:
                 return None
             raise ValueError("Cannot get lounge name for unsupported type")
-        lounge_name = ''
+        lounge_name = None
         if self._original_type is SmartLookupTypes.FC:
             lounge_name = UserDataProcessing.lounge_get(self.modified_original)
         elif self._original_type is SmartLookupTypes.FC_LIST:
@@ -89,9 +113,9 @@ class SmartLookupTypes:
         elif self._original_type is SmartLookupTypes.LOUNGE_NAME:
             lounge_name = self.modified_original
 
-        return None if lounge_name in {'', None} else lounge_name
+        return None if lounge_name == '' else lounge_name
 
-    def get_fcs(self, suppress_exception=False):
+    def get_fcs(self, suppress_exception=False) -> Union[List[str], None]:
         if self._original_type not in SmartLookupTypes.PLAYER_LOOKUP_TYPES:
             if suppress_exception:
                 return None
