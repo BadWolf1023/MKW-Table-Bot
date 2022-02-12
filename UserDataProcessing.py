@@ -7,7 +7,7 @@ Created on Jul 25, 2020
 import asyncio
 import os
 from collections import defaultdict
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 import common
 from datetime import datetime, timedelta
 
@@ -146,9 +146,9 @@ def add_flag(discord_id, flag):
         return True
      
 def get_flag(discord_id):
+    if discord_id is None:
+        return None
     discord_id = str(discord_id)
-    global discordId_flags
-    
     if discord_id in discordId_flags:
         return discordId_flags[discord_id]
     return None
@@ -269,6 +269,12 @@ def get_lounge(discord_id):
     if discord_id in discordId_lounges:
         return discordId_lounges[discord_id]
     return None
+
+def get_discord_id_from_fc(fc: Union[str, None]) -> Union[str, None]:
+    if fc is None or fc not in fc_discordId:
+        return None
+    return fc_discordId[fc][0]
+
 
 def get_all_fcs(discord_id, include_time=False):
     if discord_id is None:
