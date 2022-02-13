@@ -17,13 +17,19 @@ class ManualTeamsModal(discord.ui.Modal):
 
     async def on_error(self): #not yet implemented in pycord - will be soon
         pass
-    
+
     async def callback(self, interaction: discord.Interaction):
+        if not self.bot.manualWarSetUp: 
+            return await interaction.response.send_message("This button has expired.", ephemeral=True, delete_after=3)
         message = InteractionUtils.create_proxy_msg(interaction)
         message.content = self.children[0].value
+        response = await interaction.response.send_message('Manual teams processed.')
+        try:
+            await commands.TablingCommands.manual_war_setup(message, self.bot, self.prefix, self.is_lounge, message.content)
+        except Exception as error:
+            await response.edit_original_message(content='An error occurred while creating manual teams.')
+            return await InteractionUtils.on_component_error(error, interaction, self.prefix)
         await self.view.message.edit(view=None)
-        await interaction.response.send_message('Manual teams created.')
-        await commands.TablingCommands.manual_war_setup(message, self.bot, self.prefix, self.is_lounge, message.content)
         
 
 class InputTeamsButton(discord.ui.Button['ManualTeamsView']):
@@ -41,11 +47,17 @@ class ManualTeamsView(discord.ui.View):
         self.is_lounge = is_lounge
         self.message = None
         self.add_item(InputTeamsButton())
+        self.bot.add_component(self)
     
     async def delete(self, interaction: discord.Interaction):
         self.clear_items()
         self.stop()
         await interaction.response.edit_message(view=None)
+    
+    async def on_timeout(self):
+        self.clear_items()
+        self.stop()
+        await self.message.edit(view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'confirm_interaction')

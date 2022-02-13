@@ -2449,11 +2449,11 @@ class TablingCommands:
         except AttributeError:
             common.log_traceback(traceback)
             common.log_error(f"rxx(s) that triggered traceback: {this_bot.getRoom().rLIDs}")
-            await message.channel.send("Table Bot has a bug, and this mkwx room triggered it. I cannot tally your scores. You should join the Table Bot server by using the invite code *{common.TABLEBOT_SERVER_INVITE_CODE}* and tell developers what happened and for them to check error logs.")
+            await message.channel.send(f"Table Bot has a bug, and this mkwx room triggered it. I cannot tally your scores. You should join the Table Bot server by using the invite code *{common.TABLEBOT_SERVER_INVITE_CODE}* and tell developers what happened and for them to check error logs.")
 
     @staticmethod
     async def manual_war_setup(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool, command:str):
-        ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server, custom_message="Unexpected error. Somehow, there is no room loaded. Recommend the command: {server_prefix}reset")
+        ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server, custom_message=f"Unexpected error. Somehow, there is no room loaded. Recommend the command: {server_prefix}reset")
 
         fc_tag = this_bot.getWar().getConvertedTempTeams()
 

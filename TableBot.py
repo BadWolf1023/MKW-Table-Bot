@@ -3,6 +3,7 @@ Created on Jul 30, 2020
 
 @author: willg
 '''
+from collections import defaultdict
 import WiimmfiSiteFunctions
 import SmartTypes
 import Room
@@ -44,6 +45,7 @@ graphs = {"1":("None", "default graph"),
 DEFAULT_DC_POINTS = 3
 last_wp_message = {}
 last_sug_view = {}
+active_components = defaultdict(list)
 
 class ChannelBot(object):
     '''
@@ -493,8 +495,19 @@ class ChannelBot(object):
             view = last_sug_view.pop(self.channel_id, None)
             if view: 
                 asyncio.create_task(view.on_timeout())
-        except:
+        except Exception:
             pass
+    
+    def add_component(self, component):
+        active_components[self.channel_id].append(component)
+    
+    def clear_all_components(self):
+        components = active_components.pop(self.channel_id, [])
+        for c in components:
+            try:
+                asyncio.create_task(c.on_timeout())
+            except Exception:
+                pass
 
     def unload_table(self):
         if self.is_table_loaded():
@@ -505,6 +518,7 @@ class ChannelBot(object):
     def destroy(self):
         asyncio.create_task(self.clear_last_wp_button())
         self.clear_last_sug_view()
+        self.clear_all_components()
         self.unload_table()
 
     def reset(self):

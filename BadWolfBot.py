@@ -224,7 +224,7 @@ def get_prefix(bot,msg: discord.Message) -> str:
 
 class BadWolfBot(discord.Bot):
     def __init__(self):
-        super().__init__(description="MKW Table Bot", debug_guilds=common.SLASH_GUILDS)
+        super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS) #debug_guilds=common.SLASH_GUILDS
         self.table_bots = dict()
         self.lounge_submissions = lounge_submissions
         self.user_flag_exceptions = set()
@@ -476,8 +476,8 @@ class BadWolfBot(discord.Bot):
         except discord.errors.Forbidden: # bot doesn't have application commands scope; this should be retroactively given in the future, so we ignore any 403 Forbidden - Missing Access errors
             pass
     
-    async def slash_interaction_pre_invoke(self, ctx: discord.ApplicationContext):
-        message = InteractionUtils.create_proxy_msg(ctx.interaction, ctx=ctx)
+    async def slash_interaction_pre_invoke(self, ctx: discord.ApplicationContext, args=None):
+        message = InteractionUtils.create_proxy_msg(ctx.interaction, ctx=ctx, args=args)
 
         is_lounge_server = InteractionUtils.check_lounge_server(message)
         
@@ -595,7 +595,7 @@ class BadWolfBot(discord.Bot):
                 await common.safe_send(message,
                                        f"{wrong_server_exception}: **I am not <@735782213118853180>. Use <@735782213118853180> in <#389521626645004302> to submit your table.**")
             else:
-                await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")
+                await message.channel.send(f"Not a valid command. For more help, do the command: `{server_prefix}help`")
         except TableBotExceptions.WrongUpdaterChannel as wrong_updater_channel_exception:
             await common.safe_send(message,
                                    f"Use this command in the appropriate updater channel: {wrong_updater_channel_exception}")

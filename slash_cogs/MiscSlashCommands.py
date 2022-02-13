@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands as ext_commands
-from discord.commands import slash_command, SlashCommandGroup, CommandPermission, Option
+from discord.commands import slash_command, SlashCommandGroup, CommandPermission, Option, permissions
 
 import TableBot
 import commands
@@ -8,7 +8,7 @@ import common
 
 EMPTY_CHAR = "\u200b"
 GUILDS = common.SLASH_GUILDS
-SETTING_PERMISSIONS = [CommandPermission("administrator", 2, True)]
+SETTING_PERMISSIONS = [CommandPermission("owner", 2, True)]
 
 class MiscSlash(ext_commands.Cog):
     def __init__(self, bot):
@@ -29,9 +29,7 @@ class MiscSlash(ext_commands.Cog):
         message.content = input
         
         await self.bot.simulate_on_message(message, args, message.content, this_bot, server_prefix, is_lounge)
-    
-    setting = SlashCommandGroup("setting", "Change your Table Bot server settings", guild_ids=GUILDS)
-    
+        
     @slash_command(name="settings",
     description="Show your Table Bot server settings",
     guild_ids=GUILDS)
@@ -43,8 +41,11 @@ class MiscSlash(ext_commands.Cog):
         
         await commands.ServerDefaultCommands.show_settings_command(message, this_bot, server_prefix)
     
+    setting = SlashCommandGroup("setting", "Change your Table Bot server settings", guild_ids=GUILDS)
+    
     @setting.command(name="prefix",
-    description="Change your server's Table Bot prefix")
+    description="Change your server's Table Bot prefix",
+    )
     async def _set_prefix(
         self,
         ctx: discord.ApplicationContext,

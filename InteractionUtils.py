@@ -157,7 +157,7 @@ async def handle_component_exception(error, message, server_prefix):
             await common.safe_send(message,
                                     f"{wrong_server_exception}: **I am not <@735782213118853180>. Use <@735782213118853180> in <#389521626645004302> to submit your table.**")
         else:
-            await message.channel.send(f"Not a valid command. For more help, do the command: {server_prefix}help")
+            await message.channel.send(f"Not a valid command. For more help, do the command: `{server_prefix}help`")
     except TableBotExceptions.WrongUpdaterChannel as wrong_updater_channel_exception:
         await common.safe_send(message,
                                 f"Use this command in the appropriate updater channel: {wrong_updater_channel_exception}")
