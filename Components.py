@@ -15,6 +15,9 @@ class ManualTeamsModal(discord.ui.Modal):
         self.view = view
         self.add_item(discord.ui.InputText(style=discord.InputTextStyle.singleline, label='Input', placeholder="Input teams here"))
 
+    async def on_error(self): #not yet implemented in pycord - will be soon
+        pass
+    
     async def callback(self, interaction: discord.Interaction):
         message = InteractionUtils.create_proxy_msg(interaction)
         message.content = self.children[0].value

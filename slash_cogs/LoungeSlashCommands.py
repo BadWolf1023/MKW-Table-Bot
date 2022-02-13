@@ -23,12 +23,15 @@ class TableTextModal(discord.ui.Modal):
         self.view = view
         self.add_item(discord.ui.InputText(style=discord.InputTextStyle.singleline, label='Table text', placeholder="Input table text here"))
 
+    async def on_error(self): #not yet implemented in pycord - will be soon
+        pass
+
     async def callback(self, interaction: discord.Interaction):
         message = self.view.proxy_msg
         message.content += '\n' + self.children[0].value
         self.view.args.append(self.children[0].value)
         await self.view.message.edit(view=None)
-        await self.update_commands[self.type](self.bot, self.chan_bot, message, self.view.args, self.bot.lounge_submissions)
+        await self.update_commands[self.view.type](self.bot, self.chan_bot, message, self.view.args, self.bot.lounge_submissions)
 
 class TableTextButton(discord.ui.Button['TableTextView']):
     def __init__(self):
@@ -38,7 +41,7 @@ class TableTextButton(discord.ui.Button['TableTextView']):
         await interaction.response.send_modal(TableTextModal(self.view.bot, self.view.chan_bot, self.view.prefix, self.view.is_lounge, self.view))
 
 class TableTextView(discord.ui.View):
-    def __init__(self, bot, chan_bot, prefix, is_lounge, ctx, message, args):
+    def __init__(self, bot, chan_bot, prefix, is_lounge, ctx, message, args, type):
         super().__init__()
         self.bot = bot
         self.chan_bot = chan_bot
@@ -48,6 +51,7 @@ class TableTextView(discord.ui.View):
         self.args = args
         self.ctx = ctx
         self.proxy_msg = message
+        self.type = type
         self.message = None
         self.add_item(TableTextButton())
     
@@ -87,7 +91,7 @@ class LoungeSlash(ext_commands.Cog):
     update = SlashCommandGroup("update", "Submit tables to updaters", guild_ids=GUILDS) 
 
     @update.command(name='rt',
-    description="Submit an RT table to updaters. NO TABLE TEXT SUBMISSIONS")
+    description="Submit an RT table to updaters.")
     async def _rt_update(
         self, 
         ctx: discord.ApplicationContext,
@@ -102,11 +106,11 @@ class LoungeSlash(ext_commands.Cog):
         if not table_text:
             return await commands.LoungeCommands.rt_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
         
-        view = TableTextView(self.bot, this_bot, server_prefix, is_lounge, ctx, message, args)
+        view = TableTextView(self.bot, this_bot, server_prefix, is_lounge, ctx, message, args, 'rt')
         await view.send(message, content="Copy your table text from `/tt` before clicking this button.")
         
     @update.command(name='ct',
-    description="Submit a CT table to updaters. NO TABLE TEXT SUBMISSIONS")
+    description="Submit a CT table to updaters.")
     async def _ct_update(
         self,
         ctx: discord.ApplicationContext,
@@ -121,7 +125,7 @@ class LoungeSlash(ext_commands.Cog):
         if not table_text:
             return await commands.LoungeCommands.ct_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
 
-        view = TableTextView(self.bot, this_bot, server_prefix, is_lounge, ctx, message, args)
+        view = TableTextView(self.bot, this_bot, server_prefix, is_lounge, ctx, message, args, 'ct')
         await view.send(message, content="Copy your table text from `/tt` before clicking this button.")
     
     @slash_command(name="approve",
