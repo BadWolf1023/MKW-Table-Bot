@@ -51,6 +51,9 @@ class ConfirmView(discord.ui.View):
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
         return allowed
     
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        await InteractionUtils.on_component_error(error, interaction, self.prefix)
+    
     async def send(self, messageable, content=None, file=None, embed=None):
         if hasattr(messageable, 'channel'):
             messageable = messageable.channel
@@ -114,7 +117,10 @@ class PictureView(discord.ui.View):
         if self.message:
             await self.message.edit(view=None)
         self = None
-            
+    
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        await InteractionUtils.on_component_error(error, interaction, self.prefix)
+
     async def send(self, messageable, content=None, file=None, embed=None):
         if hasattr(messageable, 'channel'):
             messageable = messageable.channel
@@ -231,6 +237,9 @@ class SuggestionView(discord.ui.View):
             pass
         self.stop()
         self.clear_items()
+    
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        await InteractionUtils.on_component_error(error, interaction, self.prefix)
         
     async def send(self, messageable, file=None, embed=None):
         if hasattr(messageable, 'channel'):

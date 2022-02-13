@@ -564,7 +564,7 @@ class BadWolfBot(ext_commands.Bot):
         except Exception as e:
             await self.handle_exception(e,message,server_prefix)
 
-    async def handle_exception(self, error,message: discord.Message,server_prefix):
+    async def handle_exception(self, error, message: discord.Message, server_prefix):
         try:
             raise error
         except (discord.errors.Forbidden,ext_commands.BotMissingPermissions):
@@ -602,7 +602,7 @@ class BadWolfBot(ext_commands.Bot):
         except discord.errors.DiscordServerError:
             await common.safe_send(message,
                                    "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
-        except aiohttp.client_exceptions.ClientOSError:
+        except aiohttp.ClientOSError:
             await common.safe_send(message,
                                    "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
             raise

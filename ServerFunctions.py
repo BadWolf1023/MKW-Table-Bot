@@ -17,11 +17,11 @@ server_graphs = {}
 default_mii_setting = "1"
 server_miis = {}
 
-default_large_time_setting = "1"
+default_large_time_setting = "0"
 server_large_times = {}
 
 bool_map = {"1":True, "2":False}
-ILT_map = {"1": "Never"}
+ILT_map = {"0": "Never", "1+": "Always"}
 
     
 def get_server_table_theme(server_id, default_table_theme=default_table_theme):
@@ -30,18 +30,18 @@ def get_server_table_theme(server_id, default_table_theme=default_table_theme):
         return default_table_theme
     return server_table_themes[server_id]
 
-def get_server_mii_setting(server_id, default_mii_setting=default_mii_setting):
+def get_server_mii_setting(server_id, display=False, default_mii_setting=default_mii_setting):
     server_id = str(server_id).strip()
+    map = {'1': 'On', '2': 'Off'} if display else bool_map
     if server_id not in server_miis:
-        return bool_map[default_mii_setting]
-    return bool_map[server_miis[server_id]]
+        return map[default_mii_setting]
+    return map[server_miis[server_id]]
 
 def get_server_large_time_setting(server_id, default_large_time_setting=default_large_time_setting):
     server_id = str(server_id).strip()
     if server_id not in server_large_times:
         return ILT_map[default_large_time_setting]
-        # return not bool_map[default_large_time_setting]
-    # return not bool_map[server_large_times[server_id]]
+
     return insert_formats(server_large_times[server_id])
 
 def is_sui_from_format(server_id, warFormat):
@@ -126,7 +126,10 @@ def get_server_settings(server_name, server_id):
     spaces = max([len(k[1]) for k in setting_list])+1
     build_str = f"asciidoc\n== [ {server_name} ] server settings =="
     for get_setting, setting_name in setting_list:
-        setting = get_setting(server_id)
+        if get_setting == get_server_mii_setting:
+            setting = get_setting(server_id, display=True)
+        else:
+            setting = get_setting(server_id)
         build_str+=f"\n{setting_name}{' '*(spaces-len(setting_name))}:: {setting}"
 
     return f"```{build_str}```"
