@@ -5,6 +5,7 @@
 *.pyc
 .settings/org.eclipse.core.resources.prefs
 .vscode/*
+tablebotvenv/*
 
 #private Table Bot data
 tablebot_data/*

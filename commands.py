@@ -884,50 +884,17 @@ class OtherCommands:
 
     @staticmethod
     async def fc_command(message:discord.Message, args:List[str], old_command:str):
-        discordIDToLoad = None
-        id_lounge = {}
-        fc_id = {}
-
-        if len(args) == 1:
-            discordIDToLoad = str(message.author.id)
-            id_lounge, fc_id = await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad])
-        else:
-            if len(message.raw_mentions) > 0:
-                discordIDToLoad = str(message.raw_mentions[0])
-                id_lounge, fc_id = await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad])
-            else:
-                to_find_lounge = " ".join(old_command.split()[1:])
-                id_lounge, fc_id = await LoungeAPIFunctions.getByLoungeNames([to_find_lounge])
-                if id_lounge is not None and len(id_lounge) == 1:
-                    for this_id in id_lounge:
-                        discordIDToLoad = this_id
-                        break
-                if discordIDToLoad is None:
-                    discordIDToLoad = UserDataProcessing.get_DiscordID_By_LoungeName(to_find_lounge)
-
-        updateData(id_lounge, fc_id)
-        FC = None
-        if fc_id is not None and id_lounge is not None: #This would only occur it the API went down...
-            for fc, _id in fc_id.items():
-                if _id == discordIDToLoad:
-                    FC = fc
-                    break
-        if FC is None:
-            FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-            if len(FCs) > 0:
-                FC = FCs[0]
-
-        if FC is None:
-            if len(args) == 1:
-                await message.channel.send("You have not set an FC. (Use Friendbot to add your FC, then try this command later.")
-            elif len(message.raw_mentions) > 0:
-                lookup_name = UtilityFunctions.process_name(str(message.mentions[0].name))
-                await message.channel.send(f"No FC found for {lookup_name}. Try again later.")
-            else:
-                lookup_name = UtilityFunctions.process_name(" ".join(old_command.split()[1:]))
-                await message.channel.send(f"No FC found for {lookup_name}. Try again later.")
-        else:
-            await message.channel.send(FC)
+        to_load = SmartTypes.create_you_discord_id(message.author.id)
+        if len(args) > 1:
+            to_load = " ".join(args[3:])
+        smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
+        await smart_type.lounge_api_update()
+        fcs = smart_type.get_fcs()
+        if fcs is None:
+            descriptive, pronoun = smart_type.get_clean_smart_print(message)
+            await message.channel.send(f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?")
+            return
+        await message.channel.send(fcs[0])
 
     @staticmethod
     async def mii_command(message:discord.Message, args:List[str], old_command:str):
@@ -1037,31 +1004,10 @@ class OtherCommands:
         to_load = SmartTypes.create_you_discord_id(message.author.id) if len(args) == 1 else " ".join(old_command.split()[1:])
         status, front_race, smart_type = await this_bot.verify_room_smart(to_load)
         if not status:
-            failure_message = "VR Failed"
-            if smart_type.get_type() is smart_type.DISCORD_ID:
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for discord id {smart_type.modified_original}. Has this Discord ID joined Lounge and registered an FC in Lounge?"
-                else:
-                    failure_message = f"Could not find discord id {smart_type.modified_original} in a room."
-            elif smart_type.get_type() is smart_type.SELF_DISCORD_ID:
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for you. Have you joined Lounge and verified an FC in Lounge?"
-                else:
-                    failure_message = f"Could not find you in a room."
-            elif smart_type.get_type() is smart_type.RAW_DISCORD_MENTION:
-                name = UtilityFunctions.process_name(str(message.mentions[0].name)) if len(message.mentions) > 0 else f"discord id {smart_type.modified_original}"
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for {name}. Have they joined Lounge and verified an FC in Lounge?"
-                else:
-                    failure_message = f"Could not find {name} in a room."
-            elif smart_type.get_type() is smart_type.FC:
-                failure_message = f"Could not find the FC {smart_type.modified_original} in a room."
-            else:
-                name = UtilityFunctions.process_name(to_load)
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for {name}. Have they joined Lounge and verified an FC in Lounge?"
-                else:
-                    failure_message = f"Could not find {UtilityFunctions.process_name(to_load)} in a room."
+            descriptive, pronoun = smart_type.get_clean_smart_print(message)
+            failure_message = f"Could not find {descriptive} in a room, {pronoun} don't seem to be playing right now."
+            if status.status is status.NO_KNOWN_FCS:
+                failure_message = f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"
             await message2.edit(failure_message)
             return
 
@@ -1611,7 +1557,7 @@ class TablingCommands:
         server_id = message.guild.id
         channel_id = message.channel.id
         if server_id in table_bots and channel_id in table_bots[server_id]:
-            table_bots[server_id][channel_id].reset(message.guild.id)
+            table_bots[server_id][channel_id].reset()
             del(table_bots[server_id][channel_id])
 
         await message.channel.send("Reset successful.")
@@ -2075,40 +2021,16 @@ class TablingCommands:
         if len(args) > 3:
             to_load = " ".join(args[3:])
 
-        this_bot.reset(server_id)  
         message2 = await message.channel.send("Loading room...")
         this_bot.updateRLCoolDown()
         status, smart_type = await this_bot.load_table_smart(to_load, war, message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
         if not status:
-            this_bot.unload_table()
-            failure_message = 'Failed to load table.'
+            descriptive, pronoun = smart_type.get_clean_smart_print(message)
+            failure_message = f"Could not find {descriptive} in a room, **did {pronoun} finish the first race?**"
             if smart_type.get_type() is smart_type.RXX:
-                failure_message = "Could not find this rxx number. Is the room over 24 hours old?"
-            elif smart_type.get_type() is smart_type.DISCORD_ID:
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for discord id {smart_type.modified_original}. Has this Discord ID joined Lounge and registered an FC in Lounge?"
-                else:
-                    failure_message = f"The discord id {smart_type.modified_original} is not in a room, **or they haven't finished the first race.**"
-            elif smart_type.get_type() is smart_type.SELF_DISCORD_ID:
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for you. Have you joined Lounge and verified an FC in Lounge?"
-                else:
-                    failure_message = "Could not find you in a room. **Did you finish the first race?**"
-            elif smart_type.get_type() is smart_type.RAW_DISCORD_MENTION:
-                name = UtilityFunctions.process_name(str(message.mentions[0].name)) if len(message.mentions) > 0 else f"discord id {smart_type.modified_original}"
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for {name}. Have they joined Lounge and verified an FC in Lounge?"
-                else:
-                    failure_message = f"Could not find {name} in a room. **Did they finish the first race?**"
-            elif smart_type.get_type() is smart_type.FC:
-                failure_message = f"Could not find the FC {smart_type.modified_original} in a room. **Did they finish the first race?**"
-            else:
-                name = UtilityFunctions.process_name(to_load)
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for {name}. Have they joined Lounge and verified an FC in Lounge?"
-                else:
-                    failure_message = f"Could not find {name} in a room. **Did they finish the first race?**"
-                
+                f"Could not find load the room for {descriptive}, {pronoun} may be more than 24 hours old, or **{pronoun} didn't finish the first race.**"
+            if status.status is status.NO_KNOWN_FCS:
+                failure_message = f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"
             await message2.edit(failure_message)
             return
 

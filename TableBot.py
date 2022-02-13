@@ -242,6 +242,7 @@ class ChannelBot(object):
         status, rxx, room_races, smart_type = await WiimmfiSiteFunctions.get_races_smart(load_me, hit_lounge_api=True)
         if not status:
             return status, smart_type
+        self.reset()
         room = Room.Room(rxx, room_races, message_id, setup_discord_id, setup_display_name)
         self.setWar(war)
         self.setRoom(room)
@@ -505,10 +506,9 @@ class ChannelBot(object):
     def destroy(self):
         asyncio.create_task(self.clear_last_wp_button())
         self.clear_last_sug_view()
-
         self.unload_table()
 
-    def reset(self, server_id):
+    def reset(self):
         self.destroy()
         self.room = None
         self.war = None
@@ -523,7 +523,7 @@ class ChannelBot(object):
         self.state_pointer = -1
         self.resolved_errors = set()
         self.should_send_mii_notification = True
-        self.set_style_and_graph(server_id)
+        self.set_style_and_graph(self.server_id)
         self.race_size = 4
 
         
