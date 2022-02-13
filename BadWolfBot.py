@@ -281,6 +281,8 @@ class BadWolfBot(discord.Bot):
             commands.load_vr_is_on()
         
         AbuseTracking.set_bot_abuse_report_channel(self)
+        common.ERROR_LOGS_CHANNEL = self.get_channel(common.ERROR_LOGS_CHANNEL_ID)
+
         try:
             self.updatePresence.start()
         except RuntimeError:
@@ -521,6 +523,8 @@ class BadWolfBot(discord.Bot):
             return
         if common.running_beta and not InteractionUtils.check_lounge_server(message): #lounge server is Bad Wolf's server if beta is running
             return
+
+        server_prefix = '?'
         try:
             #server_id = message.guild.id   
             is_lounge_server = message.guild.id == common.MKW_LOUNGE_SERVER_ID

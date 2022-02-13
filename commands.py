@@ -2513,18 +2513,16 @@ class TablingCommands:
                 await pic_view_func(this_bot, server_prefix, is_lounge_server)
 
                 if error_types and len(error_types)>0:
-                    # chosen_suggestion = get_suggestion(error_types, numRaces, this_bot)
-                    # if chosen_suggestion:
-                    #     sug_view = Components.SuggestionView(chosen_suggestion, this_bot, server_prefix, is_lounge_server)
-                    #     await sug_view.send(message)
-                    sug_view = Components.SuggestionView(error_types, this_bot, server_prefix, is_lounge_server)
-                    await sug_view.send(message)
+                    not_large_time_error_types = [x for x in error_types if x['type'] != 'large_time']
+                    num_large_time_errors = len(error_types)-len(not_large_time_error_types)
 
-                # if error_types:
-                #     for race,suggestions in error_types:
-                #         for chosen_suggestion in suggestions:
-                #             sug_view = Components.SuggestionView(chosen_suggestion, this_bot, server_prefix, is_lounge_server)
-                #             await sug_view.send(message)
+                    # don't display large time suggestions if it's a 5v5 war
+                    if this_bot.war.is_clan_war() and not this_bot.war.ignoreLargeTimes and num_large_time_errors > 2:
+                        error_types = not_large_time_error_types
+
+                    if len(error_types) != 0:
+                        sug_view = Components.SuggestionView(error_types, this_bot, server_prefix, is_lounge_server)
+                        await sug_view.send(message)
 
                 await common.safe_delete(message3)
 
@@ -2970,9 +2968,9 @@ async def send_available_mii_options(message:discord.Message, args:List[str], th
     return await message.channel.send(to_send)
 
 async def send_available_large_time_options(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot, server_prefix:str, server_wide=False):
-    to_send = "Choose an option from this list or comma-separate multiple options (you can either input the number or the word):\n"
+    to_send = f"Choose an option from this list or comma-separate multiple options and do `{server_prefix}{args[0]} <option>`. (You can either input the number or the word):\n"
     for numVal, val, in LARGE_TIME_OPTIONS.items():
-        to_send+="   - `{}` / {}\n".format(numVal, f"`{val}`")
+        to_send+="   - `{}` / `{}`\n".format(val, numVal)
     
     return await message.channel.send(to_send)
 

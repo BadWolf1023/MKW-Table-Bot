@@ -120,7 +120,7 @@ def get_server_settings(server_name, server_id):
         (get_server_graph, "Default Graph"),
         (get_server_table_theme, "Default Theme"),
         (get_server_mii_setting, "Default Mii Setting"),
-        (get_server_large_time_setting, "Hide Large Times When")
+        (get_server_large_time_setting, "Ignore Large Times When")
     ]
 
     spaces = max([len(k[1]) for k in setting_list])+1
