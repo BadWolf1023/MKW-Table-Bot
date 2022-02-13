@@ -26,6 +26,7 @@ class MiscSlash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = input.split() #split the raw string
+        message.content = input
         
         await self.bot.simulate_on_message(message, args, message.content, this_bot, server_prefix, is_lounge)
     

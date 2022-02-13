@@ -334,7 +334,7 @@ class BadWolfBot(ext_commands.Bot):
                 if self.table_bots[server_id][channel_id].isInactive(): #if the table bot is inactive, delete it
                     to_remove.append((server_id, channel_id))
                     
-        for (serv_id, chan_id)in to_remove:
+        for (serv_id, chan_id) in to_remove:
             self.table_bots[serv_id][chan_id].destroy()
             del(self.table_bots[serv_id][chan_id])
     
@@ -1106,15 +1106,17 @@ def initialize():
     private_data_init()
     Race.initialize()
     UserDataProcessing.initialize()
-    asyncio.run(DataTracker.initialize())
     ServerFunctions.initialize()
     UtilityFunctions.initialize()
     TagAIShell.initialize()
+def after_init():
+    asyncio.run(DataTracker.initialize())
+
 
 if __name__ == "__main__":
-    bot = BadWolfBot()
-
     initialize()
+    bot = BadWolfBot()
+    after_init()
 
     if common.is_dev:
         bot.run(testing_bot_key)
