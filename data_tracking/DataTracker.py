@@ -695,7 +695,7 @@ class RoomTracker(object):
         added_event_ids = await sql_helper.insert_missing_event(was_real_update=(len(added_event_ids_race_ids) > 0))
         added_event_fcs = await sql_helper.insert_missing_event_fcs_and_miis()
         added_event_fcs_miis = await sql_helper.update_missing_miis_in_event_fcs()
-        event_structure_data_dump_event_id = await sql_helper.dump_event_structure_data()
+        # event_structure_data_dump_event_id = await sql_helper.dump_event_structure_data()
 
         if DEBUGGING_SQL:
             print(f"Added players: {added_players}")
@@ -708,8 +708,7 @@ class RoomTracker(object):
             print(f"Added event ids: {added_event_ids}")
             print(f"Added event_id, fc's: {added_event_fcs}")
             print(f"Added miis for event fcs: {added_event_fcs_miis}")
-            print(f"Event ids updated for event structure: {event_structure_data_dump_event_id}")
-    
+            # print(f"Event ids updated for event structure: {event_structure_data_dump_event_id}")
     
     @staticmethod
     @TimerDebuggers.timer_coroutine

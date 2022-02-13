@@ -456,7 +456,7 @@ class Room(object):
                 player_obj = self.get_player_from_FC(player_fc)
                 DC_placement = Placement.Placement(player_obj, 'DC')
 
-                add_dict = {'type': 'add', 'payload': player_fc}
+                add_dict = {'type': 'add', 'payload': DC_placement}
                 self.manual_dc_placements[raceNum].append(add_dict)
                 race.addPlacement(DC_placement)
                 
@@ -613,9 +613,9 @@ class Room(object):
                 items = self.manual_dc_placements[raceNum]
                 for p in items:
                     if p['type'] == 'add':
-                        player_obj = self.get_player_from_FC(p['payload'])
-                        DC_placement = Placement.Placement(player_obj, 'DC')
-                        race.addPlacement(DC_placement)
+                        # player_obj = self.get_player_from_FC(p['payload'])
+                        # DC_placement = Placement.Placement(player_obj, 'DC')
+                        race.addPlacement(p['payload'])
                     else:
                         race.remove_placement_by_FC(p['payload'])
 
