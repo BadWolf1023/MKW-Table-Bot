@@ -281,6 +281,8 @@ class BadWolfBot(ext_commands.Bot):
             commands.load_vr_is_on()
         
         AbuseTracking.set_bot_abuse_report_channel(self)
+        common.ERROR_LOGS_CHANNEL = self.get_channel(common.ERROR_LOGS_CHANNEL_ID)
+
         try:
             self.updatePresence.start()
         except RuntimeError:
@@ -334,7 +336,7 @@ class BadWolfBot(ext_commands.Bot):
                 if self.table_bots[server_id][channel_id].isInactive(): #if the table bot is inactive, delete it
                     to_remove.append((server_id, channel_id))
                     
-        for (serv_id, chan_id)in to_remove:
+        for (serv_id, chan_id) in to_remove:
             self.table_bots[serv_id][chan_id].destroy()
             del(self.table_bots[serv_id][chan_id])
     
@@ -521,6 +523,8 @@ class BadWolfBot(ext_commands.Bot):
             return
         if common.running_beta and not InteractionUtils.check_lounge_server(message): #lounge server is Bad Wolf's server if beta is running
             return
+
+        server_prefix = '?'
         try:
             #server_id = message.guild.id   
             is_lounge_server = message.guild.id == common.MKW_LOUNGE_SERVER_ID
@@ -564,7 +568,7 @@ class BadWolfBot(ext_commands.Bot):
         except Exception as e:
             await self.handle_exception(e,message,server_prefix)
 
-    async def handle_exception(self, error,message: discord.Message,server_prefix):
+    async def handle_exception(self, error, message: discord.Message, server_prefix):
         try:
             raise error
         except (discord.errors.Forbidden,ext_commands.BotMissingPermissions):
@@ -602,7 +606,7 @@ class BadWolfBot(ext_commands.Bot):
         except discord.errors.DiscordServerError:
             await common.safe_send(message,
                                    "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
-        except aiohttp.client_exceptions.ClientOSError:
+        except aiohttp.ClientOSError:
             await common.safe_send(message,
                                    "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
             raise
@@ -1106,15 +1110,17 @@ def initialize():
     private_data_init()
     Race.initialize()
     UserDataProcessing.initialize()
-    asyncio.run(DataTracker.initialize())
     ServerFunctions.initialize()
     UtilityFunctions.initialize()
     TagAIShell.initialize()
+def after_init():
+    asyncio.run(DataTracker.initialize())
+
 
 if __name__ == "__main__":
-    bot = BadWolfBot()
-
     initialize()
+    bot = BadWolfBot()
+    after_init()
 
     if common.is_dev:
         bot.run(testing_bot_key)

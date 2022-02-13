@@ -99,7 +99,6 @@ def addBotAdmin(admin_id:str):
         return False
     else:
         common.botAdminsFileIsOpen = True
-        #If it's not in the blacklisted words, then add it
         if admin_id not in common.botAdmins:            
             with open(common.BOT_ADMINS_FILE, "a", encoding="utf-8", errors="replace") as f:
                 f.write(admin_id + "\n")
@@ -115,11 +114,9 @@ def removeBotAdmin(admin_id:str):
         return False
     else:
         common.botAdminsFileIsOpen = True
-        #If it's in the blacklisted words, we need to remove it
         if admin_id in common.botAdmins:
             common.check_create(common.BOT_ADMINS_FILE)
 
-            #Next, let's add all of the fc and lounge names to the file and dictionary
             temp_file_name = f"{common.BOT_ADMINS_FILE}_temp"
             with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.BOT_ADMINS_FILE, "r", encoding="utf-8", errors="replace") as original:
                 for line in original:

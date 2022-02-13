@@ -79,7 +79,7 @@ class StatisticsSlash(ext_commands.Cog):
     
     @slash_command(
         name='topplayers',
-        description="Displays the best players of a particular track",
+        description="Displays the top players of a particular track",
         guild_ids=GUILDS
     )
     async def _top_players(

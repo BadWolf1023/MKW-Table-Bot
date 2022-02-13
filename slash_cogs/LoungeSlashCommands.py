@@ -5,8 +5,7 @@ import commands
 import common
 
 REQUIRED_PERMISSIONS = [CommandPermission(role, 2, True, common.MKW_LOUNGE_SERVER_ID) for role in list(common.reporter_plus_roles)] #+ [CommandPermission(common.properties["admin_id"], 2, True)]
-# GUILDS = [common.MKW_LOUNGE_SERVER_ID]
-GUILDS = common.SLASH_GUILDS
+GUILDS = [common.MKW_LOUNGE_SERVER_ID] if common.is_prod else common.SLASH_GUILDS
 EMPTY_CHAR = "\u200b"
 
 class LoungeSlash(ext_commands.Cog):

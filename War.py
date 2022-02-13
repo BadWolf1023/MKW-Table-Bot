@@ -34,9 +34,9 @@ class War(object):
 
     __formatMapping = {u"ffa":1,u"1v1":1, u"2v2":2, u"3v3":3, u"4v4":4, u"5v5":5, u"6v6":6}
 
-    def __init__(self, formatt, numberOfTeams, message_id, numberOfGPs=3, missingRacePts=3, ignoreLargeTimes=False, displayMiis=True):
+    def __init__(self,format,numberOfTeams,message_id,numberOfGPs=3,missingRacePts=3,ignoreLargeTimes=False,displayMiis=True):
         self.teamColors = None
-        self.setWarFormat(formatt, numberOfTeams)
+        self.setWarFormat(format,numberOfTeams)
         self.numberOfGPs = numberOfGPs
         self.warName = None
         self.missingRacePts = missingRacePts
@@ -315,6 +315,9 @@ class War(object):
     def restore_save_state(self, save_state):
         for save_attr, save_value in save_state.items():
             self.__dict__[save_attr] = save_value
+
+    def is_clan_war(self):
+        return self.numberOfTeams == 2 and self.playersPerTeam == 5
     
         
             

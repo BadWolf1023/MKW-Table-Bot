@@ -1434,9 +1434,11 @@ class ServerDefaultCommands:
 
         elif len(args) > 1:
             setting = args[1:]
+            if len(setting) > 1:
+                setting = [e.strip(',') for e in setting]
             valid = False
-            if any([True if ('never' in entry and 'always' in entry) else False for entry in setting]):
-                    valid = False
+            if any([('never' in entry and 'always' in entry) for entry in setting]):
+                valid = False
             else:
                 try:
                     setting = ','.join(setting).strip().lower()
@@ -1445,10 +1447,8 @@ class ServerDefaultCommands:
                 except (ValueError, IndexError):
                     valid = False
 
-            # if setting not in ServerFunctions.bool_map:
             if not valid:
-                await message.channel.send(f"That is not a valid default large time setting. To see valid settings, run the command `{server_prefix}{args[0]}` and read carefully.")
-                return
+                return await send_available_large_time_options(message, args, this_bot, server_prefix, server_wide=True)
 
             was_success = ServerFunctions.change_default_large_time_setting(server_id, setting)
             if was_success:
@@ -2435,12 +2435,16 @@ class TablingCommands:
                 await pic_view_func(this_bot, server_prefix, is_lounge_server)
 
                 if error_types and len(error_types)>0:
-                    # chosen_suggestion = get_suggestion(error_types, numRaces, this_bot)
-                    # if chosen_suggestion:
-                    #     sug_view = Components.SuggestionView(chosen_suggestion, this_bot, server_prefix, is_lounge_server)
-                    #     await sug_view.send(message)
-                    sug_view = Components.SuggestionView(error_types, this_bot, server_prefix, is_lounge_server)
-                    await sug_view.send(message)
+                    not_large_time_error_types = [x for x in error_types if x['type'] != 'large_time']
+                    num_large_time_errors = len(error_types)-len(not_large_time_error_types)
+
+                    # don't display large time suggestions if it's a 5v5 war
+                    if this_bot.war.is_clan_war() and not this_bot.war.ignoreLargeTimes and num_large_time_errors > 2:
+                        error_types = not_large_time_error_types
+
+                    if len(error_types) != 0:
+                        sug_view = Components.SuggestionView(error_types, this_bot, server_prefix, is_lounge_server)
+                        await sug_view.send(message)
 
                 # if error_types:
                 #     for race,suggestions in error_types:
@@ -2501,7 +2505,9 @@ class TablingCommands:
         else:
             this_bot.manualWarSetUp = False
             this_bot.getWar().setTeams(fc_tag)
-            await message.channel.send(this_bot.get_room_started_message())
+            view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+            await view.send(message, this_bot.get_room_started_message())
+            TableBot.last_wp_message[this_bot.channel_id] = view.message
 
     @staticmethod
     async def remove_race_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2880,11 +2886,6 @@ def get_mii_option(option_number) -> str:
     return "Unknown Option"
 
 def get_large_time_option(option_number) -> str:
-    # if option_number == "1" or option_number == 1:
-    #     return "**Show large times** by default for tables in this server."
-    # elif option_number == "2" or option_number == 2:
-    #     return "**Hide large times** by default for tables in this server."
-    # return "Unknown Option"
     return "Will ignore large times when: " + ServerFunctions.insert_formats(option_number)
 
 
@@ -2895,12 +2896,9 @@ async def send_available_mii_options(message:discord.Message, args:List[str], th
     return await message.channel.send(to_send)
 
 async def send_available_large_time_options(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot, server_prefix:str, server_wide=False):
-#     to_send = f"Choose an option from this list and do `{server_prefix}{args[0]} <optionNumber>`:\n"
-#     to_send += f"""`1.` {get_large_time_option(1)}
-# `2.` {get_large_time_option(2)}"""
-    to_send = "Choose an option from this list (you can either input the number or the word):\n"
+    to_send = f"Choose an option from this list or comma-separate multiple options and do `{server_prefix}{args[0]} <option>`. (You can either input the number or the word):\n"
     for numVal, val, in LARGE_TIME_OPTIONS.items():
-        to_send+="   `{}`. {}\n".format(numVal, f"`{val}`")
+        to_send+="   - `{}` / `{}`\n".format(val, numVal)
     
     return await message.channel.send(to_send)
 

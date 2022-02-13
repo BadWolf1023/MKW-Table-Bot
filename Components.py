@@ -28,28 +28,32 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
 
 
 class ConfirmView(discord.ui.View):
-    def __init__(self, bot, prefix, lounge, message=None):
+    def __init__(self, bot, prefix, lounge):
         super().__init__()
         self.bot = bot
         self.prefix = prefix
         self.lounge = lounge
-        self.message = message
         self.add_item(ConfirmButton('Yes'))
         self.add_item(ConfirmButton('No'))
     
-    async def delete(self): 
-        for ind, child in enumerate(self.children):
-            child.disabled = True
-            if child.cat != self.cat: 
-                self.children.pop(ind)
+    async def delete(self, interaction: discord.Interaction):
+        self.clear_items()
         self.stop()
-        await self.message.edit(view=self)
-    
+        await interaction.response.edit_message(view=None)
+        
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, 'confirm_interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
+            return False
+        if not self.bot.prev_command_sw:
+            await self.delete(interaction)
+            await interaction.followup.send("This has already been responded to.", ephemeral=True)
+            return False
         return allowed
+    
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        await InteractionUtils.on_component_error(error, interaction, self.prefix)
     
     async def send(self, messageable, content=None, file=None, embed=None):
         if hasattr(messageable, 'channel'):
@@ -114,7 +118,10 @@ class PictureView(discord.ui.View):
         if self.message:
             await self.message.edit(view=None)
         self = None
-            
+    
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        await InteractionUtils.on_component_error(error, interaction, self.prefix)
+
     async def send(self, messageable, content=None, file=None, embed=None):
         if hasattr(messageable, 'channel'):
             messageable = messageable.channel
@@ -231,6 +238,9 @@ class SuggestionView(discord.ui.View):
             pass
         self.stop()
         self.clear_items()
+    
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        await InteractionUtils.on_component_error(error, interaction, self.prefix)
         
     async def send(self, messageable, file=None, embed=None):
         if hasattr(messageable, 'channel'):

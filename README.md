@@ -6,7 +6,7 @@ Visit the Documentation to see all the commands: https://github.com/BadWolf1023/
 
 ## Get Started
 
-[**Invite the Bot**](https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=274878031936&scope=bot)
+[**Invite the Bot**](https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=274878031936&scope=bot%20applications.commands)
 
 [**Join the Table Bot Discord Server**]( https://discord.gg/K937DqM)
 
