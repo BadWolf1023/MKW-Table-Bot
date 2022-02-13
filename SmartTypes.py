@@ -1,7 +1,7 @@
 import UtilityFunctions
 import UserDataProcessing
 import LoungeAPIFunctions
-from typing import List, Union
+from typing import List, Union, Tuple
 
 class SmartLookupTypes:
     FC = object()
@@ -151,6 +151,79 @@ class SmartLookupTypes:
 
     def is_rxx(self):
         return self._original_type is SmartLookupTypes.RXX
+
+    def get_smart_print(self) -> Tuple[str, str]:
+        '''Based on the type, returns a 2-tuple of strings that most informational messages can use
+        The first index in the tuple is a descriptive of the SmartLookupType type along with the actual modified type
+        The second index is the correct grammatical pronoun of the type (eg they, you, it)
+        '''
+        if self.get_type() is SmartLookupTypes.FC:
+            return f"the FC {self.modified_original}", "they"
+        if self.get_type() is SmartLookupTypes.FC_LIST:
+            return f"the FCs {self.modified_original}", "they"
+        if self.get_type() is SmartLookupTypes.DISCORD_ID:
+            return f"the discord ID {self.modified_original}", "they"
+        if self.get_type() is SmartLookupTypes.SELF_DISCORD_ID:
+            return f"you", "you"
+        if self.get_type() is SmartLookupTypes.RXX:
+            return f"the rxx {self.modified_original}", "it"
+        if self.get_type() is SmartLookupTypes.LOUNGE_NAME:
+            return f"{self.original}", "they"
+        if self.get_type() is SmartLookupTypes.RAW_DISCORD_MENTION:
+            return f"the discord ID {self.modified_original}", "they"
+        return f"{self.modified_original}", "it"
+
+    def get_clean_smart_print(self, message):
+        descriptive, pronoun = self.get_smart_print()
+        if self.get_type() is self.RAW_DISCORD_MENTION:
+            for mention in message.mentions:
+                if str(mention.id) == self.modified_original:
+                    descriptive = str(mention.name)
+                    break
+        return UtilityFunctions.process_name(descriptive), pronoun
+
+def to_be_conjugation(pronoun: str):
+    conjugations = {"i": "am",
+                    "I": "am",
+                    "you": "are",
+                    "You": "are",
+                    "we": "are",
+                    "We": "are",
+                    "Y'all": "are",
+                    "y'all": "are",
+                    "you all": "are",
+                    "You all": "are",
+                    "They": "are",
+                    "they": "are"}
+    if pronoun in conjugations:
+        return conjugations[pronoun]
+    if pronoun.lower() in conjugations:
+        return conjugations[pronoun.lower()]
+    return "is"
+
+def possessive(name: str):
+    possessive_forms = {"i": "my",
+                        "I": "My",
+                        "you": "your",
+                        "You": "Your",
+                        "we": "our",
+                        "We": "Our",
+                        "Y'all": "Y'all's",
+                        "y'all": "y'all's",
+                        "you all": "you all's",
+                        "You all": "You all's",
+                        "They": "Their",
+                        "they": "their"}
+    if name in possessive_forms:
+        return possessive_forms[name]
+    if name.lower() in possessive_forms:
+        return possessive[name.lower()]
+    return f"{name}'" if name.lower().endswith('s') else f"{name}'s"
+    
+def capitalize(name: str):
+    if len(name) == 0:
+        return name
+    return name[0].upper() + name[1:]
 
 def create_you_discord_id(discord_id):
     return ("you", str(discord_id))

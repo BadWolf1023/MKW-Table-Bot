@@ -220,7 +220,7 @@ class ChannelBot(object):
             self.loungeFinishTime = datetime.now()
     
     @TimerDebuggers.timer_coroutine
-    async def update_table(self) -> bool:
+    async def update_table(self) -> WiimmfiSiteFunctions.RoomLoadStatus:
         if not self.is_table_loaded():
             return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.NO_ROOM_LOADED)
             
@@ -232,15 +232,16 @@ class ChannelBot(object):
             asyncio.create_task(self.room.populate_miis())  # Must come after adjustments are applied
         return status
         
-    async def verify_room_smart(self, load_me) -> Tuple[WiimmfiSiteFunctions.RoomLoadStatus, Union[None, Room.Race.Race], SmartTypes.SmartLookupTypes]:
-        status_code, front_race, smart_type = await WiimmfiSiteFunctions.get_front_race_smart(load_me, hit_lounge_api=True)
-        return status_code, front_race, smart_type
+    async def verify_room_smart(self, smart_type: SmartTypes.SmartLookupTypes) -> Tuple[WiimmfiSiteFunctions.RoomLoadStatus, Union[None, Room.Race.Race]]:
+        status_code, front_race = await WiimmfiSiteFunctions.get_front_race_smart(smart_type, hit_lounge_api=True)
+        return status_code, front_race
     
     @TimerDebuggers.timer_coroutine
-    async def load_table_smart(self, load_me, war, message_id=None, setup_discord_id=0, setup_display_name="") -> Tuple[WiimmfiSiteFunctions.RoomLoadStatus, SmartTypes.SmartLookupTypes]:
-        status, rxx, room_races, smart_type = await WiimmfiSiteFunctions.get_races_smart(load_me, hit_lounge_api=True)
+    async def load_table_smart(self, smart_type: SmartTypes.SmartLookupTypes, war, message_id=None, setup_discord_id=0, setup_display_name="") -> WiimmfiSiteFunctions.RoomLoadStatus:
+        status, rxx, room_races = await WiimmfiSiteFunctions.get_races_smart(smart_type, hit_lounge_api=True)
         if not status:
-            return status, smart_type
+            return status
+        self.reset()
         room = Room.Room(rxx, room_races, message_id, setup_discord_id, setup_display_name)
         self.setWar(war)
         self.setRoom(room)
@@ -248,8 +249,8 @@ class ChannelBot(object):
         # Make call to database to add data
         await DataTracker.RoomTracker.add_data(self)
         if self.getWar() is None:  # The caller should have ensured that a war is set - dangerous game to play!
-            status = WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS_BUT_NO_WAR)
-        return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS), smart_type
+            return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS_BUT_NO_WAR)
+        return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS)
 
     async def add_room_races(self, rxx, room_races):
         if not self.is_table_loaded():
@@ -504,10 +505,9 @@ class ChannelBot(object):
     def destroy(self):
         asyncio.create_task(self.clear_last_wp_button())
         self.clear_last_sug_view()
-
         self.unload_table()
 
-    def reset(self, server_id):
+    def reset(self):
         self.destroy()
         self.room = None
         self.war = None
@@ -522,7 +522,7 @@ class ChannelBot(object):
         self.state_pointer = -1
         self.resolved_errors = set()
         self.should_send_mii_notification = True
-        self.set_style_and_graph(server_id)
+        self.set_style_and_graph(self.server_id)
         self.race_size = 4
 
         

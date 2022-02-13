@@ -19,12 +19,13 @@ import TimerDebuggers
 
 class RoomLoadStatus:
     DOES_NOT_EXIST = object()
+    NOT_ON_FRONT_PAGE = object()
     NO_KNOWN_FCS = object()
     HAS_NO_RACES = object()
     NO_ROOM_LOADED = object()
     SUCCESS = object()
     SUCCESS_BUT_NO_WAR = object()
-    FAILURE_CODES = {DOES_NOT_EXIST, HAS_NO_RACES, NO_ROOM_LOADED, NO_KNOWN_FCS}
+    FAILURE_CODES = {DOES_NOT_EXIST, NOT_ON_FRONT_PAGE, HAS_NO_RACES, NO_ROOM_LOADED, NO_KNOWN_FCS}
     SUCCESS_CODES = {SUCCESS, SUCCESS_BUT_NO_WAR}
     def __init__(self, status):
         self.status = status
@@ -115,28 +116,30 @@ async def get_room_soup(rxx: str) -> Union[BeautifulSoup, None]:
 
 
 async def get_front_race_by_fc(fcs: List[str]) -> Tuple[RoomLoadStatus, Union[Race, None]]:
+    '''RETURNS NOT_ON_FRONT_PAGE, SUCCESS'''
     parser = WiimmfiParser.FrontPageParser(await get_mkwx_soup())
     for front_page_race in parser.get_front_room_races():
         for fc in fcs:
             if front_page_race.hasFC(fc):
                 return RoomLoadStatus(RoomLoadStatus.SUCCESS), front_page_race
-    return RoomLoadStatus(RoomLoadStatus.DOES_NOT_EXIST), None
+    return RoomLoadStatus(RoomLoadStatus.NOT_ON_FRONT_PAGE), None
 
 
-async def get_front_race_smart(needle: Union[str, List[str]], hit_lounge_api=False) -> Tuple[RoomLoadStatus, Union[Race, None], ST.SmartLookupTypes]:
-    smart_type = ST.SmartLookupTypes(needle, allowed_types=ST.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
+async def get_front_race_smart(smart_type: ST.SmartLookupTypes, hit_lounge_api=False) -> Tuple[RoomLoadStatus, Union[Race, None]]:
+    '''RETURNS NOT_ON_FRONT_PAGE, NO_KNOWN_FCS, SUCCESS'''
     if hit_lounge_api:
         await smart_type.lounge_api_update()
     fcs = smart_type.get_fcs()
     if fcs is None:
-        return RoomLoadStatus(RoomLoadStatus.NO_KNOWN_FCS), None, smart_type
+        return RoomLoadStatus(RoomLoadStatus.NO_KNOWN_FCS), None
     status_code, front_race = await get_front_race_by_fc(fcs)
     if status_code and hit_lounge_api:
         await ST.SmartLookupTypes(front_race.getFCs(), allowed_types=ST.SmartLookupTypes.PLAYER_LOOKUP_TYPES).lounge_api_update()
-    return status_code, front_race, smart_type
+    return status_code, front_race
 
 
 async def get_races_for_rxx(rxx: str, hit_lounge_api=False) -> Tuple[RoomLoadStatus, str, List[Race]]:
+    '''RETURNS DOES_NOT_EXIST, HAS_NO_RACES, SUCCESS'''
     room_page_soup = await get_room_soup(rxx)
     if room_page_soup is None:
         return RoomLoadStatus(RoomLoadStatus.DOES_NOT_EXIST), rxx, []
@@ -149,6 +152,7 @@ async def get_races_for_rxx(rxx: str, hit_lounge_api=False) -> Tuple[RoomLoadSta
 
 
 async def get_races_by_fcs(fcs: List[str], hit_lounge_api=False) -> Tuple[RoomLoadStatus, Union[None, str], List[Race]]:
+    '''RETURNS DOES_NOT_EXIST, NOT_ON_FRONT_PAGE, HAS_NO_RACES, SUCCESS'''
     status_code, front_page_race = await get_front_race_by_fc(fcs)
     if not status_code:
         return status_code, None, []
@@ -156,22 +160,17 @@ async def get_races_by_fcs(fcs: List[str], hit_lounge_api=False) -> Tuple[RoomLo
     return await get_races_for_rxx(rxx, hit_lounge_api)
 
 
-# load_me can be an FC, or rxx number, or discord name. Order of checking is the following:
-# list of FCs, rxx, FC, Discord name
-# If no FC or discord name can be found on the front page, (None, []) is returned
-# If the FC or discord name or rxx number is found, but the room page has not played any races yet, (rxx, []) is returned
-# Otherwise, if the lookup was successful and there have been races played, (rxx, [Race]) is returned
 @TimerDebuggers.timer_coroutine
-async def get_races_smart(load_me: Union[str, List[str]], hit_lounge_api=False) ->  Tuple[RoomLoadStatus, Union[None, str], List[Race], ST.SmartLookupTypes]:
-    smart_type = ST.SmartLookupTypes(load_me, allowed_types=ST.SmartLookupTypes.ROOM_LOOKUP_TYPES)
+async def get_races_smart(smart_type: ST.SmartLookupTypes, hit_lounge_api=False) ->  Tuple[RoomLoadStatus, Union[None, str], List[Race]]:
+    '''RETURNS DOES_NOT_EXIST, NOT_ON_FRONT_PAGE, HAS_NO_RACES, NO_KNOWN_FCS, SUCCESS'''
     if smart_type.is_rxx():
-        return *await get_races_for_rxx(load_me, hit_lounge_api), smart_type
+        return await get_races_for_rxx(smart_type.modified_original, hit_lounge_api)
     if hit_lounge_api:
         await smart_type.lounge_api_update()
     fcs = smart_type.get_fcs()
     if fcs is None:
-        return RoomLoadStatus(RoomLoadStatus.NO_KNOWN_FCS), None, [], smart_type
-    return *await get_races_by_fcs(fcs, hit_lounge_api), smart_type
+        return RoomLoadStatus(RoomLoadStatus.NO_KNOWN_FCS), None, []
+    return await get_races_by_fcs(fcs, hit_lounge_api)
 
 
 if __name__ == '__main__':

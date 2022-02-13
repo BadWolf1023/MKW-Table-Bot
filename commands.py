@@ -613,32 +613,29 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 - Your {adjective} RTs in Tier 4: `{server_prefix}{args[0]} rt t4`
 - Your {adjective} CTs with at least 10 plays: `{server_prefix}{args[0]} ct min=10`
 """
+        def get_full_error_message(specific_error: str) -> str:
+            return f"**Error:** {specific_error}\n\n{error_message}"
 
         is_ct, rest = StatisticCommands.parse_track_type(command.lower())
         # if is_ct is None:
         #     is_ct = False
         tier, number_of_days, min_count, rest = StatisticCommands.parse_track_args(rest, is_ct)
 
-        specific_error = None
         if is_ct is None:
-            specific_error = "Please specify for **rts** or **cts**."
-
-        if rest:
-            discordIDToLoad = UserDataProcessing.get_DiscordID_By_LoungeName(rest)
-            if not discordIDToLoad:
-                specific_error = f"No FCs found for {UtilityFunctions.process_name(rest)}"
-        else:
-            discordIDToLoad = str(message.author.id)
-
-        if specific_error is not None:
-            full_error_message = f"**Error:** {specific_error}\n\n{error_message}"
-            await message.channel.send(full_error_message)
+            await message.channel.send(get_full_error_message("Please specify for **rts** or **cts**."))
             return
 
-        updateData(*await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
+        if not rest:
+            rest = SmartTypes.create_you_discord_id(message.author.id)
+        smart_type = SmartTypes.SmartLookupTypes(rest, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
+        await smart_type.lounge_api_update()
+        descriptive, pronoun = smart_type.get_clean_smart_print(message)
+        fcs = smart_type.get_fcs()
+        lounge_name = smart_type.get_lounge_name()
 
-        fcs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-        lounge_name = UserDataProcessing.get_lounge(discordIDToLoad)
+        if fcs is None:
+            await message.channel.send(get_full_error_message(f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"))
+            return
 
         if not min_count:
             min_count = StatisticCommands.ct_min_count if is_ct else StatisticCommands.rt_min_count
@@ -804,19 +801,29 @@ class OtherCommands:
 
     @staticmethod
     async def get_flag_command(message:discord.Message, server_prefix:str):
-        author_id = message.author.id
-        flag = UserDataProcessing.get_flag(author_id)
-        if flag is None:
-            await message.channel.send(f"You don't have a flag set. Use {server_prefix}setflag [flag] to set your flag for tables. Flag codes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+        to_load = SmartTypes.create_you_discord_id(message.author.id)
+        args = message.content.split()
+        if len(args) > 1:
+            to_load = " ".join(args[1:])
+        smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
+        await smart_type.lounge_api_update()
+        descriptive, pronoun = smart_type.get_clean_smart_print(message)
+
+        discord_id = smart_type.get_discord_id()
+        if discord_id is None:
+            await message.channel.send(f"Could not find a discord ID for {descriptive}, have {pronoun} verified an FC in Lounge?")
             return
 
-        image_name = ""
+        flag = smart_type.get_country_flag()
+        if flag is None:
+            await message.channel.send(f"{SmartTypes.capitalize(descriptive)} does not have a flag set. To set {SmartTypes.possessive(pronoun)} flag for tables, {descriptive} should use `{server_prefix}setflag flagcode`. Flagcodes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+            return
+
+        image_name = f"{flag}.png"
         if flag.startswith("cl_") and flag.endswith("u"): #Remap this specific flag code to a specific picture
             image_name += 'cl_C3B1u.png'
-        else:
-            image_name += f"{flag}.png"
 
-        embed = discord.Embed(colour = discord.Colour.dark_blue())
+        embed = discord.Embed(title=f"{SmartTypes.capitalize(SmartTypes.possessive(descriptive))} flag", colour = discord.Colour.dark_blue())
         file = discord.File(f"{common.FLAG_IMAGES_PATH}{image_name}", filename=image_name)
         embed.set_thumbnail(url=f"attachment://{image_name}")
         await message.channel.send(file=file, embed=embed)
@@ -872,62 +879,35 @@ class OtherCommands:
 
     @staticmethod
     async def lounge_name_command(message:discord.Message):
-        author_id = message.author.id
-        discordIDToLoad = str(author_id)
-        updateData(* await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad]))
-        lounge_name = UserDataProcessing.get_lounge(author_id)
-        if lounge_name is None:
-            await message.channel.send("You don't have a lounge name. Join Lounge! (If you think this is an error, go on Wiimmfi and try running this command again.)")
-        else:
-            await message.channel.send("Your lounge name is: " + UtilityFunctions.process_name(str(lounge_name)))
+        to_load = SmartTypes.create_you_discord_id(message.author.id)
+        args = message.content.split()
+        if len(args) > 1:
+            to_load = " ".join(args[1:])
+        smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
+        await smart_type.lounge_api_update()
+        lounge_name = smart_type.get_lounge_name()
+        fcs = smart_type.get_fcs()
+        descriptive, pronoun = smart_type.get_clean_smart_print(message)
+        if fcs is None:
+            await message.channel.send(f"Could not a lounge name for {descriptive}, have {pronoun} verified an FC in Lounge?")
+            return
+        await message.channel.send(f"{SmartTypes.possessive(SmartTypes.capitalize(descriptive))} Lounge name is: **{lounge_name}**")
 
 
     @staticmethod
     async def fc_command(message:discord.Message, args:List[str], old_command:str):
-        discordIDToLoad = None
-        id_lounge = {}
-        fc_id = {}
-
-        if len(args) == 1:
-            discordIDToLoad = str(message.author.id)
-            id_lounge, fc_id = await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad])
-        else:
-            if len(message.raw_mentions) > 0:
-                discordIDToLoad = str(message.raw_mentions[0])
-                id_lounge, fc_id = await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad])
-            else:
-                to_find_lounge = " ".join(old_command.split()[1:])
-                id_lounge, fc_id = await LoungeAPIFunctions.getByLoungeNames([to_find_lounge])
-                if id_lounge is not None and len(id_lounge) == 1:
-                    for this_id in id_lounge:
-                        discordIDToLoad = this_id
-                        break
-                if discordIDToLoad is None:
-                    discordIDToLoad = UserDataProcessing.get_DiscordID_By_LoungeName(to_find_lounge)
-
-        updateData(id_lounge, fc_id)
-        FC = None
-        if fc_id is not None and id_lounge is not None: #This would only occur it the API went down...
-            for fc, _id in fc_id.items():
-                if _id == discordIDToLoad:
-                    FC = fc
-                    break
-        if FC is None:
-            FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-            if len(FCs) > 0:
-                FC = FCs[0]
-
-        if FC is None:
-            if len(args) == 1:
-                await message.channel.send("You have not set an FC. (Use Friendbot to add your FC, then try this command later.")
-            elif len(message.raw_mentions) > 0:
-                lookup_name = UtilityFunctions.process_name(str(message.mentions[0].name))
-                await message.channel.send(f"No FC found for {lookup_name}. Try again later.")
-            else:
-                lookup_name = UtilityFunctions.process_name(" ".join(old_command.split()[1:]))
-                await message.channel.send(f"No FC found for {lookup_name}. Try again later.")
-        else:
-            await message.channel.send(FC)
+        to_load = SmartTypes.create_you_discord_id(message.author.id)
+        args = old_command.split()
+        if len(args) > 1:
+            to_load = " ".join(old_command.split()[1:])
+        smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
+        await smart_type.lounge_api_update()
+        fcs = smart_type.get_fcs()
+        if fcs is None:
+            descriptive, pronoun = smart_type.get_clean_smart_print(message)
+            await message.channel.send(f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?")
+            return
+        await message.channel.send(fcs[0])
 
     @staticmethod
     async def mii_command(message:discord.Message, args:List[str], old_command:str):
@@ -936,56 +916,36 @@ class OtherCommands:
             return
         await mkwx_check(message, "Mii command disabled.")
 
+        to_load = SmartTypes.create_you_discord_id(message.author.id)
+        if len(args) > 1:
+            to_load = " ".join(old_command.split()[1:])
+        smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
+        await smart_type.lounge_api_update()
+        fcs = smart_type.get_fcs()
+        descriptive, pronoun = smart_type.get_clean_smart_print(message)
+        if fcs is None:
+            await message.channel.send(f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?")
+            return
 
-        discordIDToLoad = None
-        if len(args) == 1:
-            discordIDToLoad = str(message.author.id)
-        else:
-            if len(message.raw_mentions) > 0:
-                discordIDToLoad = str(message.raw_mentions[0])
-            else:
-                to_find_lounge = " ".join(old_command.split()[1:])
-                discordIDToLoad = UserDataProcessing.get_DiscordID_By_LoungeName(to_find_lounge)
-                if discordIDToLoad is None or discordIDToLoad == "":
-                    discordIDToLoad = to_find_lounge
-
-
-        FC = None
-        if UtilityFunctions.is_fc(discordIDToLoad):
-            FC = discordIDToLoad
-        else:
-            id_lounge, fc_id = await LoungeAPIFunctions.getByDiscordIDs([discordIDToLoad])
-            updateData(id_lounge, fc_id)
-            FCs = UserDataProcessing.get_all_fcs(discordIDToLoad)
-            if len(FCs) > 0:
-                FC = FCs[0]
-
-        if FC is None:
-            if len(args) == 1:
-                await message.channel.send("You have not set an FC. (Use Friendbot to add your FC, then try this command later.")
-            elif len(message.raw_mentions) > 0:
-                lookup_name = UtilityFunctions.process_name(str(message.mentions[0].name))
-                await message.channel.send(f"No FC found for {lookup_name}, so cannot find the mii. Try again later.")
-            else:
-                lookup_name = UtilityFunctions.process_name(' '.join(old_command.split()[1:]))
-                await message.channel.send(f"No FC found for {lookup_name}, so cannot find the mii. Try again later.")
-        else:
-            mii_dict = await MiiPuller.get_miis([FC], str(message.id))
-            if isinstance(mii_dict, str):
-                await message.channel.send(mii_dict)
-            elif mii_dict is None or (isinstance(mii_dict, dict) and FC not in mii_dict):
-                await message.channel.send("There was a problem trying to get the mii. Try again later.")
-            else:
-                mii = mii_dict[FC]
-                if isinstance(mii, str):
-                    await message.channel.send(str)
-                if isinstance(mii, type(None)):
-                    await message.channel.send("There was a problem trying to get the mii. Try again later.")
-                try:
-                    file, embed = mii.get_mii_embed()
-                    await message.channel.send(file=file, embed=embed)
-                finally:
-                    mii.clean_up()
+        FC = fcs[0]
+        mii_dict = await MiiPuller.get_miis([FC], str(message.id))
+        if isinstance(mii_dict, str):
+            await message.channel.send(mii_dict)
+            return
+        if mii_dict is None or (isinstance(mii_dict, dict) and FC not in mii_dict):
+            await message.channel.send("There was a problem trying to get the mii. Try again later.")
+            return
+        mii = mii_dict[FC]
+        if isinstance(mii, str):
+            await message.channel.send(str)
+        if isinstance(mii, type(None)):
+            await message.channel.send("There was a problem trying to get the mii. Try again later.")
+        try:
+            file, embed = mii.get_mii_embed()
+            embed.title = f"{SmartTypes.possessive(SmartTypes.capitalize(descriptive))} mii"
+            await message.channel.send(file=file, embed=embed)
+        finally:
+            mii.clean_up()
 
     @staticmethod
     async def wws_command(client, this_bot:TableBot.ChannelBot, message:discord.Message, ww_type=Race.RT_WW_REGION):
@@ -993,8 +953,7 @@ class OtherCommands:
 
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
-            delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
-            await delete_me.delete(delay=5)
+            await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.", delete_after=5)
             return
 
         this_bot.updateRLCoolDown()
@@ -1026,42 +985,23 @@ class OtherCommands:
         await mkwx_check(message, "VR command disabled.")
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
-            delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
-            await delete_me.delete(delay=5)
+            await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.", delete_after=5)
             return
 
         this_bot.updateRLCoolDown()
         message2 = await message.channel.send("Verifying room...")
         status = False
         front_race = None
-        to_load = SmartTypes.create_you_discord_id(message.author.id) if len(args) == 1 else " ".join(old_command.split()[1:])
-        status, front_race, smart_type = await this_bot.verify_room_smart(to_load)
+        to_load = SmartTypes.create_you_discord_id(message.author.id)
+        if len(args) > 1:
+            to_load = " ".join(old_command.split()[1:])
+        smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
+        status, front_race = await this_bot.verify_room_smart(smart_type)
         if not status:
-            failure_message = "VR Failed"
-            if smart_type.get_type() is smart_type.DISCORD_ID:
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for discord id {smart_type.modified_original}. Has this Discord ID joined Lounge and registered an FC in Lounge?"
-                else:
-                    failure_message = f"Could not find discord id {smart_type.modified_original} in a room."
-            elif smart_type.get_type() is smart_type.SELF_DISCORD_ID:
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for you. Have you joined Lounge and verified an FC in Lounge?"
-                else:
-                    failure_message = f"Could not find you in a room."
-            elif smart_type.get_type() is smart_type.RAW_DISCORD_MENTION:
-                name = UtilityFunctions.process_name(str(message.mentions[0].name)) if len(message.mentions) > 0 else f"discord id {smart_type.modified_original}"
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for {name}. Have they joined Lounge and verified an FC in Lounge?"
-                else:
-                    failure_message = f"Could not find {name} in a room."
-            elif smart_type.get_type() is smart_type.FC:
-                failure_message = f"Could not find the FC {smart_type.modified_original} in a room."
-            else:
-                name = UtilityFunctions.process_name(to_load)
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for {name}. Have they joined Lounge and verified an FC in Lounge?"
-                else:
-                    failure_message = f"Could not find {UtilityFunctions.process_name(to_load)} in a room."
+            descriptive, pronoun = smart_type.get_clean_smart_print(message)
+            failure_message = f"Could not find {descriptive} in a room, {pronoun} don't seem to be playing right now."
+            if status.status is status.NO_KNOWN_FCS:
+                failure_message = f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"
             await message2.edit(failure_message)
             return
 
@@ -1611,7 +1551,7 @@ class TablingCommands:
         server_id = message.guild.id
         channel_id = message.channel.id
         if server_id in table_bots and channel_id in table_bots[server_id]:
-            table_bots[server_id][channel_id].reset(message.guild.id)
+            table_bots[server_id][channel_id].reset()
             del(table_bots[server_id][channel_id])
 
         await message.channel.send("Reset successful.")
@@ -2074,41 +2014,18 @@ class TablingCommands:
         to_load = SmartTypes.create_you_discord_id(message.author.id)
         if len(args) > 3:
             to_load = " ".join(args[3:])
+        smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.ROOM_LOOKUP_TYPES)
 
-        this_bot.reset(server_id)  
         message2 = await message.channel.send("Loading room...")
         this_bot.updateRLCoolDown()
-        status, smart_type = await this_bot.load_table_smart(to_load, war, message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
+        status = await this_bot.load_table_smart(smart_type, war, message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
         if not status:
-            this_bot.unload_table()
-            failure_message = 'Failed to load table.'
+            descriptive, pronoun = smart_type.get_clean_smart_print(message)
+            failure_message = f"Could not find {descriptive} in a room, **did {pronoun} finish the first race?**"
             if smart_type.get_type() is smart_type.RXX:
-                failure_message = "Could not find this rxx number. Is the room over 24 hours old?"
-            elif smart_type.get_type() is smart_type.DISCORD_ID:
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for discord id {smart_type.modified_original}. Has this Discord ID joined Lounge and registered an FC in Lounge?"
-                else:
-                    failure_message = f"The discord id {smart_type.modified_original} is not in a room, **or they haven't finished the first race.**"
-            elif smart_type.get_type() is smart_type.SELF_DISCORD_ID:
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for you. Have you joined Lounge and verified an FC in Lounge?"
-                else:
-                    failure_message = "Could not find you in a room. **Did you finish the first race?**"
-            elif smart_type.get_type() is smart_type.RAW_DISCORD_MENTION:
-                name = UtilityFunctions.process_name(str(message.mentions[0].name)) if len(message.mentions) > 0 else f"discord id {smart_type.modified_original}"
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for {name}. Have they joined Lounge and verified an FC in Lounge?"
-                else:
-                    failure_message = f"Could not find {name} in a room. **Did they finish the first race?**"
-            elif smart_type.get_type() is smart_type.FC:
-                failure_message = f"Could not find the FC {smart_type.modified_original} in a room. **Did they finish the first race?**"
-            else:
-                name = UtilityFunctions.process_name(to_load)
-                if status.status is status.NO_KNOWN_FCS:
-                    failure_message = f"Could not find any FCs for {name}. Have they joined Lounge and verified an FC in Lounge?"
-                else:
-                    failure_message = f"Could not find {name} in a room. **Did they finish the first race?**"
-                
+                f"Could not load the room for {descriptive}, {pronoun} may be more than 24 hours old, or **{pronoun} didn't finish the first race.**"
+            if status.status is status.NO_KNOWN_FCS:
+                failure_message = f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"
             await message2.edit(failure_message)
             return
 
@@ -2165,37 +2082,36 @@ class TablingCommands:
     @TimerDebuggers.timer_coroutine
     async def merge_room_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
-        to_load = ""
-
-        if len(args) < 2:
-            # await message.channel.send("Nothing given to mergeroom. No merges nor changes made.")
-            # return
-            discord_id = str(message.author.id)
-            id_lounge, fc_id = await LoungeAPIFunctions.getByDiscordIDs([discord_id])
-            updateData(id_lounge, fc_id)
-            to_load = UserDataProcessing.get_all_fcs(discord_id)
-        else:
-            to_load = ' '.join(args[1:])
-
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
-            delete_me = await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.")
-            await delete_me.delete(delay=5)
+            await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.", delete_after=5)
             return
         this_bot.updateRLCoolDown()
-        
-        rxx_given = UtilityFunctions.is_rLID(to_load)
+
+        to_load = SmartTypes.create_you_discord_id(message.author.id)
+        if len(args) > 1:
+            # await message.channel.send("Nothing given to mergeroom. No merges nor changes made.")
+            # return
+            to_load = ' '.join(args[1:])
+
+        smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.ROOM_LOOKUP_TYPES)
+        descriptive, pronoun = smart_type.get_clean_smart_print(message)
         if to_load in this_bot.getRoom().rLIDs:
             await message.channel.send(f"The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `{server_prefix}undo`.")
 
-        status, rxx, room_races, smart_type = await WiimmfiSiteFunctions.get_races_smart(to_load, hit_lounge_api=True)
+        
+        status, rxx, room_races = await WiimmfiSiteFunctions.get_races_smart(smart_type, hit_lounge_api=True)
         if not status:
-            await message.channel.send("Merge room failed. More specific error messages will come in the future.")
+            failure_message = f"Could not find {descriptive} in a room. **Make sure the new room has finished the first race before using this command.**"
+            if status.status is status.NO_KNOWN_FCS:
+                failure_message = f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"
+            if smart_type.is_rxx():
+                failure_message = f"Could not load the room for {descriptive}. **Make sure the new room has finished the first race before using this command.**"
+            await message.channel.send(failure_message)
             return
 
-        if not rxx_given and rxx in this_bot.getRoom().rLIDs:
-            await message.channel.send("The room you are currently in is already included in this table. No changes made.")
+        if not smart_type.is_rxx() and rxx in this_bot.getRoom().rLIDs:
+            await message.channel.send(f"The room {descriptive} {SmartTypes.to_be_conjugation(descriptive)} currently in is already included in this table. No changes made.")
             return
 
         this_bot.add_save_state(message.content)
@@ -2204,14 +2120,7 @@ class TablingCommands:
             await message.channel.send(f"Successfully merged with this room: {this_bot.getRoom().getLastRXXString()} | Total number of races played: " + str(len(this_bot.getRoom().races)))
         else:
             this_bot.remove_last_save_state()
-            if success_status is WiimmfiSiteFunctions.RoomLoadStatus.DOES_NOT_EXIST or success_status is WiimmfiSiteFunctions.RoomLoadStatus.HAS_NO_RACES:
-                if len(args) < 2:
-                    return await message.channel.send(f"Could not find you in a room. **Make sure the new room has finished the first race before using this command.**")
-
-                str_addition = " the rxx "
-                await message.channel.send(f"Could not find {str_addition}{UtilityFunctions.process_name(to_load)}. **Make sure the new room has finished the first race before using this command.**")
-            else:
-                await message.channel.send("An unknown error occurred when trying to merge rooms. No changes made.")
+            await message.channel.send("An unknown error occurred when trying to merge rooms. No changes made.")
 
 
     @staticmethod
@@ -2249,10 +2158,6 @@ class TablingCommands:
     @staticmethod
     async def all_players_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
-        players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, len(this_bot.getRoom().races)).items())
-        FC_List = [fc for fc, _ in players]
-        updateData(* await LoungeAPIFunctions.getByFCs(FC_List))
         await message.channel.send(this_bot.getRoom().get_players_list_string())
 
     @staticmethod
@@ -2363,13 +2268,12 @@ class TablingCommands:
             this_bot.getRoom().forceRoomSize(raceNum, roomSize)
             mes = "Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + "."
             if not dont_send: await message.channel.send(mes)
-            return mes + " Make sure to give correct DC points using `?edit`."
+            return mes + " Make sure to give the missing players their DC points by using `?edit`."
 
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
 
-        updateData(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs()))
         if len(args) == 1:
             await message.channel.send(str(this_bot.getRoom().races[-1]))
         else:
@@ -2420,7 +2324,7 @@ class TablingCommands:
         new_room_fcs = set(this_bot.getRoom().getFCPlayerListStartEnd(1, this_bot.getWar().numberOfGPs*4))
         added_fcs = new_room_fcs.difference(old_room_fcs)
         if added_fcs:
-            updateData(* await LoungeAPIFunctions.getByFCs(list(added_fcs)))
+            await SmartTypes.SmartLookupTypes(added_fcs).lounge_api_update()
 
         await message2.edit(content=str(
                                 "Room updated. Room has finished " + \
@@ -2687,14 +2591,6 @@ class TablingCommands:
         else:
             await message.channel.send("Do " + server_prefix + "changeplace to learn how to use this command.")
 
-    @staticmethod
-    async def current_room_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
-        await mkwx_check(message, "Current room command disabled.")
-        ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
-        if len(this_bot.getRoom().races) >= 1:
-            updateData(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs()))
-            await message.channel.send(this_bot.getRoom().races[-1].getPlayersByPlaceInRoomString())
 
     @staticmethod
     async def transfer_table_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool, table_bots, client):
@@ -2857,20 +2753,6 @@ def getNumGPs(args, defaultGPs=3):
                     else:
                         return index, numGPs
     return -1, defaultGPs
-
-valid_suppress_large_time_flags = ["largetime=off", "largetime=no","largetimes=off", "largetimes=no", "sui=yes","sui=on","sui=true", "lgt=no", "lgt=off", "psb=yes", "psb=on", "psb=true", "professionalseriesbagging=yes", "professionalseriesbagging=true"]
-valid_unsuppress_large_time_flags = ["largetime=yes", "largetime=yes","largetimes=on", "largetimes=yes", "sui=no","sui=off","sui=false", "lgt=yes", "lgt=on", "psb=no", "psb=off", "psb=false", "professionalseriesbagging=no", "professionalseriesbagging=false"]
-def getSuppressLargeTimes(args, default_use=False):
-    if len(args) < 4:
-        return -1, default_use
-
-    for index, arg in enumerate(args[3:], 3):
-        if arg.lower().strip() in valid_suppress_large_time_flags:
-            return index, True
-        if arg.lower().strip() in valid_unsuppress_large_time_flags:
-            return index, False
-
-    return -1, default_use
 
 
 valid_mii_flags = ["usemiis=", "usemii=", "miis=", "miinames=", "mii=", "miiname=", 'miiheads=']
