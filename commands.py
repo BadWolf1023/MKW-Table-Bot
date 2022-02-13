@@ -2022,7 +2022,7 @@ class TablingCommands:
             descriptive, pronoun = smart_type.get_clean_smart_print(message)
             failure_message = f"Could not find {descriptive} in a room, **did {pronoun} finish the first race?**"
             if smart_type.get_type() is smart_type.RXX:
-                f"Could not find load the room for {descriptive}, {pronoun} may be more than 24 hours old, or **{pronoun} didn't finish the first race.**"
+                f"Could not load the room for {descriptive}, {pronoun} may be more than 24 hours old, or **{pronoun} didn't finish the first race.**"
             if status.status is status.NO_KNOWN_FCS:
                 failure_message = f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"
             await message2.edit(failure_message)
@@ -2100,8 +2100,13 @@ class TablingCommands:
 
         
         status, rxx, room_races = await WiimmfiSiteFunctions.get_races_smart(smart_type, hit_lounge_api=True)
-        if not status:  # TODO: Add more specific error messages
-            await message.channel.send("Merge room failed. More specific error messages will come in the future.")
+        if not status:
+            failure_message = f"Could not find {descriptive} in a room. **Make sure the new room has finished the first race before using this command.**"
+            if status.status is status.NO_KNOWN_FCS:
+                failure_message = f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"
+            if smart_type.is_rxx():
+                failure_message = f"Could not load the room for {descriptive}. **Make sure the new room has finished the first race before using this command.**"
+            await message.channel.send(failure_message)
             return
 
         if not smart_type.is_rxx() and rxx in this_bot.getRoom().rLIDs:
@@ -2112,15 +2117,8 @@ class TablingCommands:
         success_status = await this_bot.add_room_races(rxx, room_races)
         if success_status:
             await message.channel.send(f"Successfully merged with this room: {this_bot.getRoom().getLastRXXString()} | Total number of races played: " + str(len(this_bot.getRoom().races)))
-            return
-
-        this_bot.remove_last_save_state()
-        if success_status is WiimmfiSiteFunctions.RoomLoadStatus.DOES_NOT_EXIST or success_status is WiimmfiSiteFunctions.RoomLoadStatus.HAS_NO_RACES:
-            to_send = f"Could not find {descriptive} in a room. **Make sure the new room has finished the first race before using this command.**"
-            if smart_type.is_rxx():
-                to_send = f"Could not load the room for {descriptive}. **Make sure the new room has finished the first race before using this command.**"
-            await message.channel.send(to_send)
         else:
+            this_bot.remove_last_save_state()
             await message.channel.send("An unknown error occurred when trying to merge rooms. No changes made.")
 
 
