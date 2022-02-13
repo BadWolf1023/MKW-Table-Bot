@@ -2116,7 +2116,7 @@ class TablingCommands:
 
         this_bot.remove_last_save_state()
         if success_status is WiimmfiSiteFunctions.RoomLoadStatus.DOES_NOT_EXIST or success_status is WiimmfiSiteFunctions.RoomLoadStatus.HAS_NO_RACES:
-            to_send = f"Could not find {descriptive} in a room. **Make sure the new room has finished the first race before using this command.**")
+            to_send = f"Could not find {descriptive} in a room. **Make sure the new room has finished the first race before using this command.**"
             if smart_type.is_rxx():
                 to_send = f"Could not load the room for {descriptive}. **Make sure the new room has finished the first race before using this command.**"
             await message.channel.send(to_send)
@@ -2269,7 +2269,7 @@ class TablingCommands:
             this_bot.getRoom().forceRoomSize(raceNum, roomSize)
             mes = "Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + "."
             if not dont_send: await message.channel.send(mes)
-            return mes + " Make sure to give correct DC points using `?edit`."
+            return mes + " Make sure to give the missing players their DC points by using `?edit`."
 
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2598,14 +2598,6 @@ class TablingCommands:
         else:
             await message.channel.send("Do " + server_prefix + "changeplace to learn how to use this command.")
 
-    @staticmethod
-    async def current_room_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
-        await mkwx_check(message, "Current room command disabled.")
-        ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
-        if len(this_bot.getRoom().races) >= 1:
-            updateData(* await LoungeAPIFunctions.getByFCs(this_bot.getRoom().getFCs()))
-            await message.channel.send(this_bot.getRoom().races[-1].getPlayersByPlaceInRoomString())
 
     @staticmethod
     async def transfer_table_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool, table_bots, client):
