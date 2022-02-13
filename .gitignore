@@ -11,17 +11,16 @@ tablebot_data/*
 room_data.txt
 room_race_data.txt
 AI_data.pkl
-room_data_tracking.db
-data_tracking/*.db
-*/room_data_tracking.db
 team_formats.pkl
-miis/mii_cache/*
 /*.db
 miis/*
 logging/full_logging.txt
 logging/error_logs.txt
 logging/messages_logging.txt
 discord_server_settings/*
+
+#keep ILT setting migration script
+!ILT_migration.py 
 
 #keep description files
 !*/description.txt
