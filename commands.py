@@ -816,7 +816,7 @@ class OtherCommands:
 
         flag = smart_type.get_country_flag()
         if flag is None:
-            await message.channel.send(f"{SmartTypes.capitalize(descriptive)} does not have a flag set. {SmartTypes.capitalize(descriptive)} should use {server_prefix}setflag [flag] to set {SmartTypes.possessive(pronoun)} flag for tables. Flag codes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+            await message.channel.send(f"{SmartTypes.capitalize(descriptive)} does not have a flag set. To set {SmartTypes.possessive(pronoun)} flag for tables, {descriptive} should use `{server_prefix}setflag flagcode`. Flagcodes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
             return
 
         image_name = f"{flag}.png"
@@ -886,8 +886,9 @@ class OtherCommands:
         smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
         await smart_type.lounge_api_update()
         lounge_name = smart_type.get_lounge_name()
+        fcs = smart_type.get_fcs()
         descriptive, pronoun = smart_type.get_clean_smart_print(message)
-        if lounge_name is None:
+        if fcs is None:
             await message.channel.send(f"Could not a lounge name for {descriptive}, have {pronoun} verified an FC in Lounge?")
             return
         await message.channel.send(f"{SmartTypes.possessive(SmartTypes.capitalize(descriptive))} Lounge name is: **{lounge_name}**")
@@ -2110,7 +2111,7 @@ class TablingCommands:
             return
 
         if not smart_type.is_rxx() and rxx in this_bot.getRoom().rLIDs:
-            await message.channel.send(f"The room {descriptive} {SmartTypes.to_be_conjugation(pronoun)} currently in is already included in this table. No changes made.")
+            await message.channel.send(f"The room {descriptive} {SmartTypes.to_be_conjugation(descriptive)} currently in is already included in this table. No changes made.")
             return
 
         this_bot.add_save_state(message.content)

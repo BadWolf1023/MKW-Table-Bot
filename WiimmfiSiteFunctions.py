@@ -131,11 +131,11 @@ async def get_front_race_smart(smart_type: ST.SmartLookupTypes, hit_lounge_api=F
         await smart_type.lounge_api_update()
     fcs = smart_type.get_fcs()
     if fcs is None:
-        return RoomLoadStatus(RoomLoadStatus.NO_KNOWN_FCS), None, smart_type
+        return RoomLoadStatus(RoomLoadStatus.NO_KNOWN_FCS), None
     status_code, front_race = await get_front_race_by_fc(fcs)
     if status_code and hit_lounge_api:
         await ST.SmartLookupTypes(front_race.getFCs(), allowed_types=ST.SmartLookupTypes.PLAYER_LOOKUP_TYPES).lounge_api_update()
-    return status_code, front_race, smart_type
+    return status_code, front_race
 
 
 async def get_races_for_rxx(rxx: str, hit_lounge_api=False) -> Tuple[RoomLoadStatus, str, List[Race]]:
