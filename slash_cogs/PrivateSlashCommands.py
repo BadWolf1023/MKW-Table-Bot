@@ -8,11 +8,13 @@ REQUIRED_PERMISSIONS = [CommandPermission(id,2,True) for id in common.OWNERS]
 
 EMPTY_CHAR = '\u200b'
 
+GUILDS = [common.MKW_TABLE_BOT_CENTRAL_SERVER_ID] if common.is_prod else common.SLASH_GUILDS
+
 class PrivateSlash(ext_commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    admin = SlashCommandGroup("admin", "Configure Table Bot admins", guild_ids=common.SLASH_GUILDS, permissions=REQUIRED_PERMISSIONS)
+    admin = SlashCommandGroup("admin", "Configure Table Bot admins", guild_ids=GUILDS, permissions=REQUIRED_PERMISSIONS)
 
     @admin.command(name="add",
     description="Add a bot admin")
@@ -41,7 +43,7 @@ class PrivateSlash(ext_commands.Cog):
     
     @slash_command(name="logs",
     description="Show Table Bot's logs",
-    guild_ids=common.SLASH_GUILDS, 
+    guild_ids=GUILDS,
     permissions=REQUIRED_PERMISSIONS)
     async def _get_logs(
         self, 
@@ -53,7 +55,7 @@ class PrivateSlash(ext_commands.Cog):
     
     @slash_command(name="garbage_collect",
     description="Table Bot garbage collection",
-    guild_ids=common.SLASH_GUILDS, 
+    guild_ids=GUILDS,
     permissions=REQUIRED_PERMISSIONS)
     async def _garbage_collect(
         self,
@@ -65,7 +67,7 @@ class PrivateSlash(ext_commands.Cog):
     
     @slash_command(name="server_usage",
     description="See statistics about Table Bot's server usage",
-    guild_ids=common.SLASH_GUILDS, 
+    guild_ids=GUILDS,
     permissions=REQUIRED_PERMISSIONS)
     async def _server_usage(
         self,
@@ -77,7 +79,7 @@ class PrivateSlash(ext_commands.Cog):
     
     @slash_command(name='close_bot',
     description="Gracefully close Table Bot and save its data",
-    guild_ids=common.SLASH_GUILDS,
+    guild_ids=GUILDS,
     permissions=REQUIRED_PERMISSIONS)
     async def _close_bot(
         self,

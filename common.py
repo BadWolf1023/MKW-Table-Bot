@@ -37,7 +37,7 @@ SAVED_ROOMS_DIR = "testing_rooms/windows/" if (ON_WINDOWS and not USING_LINUX_PR
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
 
-INVITE_LINK = "https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=274878031936&scope=bot"
+INVITE_LINK = "https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=274878031936&scope=bot%20applications.commands"
 
 SCORE_MATRIX = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -105,7 +105,14 @@ BETA_CATEGORY_IDS = {744842611998588928, 740659739611889765, 895999567894556672}
 SQUAD_QUEUE_CATEGORY_ID = 791199067232272404
 
 MKW_TABLE_BOT_CENTRAL_SERVER_ID = 739733336871665696 #Same as "Bad Wolf's Server", but this is the new name for the server
-SLASH_GUILDS = [MKW_TABLE_BOT_CENTRAL_SERVER_ID] if is_beta else [properties['slash_command_server']]
+
+SLASH_GUILDS = None
+if is_beta:
+    SLASH_GUILDS = [MKW_TABLE_BOT_CENTRAL_SERVER_ID]
+elif (not is_prod) and ('slash_command_server' in properties):
+    SLASH_GUILDS = [properties['slash_command_server']]
+else:
+    SLASH_GUILDS = None
 
 needPermissionCommands = set()
 
@@ -291,6 +298,8 @@ botAdmins = set()
 
 #Abuse tracking
 BOT_ABUSE_REPORT_CHANNEL_ID = 766272946091851776
+ERROR_LOGS_CHANNEL_ID = 942264377984315442
+ERROR_LOGS_CHANNEL = None
 CLOUD_FLARE_REPORT_CHANNEL_ID = 888551356238020618
 SPAM_THRESHOLD = 13
 WARN_THRESHOLD = 13
@@ -385,6 +394,9 @@ def log_error(text):
     return log_text(text, logging_type=ERROR_LOGGING_TYPE)
 
 def log_traceback(traceback):
+    if is_prod or is_beta:
+        asyncio.create_task(ERROR_LOGS_CHANNEL.send(f"```\n{traceback.format_exc()}\n```"))
+
     with open(ERROR_LOGS_FILE, "a+", encoding="utf-8") as f:
         f.write(f"\n{str(datetime.now())}: \n")
         traceback.print_exc(file=f)
