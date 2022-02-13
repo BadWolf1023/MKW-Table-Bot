@@ -2769,20 +2769,6 @@ def getNumGPs(args, defaultGPs=3):
                         return index, numGPs
     return -1, defaultGPs
 
-valid_suppress_large_time_flags = ["largetime=off", "largetime=no","largetimes=off", "largetimes=no", "sui=yes","sui=on","sui=true", "lgt=no", "lgt=off", "psb=yes", "psb=on", "psb=true", "professionalseriesbagging=yes", "professionalseriesbagging=true"]
-valid_unsuppress_large_time_flags = ["largetime=yes", "largetime=yes","largetimes=on", "largetimes=yes", "sui=no","sui=off","sui=false", "lgt=yes", "lgt=on", "psb=no", "psb=off", "psb=false", "professionalseriesbagging=no", "professionalseriesbagging=false"]
-def getSuppressLargeTimes(args, default_use=False):
-    if len(args) < 4:
-        return -1, default_use
-
-    for index, arg in enumerate(args[3:], 3):
-        if arg.lower().strip() in valid_suppress_large_time_flags:
-            return index, True
-        if arg.lower().strip() in valid_unsuppress_large_time_flags:
-            return index, False
-
-    return -1, default_use
-
 
 valid_mii_flags = ["usemiis=", "usemii=", "miis=", "miinames=", "mii=", "miiname=", 'miiheads=']
 def getUseMiis(args, default_use=False, default_start_arg=1):
