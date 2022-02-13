@@ -236,7 +236,7 @@ ANDREW_ID = 267395889423712258
 
 TABLEBOT_SERVER_INVITE_CODE = "K937DqM"
 
-OWNERS = {BAD_WOLF_ID,CW_ID,ANDREW_ID} if is_dev else {BAD_WOLF_ID,ANDREW_ID}
+OWNERS = {BAD_WOLF_ID,CW_ID,ANDREW_ID} if is_prod else {BAD_WOLF_ID,ANDREW_ID}
 
 #Lounge stuff
 MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=1&event_data="

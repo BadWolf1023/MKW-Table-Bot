@@ -72,7 +72,6 @@ class ChannelBot(object):
     def is_table_loaded(self) -> bool:
         return self.room is not None and self.war is not None
         
-
     def get_race_size(self):
         return self.race_size
     def get_room(self):

@@ -6,6 +6,66 @@ import UtilityFunctions
 import asyncio
 import TimerDebuggers
 
+class ManualTeamsModal(discord.ui.Modal):
+    def __init__(self, bot, prefix, is_lounge, view):
+        super().__init__(title="Manual Teams Input")
+        self.bot = bot
+        self.prefix = prefix
+        self.is_lounge = is_lounge
+        self.view = view
+        self.add_item(discord.ui.InputText(style=discord.InputTextStyle.singleline, label='Input', placeholder="Input teams here"))
+
+    async def callback(self, interaction: discord.Interaction):
+        message = InteractionUtils.create_proxy_msg(interaction)
+        message.content = self.children[0].value
+        await self.view.message.edit(view=None)
+        await interaction.response.send_message('Manual teams created.')
+        await commands.TablingCommands.manual_war_setup(message, self.bot, self.prefix, self.is_lounge, message.content)
+        
+
+class InputTeamsButton(discord.ui.Button['ManualTeamsView']):
+    def __init__(self):
+        super().__init__(style=discord.ButtonStyle.primary, label="Input Teams", row=1)
+    
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(ManualTeamsModal(self.view.bot, self.view.prefix, self.view.is_lounge, self.view))
+
+class ManualTeamsView(discord.ui.View):
+    def __init__(self, bot, prefix, is_lounge):
+        super().__init__()
+        self.bot = bot
+        self.prefix = prefix
+        self.is_lounge = is_lounge
+        self.message = None
+        self.add_item(InputTeamsButton())
+    
+    async def delete(self, interaction: discord.Interaction):
+        self.clear_items()
+        self.stop()
+        await interaction.response.edit_message(view=None)
+        
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'confirm_interaction')
+        if not allowed: 
+            await interaction.response.send_message("You cannot interact with this button.", ephemeral=True)
+            return False
+        if not self.bot.manualWarSetUp:
+            await self.delete(interaction)
+            await interaction.followup.send("Manual teams have already been entered.", ephemeral=True)
+            return False
+        return allowed
+    
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        await InteractionUtils.on_component_error(error, interaction, self.prefix)
+    
+    async def send(self, messageable, content=None, embed=None, file=None):
+        if hasattr(messageable, 'channel'):
+            messageable = messageable.channel
+
+        self.message = await messageable.send(content=content, embed=embed, file=file, view=self)
+
+################################################################################################
+
 class ConfirmButton(discord.ui.Button['ConfirmView']):
     def __init__(self, cat):
         self.cat = cat

@@ -223,9 +223,9 @@ def get_prefix(bot,msg: discord.Message) -> str:
     
     return ext_commands.when_mentioned_or(prefix)(bot, msg)
 
-class BadWolfBot(ext_commands.Bot):
+class BadWolfBot(discord.Bot):
     def __init__(self):
-        super().__init__(command_prefix=get_prefix,case_insensitive=True,help_command=None)
+        super().__init__(description="MKW Table Bot", debug_guilds=common.SLASH_GUILDS)
         self.table_bots = dict()
         self.lounge_submissions = lounge_submissions
         self.user_flag_exceptions = set()

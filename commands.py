@@ -2147,8 +2147,8 @@ class TablingCommands:
         this_bot.manualWarSetUp = False
         if args[0].lower().strip() in ['no', 'n']:
             this_bot.manualWarSetUp = True
-            await message.channel.send(f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{server_prefix}A 2 3 / B 1 4 / Player 5 6*")
-            return
+            view = Components.ManualTeamsView(this_bot, server_prefix, is_lounge_server)
+            return await view.send(message, content=f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{server_prefix}A 2 3 / B 1 4 / Player 5 6*")
 
         numGPS = this_bot.getWar().numberOfGPs
         players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())

@@ -19,8 +19,6 @@ class AdminSlash(ext_commands.Cog):
 
     @sha.command(name="add",
     description="Add a SHA-track mapping",
-    permissions=REQUIRED_PERMISSIONS,
-    guild_ids=common.SLASH_GUILDS
     )
     async def _add_sha(
         self,
@@ -34,9 +32,8 @@ class AdminSlash(ext_commands.Cog):
         await commands.BotAdminCommands.add_sha_track(message, args, message.content)
 
     @sha.command(name="remove",
-    description="Remove a SHA-track mapping",
-    permissions=REQUIRED_PERMISSIONS,
-    guild_ids=common.SLASH_GUILDS)
+    description="Remove a SHA-track mapping"
+    )
     async def _remove_sha(
         self,
         ctx: discord.ApplicationContext,
@@ -48,13 +45,11 @@ class AdminSlash(ext_commands.Cog):
         await commands.BotAdminCommands.remove_sha_track(message, args)
     
     blacklist = SlashCommandGroup("blacklist", "Configure Table Bot's blacklists", guild_ids=common.SLASH_GUILDS, permissions=REQUIRED_PERMISSIONS)
-    blacklist_user = blacklist.create_subgroup("user", "Configure Table Bot's blacklisted users", guild_ids=common.SLASH_GUILDS)
-    blacklist_word = blacklist.create_subgroup("word", "Configure Table Bot's blacklisted words", guild_ids=common.SLASH_GUILDS)
+    blacklist_user = blacklist.create_subgroup("user", "Configure Table Bot's blacklisted users")
+    blacklist_word = blacklist.create_subgroup("word", "Configure Table Bot's blacklisted words")
 
     @blacklist_user.command(name="add",
-    description="Blacklist a user from using Table Bot",
-    permissions=REQUIRED_PERMISSIONS,
-    guild_ids=common.SLASH_GUILDS)
+    description="Blacklist a user from using Table Bot")
     async def _add_user_blacklist(
         self,
         ctx: discord.ApplicationContext,
@@ -67,9 +62,8 @@ class AdminSlash(ext_commands.Cog):
         await commands.BotAdminCommands.blacklist_user_command(message, args, command)
     
     @blacklist_user.command(name="remove",
-    description="Remove a user from Table Bot's blacklisted users",
-    permissions=REQUIRED_PERMISSIONS,
-    guild_ids=common.SLASH_GUILDS)
+    description="Remove a user from Table Bot's blacklisted users"
+    )
     async def _remove_user_blacklist(
         self,
         ctx: discord.ApplicationContext,
@@ -82,8 +76,7 @@ class AdminSlash(ext_commands.Cog):
 
     @blacklist_word.command(name="add",
     description="Blacklist a word from being used with Table Bot",
-    permissions=REQUIRED_PERMISSIONS,
-    guild_ids=common.SLASH_GUILDS)
+    )
     async def _add_word_blacklist(
         self, 
         ctx: discord.ApplicationContext,
@@ -96,8 +89,7 @@ class AdminSlash(ext_commands.Cog):
     
     @blacklist_word.command(name="remove",
     description="Remove a blacklisted word",
-    permissions=REQUIRED_PERMISSIONS,
-    guild_ids=common.SLASH_GUILDS)
+    )
     async def _remove_word_blacklist(
         self, 
         ctx: discord.ApplicationContext,

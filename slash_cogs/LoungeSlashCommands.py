@@ -3,11 +3,83 @@ from discord.commands import slash_command, Option, CommandPermission, SlashComm
 from discord.ext import commands as ext_commands
 import commands
 import common
+import InteractionUtils
 
 REQUIRED_PERMISSIONS = [CommandPermission(role, 2, True, common.MKW_LOUNGE_SERVER_ID) for role in list(common.reporter_plus_roles)] #+ [CommandPermission(common.properties["admin_id"], 2, True)]
 GUILDS = [common.MKW_LOUNGE_SERVER_ID] if common.is_prod else common.SLASH_GUILDS
 EMPTY_CHAR = "\u200b"
 
+class TableTextModal(discord.ui.Modal):
+    update_commands = {
+        'rt': commands.LoungeCommands.rt_mogi_update,
+        'ct': commands.LoungeCommands.ct_mogi_update
+    }
+    def __init__(self, bot, chan_bot, prefix, is_lounge, view):
+        super().__init__(title="Table Text Input")
+        self.bot = bot
+        self.chan_bot = chan_bot
+        self.prefix = prefix
+        self.is_lounge = is_lounge
+        self.view = view
+        self.add_item(discord.ui.InputText(style=discord.InputTextStyle.singleline, label='Table text', placeholder="Input table text here"))
+
+    async def callback(self, interaction: discord.Interaction):
+        message = self.view.proxy_msg
+        message.content += '\n' + self.children[0].value
+        self.view.args.append(self.children[0].value)
+        await self.view.message.edit(view=None)
+        await self.update_commands[self.type](self.bot, self.chan_bot, message, self.view.args, self.bot.lounge_submissions)
+
+class TableTextButton(discord.ui.Button['TableTextView']):
+    def __init__(self):
+        super().__init__(style=discord.ButtonStyle.primary, label="Input Table Text", row=1)
+    
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(TableTextModal(self.view.bot, self.view.chan_bot, self.view.prefix, self.view.is_lounge, self.view))
+
+class TableTextView(discord.ui.View):
+    def __init__(self, bot, chan_bot, prefix, is_lounge, ctx, message, args):
+        super().__init__()
+        self.bot = bot
+        self.chan_bot = chan_bot
+        self.prefix = prefix
+        self.is_lounge = is_lounge
+        self.author = ctx.author
+        self.args = args
+        self.ctx = ctx
+        self.proxy_msg = message
+        self.message = None
+        self.add_item(TableTextButton())
+    
+    async def delete(self, interaction: discord.Interaction):
+        self.clear_items()
+        self.stop()
+        await interaction.response.edit_message(view=None)
+        
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'confirm_interaction')
+        if not allowed: 
+            await interaction.response.send_message("You cannot interact with this button.", ephemeral=True)
+            return False
+        # if not self.chan_bot:
+        #     await self.delete(interaction)
+        #     await interaction.followup.send("Manual teams have already been entered.", ephemeral=True)
+        #     return False
+        if not interaction.user == self.author:
+            await interaction.response.send_message(f"You can't use this button: in use by {self.author.mention}.", ephemeral=True)
+            return False
+        return allowed
+    
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        await InteractionUtils.on_component_error(error, interaction, self.prefix)
+    
+    async def send(self, messageable, content=None, embed=None, file=None):
+        if hasattr(messageable, 'channel'):
+            messageable = messageable.channel
+
+        self.message = await messageable.send(content=content, embed=embed, file=file, view=self)
+
+        
 class LoungeSlash(ext_commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -21,16 +93,17 @@ class LoungeSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         tier: Option(str, "Tier of event", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'squadqueue']),
         races_played: Option(int, "Number of races played in event"),
-        # table_text: Option(str, "Table text for manual submissions", required=False, default=None)
+        table_text: Option(bool, "Whether you're including table text for a manual submission", required=False, default=None)
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, tier, str(races_played)]
-        # if table_text: args.append(table_text)
+        # await message.channel.send(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting table text by slash commands at the present. Use `@{self.bot.user.name} rtupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use table texts with this slash command.")
 
-        # 
-        await message.channel.send(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting table text by slash commands at the present. Use `@{self.bot.user.name} rtupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use table texts with this slash command.")
-
-        await commands.LoungeCommands.rt_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
+        if not table_text:
+            return await commands.LoungeCommands.rt_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
+        
+        view = TableTextView(self.bot, this_bot, server_prefix, is_lounge, ctx, message, args)
+        await view.send(message, content="Copy your table text from `/tt` before clicking this button.")
         
     @update.command(name='ct',
     description="Submit a CT table to updaters. NO TABLE TEXT SUBMISSIONS")
@@ -39,15 +112,17 @@ class LoungeSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         tier: Option(str, "Tier of event", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'squadqueue']),
         races_played: Option(int, "Number of races played in event"),
-        # table_text: Option(str, "Table text for manual submissions", required=False, default=None)
+        table_text: Option(bool, "Whether you're including table text for a manual submission", required=False, default=None)
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, tier, str(races_played)]
-        # if table_text: args.append(table_text)
+        # await message.channel.send(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting table text by slash commands at the present. Use `@{self.bot.user.name} ctupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use table texts with this slash command.")
 
-        await message.channel.send(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting table text by slash commands at the present. Use `@{self.bot.user.name} ctupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use table texts with this slash command.")
+        if not table_text:
+            return await commands.LoungeCommands.ct_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
 
-        await commands.LoungeCommands.ct_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
+        view = TableTextView(self.bot, this_bot, server_prefix, is_lounge, ctx, message, args)
+        await view.send(message, content="Copy your table text from `/tt` before clicking this button.")
     
     @slash_command(name="approve",
     description="Approve a lounge submission",
