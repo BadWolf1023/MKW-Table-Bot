@@ -91,7 +91,6 @@ RACES_TERMS = {"races"}
 RXX_TERMS = {"rxx", "rlid"}
 ALL_PLAYERS_TERMS = {"allplayers", "ap"}
 FCS_TERMS = {"fcs"}
-CURRENT_ROOM_TERMS = {"currentroom"}
 TRANSFER_TABLE_TERMS = {"transferfrom", "copyfrom", "transfer", "copy", "copytable", "transfertable", "movetable", "move"}
 GET_SUBSTITUTIONS_TERMS = {"subs", "substitutes", "substitutions", "getsubs", "allsubs"}
 INTERACTIONS = {'wp_interaction', 'confirm_interaction'}
@@ -188,7 +187,7 @@ switch_status = True
 lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.MKW_LOUNGE_SERVER_ID, common.main_lounge_can_report_table)
 
 if common.in_testing_server:
-    common.MKW_LOUNGE_SERVER_ID = common.BAD_WOLF_SERVER_ID
+    #common.MKW_LOUNGE_SERVER_ID = common.BAD_WOLF_SERVER_ID
     MogiUpdate.rt_summary_channels.clear()
     MogiUpdate.rt_summary_channels.update({"1":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID})
     MogiUpdate.ct_summary_channels.clear()
@@ -697,9 +696,6 @@ class BadWolfBot(ext_commands.Bot):
         
         elif args[0] in GET_SUBSTITUTIONS_TERMS:
             await commands.TablingCommands.get_subs_command(message, this_bot, server_prefix, is_lounge_server)
-            
-        elif args[0] in CURRENT_ROOM_TERMS:
-            await commands.TablingCommands.current_room_command(message, this_bot, server_prefix, is_lounge_server)
         
         elif args[0] in TRANSFER_TABLE_TERMS:
             await commands.TablingCommands.transfer_table_command(message, this_bot, args, server_prefix, is_lounge_server, self.table_bots, self)
