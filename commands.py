@@ -921,8 +921,8 @@ class OtherCommands:
         smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
         await smart_type.lounge_api_update()
         fcs = smart_type.get_fcs()
+        descriptive, pronoun = smart_type.get_clean_smart_print(message)
         if fcs is None:
-            descriptive, pronoun = smart_type.get_clean_smart_print(message)
             await message.channel.send(f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?")
             return
 
