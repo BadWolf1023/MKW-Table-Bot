@@ -2579,7 +2579,9 @@ class TablingCommands:
         else:
             this_bot.manualWarSetUp = False
             this_bot.getWar().setTeams(fc_tag)
-            await message.channel.send(this_bot.get_room_started_message())
+            view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+            await view.send(message, this_bot.get_room_started_message())
+            TableBot.last_wp_message[this_bot.channel_id] = view.message
 
     @staticmethod
     async def remove_race_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
