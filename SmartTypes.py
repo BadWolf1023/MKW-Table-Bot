@@ -182,5 +182,48 @@ class SmartLookupTypes:
                     break
         return UtilityFunctions.process_name(descriptive), pronoun
 
+def to_be_conjugation(pronoun: str):
+    conjugations = {"i": "am",
+                    "I": "am",
+                    "you": "are",
+                    "You": "are",
+                    "we": "are",
+                    "We": "are",
+                    "Y'all": "are",
+                    "y'all": "are",
+                    "you all": "are",
+                    "You all": "are",
+                    "They": "are",
+                    "they": "are"}
+    if pronoun in conjugations:
+        return conjugations[pronoun]
+    if pronoun.lower() in conjugations:
+        return conjugations[pronoun.lower()]
+    return "is"
+
+def possessive(name: str):
+    possessive_forms = {"i": "my",
+                        "I": "My",
+                        "you": "your",
+                        "You": "Your",
+                        "we": "our",
+                        "We": "Our",
+                        "Y'all": "Y'all's",
+                        "y'all": "y'all's",
+                        "you all": "you all's",
+                        "You all": "You all's",
+                        "They": "Their",
+                        "they": "their"}
+    if name in possessive_forms:
+        return possessive_forms[name]
+    if name.lower() in possessive_forms:
+        return possessive[name.lower()]
+    return f"{name}'" if name.lower().endswith('s') else f"{name}'s"
+    
+def capitalize(name: str):
+    if len(name) == 0:
+        return name
+    return name[0].upper() + name[1:]
+
 def create_you_discord_id(discord_id):
     return ("you", str(discord_id))

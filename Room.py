@@ -575,7 +575,7 @@ class Room(object):
         self.update_mii_hexes()
 
     @TimerDebuggers.timer_coroutine
-    async def update(self):
+    async def update(self) -> WiimmfiSiteFunctions.RoomLoadStatus:
         all_races = []
         status_codes = []
         for rxx in self.rLIDs:
