@@ -1,6 +1,5 @@
 '''
 Created on Oct 29, 2021
-
 @author: willg
 '''
 PLAYER_TABLE_NAMES = ["fc", "pid", "player_url"]
@@ -89,15 +88,12 @@ WHERE {PLACE_TABLE_NAMES[0]} = ? AND {PLACE_TABLE_NAMES[1]} = ? AND {PLACE_TABLE
 def get_insert_into_race_table_script():
     return f"""INSERT INTO Race {build_data_names(RACE_TABLE_NAMES)}
 VALUES{build_sql_args_list(RACE_TABLE_NAMES)}"""
-
 def get_insert_into_player_table_script():
     return f"""INSERT INTO Player {build_data_names(PLAYER_TABLE_NAMES)}
 VALUES{build_sql_args_list(PLAYER_TABLE_NAMES)}"""
-
 def get_insert_into_track_table_script():
     return f"""INSERT INTO Track {build_data_names(TRACK_TABLE_NAMES)}
 VALUES{build_sql_args_list(TRACK_TABLE_NAMES)}"""
-
 def get_insert_into_place_table_script():
     return f"""INSERT INTO Place {build_data_names(PLACE_TABLE_NAMES)}
 VALUES{build_sql_args_list(PLACE_TABLE_NAMES)}"""

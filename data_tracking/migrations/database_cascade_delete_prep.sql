@@ -132,6 +132,7 @@ CREATE TABLE Event_Structure(
     forced_room_size JSON NOT NULL,
     player_penalties JSON NOT NULL,
     team_penalties JSON NOT NULL,
+    manual_dc_placements JSON NOT NULL,
     disconnections_on_results JSON NOT NULL,
     sub_ins JSON NOT NULL,
     teams JSON NOT NULL,

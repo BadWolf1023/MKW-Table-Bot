@@ -8,5 +8,4 @@ race_migration.sql
 event_migration.sql
 
 
-
 After the database has been successfully migrated, the above files should be deleted and this file should be deleted to avoid any issues with "migrating" multiple times

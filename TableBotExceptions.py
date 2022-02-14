@@ -62,11 +62,20 @@ class InvalidWarFormatException(WarSetupFailure):
 class InvalidNumberOfPlayersException(WarSetupFailure):
     pass
 
+class InvalidNumPlayersInputException(WarSetupFailure):
+    pass
+
 class WarSetupStillRunning(WarSetupFailure):
+    pass
+
+class TableNotLoaded(Exception):
     pass
 
 
 class CommandDisabled(Exception):
+    pass
+
+class CommandNotFound(Exception):
     pass
 
 class WiimmfiSiteFailure(Exception):

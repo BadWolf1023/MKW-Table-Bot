@@ -10,32 +10,36 @@ from datetime import datetime, timedelta, timezone
 import numpy as np
 import aiohttp
 import TableBotExceptions
-from collections import namedtuple
+from collections import namedtuple,defaultdict
 import discord
 from pathlib import Path
 import ssl
 import certifi
 import dill
-
+import TimerDebuggers
 
 sslcontext = ssl.create_default_context(cafile=certifi.where())
 
 version = "12.0.0" #Final release from Bad Wolf, stabilizing various things and releasing beta commands
 
+client:discord.Bot = None
+
 PROPERTIES_FILE = f"properties.json"
-properties = json.load(open(PROPERTIES_FILE)) if os.path.exists(PROPERTIES_FILE) else {}
+properties = json.load(open(PROPERTIES_FILE)) if os.path.exists(PROPERTIES_FILE) else {"mode": 'dev'}
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
+USING_LINUX_PROXY = "mkwx_proxy_url" in properties
 ON_WINDOWS = os.name == 'nt'
-HREF_HTML_NAME = 'href' if ON_WINDOWS else 'data-href'
-TOOLTIP_NAME = "data-tooltip" if ON_WINDOWS else "title"
-SAVED_ROOMS_DIR = "testing_rooms/windows/" if ON_WINDOWS else "testing_rooms/linux/"
+
+HREF_HTML_NAME = 'data-href' if (USING_LINUX_PROXY or not ON_WINDOWS) else 'href'
+TOOLTIP_NAME = "title" if (USING_LINUX_PROXY or not ON_WINDOWS) else "data-tooltip"
+SAVED_ROOMS_DIR = "testing_rooms/windows/" if (ON_WINDOWS and not USING_LINUX_PROXY) else "testing_rooms/linux/"
 
 default_prefix = "?"
 MAX_PREFIX_LENGTH = 3
 
-INVITE_LINK = "https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=274878031936&scope=bot"
+INVITE_LINK = "https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=274878031936&scope=bot%20applications.commands"
 
 SCORE_MATRIX = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -102,14 +106,25 @@ LIMITED_SERVER_IDS = None
 BETA_CATEGORY_IDS = {744842611998588928, 740659739611889765, 895999567894556672}
 SQUAD_QUEUE_CATEGORY_ID = 791199067232272404
 
-current_notification = ""
+MKW_TABLE_BOT_CENTRAL_SERVER_ID = 739733336871665696 #Same as "Bad Wolf's Server", but this is the new name for the server
 
+SLASH_GUILDS = None
+if is_beta:
+    SLASH_GUILDS = [MKW_TABLE_BOT_CENTRAL_SERVER_ID]
+elif (not is_prod) and ('slash_command_server' in properties):
+    SLASH_GUILDS = [properties['slash_command_server']]
+else:
+    SLASH_GUILDS = None
+
+needPermissionCommands = set()
+
+current_notification = ""
 
 #TableBot variables, for ChannelBots
 inactivity_time_period = timedelta(hours=2, minutes=30)
 lounge_inactivity_time_period = timedelta(minutes=8)
 inactivity_unlock = timedelta(minutes=30)
-wp_cooldown_seconds = 15
+wp_cooldown_seconds = 13
 mkwx_page_cooldown_seconds = 5
 
 #Mii folder location information
@@ -144,7 +159,6 @@ ROOM_DATA_TRACKING_DATABASE_MAINTENANCE_SQL = f"{DATA_TRACKING_PATH}database_mai
 
 LOUNGE_ID_COUNTER_FILE = f"{DATA_PATH}lounge_counter.pkl"
 LOUNGE_TABLE_UPDATES_FILE = f"{DATA_PATH}lounge_table_update_ids.pkl"
-BAD_WOLF_FACT_FILE = f"{DATA_PATH}bad_wolf_facts.pkl"
 CTGP_REGION_FILE = f"{DATA_PATH}CTGP_Region_File.pkl"
 BADWOLF_PICTURE_FILE = f'{DATA_PATH}BadWolf.jpg'
 
@@ -157,7 +171,6 @@ FLAG_EXCEPTION_FILE = f"{DATA_PATH}flag_exceptions.txt"
 
 PRIVATE_INFO_FILE = f'{DATA_PATH}private.txt'
 STATS_FILE = f"{DATA_PATH}stats.txt"
-ROOM_DATA_TRACKER_FILE = f"{DATA_PATH}all_room_data.pkl"
 SHA_TRACK_NAMES_FILE = f"{DATA_PATH}sha_track_names.pkl"
 
 TABLE_BOT_PKL_FILE = f'{DATA_PATH}tablebots.pkl'
@@ -179,7 +192,6 @@ FULL_LOGGING_FILE_NAME = "full_logging"
 FULL_MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}/{FULL_LOGGING_FILE_NAME}.txt"
 
 WHO_IS_LIMIT = 100
-
 
 DEFAULT_LARGE_TIME_FILE = f"{SERVER_SETTINGS_PATH}server_large_time_defaults.txt"
 DEFAULT_PREFIX_FILE = f"{SERVER_SETTINGS_PATH}server_prefixes.txt"
@@ -203,7 +215,6 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    DEFAULT_TABLE_THEME_FILE_NAME,
                    DEFAULT_GRAPH_FILE,
                    DEFAULT_MII_FILE,
-                   BAD_WOLF_FACT_FILE,
                    BLACKLISTED_USERS_FILE,
                    BLACKLISTED_WORDS_FILE,
                    BOT_ADMINS_FILE,
@@ -217,7 +228,6 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    STATS_FILE,
                    TABLE_BOT_PKL_FILE,
                    VR_IS_ON_FILE,
-                   ROOM_DATA_TRACKER_FILE,
                    SHA_TRACK_NAMES_FILE,
                    ROOM_DATA_TRACKING_DATABASE_FILE
                    }
@@ -233,6 +243,9 @@ BAD_WOLF_ID = 706120725882470460
 CW_ID = 366774710186278914
 ANDREW_ID = 267395889423712258
 
+TABLEBOT_SERVER_INVITE_CODE = "K937DqM"
+
+OWNERS = {BAD_WOLF_ID,CW_ID,ANDREW_ID} if is_dev else {BAD_WOLF_ID,ANDREW_ID}
 
 #Lounge stuff
 MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=1&event_data="
@@ -258,13 +271,14 @@ BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID = 863238405269749760
 
 #Rather than using the builtin set declaration {}, I did an iterable because BadWolfBot.py kept giving an error in Eclipse, even though everything ran fine - this seems to have suppressed the error which was giving me major OCD
 mkw_lounge_staff_roles = set([387347888935534593, #Boss
-                              792805904047276032, #CT Admin
+                            #   792805904047276032, #CT Admin
                               399382503825211393, #HT RT Arb
                               399384750923579392, #LT RT Arb
                               521149807994208295, #HT CT Arb
                               792891432301625364, #LT CT Arb
                               521154917675827221, #Developer Access
-                              BAD_WOLF_SERVER_ADMIN_ID]) #Admin in test server
+                            ])
+                            #   BAD_WOLF_SERVER_ADMIN_ID]) #Admin in test server
 
 reporter_plus_roles = set([393600567781621761, #RT Updater
                               520808645252874240, #CT Updater
@@ -286,6 +300,8 @@ botAdmins = set()
 
 #Abuse tracking
 BOT_ABUSE_REPORT_CHANNEL_ID = 766272946091851776
+ERROR_LOGS_CHANNEL_ID = 942264377984315442
+ERROR_LOGS_CHANNEL = None
 CLOUD_FLARE_REPORT_CHANNEL_ID = 888551356238020618
 SPAM_THRESHOLD = 13
 WARN_THRESHOLD = 13
@@ -328,33 +344,94 @@ TESTING_SERVER_LOUNGE_UPDATES = LoungeUpdateChannels(
     preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
     type_text_secondary="CT")
 
-lounge_channel_mappings = {MKW_LOUNGE_SERVER_ID:LoungeUpdateChannels(
-    updater_channel_id_primary=MKW_LOUNGE_RT_UPDATER_CHANNEL,
-    updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
-    preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
-    type_text_primary="RT",
-    updater_channel_id_secondary=MKW_LOUNGE_CT_UPDATER_CHANNEL,
-    updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
-    preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
-    type_text_secondary="CT"),
-    
+lounge_channel_mappings = {
+    MKW_LOUNGE_SERVER_ID:LoungeUpdateChannels(
+            updater_channel_id_primary=MKW_LOUNGE_RT_UPDATER_CHANNEL,
+            updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
+            preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
+            type_text_primary="RT",
+            updater_channel_id_secondary=MKW_LOUNGE_CT_UPDATER_CHANNEL,
+            updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
+            preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
+            type_text_secondary="CT"
+        ),
     BAD_WOLF_SERVER_ID:LoungeUpdateChannels(
-    updater_channel_id_primary=BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID,
-    updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
-    preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
-    type_text_primary="RT",
-    updater_channel_id_secondary=BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID,
-    updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
-    preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
-    type_text_secondary="CT")
+            updater_channel_id_primary=BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID,
+            updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
+            preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
+            type_text_primary="RT",
+            updater_channel_id_secondary=BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID,
+            updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
+            preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
+            type_text_secondary="CT"
+        )
     }
 
+# dict of channel IDs to tier numbers
+RXX_LOCKER_NAME = "rxx_locker"
+RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS = {
+    843981870751678484: 8,
+    836652527432499260: 7,
+    747290199242965062: 6,
+    747290182096650332: 5,
+    873721400056238160: 5,
+    747290167391551509: 4,
+    801620685826818078: 4,
+    747290151016857622: 3,
+    801620818965954580: 3,
+    805860420224942080: 3,
+    747290132675166330: 2,
+    754104414335139940: 2,
+    801630085823725568: 2,
+    747289647003992078: 1,
+    747544598968270868: 1,
+    781249043623182406: 1,
+}
+
+if is_dev or is_beta:
+    RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.update({
+        822574993362649128: 1,
+        929927137492889631: 1 # beta-dev-only
+    })
+
+CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS = {
+    875532532383363072: 7,
+    850520560424714240: 6,
+    801625226064166922: 5,
+    747290436275535913: 4,
+    879429019546812466: 4,
+    747290415404810250: 3,
+    747290383297282156: 2,
+    823014979279519774: 2,
+    747290363433320539: 1,
+    871442059599429632: 1
+}
+
+RT_REVERSE_TIER_MAPPINGS = defaultdict(set)
+CT_REVERSE_TIER_MAPPINGS = defaultdict(set)
+
+for k,v in RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
+    RT_REVERSE_TIER_MAPPINGS[v].add(k)
+for k,v in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
+    CT_REVERSE_TIER_MAPPINGS[v].add(k)
+
+TABLE_BOT_CHANNEL_TIER_MAPPINGS = {"rt": RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS, "ct": CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS}
+
+def get_channel_type_and_tier(channel_id, races):
+    if client.get_channel(channel_id).category_id == SQUAD_QUEUE_CATEGORY_ID:
+        if races[0].is_ct:
+            return "ct", "SQ"
+        else:
+            return "rt", "SQ"
+
+    if channel_id in RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
+        return "rt", RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[channel_id]
+    if channel_id in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
+        return "ct", CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[channel_id]
+    return None, None
 
 def is_bad_wolf(author):
-    if is_dev or is_beta:
-        return author.id in {BAD_WOLF_ID, CW_ID, ANDREW_ID}
-    else:
-        return author.id in {BAD_WOLF_ID, ANDREW_ID}
+    return author.id in OWNERS
 
 def is_bot_admin(author):
     return str(author.id) in botAdmins or is_bad_wolf(author)
@@ -381,6 +458,9 @@ def log_error(text):
     return log_text(text, logging_type=ERROR_LOGGING_TYPE)
 
 def log_traceback(traceback):
+    if is_prod or is_beta:
+        asyncio.create_task(ERROR_LOGS_CHANNEL.send(f"```\n{traceback.format_exc()}\n```"))
+
     with open(ERROR_LOGS_FILE, "a+", encoding="utf-8") as f:
         f.write(f"\n{str(datetime.now())}: \n")
         traceback.print_exc(file=f)
@@ -404,28 +484,27 @@ def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
         except:
             pass
     return text
-        
+
+image_downloader_session = aiohttp.ClientSession()
+@TimerDebuggers.timer_coroutine
 async def download_image(image_url, image_path):
+    global image_downloader_session
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(image_url, ssl=sslcontext) as resp:
-                if resp.status == 200:
-                    with open(image_path, mode='wb+') as f:
-                        f.write(await resp.read())
-                        return True
+        async with image_downloader_session.get(image_url, ssl=sslcontext) as resp:
+            if resp.status == 200:
+                with open(image_path, mode='wb+') as f:
+                    f.write(await resp.read())
+                    return True
     except:
-        pass
+        await image_downloader_session.close()
+        image_downloader_session = aiohttp.ClientSession()
     return False
-
-
-
-
 
 
 async def safe_send_missing_permissions(message:discord.Message, delete_after=None):
     try:
         await message.channel.send("I'm missing permissions. Contact your admins.", delete_after=delete_after)
-    except discord.errors.Forbidden: #We can't send messages
+    except discord.Forbidden: #We can't send messages
         pass
     
 async def safe_send_file(message:discord.Message, content):
@@ -453,7 +532,7 @@ async def safe_send(message:discord.Message, content=None, embed=None, delete_af
 
     try:
         await message.channel.send(content=content, embed=embed, delete_after=delete_after)
-    except discord.errors.Forbidden: #Missing permissions
+    except discord.Forbidden: #Missing permissions
         await safe_send_missing_permissions(message, delete_after=10)
 
   
@@ -466,7 +545,7 @@ def run_async_function_no_loop(function_to_call):
 async def safe_delete(message):
     try:
         await message.delete()
-    except discord.errors.NotFound:
+    except discord.NotFound:
         pass
 
 def read_sql_file(file_name):

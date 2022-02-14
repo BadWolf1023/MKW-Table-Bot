@@ -6,7 +6,7 @@ import discord
 from pathlib import Path
 import re
 from datetime import datetime, timezone
-
+from discord.ext import commands as ext_commands
     
         
 def get_blw():
@@ -99,7 +99,6 @@ def addBotAdmin(admin_id:str):
         return False
     else:
         common.botAdminsFileIsOpen = True
-        #If it's not in the blacklisted words, then add it
         if admin_id not in common.botAdmins:            
             with open(common.BOT_ADMINS_FILE, "a", encoding="utf-8", errors="replace") as f:
                 f.write(admin_id + "\n")
@@ -115,11 +114,9 @@ def removeBotAdmin(admin_id:str):
         return False
     else:
         common.botAdminsFileIsOpen = True
-        #If it's in the blacklisted words, we need to remove it
         if admin_id in common.botAdmins:
             common.check_create(common.BOT_ADMINS_FILE)
 
-            #Next, let's add all of the fc and lounge names to the file and dictionary
             temp_file_name = f"{common.BOT_ADMINS_FILE}_temp"
             with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.BOT_ADMINS_FILE, "r", encoding="utf-8", errors="replace") as original:
                 for line in original:
@@ -140,6 +137,9 @@ def isfloat(value):
         return True
     except ValueError:
         return False
+
+def is_float(value):
+    return isfloat(value)
     
 def isint(value):
     try:
@@ -147,6 +147,21 @@ def isint(value):
         return True
     except:
         return False
+
+def is_int(value):
+    return isint(value)
+
+
+def place_to_str(place):
+    append = "th"
+    if place%10 == 1 and place!=11:
+        append = "st"
+    elif place%10 == 2 and place!=12:
+        append = "nd"
+    elif place%10 == 3 and place!=13:
+        append = "rd"
+    
+    return f"{place}{append}"
 
 #Takes a list of strings and concatenates them until a new concatenation would push it over the limit given
 #Separator is what will separate each concatenation
@@ -164,12 +179,36 @@ def chunk_join(str_items:List[str], limit=2047, separator="\n"):
             to_return[-1] = to_return[-1] + separator + item
     return to_return
 
-def string_chunks(string, n):
+def string_chunks(string: str, n: int):
+    '''
+    Splits a string into a list of strings of len(n)
+    
+    Useful for making sure that messages sent through Discord will not exceed the 2048 character limit (set `n=2048` and loop through the list to send them one by one)
+    '''
     for i in range(0, len(string), n):
         yield string[i: i+n]
+
+def get_max_teams(warFormat:str):
+    warFormat = convert_to_warFormat(warFormat)
+    if warFormat == 'ffa': return 12
+    numTeams = int(warFormat[0])
+
+    return int(12/numTeams)
+
+def convert_to_warFormat(warFormat: str):
+    warFormat = warFormat.lower()
+    format_map = {1: 'ffa', 2: '2v2', 3: '3v3', 4: '4v4', 5: '5v5', 6: '6v6'}
+    if warFormat in {'ffa', '2v2', '3v3', '4v4', '5v5', '6v6'}:
+        return warFormat
     
-async def safe_send_file(message:discord.Message, content):
-    file_name = str(message.id) + ".txt"
+    try:
+        warFormat = int(warFormat[0])
+        return format_map[warFormat]
+    except:
+        return warFormat
+
+async def safe_send_file(ctx: ext_commands.Context, content):
+    file_name = str(ctx.message.id) + ".txt"
     Path('./attachments').mkdir(parents=True, exist_ok=True)
     file_path = "./attachments/" + file_name
     with open(file_path, "w", encoding="utf-8") as f:
@@ -177,7 +216,7 @@ async def safe_send_file(message:discord.Message, content):
         
     txt_file = discord.File(file_path, filename=file_name)
     try:
-        await message.channel.send(file=txt_file)
+        await ctx.send(file=txt_file)
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -214,9 +253,15 @@ def is_rLID(roomID):
 
 def is_fc(fc):
     return re.match("^[0-9]{4}[-][0-9]{4}[-][0-9]{4}(-2)?$", fc.strip()) is not None
+
+def is_discord_mention(discord_mention_str):
+    return re.match("^<@(!)?\d{7,20}>$", discord_mention_str.strip()) is not None
+
+
     
 def initialize():
     common.botAdmins.clear()
     common.botAdmins.update(readBotAdminsFile())
     common.blackListedWords.clear()
     common.blackListedWords.update(readBlackListedWordsFile())
+

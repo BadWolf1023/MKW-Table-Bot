@@ -1,9 +1,9 @@
 '''
 Created on Jul 13, 2020
-
 @author: willg
 '''
 
+import itertools
 import ErrorChecker
 from collections import defaultdict
 import random
@@ -27,10 +27,6 @@ tableColorPairs = [("#244f96", "#cce7e8"),
 
 
 
-
-
-
-
 class War(object):
     '''
     classdocs
@@ -38,9 +34,9 @@ class War(object):
 
     __formatMapping = {u"ffa":1,u"1v1":1, u"2v2":2, u"3v3":3, u"4v4":4, u"5v5":5, u"6v6":6}
 
-    def __init__(self, formatt, numberOfTeams, message_id, numberOfGPs=3, missingRacePts=3, ignoreLargeTimes=False, displayMiis=True):
+    def __init__(self,format,numberOfTeams,message_id,numberOfGPs=3,missingRacePts=3,ignoreLargeTimes=False,displayMiis=True):
         self.teamColors = None
-        self.setWarFormat(formatt, numberOfTeams)
+        self.setWarFormat(format,numberOfTeams)
         self.numberOfGPs = numberOfGPs
         self.warName = None
         self.missingRacePts = missingRacePts
@@ -71,7 +67,7 @@ class War(object):
         try: 
             int(numberOfTeams)
         except ValueError:
-            raise TableBotExceptions.InvalidNumberOfPlayersException()
+            raise TableBotExceptions.InvalidNumPlayersInputException()
         
         if self.__formatMapping[formatting.lower().strip()] * int(numberOfTeams) > 12:
             raise TableBotExceptions.InvalidNumberOfPlayersException()
@@ -198,15 +194,43 @@ class War(object):
     
     def get_num_players(self):
         return self.numberOfTeams*self.playersPerTeam
-            
 
-    def get_war_errors_string_2(self, room, replaceLounge=True, up_to_race=None):
-        errors = ErrorChecker.get_war_errors_players(self, room, replaceLounge, ignoreLargeTimes=self.ignoreLargeTimes)
+    def clear_resolved_errors(self, errors, resolved):
+        def error_priority(err_type):
+            return ['tie', 'missing_player', 'blank_player', 'gp_missing_1', 'large_time', 'gp_missing'].index(err_type)
+
+        errors = [[k,v] for k, v in errors.items() if len(v)>0]
+
+        for race_indx in range(len(errors)-1, -1, -1):
+            race_errors = errors[race_indx][1]
+            for err_indx in range(len(race_errors)-1, -1, -1):
+                err = race_errors[err_indx]
+                err['race'] = errors[race_indx][0]
+                players = err['player_fc'] if 'player_fc' in err else 'player_fcs'
+                err['id'] = err['type'] + str(players) + str(err['race'])
+                if err['id'] in resolved:
+                    race_errors.pop(err_indx)
+            if len(race_errors) == 0: 
+                errors.pop(race_indx)
+            else:
+                errors[race_indx][1] = sorted(race_errors, key=lambda l: error_priority(l['type']), reverse=True)
+
+        errors = sorted(errors, key=lambda l: l[0])
+        errors = list(itertools.chain.from_iterable([race[1] for race in errors]))
+        return errors
+
+
+    def get_war_errors_string_2(self, room, resolved_errors, replaceLounge=True, up_to_race=None):
+        error_types = defaultdict(list)
+
+        errors = ErrorChecker.get_war_errors_players(self, room, error_types, replaceLounge, ignoreLargeTimes=self.ignoreLargeTimes)
         if errors is None:
-            return "Room not loaded."
+            return "Room not loaded.", None
+
+        error_types = self.clear_resolved_errors(error_types, resolved_errors)
         
-        errors_no_large_times = ErrorChecker.get_war_errors_players(self, room, replaceLounge, ignoreLargeTimes=True)
-        errors_large_times = ErrorChecker.get_war_errors_players(self, room, replaceLounge, ignoreLargeTimes=False)
+        errors_no_large_times = ErrorChecker.get_war_errors_players(self, room, defaultdict(list), replaceLounge, ignoreLargeTimes=True)
+        errors_large_times = ErrorChecker.get_war_errors_players(self, room, defaultdict(list), replaceLounge, ignoreLargeTimes=False)
         num_errors_no_large_times = sum( [ len(raceErrors) for raceErrors in errors_no_large_times.values()])
         num_errors_large_times = sum( [ len(raceErrors) for raceErrors in errors_large_times.values()])
 
@@ -223,7 +247,7 @@ class War(object):
             errors = {k: v for (k, v) in errors.items() if k<=up_to_race}
 
         elif len(errors) == 0 and len(info_string) == 0:
-            return "Room had no errors. Table should be correct."
+            return "Room had no errors. Table should be correct.", None
         
         build_string += info_string
 
@@ -235,11 +259,10 @@ class War(object):
             
             for error_message in error_messages:
                 build_string += "\t- " + error_message + "\n"
-        return build_string
+        return build_string, error_types
     
     def get_all_war_errors_players(self, room, lounge_replace=True):
-        return ErrorChecker.get_war_errors_players(self, room, lounge_replace, ignoreLargeTimes=False)
-    
+        return ErrorChecker.get_war_errors_players(self, room, defaultdict(list), lounge_replace, ignoreLargeTimes=False)
 
     def setWarName(self, warName):
         self.warName = warName
@@ -257,12 +280,13 @@ class War(object):
             war_string += "FFA"
             war_string += " (" + str(numRaces) + " races)"
             return war_string
-        for teamTag in set(self.teams.values()):
-            war_string += teamTag + " vs "
-        if len(war_string) > 0:
-            war_string = war_string[:-4]
+        # for teamTag in set(self.teams.values()):
+        #     war_string += teamTag + " vs "
+        # if len(war_string) > 0:
+        #     war_string = war_string[:-4]
+        war_string += ' vs '.join(set(self.teams.values()))
         
-        war_string += ": " + self.formatting
+        war_string = self.formatting + ": " + war_string
         war_string += " (" + str(numRaces) + " races)"
         return war_string
     
@@ -291,7 +315,9 @@ class War(object):
     def restore_save_state(self, save_state):
         for save_attr, save_value in save_state.items():
             self.__dict__[save_attr] = save_value
+
+    def is_5v5(self):
+        return self.numberOfTeams == 2 and self.playersPerTeam == 5
     
         
             
-        
