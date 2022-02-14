@@ -2066,7 +2066,7 @@ class TablingCommands:
             this_bot.manualWarSetUp = True
             # view = Components.ManualTeamsView(this_bot, server_prefix, is_lounge_server)
             # return await view.send(message, content=f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{server_prefix}A 2 3 / B 1 4 / Player 5 6*")
-            await message.channel.send(f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{server_prefix}A 2 3 / B 1 4 / Player 5 6*")
+            return await message.channel.send(f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  `@MKW Table Bot A 2 3 / B 1 4 / Player 5 6` (**you must use my bot mention as the prefix or the `/raw` slash command**)")
 
         numGPS = this_bot.getWar().numberOfGPs
         players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
