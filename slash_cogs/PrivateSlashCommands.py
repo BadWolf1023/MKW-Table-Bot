@@ -53,7 +53,7 @@ class PrivateSlash(ext_commands.Cog):
         
         await commands.BadWolfCommands.get_logs_command(message)
     
-    @slash_command(name="garbage_collect",
+    @slash_command(name="garbagecollect",
     description="Table Bot garbage collection",
     guild_ids=GUILDS,
     permissions=REQUIRED_PERMISSIONS)
@@ -65,7 +65,7 @@ class PrivateSlash(ext_commands.Cog):
         
         await commands.BadWolfCommands.garbage_collect_command(message)
     
-    @slash_command(name="server_usage",
+    @slash_command(name="serverusage",
     description="See statistics about Table Bot's server usage",
     guild_ids=GUILDS,
     permissions=REQUIRED_PERMISSIONS)
@@ -77,7 +77,7 @@ class PrivateSlash(ext_commands.Cog):
         
         await commands.BadWolfCommands.server_process_memory_command(message)
     
-    @slash_command(name='close_bot',
+    @slash_command(name='closebot',
     description="Gracefully close Table Bot and save its data",
     guild_ids=GUILDS,
     permissions=REQUIRED_PERMISSIONS)

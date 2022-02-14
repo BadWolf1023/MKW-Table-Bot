@@ -176,7 +176,7 @@ ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | I
 SLASH_EXTENSIONS = [
     'slash_cogs.TablingSlashCommands', 
     'slash_cogs.AdminSlashCommands', 
-    # 'slash_cogs.PrivateSlashCommands', 
+    'slash_cogs.PrivateSlashCommands',
     'slash_cogs.LoungeSlashCommands', 
     'slash_cogs.MiscSlashCommands',
     'slash_cogs.StatisticsSlashCommands'
@@ -609,6 +609,9 @@ class BadWolfBot(discord.Bot):
             await common.safe_send(message,
                                    "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
             raise
+        except asyncio.exceptions.TimeoutError:
+            await common.safe_send(message,
+                                   "A HTTP request timed out. Please wait a few seconds until trying again.")
         except TableBotExceptions.WiimmfiSiteFailure:
             logging_info = log_command_sent(message,extra_text="Error info: MKWX inaccessible, other error.")
             await common.safe_send(message,
@@ -1117,6 +1120,8 @@ if __name__ == "__main__":
     initialize()
     bot = BadWolfBot()
     after_init()
+
+    common.client = bot
 
     if common.is_dev:
         bot.run(testing_bot_key)

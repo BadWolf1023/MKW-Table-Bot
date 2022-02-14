@@ -316,7 +316,7 @@ class War(object):
         for save_attr, save_value in save_state.items():
             self.__dict__[save_attr] = save_value
 
-    def is_clan_war(self):
+    def is_5v5(self):
         return self.numberOfTeams == 2 and self.playersPerTeam == 5
     
         

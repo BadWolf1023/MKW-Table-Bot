@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 import numpy as np
 import aiohttp
 import TableBotExceptions
-from collections import namedtuple
+from collections import namedtuple,defaultdict
 import discord
 from pathlib import Path
 import ssl
@@ -21,6 +21,8 @@ import TimerDebuggers
 sslcontext = ssl.create_default_context(cafile=certifi.where())
 
 version = "12.0.0" #Final release from Bad Wolf, stabilizing various things and releasing beta commands
+
+client:discord.Bot = None
 
 PROPERTIES_FILE = f"properties.json"
 properties = json.load(open(PROPERTIES_FILE)) if os.path.exists(PROPERTIES_FILE) else {"mode": 'dev'}
@@ -365,6 +367,68 @@ lounge_channel_mappings = {
         )
     }
 
+# dict of channel IDs to tier numbers
+RXX_LOCKER_NAME = "rxx_locker"
+RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS = {
+    843981870751678484: 8,
+    836652527432499260: 7,
+    747290199242965062: 6,
+    747290182096650332: 5,
+    873721400056238160: 5,
+    747290167391551509: 4,
+    801620685826818078: 4,
+    747290151016857622: 3,
+    801620818965954580: 3,
+    805860420224942080: 3,
+    747290132675166330: 2,
+    754104414335139940: 2,
+    801630085823725568: 2,
+    747289647003992078: 1,
+    747544598968270868: 1,
+    781249043623182406: 1,
+}
+
+if is_dev or is_beta:
+    RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.update({
+        822574993362649128: 1,
+        929927137492889631: 1 # beta-dev-only
+    })
+
+CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS = {
+    875532532383363072: 7,
+    850520560424714240: 6,
+    801625226064166922: 5,
+    747290436275535913: 4,
+    879429019546812466: 4,
+    747290415404810250: 3,
+    747290383297282156: 2,
+    823014979279519774: 2,
+    747290363433320539: 1,
+    871442059599429632: 1
+}
+
+RT_REVERSE_TIER_MAPPINGS = defaultdict(set)
+CT_REVERSE_TIER_MAPPINGS = defaultdict(set)
+
+for k,v in RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
+    RT_REVERSE_TIER_MAPPINGS[v].add(k)
+for k,v in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
+    CT_REVERSE_TIER_MAPPINGS[v].add(k)
+
+TABLE_BOT_CHANNEL_TIER_MAPPINGS = {"rt": RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS, "ct": CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS}
+
+def get_channel_type_and_tier(channel_id, races):
+    if client.get_channel(channel_id).category_id == SQUAD_QUEUE_CATEGORY_ID:
+        if races[0].is_ct:
+            return "ct", "SQ"
+        else:
+            return "rt", "SQ"
+
+    if channel_id in RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
+        return "rt", RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[channel_id]
+    if channel_id in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS:
+        return "ct", CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[channel_id]
+    return None, None
 
 def is_bad_wolf(author):
     return author.id in OWNERS

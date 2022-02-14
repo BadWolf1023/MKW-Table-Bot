@@ -1018,10 +1018,11 @@ class OtherCommands:
             lounge_name = UserDataProcessing.lounge_get(FC)
             if lounge_name == "":
                 lounge_name = "UNKNOWN"
-            rows.append([f'{placement.get_player().get_position()}.', lounge_name, mii_name, FC])
+            rows.append([f'{placement.get_player().get_position()}Ø', lounge_name, mii_name, FC])
             # str_msg += "{:>4} {:<13}| {:<13}| {:<1}\n".format(str(place)+".",lounge_name, mii_name, FC)
         
         str_msg += tabulate(tabular_data=rows, headers=header, tablefmt="simple", colalign=["left"], stralign="left")
+        str_msg = str_msg.replace("Ø", ".") # Single periods don't show up since tabulate treats it like a number column and auto formats it
 
         if last_match_str is not None:
             #go get races from room
@@ -2412,18 +2413,22 @@ class TablingCommands:
                 @TimerDebuggers.timer_coroutine
                 async def pic_view_func(this_bot, server_prefix, is_lounge_server):
                     pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+
+                    # Lounge submission button
+                    if not this_bot.has_been_lounge_submitted and len(this_bot.room.races) == 12 and message.channel.guild.id == common.MKW_LOUNGE_SERVER_ID:
+                        type, tier = common.get_channel_type_and_tier(this_bot.channel_id, this_bot.room.races)
+                        if type and tier:
+                            pic_view.add_item(Components.SubmitButton(this_bot, type, tier, len(this_bot.room.races)))
+
                     await pic_view.send(message, file=file, embed=embed)
                     TableBot.last_wp_message[this_bot.channel_id] = pic_view.message
 
                 await pic_view_func(this_bot, server_prefix, is_lounge_server)
 
                 if error_types and len(error_types)>0:
-                    not_large_time_error_types = [x for x in error_types if x['type'] != 'large_time']
-                    num_large_time_errors = len(error_types)-len(not_large_time_error_types)
-
                     # don't display large time suggestions if it's a 5v5 war
-                    if this_bot.war.is_clan_war() and not this_bot.war.ignoreLargeTimes and num_large_time_errors > 2:
-                        error_types = not_large_time_error_types
+                    if this_bot.war.is_5v5():
+                        error_types = [x for x in error_types if x['type'] != 'large_time']
 
                     if len(error_types) != 0:
                         sug_view = Components.SuggestionView(error_types, this_bot, server_prefix, is_lounge_server)

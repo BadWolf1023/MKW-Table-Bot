@@ -39,52 +39,6 @@ class SQLTypeWrong(SQLDataBad):
 class SQLFormatWrong(SQLDataBad):
     pass
 
-#dict of channel IDs to tier numbers
-RT_NAME = "rt"
-CT_NAME = "ct"
-RXX_LOCKER_NAME = "rxx_locker"
-RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS = {
-    843981870751678484:8,
-    836652527432499260:7,
-    747290199242965062:6,
-    747290182096650332:5,
-    873721400056238160:5,
-    747290167391551509:4,
-    801620685826818078:4,
-    747290151016857622:3,
-    801620818965954580:3,
-    805860420224942080:3,
-    747290132675166330:2,
-    754104414335139940:2,
-    801630085823725568:2,
-    747289647003992078:1,
-    747544598968270868:1,
-    781249043623182406:1
-    }
-
-CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS = {
-    875532532383363072:7,
-    850520560424714240:6,
-    801625226064166922:5,
-    747290436275535913:4,
-    879429019546812466:4,
-    747290415404810250:3,
-    747290383297282156:2,
-    823014979279519774:2,
-    747290363433320539:1,
-    871442059599429632:1
-    }
-
-RT_REVERSE_TIER_MAPPINGS = defaultdict(set)
-CT_REVERSE_TIER_MAPPINGS = defaultdict(set)
-
-for k,v in RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
-    RT_REVERSE_TIER_MAPPINGS[v].add(k)
-for k,v in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
-    CT_REVERSE_TIER_MAPPINGS[v].add(k)
-    
-TABLE_BOT_CHANNEL_TIER_MAPPINGS = {RT_NAME:RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS, CT_NAME:CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS}
-
 # aiosqlite.Cursor is a async generator (not a regular generator) so list(cursor) does not work
 class ConnectionWrapper():
     def __init__(self, connection):
@@ -656,7 +610,7 @@ class RoomTrackerSQL(object):
                 json.dumps(self.channel_bot.getRoom().getForcedRoomSize()),
                 json.dumps(self.channel_bot.getRoom().getPlayerPenalties()),
                 json.dumps(self.channel_bot.getWar().getTeamPenalities()),
-                json.dumps(self.channel_bot.getRoom().get_manual_dc_placements()),
+                # json.dumps(self.channel_bot.getRoom().get_manual_dc_placements()),
                 json.dumps(self.channel_bot.getRoom().get_dc_statuses()),
                 json.dumps(self.channel_bot.getRoom().get_subs()),
                 json.dumps(self.channel_bot.getWar().get_teams()),
@@ -695,7 +649,7 @@ class RoomTracker(object):
         added_event_ids = await sql_helper.insert_missing_event(was_real_update=(len(added_event_ids_race_ids) > 0))
         added_event_fcs = await sql_helper.insert_missing_event_fcs_and_miis()
         added_event_fcs_miis = await sql_helper.update_missing_miis_in_event_fcs()
-        # event_structure_data_dump_event_id = await sql_helper.dump_event_structure_data()
+        event_structure_data_dump_event_id = await sql_helper.dump_event_structure_data()
 
         if DEBUGGING_SQL:
             print(f"Added players: {added_players}")
@@ -708,7 +662,7 @@ class RoomTracker(object):
             print(f"Added event ids: {added_event_ids}")
             print(f"Added event_id, fc's: {added_event_fcs}")
             print(f"Added miis for event fcs: {added_event_fcs_miis}")
-            # print(f"Event ids updated for event structure: {event_structure_data_dump_event_id}")
+            print(f"Event ids updated for event structure: {event_structure_data_dump_event_id}")
     
     @staticmethod
     @TimerDebuggers.timer_coroutine

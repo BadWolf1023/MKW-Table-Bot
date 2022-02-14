@@ -70,6 +70,7 @@ class ChannelBot(object):
         self.server_id = server_id
         self.channel_id = channel_id
         self.race_size = 4
+        self.has_been_lounge_submitted = False
 
     def is_table_loaded(self) -> bool:
         return self.room is not None and self.war is not None
@@ -538,6 +539,7 @@ class ChannelBot(object):
         self.should_send_mii_notification = True
         self.set_style_and_graph(self.server_id)
         self.race_size = 4
+        self.has_been_lounge_submitted = False
 
         
         
