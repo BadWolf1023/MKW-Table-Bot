@@ -29,9 +29,9 @@ class TableTextModal(discord.ui.Modal):
     async def callback(self, interaction: discord.Interaction):
         message = self.view.proxy_msg
         message.content += '\n' + self.children[0].value
-        self.view.args.append(self.children[0].value)
-        print(message.content, self.view.args)
-        response = await interaction.response.send_message("Table text processed.")
+        # self.view.args.append(self.children[0].value)
+        # print(message.content, self.view.args)
+        response = await interaction.response.send_message("Table text submitted.")
         try:
             await self.update_commands[self.view.type](self.bot, self.chan_bot, message, self.view.args, self.bot.lounge_submissions)
         except Exception as error:
@@ -74,7 +74,7 @@ class TableTextView(discord.ui.View):
         await self.message.edit(view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'confirm_interaction')
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.chan_bot, 'confirm_interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot interact with this button.", ephemeral=True)
             return False

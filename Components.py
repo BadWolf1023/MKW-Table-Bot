@@ -176,7 +176,7 @@ class SubmitButton(discord.ui.Button['SubmitButton']):
 
     @TimerDebuggers.timer_coroutine
     async def callback(self, interaction: discord.Interaction):
-        if self.channel_bot.has_been_lounge_submitted:
+        if not self.channel_bot.has_been_lounge_submitted:
             self.channel_bot.has_been_lounge_submitted = True
 
             args = [f'{self.rt_ct}update', str(self.tier), str(self.num_races)]
@@ -185,11 +185,17 @@ class SubmitButton(discord.ui.Button['SubmitButton']):
             self.view.children.remove(self)
             await self.view.message.edit(view=self.view)
 
-            if self.rt_ct.lower() == 'ct':
-                await commands.LoungeCommands.ct_mogi_update(common.client,self.channel_bot,msg,args,common.client.lounge_submissions)
-            else:
-                await commands.LoungeCommands.rt_mogi_update(common.client,self.channel_bot,msg,args,common.client.lounge_submissions)
+            async def submit_table():
+                try:
+                    if self.rt_ct.lower() == 'ct':
+                        await commands.LoungeCommands.ct_mogi_update(common.client,self.channel_bot,msg,args,common.client.lounge_submissions)
+                    else:
+                        await commands.LoungeCommands.rt_mogi_update(common.client,self.channel_bot,msg,args,common.client.lounge_submissions)
+                except Exception as e:
+                    await InteractionUtils.handle_component_exception(e, msg, self.view.prefix)
 
+            asyncio.create_task(submit_table())
+            return
 class PictureView(discord.ui.View):
     def __init__(self, bot, prefix, is_lounge_server):
         super().__init__(timeout=60*10)
@@ -225,6 +231,8 @@ class PictureView(discord.ui.View):
         self = None
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        if error.text == 'Unknown interaction':
+            return
         await InteractionUtils.on_component_error(error, interaction, self.prefix)
 
     async def send(self, messageable, content=None, file=None, embed=None):
