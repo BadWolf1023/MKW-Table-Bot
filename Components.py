@@ -207,7 +207,7 @@ class PictureView(discord.ui.View):
         self.add_item(PictureButton(self.bot))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'wp')
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'wp_interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
             return False
