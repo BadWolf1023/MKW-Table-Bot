@@ -177,6 +177,7 @@ class PictureView(discord.ui.View):
         allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'wp')
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
+            return False
 
         cooldown = self.bot.getWPCooldownSeconds()
         cooldown_active = cooldown > 0
