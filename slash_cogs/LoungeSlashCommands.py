@@ -29,12 +29,13 @@ class TableTextModal(discord.ui.Modal):
     async def callback(self, interaction: discord.Interaction):
         message = self.view.proxy_msg
         message.content += '\n' + self.children[0].value
-        self.view.args.append(self.children[0].value)
-        response = await interaction.response.send_message("Table text processed.")
+        # self.view.args.append(self.children[0].value)
+        # print(message.content, self.view.args)
+        response = await interaction.response.send_message("Table text submitted.")
         try:
             await self.update_commands[self.view.type](self.bot, self.chan_bot, message, self.view.args, self.bot.lounge_submissions)
         except Exception as error:
-            await response.edit_original_message(content="An error occurred while processing table text.")
+            await response.edit_original_message(content="An error occurred while submitting table text.")
             await InteractionUtils.on_component_error(error, interaction, self.prefix)
         await self.view.message.edit(view=None)
 

@@ -5,6 +5,8 @@ import InteractionUtils
 import UtilityFunctions
 import asyncio
 import TimerDebuggers
+import common
+
 
 class ManualTeamsModal(discord.ui.Modal):
     def __init__(self, bot, prefix, is_lounge, view):
@@ -163,6 +165,37 @@ class PictureButton(discord.ui.Button['PictureView']):
         await commands.TablingCommands.war_picture_command(msg,self.view.bot,['wp'],self.view.prefix,self.view.is_lounge,
                                                            requester=interaction.user.display_name)
 
+class SubmitButton(discord.ui.Button['SubmitButton']):
+    def __init__(self,channel_bot: TableBot.ChannelBot, rt_ct:str, tier:str ,num_races:int):
+        super().__init__(style=discord.ButtonStyle.danger, label=f"Submit to {rt_ct.upper()} "
+                                                                 f"{'T' if tier != 'SQ' else ''}{tier}", row=0)
+        self.tier = tier
+        self.channel_bot = channel_bot
+        self.rt_ct = rt_ct
+        self.num_races = num_races
+
+    @TimerDebuggers.timer_coroutine
+    async def callback(self, interaction: discord.Interaction):
+        if not self.channel_bot.has_been_lounge_submitted:
+            self.channel_bot.has_been_lounge_submitted = True
+
+            args = [f'{self.rt_ct}update', str(self.tier), str(self.num_races)]
+            msg = InteractionUtils.create_proxy_msg(interaction, args)
+
+            self.view.children.remove(self)
+            await self.view.message.edit(view=self.view)
+
+            async def submit_table():
+                try:
+                    if self.rt_ct.lower() == 'ct':
+                        await commands.LoungeCommands.ct_mogi_update(common.client,self.channel_bot,msg,args,common.client.lounge_submissions)
+                    else:
+                        await commands.LoungeCommands.rt_mogi_update(common.client,self.channel_bot,msg,args,common.client.lounge_submissions)
+                except Exception as e:
+                    await InteractionUtils.handle_component_exception(e, msg, self.view.prefix)
+
+            asyncio.create_task(submit_table())
+            return
 class PictureView(discord.ui.View):
     def __init__(self, bot, prefix, is_lounge_server):
         super().__init__(timeout=60*10)
@@ -172,12 +205,15 @@ class PictureView(discord.ui.View):
         self.message: discord.Message = None
 
         self.add_item(PictureButton(self.bot))
-    
+
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'wp')
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
             return False
+
+        if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child
+            return True
 
         cooldown = self.bot.getWPCooldownSeconds()
         cooldown_active = cooldown > 0
@@ -186,7 +222,7 @@ class PictureView(discord.ui.View):
                                                         ephemeral=True, delete_after=3.0)
             return False
 
-        return allowed
+        return True
     
     async def on_timeout(self) -> None:
         self.clear_items()
@@ -196,6 +232,8 @@ class PictureView(discord.ui.View):
         self = None
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        if error.text == 'Unknown interaction':
+            return
         await InteractionUtils.on_component_error(error, interaction, self.prefix)
 
     async def send(self, messageable, content=None, file=None, embed=None):

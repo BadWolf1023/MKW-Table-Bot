@@ -1018,10 +1018,11 @@ class OtherCommands:
             lounge_name = UserDataProcessing.lounge_get(FC)
             if lounge_name == "":
                 lounge_name = "UNKNOWN"
-            rows.append([f'{placement.get_player().get_position()}.', lounge_name, mii_name, FC])
+            rows.append([f'{placement.get_player().get_position()}Ø', lounge_name, mii_name, FC])
             # str_msg += "{:>4} {:<13}| {:<13}| {:<1}\n".format(str(place)+".",lounge_name, mii_name, FC)
         
         str_msg += tabulate(tabular_data=rows, headers=header, tablefmt="simple", colalign=["left"], stralign="left")
+        str_msg = str_msg.replace("Ø", ".") # Single periods don't show up since tabulate treats it like a number column and auto formats it
 
         if last_match_str is not None:
             #go get races from room
@@ -1145,8 +1146,8 @@ class LoungeCommands:
         else:
             temp = message.content
             command_removed = temp[temp.lower().index(args[0])+len(args[0]):].strip("\n\t ")
-            tier_number_removed = command_removed[command_removed.lower().index(args[1])+len(args[1]):].strip("\n\t ")
-            table_text = command_removed[tier_number_removed.lower().index(args[2])+len(args[2]):].strip("\n\t ")
+            tier_number_removed = command_removed[command_removed.lower().index(args[1].lower())+len(args[1]):].strip("\n\t ")
+            table_text = command_removed[tier_number_removed.lower().index(args[2].lower())+len(args[2]):].strip("\n\t ")
 
 
         lounge_server_updates.update_user_cooldown(message.author)
@@ -2007,7 +2008,7 @@ class TablingCommands:
             await message.channel.send("Invalid number of players. The number of players must be an number.")
             return
 
-        if len(args) > 3 and is_lounge_server and not permission_check(message.author):
+        if len(args) > 3 and is_lounge_server and not permission_check(message.author) and common.is_prod:
             await message.channel.send(f"You can only load a room for yourself in Lounge. Do this instead: `{server_prefix}{args[0]} {war_format_arg} {num_teams_arg}`")
             return
 
@@ -2065,8 +2066,8 @@ class TablingCommands:
         if args[0].lower().strip() in ['no', 'n']:
             this_bot.manualWarSetUp = True
             # view = Components.ManualTeamsView(this_bot, server_prefix, is_lounge_server)
-            # return await view.send(message, content=f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{server_prefix}A 2 3 / B 1 4 / Player 5 6*")
-            return await message.channel.send(f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  `@MKW Table Bot A 2 3 / B 1 4 / Player 5 6` (**you must use my bot mention as the prefix or the `/raw` slash command**)")
+            return await message.channel.send(content=f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{server_prefix}A 2 3 / B 1 4 / Player 5 6*")
+            #return await message.channel.send(f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  `@MKW Table Bot A 2 3 / B 1 4 / Player 5 6` (**you must use my bot mention as the prefix or the `/raw` slash command**)")
 
         numGPS = this_bot.getWar().numberOfGPs
         players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
@@ -2412,18 +2413,22 @@ class TablingCommands:
                 @TimerDebuggers.timer_coroutine
                 async def pic_view_func(this_bot, server_prefix, is_lounge_server):
                     pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+
+                    # Lounge submission button
+                    if not this_bot.has_been_lounge_submitted and len(this_bot.room.races) == 12 and message.channel.guild.id == common.MKW_LOUNGE_SERVER_ID:
+                        type, tier = common.get_channel_type_and_tier(this_bot.channel_id, this_bot.room.races)
+                        if type and tier:
+                            pic_view.add_item(Components.SubmitButton(this_bot, type, tier, len(this_bot.room.races)))
+
                     await pic_view.send(message, file=file, embed=embed)
                     TableBot.last_wp_message[this_bot.channel_id] = pic_view.message
 
                 await pic_view_func(this_bot, server_prefix, is_lounge_server)
 
                 if error_types and len(error_types)>0:
-                    not_large_time_error_types = [x for x in error_types if x['type'] != 'large_time']
-                    num_large_time_errors = len(error_types)-len(not_large_time_error_types)
-
                     # don't display large time suggestions if it's a 5v5 war
-                    if this_bot.war.is_clan_war() and not this_bot.war.ignoreLargeTimes and num_large_time_errors > 2:
-                        error_types = not_large_time_error_types
+                    if this_bot.war.is_5v5():
+                        error_types = [x for x in error_types if x['type'] != 'large_time']
 
                     if len(error_types) != 0:
                         sug_view = Components.SuggestionView(error_types, this_bot, server_prefix, is_lounge_server)
