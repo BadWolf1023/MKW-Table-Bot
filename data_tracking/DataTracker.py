@@ -25,6 +25,7 @@ import UserDataProcessing
 import UtilityFunctions
 import common
 from data_tracking import Data_Tracker_SQL_Query_Builder as QB
+import TimerDebuggers
 
 DEBUGGING_DATA_TRACKER = False
 DEBUGGING_SQL = False
@@ -37,52 +38,6 @@ class SQLTypeWrong(SQLDataBad):
     pass
 class SQLFormatWrong(SQLDataBad):
     pass
-
-#dict of channel IDs to tier numbers
-RT_NAME = "rt"
-CT_NAME = "ct"
-RXX_LOCKER_NAME = "rxx_locker"
-RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS = {
-    843981870751678484:8,
-    836652527432499260:7,
-    747290199242965062:6,
-    747290182096650332:5,
-    873721400056238160:5,
-    747290167391551509:4,
-    801620685826818078:4,
-    747290151016857622:3,
-    801620818965954580:3,
-    805860420224942080:3,
-    747290132675166330:2,
-    754104414335139940:2,
-    801630085823725568:2,
-    747289647003992078:1,
-    747544598968270868:1,
-    781249043623182406:1
-    }
-
-CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS = {
-    875532532383363072:7,
-    850520560424714240:6,
-    801625226064166922:5,
-    747290436275535913:4,
-    879429019546812466:4,
-    747290415404810250:3,
-    747290383297282156:2,
-    823014979279519774:2,
-    747290363433320539:1,
-    871442059599429632:1
-    }
-
-RT_REVERSE_TIER_MAPPINGS = defaultdict(set)
-CT_REVERSE_TIER_MAPPINGS = defaultdict(set)
-
-for k,v in RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
-    RT_REVERSE_TIER_MAPPINGS[v].add(k)
-for k,v in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
-    CT_REVERSE_TIER_MAPPINGS[v].add(k)
-    
-TABLE_BOT_CHANNEL_TIER_MAPPINGS = {RT_NAME:RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS, CT_NAME:CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS}
 
 # aiosqlite.Cursor is a async generator (not a regular generator) so list(cursor) does not work
 class ConnectionWrapper():
@@ -381,7 +336,7 @@ class ChannelBotSQLDataValidator(object):
     
             
     def validate_event_data(self, channel_bot):
-        self.event_id_validation(channel_bot.get_event_id())
+        self.event_id_validation(channel_bot.room.get_event_id())
         self.channel_id_validation(channel_bot.get_channel_id())
         self.discord_id_validation(channel_bot.getRoom().get_set_up_user_discord_id())
         if not isinstance(channel_bot.getRoom().get_known_region(), str):
@@ -571,7 +526,7 @@ class RoomTrackerSQL(object):
         '''Inserts (event_id, race_id) in for each race in self.channel_bot's races that are not yet in the database's Event_Races table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns the a list of the inserted event_ids, race_ids (as 2-tuples) upon success. (An empty list is returned if nothing was inserted.)'''
-        event_id_race_ids = {(self.channel_bot.get_event_id(), race.get_race_id()) for race in self.channel_bot.getRoom().races} #Note this is a set of tuples, not a dict
+        event_id_race_ids = {(self.channel_bot.room.get_event_id(), race.get_race_id()) for race in self.channel_bot.getRoom().races} #Note this is a set of tuples, not a dict
         if len(event_id_race_ids) < 1:
             return []
         self.data_validator.validate_event_id_race_ids(event_id_race_ids)
@@ -582,7 +537,7 @@ class RoomTrackerSQL(object):
 
     def get_event_as_upsert_sql_place_tuple(self, channel_bot):
         '''Converts a given table bot a tuple that is ready to be inserted into the Event SQL table'''
-        return (channel_bot.get_event_id(),
+        return (channel_bot.room.get_event_id(),
                 channel_bot.get_channel_id(),
                 0,
                 channel_bot.getRoom().get_known_region(),
@@ -609,8 +564,8 @@ class RoomTrackerSQL(object):
         '''Inserts event_id for self.channel_bot int Event_ID table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted event_id (as a 1-tuple) upon success. (An empty list is returned if nothing was inserted.)'''
-        self.data_validator.event_id_validation(self.channel_bot.get_event_id())
-        event_sql_args = [(self.channel_bot.get_event_id(),)]
+        self.data_validator.event_id_validation(self.channel_bot.room.get_event_id())
+        event_sql_args = [(self.channel_bot.room.get_event_id(),)]
         if len(event_sql_args) < 1:
             return []
         
@@ -621,7 +576,7 @@ class RoomTrackerSQL(object):
         '''Inserts event_id, fcs in self.channel_bot's races are not yet in the database's Event_FCS table.
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns a list of the inserted placements (as 2-tuples: race_id, fc) upon success. (An empty list is returned if no placements were inserted.)'''
-        event_id_fcs = list({(self.channel_bot.get_event_id(), fc, None) for fc in self.channel_bot.getRoom().getFCs()})
+        event_id_fcs = list({(self.channel_bot.room.get_event_id(), fc, None) for fc in self.channel_bot.getRoom().getFCs()})
         if len(event_id_fcs) == 0:
             return []
         
@@ -634,7 +589,7 @@ class RoomTrackerSQL(object):
         '''Updates the mii_hex for fcs for the event in Event_FCs table if the mii is null in Event_FCs and if we have a non-null mii
         May raise SQLDataBad, SQLTypeWrong, SQLFormatWrong
         Returns the a list of the event_id, fc (as 2-tuples) of the fcs in the event whose mii_hex's were updated. (An empty list is returned if nothing was updated.)'''
-        have_miis_for_event = list({(self.channel_bot.get_event_id(), fc, mii.mii_data_hex_str) for fc, mii in self.channel_bot.get_miis().items()})
+        have_miis_for_event = list({(self.channel_bot.room.get_event_id(), fc, mii.mii_data_hex_str) for fc, mii in self.channel_bot.room.get_miis().items()})
         if len(have_miis_for_event) == 0:
             return []
         
@@ -648,13 +603,14 @@ class RoomTrackerSQL(object):
         return found_event_id_fcs_with_null_miis
     
     def get_event_structure_tuple(self):
-        return (self.channel_bot.get_event_id(),
+        return (self.channel_bot.room.get_event_id(),
                 json.dumps(self.channel_bot.getRoom().getNameChanges()),
                 json.dumps(self.channel_bot.getRoom().getRemovedRaces()),
                 json.dumps(self.channel_bot.getRoom().getPlacementHistory()),
                 json.dumps(self.channel_bot.getRoom().getForcedRoomSize()),
                 json.dumps(self.channel_bot.getRoom().getPlayerPenalties()),
                 json.dumps(self.channel_bot.getWar().getTeamPenalities()),
+                # json.dumps(self.channel_bot.getRoom().get_manual_dc_placements()),
                 json.dumps(self.channel_bot.getRoom().get_dc_statuses()),
                 json.dumps(self.channel_bot.getRoom().get_subs()),
                 json.dumps(self.channel_bot.getWar().get_teams()),
@@ -708,23 +664,17 @@ class RoomTracker(object):
             print(f"Added miis for event fcs: {added_event_fcs_miis}")
             print(f"Event ids updated for event structure: {event_structure_data_dump_event_id}")
     
-    
     @staticmethod
+    @TimerDebuggers.timer_coroutine
     async def add_data(channel_bot):
-        if channel_bot.getRoom().is_initialized():
-            t0 = time.perf_counter()
-
-            
+        if channel_bot.is_table_loaded():
             #Make a deep copy to avoid asyncio switching current task to a tabler command and modifying our data in the middle of us validating it or adding it
             deepcopied_channel_bot = deepcopy(channel_bot)
-            if deepcopied_channel_bot.getRoom().is_initialized(): #This check might seem unnecessary, but we'll leave it in case we convert things to asyncio that aren't currently asynchronous (making it necessary)
+            if deepcopied_channel_bot.is_table_loaded(): #This check might seem unnecessary, but we'll leave it in case we convert things to asyncio that aren't currently asynchronous (making it necessary)
                 try:
                     await RoomTracker.add_everything_to_database(deepcopied_channel_bot)
                 except:
                     common.log_traceback(traceback)
-            t1 = time.perf_counter()
-            if DEBUGGING_SQL:
-                print(f"Total time taken to add everything to SQL DB: {round((t1-t0), 5)}s")
 
 def load_room_data():
     if not os.path.exists(common.ROOM_DATA_TRACKING_DATABASE_FILE):

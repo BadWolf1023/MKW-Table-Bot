@@ -3,10 +3,8 @@ Created on Aug 4, 2020
 
 @author: willg
 '''
-import asyncio
 import fnmatch
 import os
-import subprocess
 from datetime import datetime
 import humanize
 from pathlib import Path

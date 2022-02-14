@@ -7,7 +7,7 @@ Created on Jul 25, 2020
 import asyncio
 import os
 from collections import defaultdict
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 import common
 from datetime import datetime, timedelta
 
@@ -42,6 +42,13 @@ def lounge_add(fc, lounge_replace=True):
             return " - (" + did_lounge[fc_did[fc][0]] + ")"
     return ""
 
+def lounge_add_no_dash(fc, lounge_replace=True):
+    if not lounge_replace: return
+    fc_did = fc_discordId
+    did_lounge = discordId_lounges
+    if fc in fc_did and fc_did[fc][0] in did_lounge:
+        return " (" + did_lounge[fc_did[fc][0]] + ")"
+
 def lounge_get(fc, lounge_replace=True):
     if lounge_replace:
         fc_did = fc_discordId
@@ -50,9 +57,14 @@ def lounge_get(fc, lounge_replace=True):
             return did_lounge[fc_did[fc][0]]
     return ""
 
+def lounge_get_fill(fc, name, lounge_replace=True):
+    loungeName = lounge_get(fc, lounge_replace)
+    if loungeName=="":
+        return name
+    return loungeName
+
 def process_lounge_name(name):
     return name.lower().replace(" ","").strip()
-
 
 def read_Blacklisted_file(filename=common.BLACKLISTED_USERS_FILE):
     common.check_create(filename)
@@ -134,9 +146,9 @@ def add_flag(discord_id, flag):
         return True
      
 def get_flag(discord_id):
+    if discord_id is None:
+        return None
     discord_id = str(discord_id)
-    global discordId_flags
-    
     if discord_id in discordId_flags:
         return discordId_flags[discord_id]
     return None
@@ -257,6 +269,12 @@ def get_lounge(discord_id):
     if discord_id in discordId_lounges:
         return discordId_lounges[discord_id]
     return None
+
+def get_discord_id_from_fc(fc: Union[str, None]) -> Union[str, None]:
+    if fc is None or fc not in fc_discordId:
+        return None
+    return fc_discordId[fc][0]
+
 
 def get_all_fcs(discord_id, include_time=False):
     if discord_id is None:

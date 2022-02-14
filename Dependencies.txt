@@ -1,4 +1,4 @@
-discord.py
+git+https://github.com/Pycord-Development/pycord
 opencv-python
 beautifulsoup4
 humanize
@@ -9,3 +9,6 @@ bitstring
 tabulate
 aiosqlite
 lxml
+certifi
+dill
+requests

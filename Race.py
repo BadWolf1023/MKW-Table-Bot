@@ -118,8 +118,6 @@ class Race:
     classdocs
     '''
 
-
-
     def __init__(self, matchTime, matchID, raceNumber, roomID, roomType, cc, track, is_ct, mkwxRaceNumber, rxx=None, raceID=None, trackURL=None, placements=None, is_wiimmfi_race=True):
         self.matchTime = matchTime
         self.matchID = matchID
@@ -134,7 +132,7 @@ class Race:
             self.track = sha_track_name_mappings[self.track]
         self.track_check()
         self.cc = cc
-        self.placements = []
+        self.placements: List[Placement] = []
         self.region = UNKNOWN_REGION
         self.is_ct = is_ct
         self.is_wiimmfi_race = is_wiimmfi_race
@@ -143,6 +141,9 @@ class Race:
             self.mkwxRaceNumber = int(self.mkwxRaceNumber)
         else:
             self.mkwxRaceNumber
+
+        self.created_when_str = None
+        self.last_start_str = None
     
     def get_mkwx_race_number(self):
         return self.mkwxRaceNumber
@@ -182,7 +183,12 @@ class Race:
     def hasFC(self, FC):
         return False if self.getPlacement(FC) is None else True
         
-        
+    def update_FC_mii_hex(self, FC, mii_hex: str):
+        for placement in self.placements:
+            player = placement.get_player()
+            if player.get_FC() == FC:
+                player.set_mii_hex(mii_hex)
+
     def numRacers(self):
         if (self.placements is None):
             return 0
@@ -206,6 +212,14 @@ class Race:
             self.placements[i].place = i+1
             i += 1
         self.update_region()
+    
+    def remove_placement_by_FC(self, FC):
+        for ind, placement in enumerate(self.placements):
+            if placement.player.FC == FC:
+                self.placements.pop(ind)
+                for placement in self.placements[ind:]:
+                    placement.place-=1
+                return
          
     def setRegion(self, region):
         self.region = region
@@ -274,20 +288,25 @@ class Race:
         return False
     
     def getTies(self):
-        ties = []
+        ties = {}
         for placement_1 in self.placements:
             for placement_2 in self.placements:
                 if placement_1.player.FC != placement_2.player.FC and placement_1 == placement_2\
                 and not placement_1.is_bogus_time() and not placement_2.is_bogus_time()\
                 and not placement_1.is_disconnected() and not placement_1.is_disconnected():
-                    if placement_1.player.FC not in ties:
-                        ties.append(placement_1.player.FC)
-                    if placement_2.player.FC not in ties:
-                        ties.append(placement_2.player.FC)       
+                    if placement_1.time not in ties:
+                        ties[placement_1.time] = []
+                    if placement_1.player.FC not in ties[placement_1.time]:
+                        ties[placement_1.time].append(placement_1.player.FC)
+                    if placement_2.player.FC not in ties[placement_1.time]:
+                        ties[placement_1.time].append(placement_2.player.FC)       
         return ties
     
     def get_placement_times_as_set(self) -> set:
         return set(placement.get_time() for placement in self.placements)
+    
+    def get_sorted_valid_times(self):
+        return sorted([place.get_time() for place in self.placements if not place.is_bogus_time()])
     
     #Specialized function
     def times_are_subset_of(self, other_race) -> bool:
@@ -309,31 +328,6 @@ class Race:
     def has_unusual_delta_time(self):
         return any(True for placement in self.placements if placement.is_delta_unlikely())
         
-    
-    def getPlayerObjects(self):
-        players = []
-        for placement in self.placements:
-            players.append(placement.player)
-        return players
-    
-    def getPlayersByPlaceInRoom(self):
-        players = self.getPlayerObjects()
-        try:
-            players.sort(key=lambda p: int(p.positionInRoom))
-        except ValueError:
-            print("This actually happened - position in room wasn't a number.")
-            players.sort(key=lambda p: p.positionInRoom)
-        return players
-    
-    def getPlayersByPlaceInRoomString(self):
-        sortedPlayers = self.getPlayersByPlaceInRoom()
-        to_build = ""
-        for player in sortedPlayers:
-            lounge_name = UtilityFunctions.process_name(UserDataProcessing.lounge_get(player.FC))
-            if lounge_name is None or len(lounge_name) == 0:
-                lounge_name = "No Lounge"
-            to_build += "**" + str(player.positionInRoom) + ". " + lounge_name + "** - " + UtilityFunctions.process_name(player.name) + "\n"
-        return to_build
     
     def FCInPlacements(self, FC):
         for placement in self.placements:

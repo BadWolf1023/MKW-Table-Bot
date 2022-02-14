@@ -128,10 +128,13 @@ class Mii(KaitaiStruct):
                                             colour = Mii.mii_color_dict[self.favorite_color]
                                         )
         
-        
-        embed.add_field(name="**Mii Name**",value=f"{UtilityFunctions.process_name(self.mii_name)}"+'\u200b')
+        mii_name = UtilityFunctions.process_name(self.mii_name)
+        mii_name = mii_name if len(mii_name) > 0 else '\u200b'
+        fc = self.FC if len(self.FC) > 0 else '\u200b'
+        embed.add_field(name="**Mii Name**",value=mii_name)
         embed.add_field(name="**Gender**",value=f"{'Female' if self.gender else 'Male'}")
-        embed.add_field(name="**FC**",value=self.FC+'\u200b')
+        
+        embed.add_field(name="**FC**",value=fc)
         #file_name_id
         file = File(self.get_mii_picture_link())
         embed.set_image(url="attachment://" + self.file_name)

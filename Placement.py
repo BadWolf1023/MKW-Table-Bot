@@ -10,6 +10,7 @@ import re
 
 DEBUGGING = False
 DISCONNECTION_TIME = (999,999,999)
+MANUAL_DC_TIME = (1000,0,0)
 BOGUS_TIME_LIMIT = (5,59,999)
 MINIMUM_DELTA_VALUE = -10
 MAXIMUM_DELTA_VALUE = 10
@@ -31,6 +32,8 @@ class Placement:
             print(time)
         if time == u'\u2014':
             return DISCONNECTION_TIME #Disconnection
+        elif time == 'DC':
+            return MANUAL_DC_TIME
         elif (":" in time):
             temp = time.split(":")
             minute = temp[0]
@@ -45,12 +48,16 @@ class Placement:
     
     def _process_delta_(self, delta):
         new_delta = float(0)
+        
         if delta is not None and UtilityFunctions.isfloat(delta):
             return float(delta)
         return new_delta
     
     def is_disconnected(self):
-        return self.time == DISCONNECTION_TIME
+        return self.time == DISCONNECTION_TIME or self.time == MANUAL_DC_TIME
+    
+    def is_manual_DC(self):
+        return self.time == MANUAL_DC_TIME
     
     def is_delta_unlikely(self):
         if self.delta is None:
@@ -62,9 +69,19 @@ class Placement:
             return False
         return self.time > BOGUS_TIME_LIMIT
     
-    def __init__(self, player, place, time, delta=None, is_wiimmfi_place=False):
+    def get_reconstructed_bogus_time(self):
+        '''
+        Gets a reconstructed time for large times (first digit dropped)
+        '''
+        if self.time[0]<11:
+            return self.time
+
+        reconstructed_time = (int(str(self.time[0])[1:]), self.time[1], self.time[2])
+        return reconstructed_time
+    
+    def __init__(self, player, time, delta=None, is_wiimmfi_place=False):
         self.player = player
-        self.place = place
+        self.place = -1
         self.time = self._createTime_(time)
         self.delta = self._process_delta_(delta)
         self.is_wiimmfi_place = is_wiimmfi_place
@@ -90,12 +107,29 @@ class Placement:
     
     def get_place(self):
         return self.place
+    
+    def get_place_str(self):
+        append = "th"
+        if self.place%10 == 1 and self.place!=11:
+            append = "st"
+        elif self.place%10 == 2 and self.place!=12:
+            append = "nd"
+        elif self.place%10 == 3 and self.place!=13:
+            append = "rd"
+        
+        return f"{self.place}{append}"
         
     def get_delta(self):
         return self.delta
     
     def getPlayer(self) -> Player.Player:
         return self.player
+    
+    def get_player(self) -> Player.Player:
+        return self.player
+
+    def get_fc(self):
+        return self.getPlayer().get_FC()
     
     def is_from_wiimmfi(self):
         return self.is_wiimmfi_place
