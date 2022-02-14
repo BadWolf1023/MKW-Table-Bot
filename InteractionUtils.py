@@ -1,5 +1,5 @@
 import discord
-import BadWolfBot
+import botUtils
 import common
 import TableBotExceptions
 import aiohttp
@@ -20,25 +20,6 @@ def check_beta_server_id(id):
 def bot_admin_check(ctx: discord.ApplicationContext):
     can = common.is_bot_admin(ctx.author)
     return can 
-
-def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bot, command:str):
-    if not isLoungeServer:
-        return True
-    
-    if common.author_is_table_bot_support_plus(message_author):
-        return True
-    
-    if this_bot is not None and this_bot.getWar() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
-        return this_bot.getRoom().canModifyTable(message_author.id) #Check ALL people who can modify table
-    
-    if command not in common.needPermissionCommands:
-        return True
-    
-    if this_bot is None or not this_bot.is_table_loaded() or not this_bot.getRoom().is_freed:
-        return True
-
-    #At this point, we know the command's server is Lounge, it's not staff, and a room has been loaded
-    return this_bot.getRoom().canModifyTable(message_author.id)
 
 def convert_key_to_command(key):
     map = {
@@ -129,7 +110,7 @@ async def on_component_error(error: Exception, interaction: discord.Interaction,
         await common.safe_send(message,
                                 f"Internal bot error. This exception occurred and could not be handled: {error}. Try `/reset`. Please report this error at the MKW Table Bot server: https://discord.gg/K937DqM")
             
-async def handle_component_exception(error, message, server_prefix):
+async def handle_component_exception(error: Exception, message: discord.Message, server_prefix):
     try:
         raise error
     except (discord.errors.Forbidden):
@@ -137,9 +118,9 @@ async def handle_component_exception(error, message, server_prefix):
         await common.safe_send(message,
                                 "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work. If none of these work, this is a bot permissions error with Discord.")
     except TableBotExceptions.BlacklistedUser:
-        BadWolfBot.log_command_sent(message)
+        botUtils.log_command_sent(message)
     except TableBotExceptions.WarnedUser:
-        BadWolfBot.log_command_sent(message)
+        botUtils.log_command_sent(message)
     except TableBotExceptions.TableNotLoaded as not_loaded:
         await common.safe_send(message,f"{not_loaded}")
     except TableBotExceptions.NotBadWolf as not_bad_wolf_exception:
@@ -172,7 +153,7 @@ async def handle_component_exception(error, message, server_prefix):
                                 "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
         raise
     except TableBotExceptions.WiimmfiSiteFailure:
-        logging_info = BadWolfBot.log_command_sent(message,extra_text="Error info: MKWX inaccessible, other error.")
+        logging_info = botUtils.log_command_sent(message,extra_text="Error info: MKWX inaccessible, other error.")
         await common.safe_send(message,
                                 "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")
         # await self.send_to_503_channel(logging_info)

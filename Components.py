@@ -6,7 +6,7 @@ import UtilityFunctions
 import asyncio
 import TimerDebuggers
 import common
-
+import botUtils
 
 class ManualTeamsModal(discord.ui.Modal):
     def __init__(self, bot, prefix, is_lounge, view):
@@ -62,7 +62,7 @@ class ManualTeamsView(discord.ui.View):
         await self.message.edit(view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'confirm_interaction')
+        allowed = botUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'confirm_interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot interact with this button.", ephemeral=True)
             return False
@@ -119,7 +119,7 @@ class ConfirmView(discord.ui.View):
         await interaction.response.edit_message(view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, 'confirm_interaction')
+        allowed = botUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, 'confirm_interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
             return False
@@ -207,7 +207,7 @@ class PictureView(discord.ui.View):
         self.add_item(PictureButton(self.bot))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'wp_interaction')
+        allowed = botUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'wp_interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
             return False
@@ -365,7 +365,7 @@ class SuggestionView(discord.ui.View):
         self.message: discord.Message = await messageable.send(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", file=file, embed=embed, view=self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, InteractionUtils.convert_key_to_command(self.current_error['type']))
+        allowed = botUtils.commandIsAllowed(self.lounge, interaction.user, self.bot, InteractionUtils.convert_key_to_command(self.current_error['type']))
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True, delete_after=3.0)
         return allowed

@@ -3,6 +3,7 @@ from discord.commands import slash_command, Option, CommandPermission, SlashComm
 from discord.ext import commands as ext_commands
 import commands
 import common
+import botUtils
 import InteractionUtils
 
 REQUIRED_PERMISSIONS = [CommandPermission(role, 2, True, common.MKW_LOUNGE_SERVER_ID) for role in list(common.reporter_plus_roles)] #+ [CommandPermission(common.properties["admin_id"], 2, True)]
@@ -74,7 +75,7 @@ class TableTextView(discord.ui.View):
         await self.message.edit(view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.chan_bot, 'confirm_interaction')
+        allowed = botUtils.commandIsAllowed(self.is_lounge, interaction.user, self.chan_bot, 'confirm_interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot interact with this button.", ephemeral=True)
             return False
