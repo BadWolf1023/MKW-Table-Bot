@@ -890,8 +890,8 @@ class OtherCommands:
         lounge_name = smart_type.get_lounge_name()
         fcs = smart_type.get_fcs()
         descriptive, pronoun = smart_type.get_clean_smart_print(message)
-        if fcs is None:
-            await message.channel.send(f"Could not a lounge name for {descriptive}, have {pronoun} verified an FC in Lounge?")
+        if fcs is None or lounge_name is None:
+            await message.channel.send(f"Could not find a lounge name for {descriptive}, have {pronoun} verified an FC in Lounge?")
             return
         await message.channel.send(f"{SmartTypes.possessive(SmartTypes.capitalize(descriptive))} Lounge name is: **{lounge_name}**")
 
