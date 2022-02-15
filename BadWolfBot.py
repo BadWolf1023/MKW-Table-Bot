@@ -638,7 +638,7 @@ class BadWolfBot(discord.Bot):
         elif this_bot.prev_command_sw:
             await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in botUtils.GARBAGE_COLLECT_TERMS:
+        elif args[0] in GARBAGE_COLLECT_TERMS:
             await commands.BadWolfCommands.garbage_collect_command(message)
                 
         elif args[0] in START_WAR_TERMS:
