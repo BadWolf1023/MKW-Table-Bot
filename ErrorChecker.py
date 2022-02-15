@@ -193,6 +193,7 @@ def get_war_errors_players(war, room, error_types, lounge_replace=True, ignoreLa
                             error_types[int(race.raceNumber)].append({'type': 'gp_missing' + ('_1' if num_missing==1 else ''),
                                                                     'num_missing': num_missing,
                                                                     'corrected_room_sizes': list(range(race.getNumberOfPlayers(), war.get_num_players() +1)),
+                                                                    'player_fcs': num_missing
                                                                     })
                 
                 elif missingPlayersByRace[int(race.raceNumber)-1] != []:
