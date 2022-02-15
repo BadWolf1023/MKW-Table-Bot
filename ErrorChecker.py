@@ -124,7 +124,7 @@ def get_room_errors_players(war, room, error_types, startrace=None, endrace=None
                 for this_fc in ties:
                     this_placement = race.getPlacement(this_fc)
                     _, this_name = this_placement.get_fc_and_name()
-                    errors.append(this_name + UserDataProcessing.lounge_add(this_fc, lounge_replace) + "'s finish time: " + this_placement.get_time_string() + " - use ?qe to change their position")
+                    errors.append(this_name + UserDataProcessing.lounge_add(this_fc, lounge_replace) + "'s finish time: " + this_placement.get_time_string() + " - use ?cp to change their position")
                     
 
         if blank_time_counter == len(race.placements):

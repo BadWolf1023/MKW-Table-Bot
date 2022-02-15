@@ -93,7 +93,7 @@ ALL_PLAYERS_TERMS = {"allplayers", "ap"}
 FCS_TERMS = {"fcs"}
 TRANSFER_TABLE_TERMS = {"transferfrom", "copyfrom", "transfer", "copy", "copytable", "transfertable", "movetable", "move"}
 GET_SUBSTITUTIONS_TERMS = {"subs", "substitutes", "substitutions", "getsubs", "allsubs"}
-INTERACTIONS = {'wp_interaction', 'confirm_interaction'}
+INTERACTIONS = {'interaction'}
 
 
 #General commands that do not require a war to be started (stateless commands)
@@ -528,7 +528,7 @@ class BadWolfBot(discord.Bot):
             #server_id = message.guild.id   
             is_lounge_server = message.guild.id == common.MKW_LOUNGE_SERVER_ID
             server_prefix = ServerFunctions.get_server_prefix(message.guild.id)
-            message_has_prefix, is_mention, server_prefix = self.has_prefix(message.content, server_prefix)
+            message_has_prefix, is_mention, _ = self.has_prefix(message.content, server_prefix)
             if is_mention:
                 message.raw_mentions.pop(0)
 
@@ -605,6 +605,8 @@ class BadWolfBot(discord.Bot):
         except discord.errors.DiscordServerError:
             await common.safe_send(message,
                                    "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
+        except discord.errors.NotFound:
+            pass
         except aiohttp.ClientOSError:
             await common.safe_send(message,
                                    "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
@@ -735,8 +737,8 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.change_room_size_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif args[0] in QUICK_EDIT_TERMS:
-            if args[0] in DEPRECATED_QUICK_EDIT_TERMS:
-                await message.channel.send(f"**NOTE: The command `{server_prefix}{args[0]}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")
+            # if args[0] in DEPRECATED_QUICK_EDIT_TERMS:
+            #     await message.channel.send(f"**NOTE: The command `{server_prefix}{args[0]}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")
             await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif args[0] in CHANGE_PLAYER_TAG_TERMS:
@@ -972,7 +974,7 @@ def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bo
     if command not in needPermissionCommands:
         return True
 
-    if this_bot is None or not this_bot.is_table_loaded() or not this_bot.getRoom().is_freed:
+    if this_bot is None or not this_bot.is_table_loaded() or this_bot.getRoom().is_freed:
         return True
 
     #At this point, we know the command's server is Lounge, it's not staff, and a room has been loaded
@@ -1122,6 +1124,7 @@ if __name__ == "__main__":
     after_init()
 
     common.client = bot
+    common.main = sys.modules[__name__]
 
     if common.is_dev:
         bot.run(testing_bot_key)
