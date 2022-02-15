@@ -122,7 +122,7 @@ RECORD_TERMS = {"record"}
 QUICK_START_TERMS = {"quickstart"}
 TUTORIAL_TERMS = {"tutorial"}
 HELP_TERMS = {"help"}
- 
+
 #Lounge table submission commands
 LOUNGE_RT_MOGI_UPDATE_TERMS = {'rtmogiupdate', 'rttableupdate', 'rtupdatemogi', 'rtupdate'}
 LOUNGE_CT_MOGI_UPDATE_TERMS = {'ctmogiupdate', 'cttableupdate', 'ctupdatemogi', 'ctupdate'}
@@ -642,7 +642,7 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif args[0] in GARBAGE_COLLECT_TERMS:
-            commands.BadWolfCommands.garbage_collect_command(message)
+            await commands.BadWolfCommands.garbage_collect_command(message)
                 
         elif args[0] in START_WAR_TERMS:
             await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
@@ -736,7 +736,7 @@ class BadWolfBot(discord.Bot):
         
         elif args[0] in QUICK_EDIT_TERMS:
             if args[0] in DEPRECATED_QUICK_EDIT_TERMS:
-                await message.channel.send(f"**NOTE: The command `{server_prefix}{args[0]}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")                      
+                await message.channel.send(f"**NOTE: The command `{server_prefix}{args[0]}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")
             await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif args[0] in CHANGE_PLAYER_TAG_TERMS:
@@ -994,15 +994,15 @@ async def send_lounge_locked_message(message, this_bot):
             to_send += ", ".join(room_lounge_names)
             to_send += "**."
         if this_bot.loungeFinishTime is None:
-            await message.channel.send(f"{to_send} Wait until they are finished.")  
+            await message.channel.send(f"{to_send} Wait until they are finished.")
         else:
-            await message.channel.send(f"{to_send} {this_bot.getBotunlockedInStr()}") 
+            await message.channel.send(f"{to_send} {this_bot.getBotunlockedInStr()}")
 
 def log_command_sent(message:discord.Message, extra_text=""):
     common.log_text(f"Server: {message.guild} - Channel: {message.channel} - User: {message.author} - Command: {message.content} {extra_text}")
-    return common.full_command_log(message, extra_text) 
-    
-    
+    return common.full_command_log(message, extra_text)
+
+
 #Creates the necessary folders for running the bot
 def create_folders():
     Path(common.MIIS_PATH).mkdir(parents=True, exist_ok=True)
