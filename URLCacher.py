@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import aiohttp
 import asyncio
 import common
+from typing import Union
 
 PRINT_REQUESTS = True
 class URLCacher():
@@ -22,7 +23,7 @@ class URLCacher():
         self.request_timeout = timedelta(seconds=request_timeout)
         self.maximum_cache_storage_length = self.default_cache_length + self.default_cache_length  # Maximum time that responses are stored are two times the cache length
         self._session = aiohttp.ClientSession()
-
+        
     @staticmethod
     def _default_cache_entry():
         return {"currently_pulling": False,
@@ -39,8 +40,9 @@ class URLCacher():
         self._url_cache[url]["time_received"] = datetime.now()
         self._url_cache[url]["currently_pulling"] = False
         
-    async def _fetch_url(self, url: str) -> str:
-        '''Sends an asychronous request for the given url, caches the response text, and returns the response text'''
+    async def _fetch_url(self, url: str) -> Union[str, None]:
+        '''Sends an asychronous request for the given url, caches the response text, and returns the response text
+        If the request fails, returns None'''
         response_text = None
         self._prepare_fetch(url)
         try:
@@ -93,9 +95,10 @@ class URLCacher():
         return not self.is_url_expired(url, cache_length)
 
 
-    async def get_url(self, url, cache_length:timedelta=None, allow_hanging:bool=None) -> str:
+    async def get_url(self, url, cache_length:timedelta=None, allow_hanging:bool=None) -> Union[str, None]:
         '''Returns the text response for the specified url by either hitting the cache or sending an asynchronous request for the specified url
         If a request is sent, the response is stored in the cache
+        If the request fails, None is returned. Additionally, if a request failed before and the cache is hit, that will return None as well (that is, the cache stores failed requests)
         
         To override using the default cache length for a url, specifiy a timedelta for cache_length
         
