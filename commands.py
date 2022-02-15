@@ -2309,7 +2309,7 @@ class TablingCommands:
             message2 = prev_message
             @TimerDebuggers.timer_coroutine
             async def prev_message_edit(p):
-                await p.edit("Updating room", view=None)
+                await p.edit("Updating room...", view=None)
             await prev_message_edit(prev_message)
         else:
             message2 = await message.channel.send("Updating room...")
@@ -2401,7 +2401,7 @@ class TablingCommands:
                 embed.set_author(name=this_bot.getWar().getWarName(numRaces), icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                 embed.set_image(url="attachment://" + table_image_path)
                 
-                temp, error_types = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), this_bot.get_resolved_errors(), lounge_replace, up_to_race=up_to)
+                temp, error_types = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), this_bot.get_all_resolved_errors(), lounge_replace, up_to_race=up_to)
 
                 error_message = "\nMore errors occurred. Embed only allows so many errors to display."
                 #request_message = f"\n\nPicture requested by {requester}" if requester is not None else ''

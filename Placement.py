@@ -33,7 +33,7 @@ class Placement:
         if time == u'\u2014':
             return DISCONNECTION_TIME #Disconnection
         elif time == 'DC':
-            return MANUAL_DC_TIME
+            return MANUAL_DC_TIME #Manually set as DCed
         elif (":" in time):
             temp = time.split(":")
             minute = temp[0]
