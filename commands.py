@@ -2307,6 +2307,7 @@ class TablingCommands:
                                   is_lounge_server:bool, requester: Union[discord.Member, discord.User, None] = None,
                                   prev_message=None):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
+        
         wpCooldown = this_bot.getWPCooldownSeconds()
         if wpCooldown > 0:
             await message.channel.send("Wait " + str(wpCooldown) + " more seconds before using this command.", delete_after=5.0)

@@ -1,9 +1,5 @@
 import discord
-import botUtils
 import common
-import TableBotExceptions
-import aiohttp
-import traceback
 
 def check_lounge_server(message):
     return message.guild.id == common.MKW_LOUNGE_SERVER_ID
@@ -104,66 +100,9 @@ async def on_component_error(error: Exception, interaction: discord.Interaction,
         message = await interaction.original_message()
     
     if message:
-        await handle_component_exception(error, message, prefix)
+        # await handle_component_exception(error, message, prefix)
+        await common.client.handle_exception(error, message, prefix)
     else:
         common.log_error("Exception raised on Component interaction could not be caught because there was no message from the interaction. THIS IS A BUG AND NEEDS TO BE FIXED.")
         await common.safe_send(message,
                                 f"Internal bot error. This exception occurred and could not be handled: {error}. Try `/reset`. Please report this error at the MKW Table Bot server: https://discord.gg/K937DqM")
-            
-async def handle_component_exception(error: Exception, message: discord.Message, server_prefix):
-    try:
-        raise error
-    except (discord.errors.Forbidden):
-        # self.lounge_submissions.clear_user_cooldown(message.author)
-        await common.safe_send(message,
-                                "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work. If none of these work, this is a bot permissions error with Discord.")
-    except TableBotExceptions.BlacklistedUser:
-        botUtils.log_command_sent(message)
-    except TableBotExceptions.WarnedUser:
-        botUtils.log_command_sent(message)
-    except TableBotExceptions.TableNotLoaded as not_loaded:
-        await common.safe_send(message,f"{not_loaded}")
-    except TableBotExceptions.NotBadWolf as not_bad_wolf_exception:
-        await common.safe_send(message,f"You are not Bad Wolf: {not_bad_wolf_exception}")
-    except TableBotExceptions.NotLoungeStaff:
-        await common.safe_send(message,f"Not a valid command. For more help, do the command: {server_prefix}help")
-    except TableBotExceptions.NotBotAdmin as not_bot_admin_exception:
-        await common.safe_send(message,f"You are not a bot admin: {not_bot_admin_exception}")
-    except TableBotExceptions.NotServerAdministrator as not_admin_failure:
-        await common.safe_send(message,f"You are not a server administrator: {not_admin_failure}")
-    except TableBotExceptions.NotStaff as not_staff_exception:
-        await common.safe_send(message,f"You are not staff in this server: {not_staff_exception}")
-    except TableBotExceptions.WrongServer as wrong_server_exception:
-        if common.running_beta:
-            await common.safe_send(message,
-                                    f"{wrong_server_exception}: **I am not <@735782213118853180>. Use <@735782213118853180> in <#389521626645004302> to submit your table.**")
-        else:
-            await message.channel.send(f"Not a valid command. For more help, do the command: `{server_prefix}help`")
-    except TableBotExceptions.WrongUpdaterChannel as wrong_updater_channel_exception:
-        await common.safe_send(message,
-                                f"Use this command in the appropriate updater channel: {wrong_updater_channel_exception}")
-    except TableBotExceptions.WarSetupStillRunning:
-        await common.safe_send(message,
-                                f"I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
-    except discord.errors.DiscordServerError:
-        await common.safe_send(message,
-                                "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
-    except aiohttp.ClientOSError:
-        await common.safe_send(message,
-                                "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
-        raise
-    except TableBotExceptions.WiimmfiSiteFailure:
-        logging_info = botUtils.log_command_sent(message,extra_text="Error info: MKWX inaccessible, other error.")
-        await common.safe_send(message,
-                                "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")
-        # await self.send_to_503_channel(logging_info)
-    except TableBotExceptions.CommandDisabled:
-        await common.safe_send(message,"This command has been disabled.")
-    except (TableBotExceptions.CommandNotFound):
-        await common.safe_send(message,f"Not a valid command. For more help, do the command: `{server_prefix}help`")
-    except Exception as e:
-        common.log_traceback(traceback)
-        # self.lounge_submissions.clear_user_cooldown(message.author)
-        await common.safe_send(message,
-                                f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: `{server_prefix}reset`")
-        raise e

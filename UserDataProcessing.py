@@ -58,6 +58,7 @@ def lounge_get(fc, lounge_replace=True):
     return ""
 
 def lounge_get_fill(fc, name, lounge_replace=True):
+    """Return lounge name if player has one"""
     loungeName = lounge_get(fc, lounge_replace)
     if loungeName=="":
         return name

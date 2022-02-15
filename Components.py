@@ -233,8 +233,6 @@ class PictureView(discord.ui.View):
         self = None
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        if error.text == 'Unknown interaction':
-            return
         await InteractionUtils.on_component_error(error, interaction, self.prefix)
 
     async def send(self, messageable, content=None, file=None, embed=None):
