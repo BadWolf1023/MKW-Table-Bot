@@ -16,6 +16,7 @@ import ServerFunctions
 import asyncio
 from data_tracking import DataTracker
 import TimerDebuggers
+import copy
 
 
 lorenzi_style_key = "#style"
@@ -62,7 +63,8 @@ class ChannelBot(object):
         self.roomLoadTime = None
         self.save_states = []
         self.state_pointer = -1
-        self.resolved_errors = set()
+        self.resolved_errors = set() #this one isn't part of the save state
+        self.semi_resolved_errors = set() #this one is
         
         self.should_send_mii_notification = True
         self.set_style_and_graph(server_id)
@@ -112,6 +114,12 @@ class ChannelBot(object):
     
     def get_resolved_errors(self):
         return self.resolved_errors
+    
+    def get_semi_resolved_errors(self):
+        return self.semi_resolved_errors
+    
+    def get_all_resolved_errors(self):
+        return self.resolved_errors | self.semi_resolved_errors
     
     def player_to_dc_num(self, race, player):
         GPs = self.getWar().getNumberOfGPS()
@@ -284,31 +292,6 @@ class ChannelBot(object):
     def getWar(self) -> War.War:
         return self.war
     
-    # def add_pic_view(self, pic_view):
-    #     view_ind = add_pic_view(pic_view)
-    #     self.pic_views.append(view_ind)
-    #     try:
-    #         if len(self.pic_views)>1:
-    #             to_delete = self.pic_views[:-1]
-
-    #             delete_pic_views(to_delete)
-    #             self.pic_views = self.pic_views[-1:]
-
-    #     except IndexError:
-    #         pass
-
-    # def add_sug_view(self, sug_view):
-    #     view_ind = add_sug_view(sug_view)
-    #     self.sug_views.append(view_ind)
-    #     try:
-    #         if len(self.sug_views)>1:
-    #             to_delete = self.sug_views[:-1]
-    #             delete_sug_views(to_delete)
-    #             self.sug_views = self.sug_views[-1:]
-
-    #     except IndexError:
-    #         pass
-    
     def updatedLastUsed(self):
         self.last_used = datetime.now()
         self.updateLoungeFinishTime()
@@ -391,6 +374,7 @@ class ChannelBot(object):
         save_state["graph"] = self.graph
         save_state["race_size"] = self.race_size
         save_state["style"] = self.style
+        save_state['semi_resolved_errors'] = copy.copy(self.semi_resolved_errors)
         return (command, save_state)
     
     def add_save_state(self, command="Unknown Command", save_state=None):
@@ -458,6 +442,7 @@ class ChannelBot(object):
         self.graph = save_state["graph"]
         self.style = save_state["style"]
         self.race_size = save_state["race_size"]
+        self.semi_resolved_errors = copy.copy(save_state['semi_resolved_errors'])
         return command
     
     #restores to the following state (?redo)
@@ -478,6 +463,7 @@ class ChannelBot(object):
         self.graph = save_state["graph"]
         self.style = save_state["style"]
         self.race_size = save_state["race_size"]
+        self.semi_resolved_errors = copy.copy(save_state['semi_resolved_errors'])
         return command
 
     async def clear_last_wp_button(self):
@@ -536,6 +522,7 @@ class ChannelBot(object):
         self.save_states = []
         self.state_pointer = -1
         self.resolved_errors = set()
+        self.semi_resolved_errors = set()
         self.should_send_mii_notification = True
         self.set_style_and_graph(self.server_id)
         self.race_size = 4

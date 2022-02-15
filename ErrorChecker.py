@@ -116,8 +116,9 @@ def get_room_errors_players(war, room, error_types, startrace=None, endrace=None
                 if len(ties)<=2: #display tie error suggestion
                     player_fc = ties[0]
                     placement = race.getPlacement(player_fc)
-                    player_name = UserDataProcessing.lounge_get_fill(player_fc, "", lounge_replace)
-                    tie_error = {'type': 'tie', 'player_name': player_name, 'player_fc': player_fc, 'placements': [placement.get_place(), placement.get_place()+1]}
+                    _, mii_name = placement.get_fc_and_name()
+                    player_name = UserDataProcessing.lounge_get_fill(player_fc, mii_name, lounge_replace)
+                    tie_error = {'type': 'tie', 'player_name': player_name, 'player_fc': player_fc, 'placements': [placement.get_place(), placement.get_place()+1], 'player_fcs': sorted(ties)}
                     error_types[int(race.raceNumber)].append(tie_error)
 
                 for this_fc in ties:

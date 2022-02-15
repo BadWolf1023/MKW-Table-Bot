@@ -10,6 +10,7 @@ import random
 import TableBotExceptions
 import UtilityFunctions
 import UserDataProcessing
+import base64
 
 tableColorPairs = [("#244f96", "#cce7e8"),
                    ("#D11425","#E8EE28"),
@@ -48,7 +49,6 @@ class War(object):
         self.teams = None
         self.temporary_tag_data = None
         self.war_id = message_id
-        
 
     def get_teams(self):  
         return self.teams
@@ -206,8 +206,10 @@ class War(object):
             for err_indx in range(len(race_errors)-1, -1, -1):
                 err = race_errors[err_indx]
                 err['race'] = errors[race_indx][0]
-                players = err['player_fc'] if 'player_fc' in err else 'player_fcs'
-                err['id'] = err['type'] + str(players) + str(err['race'])
+                players = err['player_fcs'] if 'player_fcs' in err else err['player_fc']
+                err_makeup = err['type'] + '-' + str(players) + '-' + str(err['race'])
+                err_bytes = err_makeup.encode('ascii')
+                err['id'] = base64.b64encode(err_bytes)
                 if err['id'] in resolved:
                     race_errors.pop(err_indx)
             if len(race_errors) == 0: 

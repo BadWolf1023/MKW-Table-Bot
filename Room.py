@@ -607,7 +607,7 @@ class Room(object):
         #Next, we need to renumber the races
         self.fix_race_numbers()
 
-        #Next, add/remove manual DC placements
+        #Then, add/remove manual DC placements
         for raceNum, race in enumerate(self.races, 1):
             if raceNum in self.manual_dc_placements: #manual DC placements found for this race
                 items = self.manual_dc_placements[raceNum]

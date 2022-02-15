@@ -43,7 +43,7 @@ TRANSFER_TABLE_TERMS = {"transferfrom", "copyfrom", "transfer", "copy", "copytab
 GET_SUBSTITUTIONS_TERMS = {"subs", "substitutes", "substitutions", "getsubs", "allsubs"}
 
 #Button interactions (only people in room can use buttons in Lounge; however, this isn't applied to the commands)
-INTERACTIONS = {'wp_interaction', 'confirm_interaction'}
+INTERACTIONS = {'interaction'}
 
 #General commands that do not require a war to be started (stateless commands)
 FC_TERMS = {"fc"}
