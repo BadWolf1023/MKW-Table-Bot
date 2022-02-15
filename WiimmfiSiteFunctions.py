@@ -106,15 +106,20 @@ async def _get_mkwx_soup() -> Union[BeautifulSoup, None]:
     return None if mkwx_HTML is None else BeautifulSoup(fix_cloudflare_email(mkwx_HTML), "html.parser")
 
 
-async def get_mkwx_soup() -> Union[BeautifulSoup, None]:
-    '''Returns Beautifulsoup version of main Wiimmfi.de mkwx page with all the cloudflare emails fixed.
+async def get_mkwx_soup() -> Tuple[RoomLoadStatus, Union[BeautifulSoup, None]]:
+    '''RETURNS FAILED_REQUEST, SUCCESS
+    Returns Beautifulsoup version of main Wiimmfi.de mkwx page with all the cloudflare emails fixed.
     The returned page may or may not be a cached version.
     If common.STUB_MKWX is enabled, the mkwx page in the testing_rooms directory will be used rather than making a request for the Wiimmfi.de mkwx page
-    If the request to the page faile, None is returned'''
+    If the request to the page faile, None is returned
+    '''
     if common.STUB_MKWX:
         with codecs.open(common.STUB_MKWX_FILE_NAME, "r", "utf-8") as fp:
-            return BeautifulSoup(fix_cloudflare_email(fp.read()), "html.parser")
-    return await _get_mkwx_soup()
+            return RoomLoadStatus(RoomLoadStatus.SUCCESS), BeautifulSoup(fix_cloudflare_email(fp.read()), "html.parser")
+    mkwx_soup = await _get_mkwx_soup()
+    if mkwx_soup is None:
+        RoomLoadStatus(RoomLoadStatus.FAILED_REQUEST), None
+    return RoomLoadStatus(RoomLoadStatus.SUCCESS), mkwx_soup
 
 
 async def get_room_soup(rxx: str) -> Tuple[RoomLoadStatus, Union[BeautifulSoup, None]]:
@@ -130,9 +135,9 @@ async def get_room_soup(rxx: str) -> Tuple[RoomLoadStatus, Union[BeautifulSoup, 
 
 async def get_front_race_by_fc(fcs: List[str]) -> Tuple[RoomLoadStatus, Union[Race, None]]:
     '''RETURNS NOT_ON_FRONT_PAGE, FAILED_REQUEST, SUCCESS'''
-    mkwx_soup = await get_mkwx_soup()
-    if mkwx_soup is None:
-        return RoomLoadStatus(RoomLoadStatus.FAILED_REQUEST), None
+    status, mkwx_soup = await get_mkwx_soup()
+    if not status:
+        return status, None
     parser = WiimmfiParser.FrontPageParser(mkwx_soup)
     for front_page_race in parser.get_front_room_races():
         for fc in fcs:

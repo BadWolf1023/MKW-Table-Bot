@@ -959,10 +959,15 @@ class OtherCommands:
             return
 
         this_bot.updateRLCoolDown()
-        mkwx_soup = await WiimmfiSiteFunctions.get_mkwx_soup()
-        if mkwx_soup is None:
-            await message.channel.send(f"Couldn't access the Wiimmfi mkwx page. Wait a minute, then try again.")
+
+        status, mkwx_soup = await WiimmfiSiteFunctions.get_mkwx_soup()
+        if not status:
+            failure_message = "General mkwx failure, wws command. Report this to a Table Bot developer if you see it."
+            if status.status is status.FAILED_REQUEST:
+                failure_message = TablingCommands.get_room_load_failure_message(message, None, status)
+            await message.channel.send(failure_message)
             return
+
         parser = WiimmfiSiteFunctions.WiimmfiParser.FrontPageParser(mkwx_soup)
         rooms = []
         if ww_type == Race.RT_WW_REGION:
@@ -2325,12 +2330,12 @@ class TablingCommands:
         update_status = await this_bot.update_table()
         if not update_status:
             failure_message = "General room failure, war picture. Report this to a Table Bot developer if you see it."
-            if update_status.status is update_status.NO_ROOM_LOADED:
+            if update_status.status is update_status.HAS_NO_RACES:
+                failure_message =  "The room has does not have any races, so I cannot give you a table."
+            elif update_status.status is update_status.NO_ROOM_LOADED:
                 failure_message = get_room_not_loaded_message(server_prefix, is_lounge_server)
             elif update_status.status is update_status.FAILED_REQUEST:
-                failure_message =  "Couldn't access the Wiimmfi website. Wait a minute, then try again."
-            elif update_status.status is update_status.HAS_NO_RACES:
-                failure_message =  "The room has does not have any races, so I cannot give you a table."
+                failure_message = TablingCommands.get_room_load_failure_message(message, None, update_status)
             await message2.edit(content=failure_message)
             return
     
