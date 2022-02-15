@@ -18,14 +18,14 @@ import SmartTypes as ST
 import TimerDebuggers
 
 class RoomLoadStatus:
-    DOES_NOT_EXIST = object()
+    FAILED_REQUEST = object()
     NOT_ON_FRONT_PAGE = object()
     NO_KNOWN_FCS = object()
     HAS_NO_RACES = object()
     NO_ROOM_LOADED = object()
     SUCCESS = object()
     SUCCESS_BUT_NO_WAR = object()
-    FAILURE_CODES = {DOES_NOT_EXIST, NOT_ON_FRONT_PAGE, HAS_NO_RACES, NO_ROOM_LOADED, NO_KNOWN_FCS}
+    FAILURE_CODES = {FAILED_REQUEST, NOT_ON_FRONT_PAGE, HAS_NO_RACES, NO_ROOM_LOADED, NO_KNOWN_FCS}
     SUCCESS_CODES = {SUCCESS, SUCCESS_BUT_NO_WAR}
     def __init__(self, status):
         self.status = status
@@ -86,38 +86,54 @@ def fix_cloudflare_email(text: str) -> str:
     return "\n".join(out)
 
 
-async def get_room_HTML(room_link: str) -> str:
+async def get_room_HTML(room_link: str) -> Union[str, None]:
+    '''Upon a successful request, returns HTML string of a given link with all of the cloudflare emails cleaned up.
+    If the request is not successful, returns None'''
     if room_link in special_test_cases:
         description, local_file_path = special_test_cases[room_link]
         with codecs.open(local_file_path, "r", "utf-8") as fp:
             return fix_cloudflare_email(fp.read())
 
-    temp = await url_cacher.get_url(room_link, cache_length)
-    return fix_cloudflare_email(temp)
+    html_text = await url_cacher.get_url(room_link, cache_length)
+    return None if html_text is None else fix_cloudflare_email(html_text)
 
 
-async def _get_mkwx_soup() -> BeautifulSoup:
+async def _get_mkwx_soup() -> Union[BeautifulSoup, None]:
+    '''Returns Beautifulsoup version of main Wiimmfi.de mkwx page with all the cloudflare emails fixed.
+    The returned page may or may not be a cached version.
+    If the request to the page faile, None is returned'''
     mkwx_HTML = await url_cacher.get_url(MKWX_URL, cache_length)
-    return BeautifulSoup(fix_cloudflare_email(mkwx_HTML), "html.parser")
+    return None if mkwx_HTML is None else BeautifulSoup(fix_cloudflare_email(mkwx_HTML), "html.parser")
 
 
-async def get_mkwx_soup() -> BeautifulSoup:
+async def get_mkwx_soup() -> Union[BeautifulSoup, None]:
+    '''Returns Beautifulsoup version of main Wiimmfi.de mkwx page with all the cloudflare emails fixed.
+    The returned page may or may not be a cached version.
+    If common.STUB_MKWX is enabled, the mkwx page in the testing_rooms directory will be used rather than making a request for the Wiimmfi.de mkwx page
+    If the request to the page faile, None is returned'''
     if common.STUB_MKWX:
         with codecs.open(common.STUB_MKWX_FILE_NAME, "r", "utf-8") as fp:
             return BeautifulSoup(fix_cloudflare_email(fp.read()), "html.parser")
     return await _get_mkwx_soup()
 
 
-async def get_room_soup(rxx: str) -> Union[BeautifulSoup, None]:
+async def get_room_soup(rxx: str) -> Tuple[RoomLoadStatus, Union[BeautifulSoup, None]]:
+    '''RETURNS FAILED_REQUEST, HAS_NO_RACES, SUCCESS'''
     room_HTML = await get_room_HTML(SUB_MKWX_URL + rxx)
+    if room_HTML is None:
+        return RoomLoadStatus(RoomLoadStatus.FAILED_REQUEST), None
     temp = BeautifulSoup(room_HTML, "html.parser")
     if temp.find(text="No match found!") is None:
-        return temp
+        return RoomLoadStatus(RoomLoadStatus.SUCCESS), temp
+    return RoomLoadStatus(RoomLoadStatus.HAS_NO_RACES), None
 
 
 async def get_front_race_by_fc(fcs: List[str]) -> Tuple[RoomLoadStatus, Union[Race, None]]:
-    '''RETURNS NOT_ON_FRONT_PAGE, SUCCESS'''
-    parser = WiimmfiParser.FrontPageParser(await get_mkwx_soup())
+    '''RETURNS NOT_ON_FRONT_PAGE, FAILED_REQUEST, SUCCESS'''
+    mkwx_soup = await get_mkwx_soup()
+    if mkwx_soup is None:
+        return RoomLoadStatus(RoomLoadStatus.FAILED_REQUEST), None
+    parser = WiimmfiParser.FrontPageParser(mkwx_soup)
     for front_page_race in parser.get_front_room_races():
         for fc in fcs:
             if front_page_race.hasFC(fc):
@@ -126,7 +142,7 @@ async def get_front_race_by_fc(fcs: List[str]) -> Tuple[RoomLoadStatus, Union[Ra
 
 
 async def get_front_race_smart(smart_type: ST.SmartLookupTypes, hit_lounge_api=False) -> Tuple[RoomLoadStatus, Union[Race, None]]:
-    '''RETURNS NOT_ON_FRONT_PAGE, NO_KNOWN_FCS, SUCCESS'''
+    '''RETURNS NOT_ON_FRONT_PAGE, NO_KNOWN_FCS, FAILED_REQUEST, SUCCESS'''
     if hit_lounge_api:
         await smart_type.lounge_api_update()
     fcs = smart_type.get_fcs()
@@ -139,10 +155,10 @@ async def get_front_race_smart(smart_type: ST.SmartLookupTypes, hit_lounge_api=F
 
 
 async def get_races_for_rxx(rxx: str, hit_lounge_api=False) -> Tuple[RoomLoadStatus, str, List[Race]]:
-    '''RETURNS DOES_NOT_EXIST, HAS_NO_RACES, SUCCESS'''
-    room_page_soup = await get_room_soup(rxx)
-    if room_page_soup is None:
-        return RoomLoadStatus(RoomLoadStatus.DOES_NOT_EXIST), rxx, []
+    '''RETURNS HAS_NO_RACES, FAILED_REQUEST, SUCCESS'''
+    status, room_page_soup = await get_room_soup(rxx)
+    if not status:
+        return status, rxx, []
     room_page_parser = WiimmfiParser.RoomPageParser(room_page_soup)
     if not room_page_parser.has_races():
         return RoomLoadStatus(RoomLoadStatus.HAS_NO_RACES), rxx, []
@@ -152,7 +168,7 @@ async def get_races_for_rxx(rxx: str, hit_lounge_api=False) -> Tuple[RoomLoadSta
 
 
 async def get_races_by_fcs(fcs: List[str], hit_lounge_api=False) -> Tuple[RoomLoadStatus, Union[None, str], List[Race]]:
-    '''RETURNS DOES_NOT_EXIST, NOT_ON_FRONT_PAGE, HAS_NO_RACES, SUCCESS'''
+    '''RETURNS NOT_ON_FRONT_PAGE, HAS_NO_RACES, FAILED_REQUEST, SUCCESS'''
     status_code, front_page_race = await get_front_race_by_fc(fcs)
     if not status_code:
         return status_code, None, []
@@ -162,7 +178,7 @@ async def get_races_by_fcs(fcs: List[str], hit_lounge_api=False) -> Tuple[RoomLo
 
 @TimerDebuggers.timer_coroutine
 async def get_races_smart(smart_type: ST.SmartLookupTypes, hit_lounge_api=False) ->  Tuple[RoomLoadStatus, Union[None, str], List[Race]]:
-    '''RETURNS DOES_NOT_EXIST, NOT_ON_FRONT_PAGE, HAS_NO_RACES, NO_KNOWN_FCS, SUCCESS'''
+    '''RETURNS NOT_ON_FRONT_PAGE, HAS_NO_RACES, NO_KNOWN_FCS, FAILED_REQUEST, SUCCESS'''
     if smart_type.is_rxx():
         return await get_races_for_rxx(smart_type.modified_original, hit_lounge_api)
     if hit_lounge_api:
@@ -171,16 +187,3 @@ async def get_races_smart(smart_type: ST.SmartLookupTypes, hit_lounge_api=False)
     if fcs is None:
         return RoomLoadStatus(RoomLoadStatus.NO_KNOWN_FCS), None, []
     return await get_races_by_fcs(fcs, hit_lounge_api)
-
-
-if __name__ == '__main__':
-    from time import sleep
-    #for i in range(100):
-    soup = common.run_async_function_no_loop(get_mkwx_soup())
-    parser_obj = WiimmfiParser.FrontPageParser(soup)
-    #sleep(int(cache_length.total_seconds())+1)
-
-    #ctgp_wws = sr.get_CTGP_WWs()
-    #for ctgp_ww in ctgp_wws:
-    #    print(ctgp_ww.get_room_name(), ctgp_ww.getRoomRating())
-    #print(FrontPageParser.get_embed_text_for_race(ctgp_wws, 0)[1])
