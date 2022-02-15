@@ -517,7 +517,7 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif args[0] in botUtils.GARBAGE_COLLECT_TERMS:
-            commands.BadWolfCommands.garbage_collect_command(message)
+            await commands.BadWolfCommands.garbage_collect_command(message)
                 
         elif args[0] in botUtils.START_WAR_TERMS:
             await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
