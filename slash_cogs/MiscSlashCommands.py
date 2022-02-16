@@ -139,8 +139,18 @@ class MiscSlash(ext_commands.Cog):
     ):  
         command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx)
 
-        
         await commands.OtherCommands.get_flag_command(message, server_prefix)
+    
+    @slash_command(
+        name="flags",
+        description="Show available flag codes",
+        guild_ids=GUILDS
+    )
+    async def _show_flags(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        await ctx.respond("**List of available flag codes:** https://gb.hlorenzi.com/help/flags")
     
     @slash_command(name="fc",
     description="Get a Lounge player's FC",
@@ -148,7 +158,7 @@ class MiscSlash(ext_commands.Cog):
     async def _get_fc(
         self,
         ctx: discord.ApplicationContext,
-        player: Option(str, "Player", required=False, default=None)
+        player: Option(str, "Lounge name/Discord mention/FC", required=False, default=None)
     ):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command]
@@ -162,7 +172,7 @@ class MiscSlash(ext_commands.Cog):
     async def _get_mii(
         self,
         ctx: discord.ApplicationContext,
-        player: Option(str, "Player", required=False, default=None)
+        player: Option(str, "Lounge name/Discord mention/FC", required=False, default=None)
     ):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command]
@@ -171,14 +181,14 @@ class MiscSlash(ext_commands.Cog):
         await commands.OtherCommands.mii_command(message, args, message.content)
     
     @slash_command(name="loungename",
-    description="Get your Lounge name",
+    description="Get a player's Lounge name",
     guild_ids=GUILDS)
     async def _get_lounge(
         self,
         ctx: discord.ApplicationContext,
+        player: Option(str, "FC/Discord mention/Discord ID", required=False, default=None)
     ):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
-
         
         await commands.OtherCommands.lounge_name_command(message)
 

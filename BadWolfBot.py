@@ -35,10 +35,6 @@ import aiohttp
 import os
 import asyncio
 
-
-finished_on_ready = False
-ALLOW_SLASH_COMMANDS = True #whether the bot should register its slash commands (since there is no reason to use slash commands until April 2022)
-
 CT_WAR_LOUNGE_ECHELONS_CAT_ID = 851666104228249652
 WAR_LOUNGE_ECHELONS_CAT_ID = 751956338912788559
 WAR_LOUNGE_COMP_DISC_CAT_ID = 751956337612685405
@@ -52,15 +48,13 @@ beta_bot_key = None
 testing_bot_key = None
 bot_invite_picture = "https://media.discordapp.net/attachments/781249043623182406/911592069636685884/unknown.png"
 
-
 #These commands modify the table
 RESET_TERMS = {"reset", "restart", "cancel", "quit", "stop", "clear"}
-START_WAR_TERMS = {"startwar", "sw", "starttable"}
+START_WAR_TERMS = {"startwar", "sw", "starttable", "start"}
 UNDO_TERMS = {"undo", "undocommand", "reverse"}
 REDO_TERMS = {"redo", "redocommand"}
 LIST_UNDOS_TERMS = {"undos", "getundos", "toundo"}
 LIST_REDOS_TERMS = {"redos", "getredos", "toredo"}
-
 
 #These commands also modify the table, but can be undone using the ?undo command
 REMOVE_RACE_TERMS = {"removerace"}
@@ -73,7 +67,7 @@ MERGE_ROOM_TERMS = {"mr", "mergeroom"}
 SET_WAR_NAME_TERMS = {"setwarname"}
 CHANGE_PLAYER_NAME_TERMS = {'changename', 'cn'}
 CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag', 'setteam', 'settag', 'ct'}
-CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize"}
+CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize", "crs"}
 EARLY_DC_TERMS = {'earlydc'}
 DEPRECATED_QUICK_EDIT_TERMS = {'quickedit', 'qe'}
 QUICK_EDIT_TERMS = DEPRECATED_QUICK_EDIT_TERMS | {"changeplace", "changeposition", "cp"}
@@ -87,14 +81,15 @@ DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
 TABLE_TEXT_TERMS = {"tt", "tabletext"}
 WAR_PICTURE_TERMS = {"wp", "warpicture", "wo", "w;", "w["}
 RACE_RESULTS_TERMS = {"rr", "raceresults"}
-RACES_TERMS = {"races"}
-RXX_TERMS = {"rxx", "rlid"}
+RACES_TERMS = {"races", "tracks", "tracklist"}
+RXX_TERMS = {"rxx", "rlid", "roomid"}
 ALL_PLAYERS_TERMS = {"allplayers", "ap"}
 FCS_TERMS = {"fcs"}
 TRANSFER_TABLE_TERMS = {"transferfrom", "copyfrom", "transfer", "copy", "copytable", "transfertable", "movetable", "move"}
 GET_SUBSTITUTIONS_TERMS = {"subs", "substitutes", "substitutions", "getsubs", "allsubs"}
-INTERACTIONS = {'interaction'}
 
+#Button interactions (only people in room can use buttons in Lounge; however, this isn't applied to the commands)
+INTERACTIONS = {'interaction'}
 
 #General commands that do not require a war to be started (stateless commands)
 FC_TERMS = {"fc"}
@@ -147,8 +142,6 @@ SERVER_DEFAULT_LARGE_TIME_TERMS = {'defaultlargetime','defaultlargetimes', 'defa
 
 
 #Bot Admin Only Commands
-ADD_FLAG_EXCEPTION_TERMS = {'addflagexception'}
-REMOVE_FLAG_EXCEPTION_TERMS = {'removeflagexception'}
 SET_CTGP_REGION_TERMS = {'set_ctgp_region'}
 VR_ON_TERMS = {'vr_on'}
 VR_OFF_TERMS = {'vr_off'}
@@ -170,8 +163,13 @@ ADD_SHA_TERMS = {"addsha", "sha"}
 REMOVE_SHA_TERMS = {"removesha", "delsha"}
 
 needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REDO_TERMS | LIST_REDOS_TERMS | LIST_UNDOS_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS | GET_SUBSTITUTIONS_TERMS | INTERACTIONS
-common.needPermissionCommands.update(needPermissionCommands)
 ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS | POPULAR_TRACKS_TERMS | UNPOPULAR_TRACKS_TERMS | TOP_PLAYERS_TERMS | BEST_TRACK_TERMS | WORST_TRACK_TERMS | RECORD_TERMS
+
+common.needPermissionCommands.update(needPermissionCommands)
+
+finished_on_ready = False
+REGISTER_SLASH_COMMANDS = True #whether the bot should register its slash commands (since there is no reason to use slash commands until April 2022)
+
 
 SLASH_EXTENSIONS = [
     'slash_cogs.TablingSlashCommands', 
@@ -210,10 +208,8 @@ elif common.running_beta and not common.beta_is_real:
     common.mkw_lounge_staff_roles.add(common.BAD_WOLF_SERVER_EVERYONE_ROLE_ID)
     lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.BAD_WOLF_SERVER_ID, common.main_lounge_can_report_table)
 
-
 def createEmptyTableBot(server_id=None, channel_id=None):
     return TableBot.ChannelBot(server_id=server_id, channel_id=channel_id)
-
 
 def get_prefix(bot,msg: discord.Message) -> str:
     prefix = common.default_prefix
@@ -227,12 +223,11 @@ class BadWolfBot(discord.Bot):
         super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS) #debug_guilds=common.SLASH_GUILDS
         self.table_bots = dict()
         self.lounge_submissions = lounge_submissions
-        self.user_flag_exceptions = set()
         self.mention = None
         # self.sug_views = {}
         # self.pic_views = {}
 
-        if ALLOW_SLASH_COMMANDS:
+        if REGISTER_SLASH_COMMANDS:
             for ext in SLASH_EXTENSIONS:
                 self.load_extension(ext)
 
@@ -298,10 +293,7 @@ class BadWolfBot(discord.Bot):
             self.stay_alive_503.start()
         except RuntimeError:
             print("stay_alive task already started")
-        
-        self.user_flag_exceptions.clear()
-        self.user_flag_exceptions.update(UserDataProcessing.read_flag_exceptions())
-        
+                
         try:
             self.dumpDataAndBackup.start()
         except RuntimeError:
@@ -704,12 +696,6 @@ class BadWolfBot(discord.Bot):
         
         elif args[0] in TRANSFER_TABLE_TERMS:
             await commands.TablingCommands.transfer_table_command(message, this_bot, args, server_prefix, is_lounge_server, self.table_bots, self)
-                                                
-        elif args[0] in ADD_FLAG_EXCEPTION_TERMS:
-            await commands.BotAdminCommands.add_flag_exception_command(message, args, self.user_flag_exceptions)
-                
-        elif args[0] in REMOVE_FLAG_EXCEPTION_TERMS:
-            await commands.BotAdminCommands.remove_flag_exception_command(message, args, self.user_flag_exceptions)
                 
         elif args[0] in SET_CTGP_REGION_TERMS:
             await commands.BotAdminCommands.change_ctgp_region_command(message, args)
@@ -751,8 +737,8 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge_server, command)
         
         elif args[0] in PLAYER_PENALTY_TERMS:
-            if False:
-                await message.channel.send(f"Use the `{server_prefix}addpoints` command instead.")
+            # if False:
+            #     await message.channel.send(f"Use the `{server_prefix}addpoints` command instead.")
             await commands.TablingCommands.player_penalty_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif args[0] in TEAM_PENALTY_TERMS:
@@ -768,7 +754,7 @@ class BadWolfBot(discord.Bot):
             await commands.OtherCommands.lounge_name_command(message)
             
         elif args[0] in SET_FLAG_TERMS:
-            await commands.OtherCommands.set_flag_command(message, args, self.user_flag_exceptions)
+            await commands.OtherCommands.set_flag_command(message, args)
             
         elif args[0] in RXX_TERMS:
             await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge_server)
@@ -1105,7 +1091,6 @@ if not common.ON_WINDOWS:
     end_signal = signal.SIGQUIT
 signal.signal(end_signal, handler)
 
-
 def initialize():
     create_folders()
     private_data_init()
@@ -1114,9 +1099,9 @@ def initialize():
     ServerFunctions.initialize()
     UtilityFunctions.initialize()
     TagAIShell.initialize()
+
 def after_init():
     asyncio.run(DataTracker.initialize())
-
 
 if __name__ == "__main__":
     initialize()

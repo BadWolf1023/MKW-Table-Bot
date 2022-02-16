@@ -3,6 +3,7 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
+import asyncio
 import Race
 import Placement
 import WiimmfiSiteFunctions
@@ -21,6 +22,8 @@ import TimerDebuggers
 
 DEBUG_RACES = False
 DEBUG_PLACEMENTS = False
+
+watched_suggestions = {}
 
 #Function takes a default dictionary, the key being a number, and makes any keys that are greater than the threshold one less, then removes that threshold, if it exists
 def generic_dictionary_shifter(old_dict, threshold):
@@ -67,6 +70,9 @@ class Room(object):
         self.event_id = event_id
         self.rLIDs: List[str] = []
         self.races: List[Race.Race] = []
+
+        self.suggestion_errors = None
+        self.channel_id = None
         
         self.add_races(rxx, races)
 
@@ -92,8 +98,26 @@ class Room(object):
     def get_event_id(self):
         return self.event_id
     
-
-
+    
+    def watch_suggestions(self, view, errors, channel_id):
+        watched_suggestions[channel_id] = view #store active channel suggestion view
+        self.suggestion_errors = errors
+        self.channel_id = channel_id
+    
+    def stop_watching_suggestions(self):
+        if self.channel_id:
+            watched_suggestions.pop(self.channel_id, None)
+            self.suggestion_errors = None
+        
+    def update_suggestions(self):
+        if self.suggestion_errors: #a suggestion view is active and must be updated after race removal
+            view = watched_suggestions.get(self.channel_id, None)
+            self.apply_tabler_adjustments(suggestion_call=True)
+            updated_suggestions = view.bot.war.get_war_errors_string_2(self, view.bot.get_all_resolved_errors(), suggestion_call=True)
+                
+            if view:
+                self.suggestion_errors = updated_suggestions
+                asyncio.create_task(view.refresh_suggestions())
 
     def set_races(self, races: List[Race.Race]):
         #In case any outsiders have a reference to our race list, we want to update their reference
@@ -137,10 +161,11 @@ class Room(object):
         
         ret = "*Subs this war:*"
         
-        for ind, (sub_in_fc, substitution) in enumerate(self.sub_ins.items(), 1):
+        for ind, (sub_in_fc, sub_data) in enumerate(self.sub_ins.items(), 1):
             subInName = self.getMiiNameByFC(sub_in_fc) + UserDataProcessing.lounge_add(sub_in_fc)
-            subOutName = substitution[3]
-            race = substitution[0]
+            sub_out_fc = sub_data[2]
+            subOutName = self.getMiiNameByFC(sub_out_fc) + UserDataProcessing.lounge_add(sub_out_fc)
+            race = sub_data[0]
             ret+=f"\n\t{ind}. **{subInName}** subbed in for **{subOutName}** on race {race}."
         
         return ret
@@ -207,10 +232,11 @@ class Room(object):
             remove_success = self.__remove_race__(raceIndex)
             if remove_success:
                 self.removed_races.append((raceIndex, raceName))
-                #Update dcs, quickedits, and room size changes, and subin scores
+                #Update dcs, manual placements, quickedits, and room size changes, and subin scores
                 self.forcedRoomSize = generic_dictionary_shifter(self.forcedRoomSize, race_num)
                 self.dc_on_or_before = generic_dictionary_shifter(self.dc_on_or_before, race_num)
                 self.placement_history = generic_dictionary_shifter(self.placement_history, race_num)
+                self.manual_dc_placements = generic_dictionary_shifter(self.manual_dc_placements, race_num)
                 for sub_data in self.sub_ins.values():
                     subout_start_race = sub_data[4]
                     subout_end_race = sub_data[5]
@@ -218,6 +244,8 @@ class Room(object):
                         sub_data[6].pop(subout_start_race - race_num)
                         sub_data[5] -= 1
                         sub_data[0] -= 1
+
+                self.update_suggestions()
                         
             return remove_success, (raceIndex, raceName)
         return False, None
@@ -592,7 +620,7 @@ class Room(object):
         return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS)
 
 
-    def apply_tabler_adjustments(self):
+    def apply_tabler_adjustments(self, suggestion_call=False):
         #First, we number all races
         self.fix_race_numbers()
             
@@ -604,8 +632,9 @@ class Room(object):
                         placement.getPlayer().set_name(f"{name_change} (Tabler Changed)")
         
         #Next, we remove races
-        for removed_race_ind, _ in self.removed_races:
-            self.races.pop(removed_race_ind)
+        if not suggestion_call:
+            for removed_race_ind, _ in self.removed_races:
+                self.races.pop(removed_race_ind)
         
         #Next, we need to renumber the races
         self.fix_race_numbers()
@@ -704,6 +733,7 @@ class Room(object):
             mii.clean_up()
             
     def destroy(self):
+        self.stop_watching_suggestions()
         self.set_populating_miis(True)
         self.clean_up()
         self.set_populating_miis(False)
@@ -723,10 +753,16 @@ class Room(object):
         save_state['races'] = deepcopy(self.races)
         save_state['placement_history'] = copy(self.placement_history)
         save_state['sub_ins'] = deepcopy(self.sub_ins)
+        save_state['suggestion_errors'] = deepcopy(self.suggestion_errors)
         
         return save_state
     
     def restore_save_state(self, save_state):
         for save_attr, save_value in save_state.items():
             self.__dict__[save_attr] = save_value
+        
+        if self.suggestion_errors:
+            view = watched_suggestions.get(self.channel_id, None)
+            if view:
+                asyncio.create_task(view.refresh_suggestions())
                 

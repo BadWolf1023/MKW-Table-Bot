@@ -218,11 +218,12 @@ class War(object):
                 errors[race_indx][1] = sorted(race_errors, key=lambda l: error_priority(l['type']), reverse=True)
 
         errors = sorted(errors, key=lambda l: l[0])
+        # errors = {k: v for (k, v) in errors}
         errors = list(itertools.chain.from_iterable([race[1] for race in errors]))
         return errors
 
 
-    def get_war_errors_string_2(self, room, resolved_errors, replaceLounge=True, up_to_race=None):
+    def get_war_errors_string_2(self, room, resolved_errors, replaceLounge=True, up_to_race=None, suggestion_call=False):
         error_types = defaultdict(list)
 
         errors = ErrorChecker.get_war_errors_players(self, room, error_types, replaceLounge, ignoreLargeTimes=self.ignoreLargeTimes)
@@ -230,6 +231,9 @@ class War(object):
             return "Room not loaded.", None
 
         error_types = self.clear_resolved_errors(error_types, resolved_errors)
+
+        if suggestion_call: 
+            return error_types
         
         errors_no_large_times = ErrorChecker.get_war_errors_players(self, room, defaultdict(list), replaceLounge, ignoreLargeTimes=True)
         errors_large_times = ErrorChecker.get_war_errors_players(self, room, defaultdict(list), replaceLounge, ignoreLargeTimes=False)

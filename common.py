@@ -30,7 +30,10 @@ if False: # for IDE autocompletion
     client: BadWolfBot.BadWolfBot = None
 
 PROPERTIES_FILE = f"properties.json"
-properties = json.load(open(PROPERTIES_FILE)) if os.path.exists(PROPERTIES_FILE) else {"mode": 'dev'}
+
+EXAMPLE_PROPERTIES_FILE = "example_properties.json"
+
+properties = json.load(open(PROPERTIES_FILE if os.path.exists(PROPERTIES_FILE) else EXAMPLE_PROPERTIES_FILE)) 
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False

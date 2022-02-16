@@ -5,7 +5,7 @@ import commands
 import common
 import InteractionUtils
 
-REQUIRED_PERMISSIONS = [CommandPermission(role, 1, True, common.MKW_LOUNGE_SERVER_ID) for role in list(common.reporter_plus_roles)] #+ [CommandPermission(common.properties["admin_id"], 2, True)]
+REQUIRED_PERMISSIONS = [CommandPermission(role, 1, True, common.MKW_LOUNGE_SERVER_ID) for role in list(common.reporter_plus_roles)]
 GUILDS = [common.MKW_LOUNGE_SERVER_ID] if common.is_prod else common.SLASH_GUILDS
 EMPTY_CHAR = "\u200b"
 

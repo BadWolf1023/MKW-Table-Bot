@@ -141,9 +141,6 @@ def best_shared_tag_rating(a_tags, b_tags, a, b):
     return 0
 
 
-# In[10]:
-
-
 def decode_from_row(row):
     k = 0
     teams = []
@@ -202,7 +199,7 @@ def get_teams(players, X):
             team_tags = set.intersection(*[player_tags[i] for i in team])
         except:
             pass
-
+        
         if len(team_tags) > 0:
             team_names = [players[i] for i in team]
             best_tag = max(team_tags, key=lambda x: tag_rating(x, team_names))
@@ -225,7 +222,7 @@ def get_teams(players, X):
             for i in team:
                 for tag in player_tags[i]:
                     tag_count[tag] += 1
-
+            
             if len(tag_count) == 0:
                 best_tag = "No Tag"
             else:
@@ -285,7 +282,11 @@ def get_teams_smart(players, formats=None, target_size=None):
         X = formats[team_size]
 
         num_teams = math.ceil(len(players)/team_size)
-
+        num_teams_floor = len(players) // team_size
+        
+        if len(players) > num_teams_floor * team_size: # format and teams don't match
+            return target_size, BaseTagAI.get_alphabetical_tags(players, lambda name: TagAI_BadWolf.getTagSmart(name)[0], players_per_team=target_size)
+        
         target_score = num_teams * (team_size)*(team_size-1)/2
         teams, score, tie_score, data = get_teams(players, X)
 
