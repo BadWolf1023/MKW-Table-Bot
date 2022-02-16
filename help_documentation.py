@@ -105,9 +105,9 @@ def get_help_files(args:List[str]):
 
 
 async def send_help(message: discord.Message, is_lounge_server, args:List[str], prefix=common.default_prefix):
-    embed = discord.Embed(description="[Docs](https://www.github.com/BadWolf1023/MKW-Table-Bot/wiki)\n"
-                                            f"[Discord Server](https://discord.gg/{common.TABLEBOT_SERVER_INVITE_CODE})\n"
-                                            f"[Invite the bot]({common.INVITE_LINK})")
+    embed = discord.Embed(description="- [Help Documentation](https://www.github.com/BadWolf1023/MKW-Table-Bot/wiki)\n"
+                                            f"- [Discord Server](https://discord.gg/{common.TABLEBOT_SERVER_INVITE_CODE})\n"
+                                            f"- [Invite the bot]({common.INVITE_LINK})")
     embed.set_author(name="MKW Table Bot Help", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
 
     await message.channel.send(embed=embed)

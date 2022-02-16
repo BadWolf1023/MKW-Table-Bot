@@ -2204,7 +2204,7 @@ class TablingCommands:
         this_bot.add_save_state(message.content)
         this_bot.getRoom().forceRoomSize(raceNum, roomSize)
         mes = "Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + "."
-        if dont_send: return mes + " Give DC points with `/edit`, if necessary."
+        if dont_send: return mes + " Give DC points with ?edit if necessary."
         await message.channel.send(mes)
     
 
@@ -2234,7 +2234,7 @@ class TablingCommands:
             this_bot.getRoom().forceRoomSize(raceNum, roomSize)
             mes = "Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + "."
             if not dont_send: await message.channel.send(mes)
-            return mes + " Give DC points with `/edit`, if necessary."
+            return mes + " Give DC points with ?edit if necessary."
 
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):

@@ -32,7 +32,6 @@ if False: # for IDE autocompletion
 PROPERTIES_FILE = f"properties.json"
 
 EXAMPLE_PROPERTIES_FILE = "example_properties.json"
-
 properties = json.load(open(PROPERTIES_FILE if os.path.exists(PROPERTIES_FILE) else EXAMPLE_PROPERTIES_FILE)) 
 
 MII_COMMAND_DISABLED = False

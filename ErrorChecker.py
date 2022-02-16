@@ -253,7 +253,7 @@ def get_war_errors_players(war, room, error_types, lounge_replace=True, ignoreLa
             GPRaceStart = (i*4) + 1
             if GPRaceStart not in race_errors:
                 race_errors[GPRaceStart] = []
-            race_errors[GPRaceStart].insert(0, "Scores have been manually modified for this GP.")
+            race_errors[GPRaceStart].insert(0, "Table has been manually modified for this GP.")
             
     temp_dict = get_room_errors_players(war, room, error_types, startrace+1, endrace, lounge_replace=lounge_replace, ignoreLargeTimes=ignoreLargeTimes)
     
