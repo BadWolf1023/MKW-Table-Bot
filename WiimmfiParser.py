@@ -301,7 +301,7 @@ class FrontPageParser(object):
                 number_of_players = 2
                 FCs = []
                 FCs.append(str(all_rows[0].find("a").string))
-                FCs.append(f"{FCs[0]}-guest")
+                FCs.append(f"{FCs[0]}-2")
                 player_url = str(all_rows[0].find("a")[
                     common.HREF_HTML_NAME])
                 ol_status = ""

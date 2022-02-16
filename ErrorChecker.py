@@ -116,14 +116,15 @@ def get_room_errors_players(war, room, error_types, startrace=None, endrace=None
                 if len(ties)<=2: #display tie error suggestion
                     player_fc = ties[0]
                     placement = race.getPlacement(player_fc)
-                    player_name = UserDataProcessing.lounge_get_fill(player_fc, "", lounge_replace)
-                    tie_error = {'type': 'tie', 'player_name': player_name, 'player_fc': player_fc, 'placements': [placement.get_place(), placement.get_place()+1]}
+                    _, mii_name = placement.get_fc_and_name()
+                    player_name = UserDataProcessing.lounge_get_fill(player_fc, mii_name, lounge_replace)
+                    tie_error = {'type': 'tie', 'player_name': player_name, 'player_fc': player_fc, 'placements': [placement.get_place(), placement.get_place()+1], 'player_fcs': sorted(ties)}
                     error_types[int(race.raceNumber)].append(tie_error)
 
                 for this_fc in ties:
                     this_placement = race.getPlacement(this_fc)
                     _, this_name = this_placement.get_fc_and_name()
-                    errors.append(this_name + UserDataProcessing.lounge_add(this_fc, lounge_replace) + "'s finish time: " + this_placement.get_time_string() + " - use ?qe to change their position")
+                    errors.append(this_name + UserDataProcessing.lounge_add(this_fc, lounge_replace) + "'s finish time: " + this_placement.get_time_string() + " - use ?cp to change their position")
                     
 
         if blank_time_counter == len(race.placements):
@@ -192,6 +193,7 @@ def get_war_errors_players(war, room, error_types, lounge_replace=True, ignoreLa
                             error_types[int(race.raceNumber)].append({'type': 'gp_missing' + ('_1' if num_missing==1 else ''),
                                                                     'num_missing': num_missing,
                                                                     'corrected_room_sizes': list(range(race.getNumberOfPlayers(), war.get_num_players() +1)),
+                                                                    'player_fcs': num_missing
                                                                     })
                 
                 elif missingPlayersByRace[int(race.raceNumber)-1] != []:
