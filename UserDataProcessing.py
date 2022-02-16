@@ -222,7 +222,6 @@ def non_async_dump_data():
         os.rename(temp_file_name, common.DISCORD_ID_LOUNGES_FILE)
         
         
-        
         temp_file_name = f"{common.FC_DISCORD_ID_FILE}_temp"
         with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.FC_DISCORD_ID_FILE, "r", encoding="utf-8", errors="replace") as original:
             for fc, (discord_id, last_used) in fc_discordId.items():
