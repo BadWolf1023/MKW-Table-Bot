@@ -181,6 +181,9 @@ class SubmitButton(discord.ui.Button['PictureView']):
             args = [f'{self.rt_ct}update', str(self.tier), str(self.num_races)]
             msg = InteractionUtils.create_proxy_msg(interaction, args)
 
+            # self.view.children.remove(self)
+            # await common.safe_edit(self.view.message, view=self)
+
             async def submit_table():
                 try:
                     if self.rt_ct.lower() == 'ct':
@@ -188,8 +191,6 @@ class SubmitButton(discord.ui.Button['PictureView']):
                     else:
                         await commands.LoungeCommands.rt_mogi_update(common.client,self.channel_bot,msg,args,common.client.lounge_submissions)
                     
-                    # self.view.children.remove(self)
-                    # await self.view.message.edit(view=self.view)
                     await self.view.on_timeout() #remove picture button as well, since table has been submitted
                 except Exception as e:
                     await InteractionUtils.handle_component_exception(e, msg, self.view.prefix)
