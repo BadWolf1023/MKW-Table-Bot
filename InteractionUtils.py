@@ -92,10 +92,10 @@ async def on_component_error(error: Exception, interaction: discord.Interaction,
         message = await interaction.original_message()
     
     if message:
-        # await handle_component_exception(error, message, prefix)
-        await common.client.handle_exception(error, message, prefix)
+        await handle_component_exception(error, message, prefix)
     else:
         common.log_error("Exception raised on Component interaction could not be caught because there was no message from the interaction. THIS IS A BUG AND NEEDS TO BE FIXED.")
+        common.log_traceback("NO MESSAGE FROM INTERACTION ERROR. InteractionUtils.py -> on_component_error()")
         await common.safe_send(message,
                                 f"Internal bot error. This exception occurred and could not be handled: {error}. Try `/reset`. Please report this error at the MKW Table Bot server: https://discord.gg/K937DqM")
 
