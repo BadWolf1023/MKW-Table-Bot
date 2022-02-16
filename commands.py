@@ -313,36 +313,6 @@ class BotAdminCommands:
             await message.channel.send("Blacklist failed.")
 
     @staticmethod
-    async def change_flag_exception(message:discord.Message, args:List[str], user_flag_exceptions:Set[int], adding=True):
-        if len(args) <= 1:
-            await message.channel.send("You must give a discord ID.")
-            return
-
-        if not args[1].isnumeric():
-            await message.channel.send("The discord ID given is not a valid number.")
-            return
-
-        user_exception = int(args[1])
-        if adding:
-            user_flag_exceptions.add(int(args[1]))
-        else:
-            user_flag_exceptions.discard(user_exception)
-
-        UserDataProcessing.flag_exception(user_exception, adding)
-
-        await message.channel.send(f"{user_exception} can {'now add flags' if adding else 'no longer add flags'}.")
-
-    @staticmethod
-    async def add_flag_exception_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]):
-        BotAdminCommands.is_bot_admin_check(message.author, "cannot give user ID a flag exception privilege")
-        await BadWolfCommands.change_flag_exception(message, args, user_flag_exceptions, adding=True)
-
-    @staticmethod
-    async def remove_flag_exception_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]):
-        BotAdminCommands.is_bot_admin_check(message.author, "cannot remove user ID's flag exception privilege")
-        await BadWolfCommands.change_flag_exception(message, args, user_flag_exceptions, adding=False)
-
-    @staticmethod
     async def change_ctgp_region_command(message:discord.Message, args:List[str]):
         BotAdminCommands.is_bot_admin_check(message.author, "cannot change CTGP CTWW region")
         if len(args) <= 1:
@@ -831,29 +801,10 @@ class OtherCommands:
         await message.channel.send(file=file, embed=embed)
 
     @staticmethod
-    async def set_flag_command(message:discord.Message, args:List[str], user_flag_exceptions:Set[int]):
+    async def set_flag_command(message:discord.Message, args:List[str]):
         author_id = message.author.id
         if len(args) > 1:
-            #if 2nd argument is numeric, it's a discord ID
-            if args[1].isnumeric(): #This is an admin attempt
-                if str(author_id) in common.botAdmins:
-                    if len(args) == 2 or args[2] == "none":
-                        UserDataProcessing.add_flag(args[1], "")
-                        await message.channel.send(str(args[1] + "'s flag was successfully removed."))
-                    else:
-                        UserDataProcessing.add_flag(args[1], args[2].lower())
-                        await message.channel.send(str(args[1] + "'s flag was successfully added and will now be displayed on tables."))
-                elif author_id in user_flag_exceptions:
-                    flag = UserDataProcessing.get_flag(int(args[1]))
-                    if flag is None:
-                        UserDataProcessing.add_flag(args[1], args[2].lower())
-                        await message.channel.send(str(args[1] + "'s flag was successfully added and will now be displayed on tables."))
-                    else:
-                        await message.channel.send("This person already has a flag set.")
-                else:
-                    await message.channel.send("You are not a bot admin, nor do you have an exception for adding flags.")
-
-            elif len(args) >= 2:
+            if len(args) >= 2:
                 if args[1].lower() not in UserDataProcessing.valid_flag_codes:
                     await message.channel.send(f"This is not a valid flag code. For a list of flags and their codes, please visit: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
                     return

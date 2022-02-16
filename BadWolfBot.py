@@ -142,8 +142,6 @@ SERVER_DEFAULT_LARGE_TIME_TERMS = {'defaultlargetime','defaultlargetimes', 'defa
 
 
 #Bot Admin Only Commands
-ADD_FLAG_EXCEPTION_TERMS = {'addflagexception'}
-REMOVE_FLAG_EXCEPTION_TERMS = {'removeflagexception'}
 SET_CTGP_REGION_TERMS = {'set_ctgp_region'}
 VR_ON_TERMS = {'vr_on'}
 VR_OFF_TERMS = {'vr_off'}
@@ -225,7 +223,6 @@ class BadWolfBot(discord.Bot):
         super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS) #debug_guilds=common.SLASH_GUILDS
         self.table_bots = dict()
         self.lounge_submissions = lounge_submissions
-        self.user_flag_exceptions = set()
         self.mention = None
         # self.sug_views = {}
         # self.pic_views = {}
@@ -296,10 +293,7 @@ class BadWolfBot(discord.Bot):
             self.stay_alive_503.start()
         except RuntimeError:
             print("stay_alive task already started")
-        
-        self.user_flag_exceptions.clear()
-        self.user_flag_exceptions.update(UserDataProcessing.read_flag_exceptions())
-        
+                
         try:
             self.dumpDataAndBackup.start()
         except RuntimeError:
@@ -702,12 +696,6 @@ class BadWolfBot(discord.Bot):
         
         elif args[0] in TRANSFER_TABLE_TERMS:
             await commands.TablingCommands.transfer_table_command(message, this_bot, args, server_prefix, is_lounge_server, self.table_bots, self)
-                                                
-        elif args[0] in ADD_FLAG_EXCEPTION_TERMS:
-            await commands.BotAdminCommands.add_flag_exception_command(message, args, self.user_flag_exceptions)
-                
-        elif args[0] in REMOVE_FLAG_EXCEPTION_TERMS:
-            await commands.BotAdminCommands.remove_flag_exception_command(message, args, self.user_flag_exceptions)
                 
         elif args[0] in SET_CTGP_REGION_TERMS:
             await commands.BotAdminCommands.change_ctgp_region_command(message, args)
@@ -766,7 +754,7 @@ class BadWolfBot(discord.Bot):
             await commands.OtherCommands.lounge_name_command(message)
             
         elif args[0] in SET_FLAG_TERMS:
-            await commands.OtherCommands.set_flag_command(message, args, self.user_flag_exceptions)
+            await commands.OtherCommands.set_flag_command(message, args)
             
         elif args[0] in RXX_TERMS:
             await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge_server)

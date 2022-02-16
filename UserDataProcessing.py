@@ -154,31 +154,6 @@ def get_flag(discord_id):
         return discordId_flags[discord_id]
     return None
     
-def flag_exception(discord_id, add=True):
-    common.check_create(common.FLAG_EXCEPTION_FILE)
-    discord_id = str(discord_id)
-    temp_file_name = f"{common.FLAG_EXCEPTION_FILE}_temp"
-    with open(temp_file_name, "w+", encoding="utf-8", errors="replace") as temp_out, open(common.FLAG_EXCEPTION_FILE, "r+", encoding="utf-8", errors="replace") as original:
-        for line in original:
-            if line.strip("\n").split(seperator)[0] != discord_id:
-                temp_out.write(line)
-        if add:
-            temp_out.write(str(discord_id) + "\n")
-                
-    os.remove(common.FLAG_EXCEPTION_FILE)
-    os.rename(temp_file_name, common.FLAG_EXCEPTION_FILE)
-   
-    return True
-
-def read_flag_exceptions():
-    common.check_create(common.FLAG_EXCEPTION_FILE)
-    flag_exceptions = set()
-    with open(common.FLAG_EXCEPTION_FILE, "r+", encoding="utf-8", errors="replace") as original:
-        for line in original:
-            line = line.strip('\n').strip()
-            if line.isnumeric():
-                flag_exceptions.add(int(line))
-    return flag_exceptions
 
 def read_DiscordID_Lounges_file(filename=common.DISCORD_ID_LOUNGES_FILE):
     common.check_create(filename)
