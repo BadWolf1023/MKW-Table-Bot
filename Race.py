@@ -4,7 +4,6 @@ Created on Jul 12, 2020
 @author: willg
 '''
 import UtilityFunctions
-import UserDataProcessing
 from Placement import DISCONNECTION_TIME, Placement
 from collections import defaultdict
 from typing import List

@@ -106,7 +106,7 @@ RECORD_TERMS = {"record"}
 QUICK_START_TERMS = {"quickstart"}
 TUTORIAL_TERMS = {"tutorial"}
 HELP_TERMS = {"help"}
- 
+
 #Lounge table submission commands
 LOUNGE_RT_MOGI_UPDATE_TERMS = {'rtmogiupdate', 'rttableupdate', 'rtupdatemogi', 'rtupdate'}
 LOUNGE_CT_MOGI_UPDATE_TERMS = {'ctmogiupdate', 'cttableupdate', 'ctupdatemogi', 'ctupdate'}
@@ -525,7 +525,7 @@ class BadWolfBot(discord.Bot):
             #server_id = message.guild.id   
             is_lounge_server = message.guild.id == common.MKW_LOUNGE_SERVER_ID
             server_prefix = ServerFunctions.get_server_prefix(message.guild.id)
-            message_has_prefix, is_mention, server_prefix = self.has_prefix(message.content, server_prefix)
+            message_has_prefix, is_mention, _ = self.has_prefix(message.content, server_prefix)
             if is_mention:
                 message.raw_mentions.pop(0)
 
@@ -602,6 +602,8 @@ class BadWolfBot(discord.Bot):
         except discord.errors.DiscordServerError:
             await common.safe_send(message,
                                    "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
+        except discord.errors.NotFound:
+            pass
         except aiohttp.ClientOSError:
             await common.safe_send(message,
                                    "Either Wiimmfi, Lounge, or Discord's servers had an error. This is usually temporary, so do your command again.")
@@ -639,7 +641,7 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif args[0] in GARBAGE_COLLECT_TERMS:
-            commands.BadWolfCommands.garbage_collect_command(message)
+            await commands.BadWolfCommands.garbage_collect_command(message)
                 
         elif args[0] in START_WAR_TERMS:
             await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
@@ -733,7 +735,7 @@ class BadWolfBot(discord.Bot):
         
         elif args[0] in QUICK_EDIT_TERMS:
             # if args[0] in DEPRECATED_QUICK_EDIT_TERMS:
-            #     await message.channel.send(f"**NOTE: The command `{server_prefix}{args[0]}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")                      
+            #     await message.channel.send(f"**NOTE: The command `{server_prefix}{args[0]}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")
             await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif args[0] in CHANGE_PLAYER_TAG_TERMS:
@@ -956,12 +958,49 @@ class BadWolfBot(discord.Bot):
         self.destroy_all_tablebots()
         print(f"{str(datetime.now())}: All table bots cleaned up.")
 
+def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bot:TableBot.ChannelBot, command:str):
+    if not isLoungeServer:
+        return True
+
+    if common.author_is_table_bot_support_plus(message_author):
+        return True
+
+    if this_bot is not None and this_bot.getWar() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
+        return this_bot.getRoom().canModifyTable(message_author.id) #Fixed! Check ALL people who can modify table, not just the person who started it!
+
+    if command not in needPermissionCommands:
+        return True
+
+    if this_bot is None or not this_bot.is_table_loaded() or this_bot.getRoom().is_freed:
+        return True
+
+    #At this point, we know the command's server is Lounge, it's not staff, and a room has been loaded
+    return this_bot.getRoom().canModifyTable(message_author.id)
+
 
 def command_is_spam(command:str):
     for c in command:
         if c in common.COMMAND_TRIGGER_CHARS:
             return False
     return True
+
+
+async def send_lounge_locked_message(message, this_bot):
+    to_send = "The bot is locked to players in this room only: **"
+    if this_bot.getRoom() is not None:
+        if not this_bot.getRoom().is_freed:
+            room_lounge_names = this_bot.getRoom().get_loungenames_can_modify_table()
+            to_send += ", ".join(room_lounge_names)
+            to_send += "**."
+        if this_bot.loungeFinishTime is None:
+            await message.channel.send(f"{to_send} Wait until they are finished.")
+        else:
+            await message.channel.send(f"{to_send} {this_bot.getBotunlockedInStr()}")
+
+def log_command_sent(message:discord.Message, extra_text=""):
+    common.log_text(f"Server: {message.guild} - Channel: {message.channel} - User: {message.author} - Command: {message.content} {extra_text}")
+    return common.full_command_log(message, extra_text)
+
 
 #Creates the necessary folders for running the bot
 def create_folders():
@@ -1081,6 +1120,7 @@ if __name__ == "__main__":
     after_init()
 
     common.client = bot
+    common.main = sys.modules[__name__]
 
     if common.is_dev:
         bot.run(testing_bot_key)

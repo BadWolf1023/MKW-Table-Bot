@@ -22,7 +22,12 @@ sslcontext = ssl.create_default_context(cafile=certifi.where())
 
 version = "12.0.0" #Final release from Bad Wolf, stabilizing various things and releasing beta commands
 
-client: discord.Bot = None
+main = None
+client = None
+
+if False: # for IDE autocompletion
+    import BadWolfBot; main = BadWolfBot
+    client: BadWolfBot.BadWolfBot = None
 
 PROPERTIES_FILE = f"properties.json"
 properties = json.load(open(PROPERTIES_FILE)) if os.path.exists(PROPERTIES_FILE) else {"mode": 'dev'}
@@ -535,7 +540,12 @@ async def safe_send(message:discord.Message, content=None, embed=None, delete_af
     except discord.Forbidden: #Missing permissions
         await safe_send_missing_permissions(message, delete_after=10)
 
-  
+async def safe_edit(message:discord.Message, **kwargs):
+    try:
+        await message.edit(**kwargs)
+    except:
+        pass
+
 #Function only for testing purposes. Do not use this in the main program code.
 def run_async_function_no_loop(function_to_call):
     import asyncio

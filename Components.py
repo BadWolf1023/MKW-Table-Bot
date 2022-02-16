@@ -62,7 +62,7 @@ class ManualTeamsView(discord.ui.View):
         await self.message.edit(view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = botUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'interaction')
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot interact with this button.", ephemeral=True)
             return False
@@ -98,7 +98,7 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
                 self.view.children.pop(ind)
 
         self.view.stop()
-        await interaction.response.edit_message(view=self.view)
+        await common.safe_edit(interaction.message, view=self.view)
 
         message = InteractionUtils.create_proxy_msg(interaction, [self.cat])
         await commands.TablingCommands.after_start_war_command(message, self.view.bot, [self.cat], self.view.prefix, self.view.is_lounge)
@@ -116,10 +116,10 @@ class ConfirmView(discord.ui.View):
     async def delete(self, interaction: discord.Interaction):
         self.clear_items()
         self.stop()
-        await interaction.response.edit_message(view=None)
+        await common.safe_edit(interaction.message, view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = botUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'interaction')
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
             return False
@@ -153,7 +153,7 @@ class PictureButton(discord.ui.Button['PictureView']):
         self.style = discord.ButtonStyle.primary
         try:
             if self.view.message.channel.id in TableBot.last_wp_message:
-                await self.view.message.edit(view=self.view)
+                await common.safe_edit(self.view.message, view=self.view)
         except:
             pass
 
@@ -161,7 +161,7 @@ class PictureButton(discord.ui.Button['PictureView']):
     async def callback(self, interaction: discord.Interaction):
         msg = InteractionUtils.create_proxy_msg(interaction, ['wp'])
 
-        await interaction.response.edit_message(view=None)
+        await common.safe_edit(interaction.message, view=None)
         await commands.TablingCommands.war_picture_command(msg,self.view.bot,['wp'],self.view.prefix,self.view.is_lounge,
                                                            requester=interaction.user.display_name)
 
@@ -209,9 +209,9 @@ class PictureView(discord.ui.View):
         self.add_item(PictureButton(self.bot))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = botUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'interaction')
-        if not allowed: 
-            await interaction.response.send_message("You cannot use this button.", ephemeral=True)
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'interaction')
+        if not allowed:
+            await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
             return False
 
         if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child and doesn't have cooldown
@@ -230,7 +230,7 @@ class PictureView(discord.ui.View):
         self.clear_items()
         self.stop()
         if self.message:
-            await self.message.edit(view=None)
+            await common.safe_edit(self.message, view=None)
         self = None
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
@@ -367,7 +367,7 @@ class SuggestionView(discord.ui.View):
         self.message: discord.Message = await messageable.send(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", file=file, embed=embed, view=self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = botUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, InteractionUtils.convert_key_to_command(self.current_error['type']))
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, InteractionUtils.convert_key_to_command(self.current_error['type']))
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True, delete_after=3.0)
         return allowed
@@ -377,7 +377,7 @@ class SuggestionView(discord.ui.View):
             self.current_error = self.errors[-1]
             self.clear_items()
             self.create_suggestion()
-            await self.message.edit(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", view=self)
+            await common.safe_edit(self.message, content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", view=self)
         else:
             await self.on_timeout()
 

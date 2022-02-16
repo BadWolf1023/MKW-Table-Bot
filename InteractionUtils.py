@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import common
 
@@ -17,6 +18,9 @@ def bot_admin_check(ctx: discord.ApplicationContext):
     can = common.is_bot_admin(ctx.author)
     return can 
 
+def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bot, command:str):
+    return common.main.commandIsAllowed(isLoungeServer,message_author,this_bot,command)
+
 def convert_key_to_command(key):
     map = {
         'blank_player': 'dc',
@@ -28,19 +32,11 @@ def convert_key_to_command(key):
     }
     return map[key]
 
-
-class MessageWrapper():
-    def __init__(self,msg, ctx):
-        self.msg = msg
-        self.ctx = ctx
-
-    async def delete(self):
-        await self.msg.edit("\u200b")
-        if self.ctx:
-            self.ctx.responded = False
-
-    def __getattr__(self,attr):
-        return self.msg.__getattribute__(attr)
+async def safe_defer(ctx):
+    try:
+        await ctx.defer()
+    except:
+        pass
 
 class ChannelWrapper():
     def __init__(self,channel, ctx: discord.ApplicationContext):
@@ -48,19 +44,15 @@ class ChannelWrapper():
         self.ctx = ctx
         if self.ctx:
             self.ctx.responded = False
-        self.message = None
+            asyncio.create_task(safe_defer(ctx))
 
     async def send(self,*args,**args2):
         if self.ctx and not self.ctx.responded:
-            if self.message:
-                await self.message.edit(*args, **args2)
-                return self.message
-
             self.ctx.responded = True
-            msg = await (await self.ctx.respond(*args,**args2)).original_message()
-            msg = MessageWrapper(msg, self.ctx)
-            self.message = msg
-            return msg
+            msg = await self.ctx.respond(*args,**args2)
+            if isinstance(msg, discord.WebhookMessage):
+                return msg
+            return await msg.original_message()
         else:
             return await self.channel.send(*args,**args2)
 
@@ -106,3 +98,6 @@ async def on_component_error(error: Exception, interaction: discord.Interaction,
         common.log_error("Exception raised on Component interaction could not be caught because there was no message from the interaction. THIS IS A BUG AND NEEDS TO BE FIXED.")
         await common.safe_send(message,
                                 f"Internal bot error. This exception occurred and could not be handled: {error}. Try `/reset`. Please report this error at the MKW Table Bot server: https://discord.gg/K937DqM")
+
+async def handle_component_exception(error, message, server_prefix):
+    await common.client.handle_exception(error,message,server_prefix)

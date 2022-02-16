@@ -118,16 +118,18 @@ def is_badwolf_check(author, failure_message):
             raise TableBotExceptions.NotBadWolf(failure_message)
         return True
 
+def get_room_not_loaded_message(server_prefix: str, is_lounge_server=False, custom_message=None):
+    if custom_message is not None:
+        return custom_message.replace("{server_prefix}", server_prefix)
+    elif is_lounge_server:
+        return f"Room is not loaded! Use the command `{server_prefix}sw mogiformat numberOfTeams` to load a room."
+    else:
+        return f"Room is not loaded! Use the command `{server_prefix}sw warformat numberOfTeams (LoungeName/rxx/FC) (gps=numberOfGPs) (psb=on/off) (miis=yes/no)` to start a war."
+
 def ensure_table_loaded_check(channel_bot: TableBot.ChannelBot, server_prefix: str, is_lounge_server=False, custom_message=None):
     if channel_bot.is_table_loaded():
         return True
-    error_message = ""
-    if custom_message is not None:
-        error_message = custom_message.replace("{server_prefix}", server_prefix)
-    elif is_lounge_server:
-        error_message = f"Room is not loaded! Use the command `{server_prefix}sw mogiformat numberOfTeams` to load a room."
-    else:
-        error_message = f"Room is not loaded! Use the command `{server_prefix}sw warformat numberOfTeams (LoungeName/rxx/FC) (gps=numberOfGPs) (psb=on/off) (miis=yes/no)` to start a war."
+    error_message = get_room_not_loaded_message(server_prefix, is_lounge_server, custom_message)
     raise TableBotExceptions.TableNotLoaded(error_message)
     
 
@@ -888,8 +890,8 @@ class OtherCommands:
         lounge_name = smart_type.get_lounge_name()
         fcs = smart_type.get_fcs()
         descriptive, pronoun = smart_type.get_clean_smart_print(message)
-        if fcs is None:
-            await message.channel.send(f"Could not a lounge name for {descriptive}, have {pronoun} verified an FC in Lounge?")
+        if fcs is None or lounge_name is None:
+            await message.channel.send(f"Could not find a lounge name for {descriptive}, have {pronoun} verified an FC in Lounge?")
             return
         await message.channel.send(f"{SmartTypes.possessive(SmartTypes.capitalize(descriptive))} Lounge name is: **{lounge_name}**")
 
@@ -957,7 +959,16 @@ class OtherCommands:
             return
 
         this_bot.updateRLCoolDown()
-        parser = WiimmfiSiteFunctions.WiimmfiParser.FrontPageParser(await WiimmfiSiteFunctions.get_mkwx_soup())
+
+        status, mkwx_soup = await WiimmfiSiteFunctions.get_mkwx_soup()
+        if not status:
+            failure_message = "General mkwx failure, wws command. Report this to a Table Bot developer if you see it."
+            if status.status is status.FAILED_REQUEST:
+                failure_message = TablingCommands.get_room_load_failure_message(message, None, status)
+            await message.channel.send(failure_message)
+            return
+
+        parser = WiimmfiSiteFunctions.WiimmfiParser.FrontPageParser(mkwx_soup)
         rooms = []
         if ww_type == Race.RT_WW_REGION:
             rooms = parser.get_RT_WWs()
@@ -998,10 +1009,7 @@ class OtherCommands:
         smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
         status, front_race = await this_bot.verify_room_smart(smart_type)
         if not status:
-            descriptive, pronoun = smart_type.get_clean_smart_print(message)
-            failure_message = f"Could not find {descriptive} in a room, {pronoun} don't seem to be playing right now."
-            if status.status is status.NO_KNOWN_FCS:
-                failure_message = f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"
+            failure_message = TablingCommands.get_room_load_failure_message(message, smart_type, status)
             await message2.edit(failure_message)
             return
 
@@ -1026,9 +1034,8 @@ class OtherCommands:
 
         if last_match_str is not None:
             #go get races from room
-            second_status, _, races = await WiimmfiSiteFunctions.get_races_for_rxx(front_race.get_rxx())
-            races_str = Room.Room.get_race_names_abbreviated(races, 12)
-            str_msg += "\n\nFailed" if races_str is None else f"\n\nRaces (Last 12): {races_str}"
+            _, _, races = await WiimmfiSiteFunctions.get_races_for_rxx(front_race.get_rxx())
+            str_msg += f"\n\nRaces (Last 12): {Room.Room.get_race_names_abbreviated(races, 12)}"
         await message2.edit(f"{str_msg}```")
 
 
@@ -2021,12 +2028,7 @@ class TablingCommands:
         this_bot.updateRLCoolDown()
         status = await this_bot.load_table_smart(smart_type, war, message_id=message_id, setup_discord_id=author_id, setup_display_name=author_name)
         if not status:
-            descriptive, pronoun = smart_type.get_clean_smart_print(message)
-            failure_message = f"Could not find {descriptive} in a room, **did {pronoun} finish the first race?**"
-            if smart_type.get_type() is smart_type.RXX:
-                f"Could not load the room for {descriptive}, {pronoun} may be more than 24 hours old, or **{pronoun} didn't finish the first race.**"
-            if status.status is status.NO_KNOWN_FCS:
-                failure_message = f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"
+            failure_message = TablingCommands.get_room_load_failure_message(message, smart_type, status)
             await message2.edit(failure_message)
             return
 
@@ -2096,22 +2098,17 @@ class TablingCommands:
             # return
             to_load = ' '.join(args[1:])
 
-        smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.ROOM_LOOKUP_TYPES)
-        descriptive, pronoun = smart_type.get_clean_smart_print(message)
         if to_load in this_bot.getRoom().rLIDs:
             await message.channel.send(f"The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `{server_prefix}undo`.")
-
         
+        smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.ROOM_LOOKUP_TYPES)
         status, rxx, room_races = await WiimmfiSiteFunctions.get_races_smart(smart_type, hit_lounge_api=True)
         if not status:
-            failure_message = f"Could not find {descriptive} in a room. **Make sure the new room has finished the first race before using this command.**"
-            if status.status is status.NO_KNOWN_FCS:
-                failure_message = f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"
-            if smart_type.is_rxx():
-                failure_message = f"Could not load the room for {descriptive}. **Make sure the new room has finished the first race before using this command.**"
+            failure_message = TablingCommands.get_room_load_failure_message(message, smart_type, status)
             await message.channel.send(failure_message)
             return
 
+        descriptive, _ = smart_type.get_clean_smart_print(message)
         if not smart_type.is_rxx() and rxx in this_bot.getRoom().rLIDs:
             await message.channel.send(f"The room {descriptive} {SmartTypes.to_be_conjugation(descriptive)} currently in is already included in this table. No changes made.")
             return
@@ -2123,6 +2120,22 @@ class TablingCommands:
         else:
             this_bot.remove_last_save_state()
             await message.channel.send("An unknown error occurred when trying to merge rooms. No changes made.")
+
+    @staticmethod
+    def get_room_load_failure_message(message: discord.Message, smart_type: SmartTypes.SmartLookupTypes, status: WiimmfiSiteFunctions.RoomLoadStatus) -> str:
+        failure_message = "General room failure. Report this to a Table Bot developer if you see it."
+        descriptive, pronoun = smart_type.get_clean_smart_print(message)
+        if status.status is status.FAILED_REQUEST:
+            failure_message =  "Couldn't access the Wiimmfi website. Wait a minute, then try again."
+        elif status.status is status.NO_KNOWN_FCS:
+            failure_message = f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"
+        elif status.status is status.NOT_ON_FRONT_PAGE:
+            failure_message = f"Could not find {descriptive} in a room, {pronoun} don't seem to be playing right now."
+        elif status.status is status.HAS_NO_RACES:
+            failure_message = f"Found {descriptive} in a room, **but that room hasn't finished the first race.** Run this command again **after** {pronoun} have finished the first race."
+            if smart_type.get_type() is smart_type.RXX:
+                failure_message = f"Could not load the room for {descriptive}, {pronoun} may be more than 24 hours old, or **{pronoun} didn't finish the first race.**"
+        return failure_message
 
 
     @staticmethod
@@ -2317,7 +2330,14 @@ class TablingCommands:
         old_room_fcs = set(this_bot.getRoom().getFCPlayerListStartEnd(1, this_bot.getWar().numberOfGPs*4))
         update_status = await this_bot.update_table()
         if not update_status:
-            await message2.edit(content=f"Room not updated. Please do {server_prefix}sw to load a different room.")
+            failure_message = "General room failure, war picture. Report this to a Table Bot developer if you see it."
+            if update_status.status is update_status.HAS_NO_RACES:
+                failure_message =  "The room has does not have any races, so I cannot give you a table."
+            elif update_status.status is update_status.NO_ROOM_LOADED:
+                failure_message = get_room_not_loaded_message(server_prefix, is_lounge_server)
+            elif update_status.status is update_status.FAILED_REQUEST:
+                failure_message = TablingCommands.get_room_load_failure_message(message, None, update_status)
+            await message2.edit(content=failure_message)
             return
     
         up_to = get_max_specified_race(args)

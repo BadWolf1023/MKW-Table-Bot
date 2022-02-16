@@ -604,10 +604,13 @@ class Room(object):
 
     @TimerDebuggers.timer_coroutine
     async def update(self) -> WiimmfiSiteFunctions.RoomLoadStatus:
+        '''RETURNS HAS_NO_RACES, FAILED_REQUEST, SUCCESS'''
         all_races = []
         status_codes = []
         for rxx in self.rLIDs:
             status_code, _, new_races = await WiimmfiSiteFunctions.get_races_for_rxx(rxx)
+            if status_code.status is status_code.FAILED_REQUEST:
+                return status_code
             all_races.extend(new_races)
             status_codes.append(status_code)
 
@@ -659,22 +662,11 @@ class Room(object):
     
     @staticmethod
     def get_race_names_abbreviated(races: List[Race.Race], last_x_races=None):
-        if last_x_races is None:
-            temp = []
-            for ind,race in enumerate(races, 1):
-                if race.getAbbreviatedName() is None:
-                    return None
-                temp.append(str(ind) + ". " + race.getAbbreviatedName())
-            return " | ".join(temp)
-        else:
-            temp = []
-            for ind,race in enumerate(races[-last_x_races:], 1):
-                if race.getAbbreviatedName() is None:
-                    return None
-                temp.append(str(ind) + ". " + race.getAbbreviatedName())
-            return " | ".join(temp)
-        
-        
+        last_races = races if last_x_races is None else races[-last_x_races:]
+        temp = []
+        for ind,race in enumerate(last_races, 1):
+            temp.append(f"{ind}. {race.getAbbreviatedName()}")
+        return " | ".join(temp)        
     
     def get_races_string(self, races=None):
         if races is None:

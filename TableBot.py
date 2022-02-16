@@ -232,6 +232,7 @@ class ChannelBot(object):
     
     @TimerDebuggers.timer_coroutine
     async def update_table(self) -> WiimmfiSiteFunctions.RoomLoadStatus:
+        '''RETURNS NO_ROOM_LOADED, HAS_NO_RACES, FAILED_REQUEST, SUCCESS'''
         if not self.is_table_loaded():
             return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.NO_ROOM_LOADED)
             
@@ -244,6 +245,7 @@ class ChannelBot(object):
         return status
         
     async def verify_room_smart(self, smart_type: SmartTypes.SmartLookupTypes) -> Tuple[WiimmfiSiteFunctions.RoomLoadStatus, Union[None, Room.Race.Race]]:
+        '''RETURNS NOT_ON_FRONT_PAGE, NO_KNOWN_FCS, FAILED_REQUEST, SUCCESS'''
         status_code, front_race = await WiimmfiSiteFunctions.get_front_race_smart(smart_type, hit_lounge_api=True)
         return status_code, front_race
     
@@ -263,13 +265,9 @@ class ChannelBot(object):
             return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS_BUT_NO_WAR)
         return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS)
 
-    async def add_room_races(self, rxx, room_races):
+    async def add_room_races(self, rxx: str, room_races):
         if not self.is_table_loaded():
             return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.NO_ROOM_LOADED)
-        if rxx is None:
-            return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.DOES_NOT_EXIST)
-        if len(room_races) == 0: # Couldn't find room or no races played (hasn't finished first race)
-            return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.HAS_NO_RACES)
         self.room.add_races(rxx, room_races)
         # Make call to database to add data
         await DataTracker.RoomTracker.add_data(self)
