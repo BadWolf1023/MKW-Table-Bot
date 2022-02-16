@@ -139,8 +139,18 @@ class MiscSlash(ext_commands.Cog):
     ):  
         command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx)
 
-        
         await commands.OtherCommands.get_flag_command(message, server_prefix)
+    
+    @slash_command(
+        name="flags",
+        description="Show available flag codes",
+        guild_ids=GUILDS
+    )
+    async def _show_flags(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        await ctx.respond("**List of available flag codes:** https://gb.hlorenzi.com/help/flags")
     
     @slash_command(name="fc",
     description="Get a Lounge player's FC",
