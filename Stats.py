@@ -4,7 +4,9 @@ Created on Aug 4, 2020
 @author: willg
 '''
 import fnmatch
+import json
 import os
+import re
 from datetime import datetime
 import humanize
 from pathlib import Path
@@ -14,7 +16,28 @@ import common
 user_delimiter = "C,'6WeWq~w,S24!z;L+EM$vL{3M,HMKjy9U2dfH8F-'mwH'2@K.qaQGpg*!StX*:D7^&P;d4@AcWS3)8f64~6CB^B4{s`>9+*brV"
 
 backup_folder = "../backups/"
+meta = {
+    "command_count": {}
+}
 
+def initialize():
+    global meta
+    if os.path.isfile(common.JSON_META_FILE):
+        with open(common.JSON_META_FILE) as f:
+            meta = json.load(f)
+
+def save_metadata():
+    counts = meta["command_count"]
+    meta["command_count"] = { k:counts[k] for k in sorted(counts.keys(),reverse=True)}
+
+    with open(common.JSON_META_FILE,'w') as f:
+        json.dump(meta, f)
+
+def log_command(command):
+    for name in dir(common.main):
+        if re.fullmatch("([A-Z]+_)*TERMS",name):
+            if command in common.main.__getattribute__(name):
+                meta["command_count"][name] = meta["command_count"].get(name, 0) + 1
 
 def backup_files(to_back_up=common.FILES_TO_BACKUP):
     Path(backup_folder).mkdir(parents=True, exist_ok=True)
