@@ -158,6 +158,9 @@ class BadWolfCommands:
         if os.path.exists(common.FULL_MESSAGE_LOGGING_FILE):
             await message.channel.send(file=discord.File(common.FULL_MESSAGE_LOGGING_FILE))
 
+        Stats.save_metadata()
+        await common.safe_send_file(message, '\n'.join([f'{k} {v}' for k,v in Stats.meta['command_count'].items()]))
+
 
     #Adds or removes a discord ID to/from the bot admins
     @staticmethod

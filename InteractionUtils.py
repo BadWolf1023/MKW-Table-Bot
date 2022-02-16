@@ -49,7 +49,10 @@ class ChannelWrapper():
     async def send(self,*args,**args2):
         if self.ctx and not self.ctx.responded:
             self.ctx.responded = True
-            msg = await self.ctx.respond(*args,**args2)
+            try:
+                msg = await self.ctx.respond(*args,**args2)
+            except:
+                return await self.channel.send(*args,**args2)
             if isinstance(msg, discord.WebhookMessage):
                 return msg
             return await msg.original_message()

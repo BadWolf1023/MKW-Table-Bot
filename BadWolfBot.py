@@ -375,6 +375,7 @@ class BadWolfBot(discord.Bot):
         self.pickle_tablebots()
         pickle_CTGP_region()
         self.pickle_lounge_updates()
+        Stats.save_metadata()
         if common.is_prod:
             Stats.backup_files()
             await Stats.prune_backups()
@@ -625,6 +626,8 @@ class BadWolfBot(discord.Bot):
             pass
     
     async def process_message_commands(self, message, args, command, this_bot, server_prefix, is_lounge_server):
+        Stats.log_command(args[0])
+
         #Core commands
         if args[0] in RESET_TERMS:
             await commands.TablingCommands.reset_command(message, self.table_bots)          
@@ -1099,6 +1102,7 @@ def initialize():
     ServerFunctions.initialize()
     UtilityFunctions.initialize()
     TagAIShell.initialize()
+    Stats.initialize()
 
 def after_init():
     asyncio.run(DataTracker.initialize())

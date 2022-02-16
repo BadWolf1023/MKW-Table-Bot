@@ -32,7 +32,6 @@ if False: # for IDE autocompletion
 PROPERTIES_FILE = f"properties.json"
 
 EXAMPLE_PROPERTIES_FILE = "example_properties.json"
-
 properties = json.load(open(PROPERTIES_FILE if os.path.exists(PROPERTIES_FILE) else EXAMPLE_PROPERTIES_FILE)) 
 
 MII_COMMAND_DISABLED = False
@@ -196,6 +195,8 @@ FEEDBACK_LOGS_FILE = f"{LOGGING_PATH}feedback_logs.txt"
 #It only logs commands that are sent to it
 MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}messages_logging.txt"
 
+JSON_META_FILE = f"{DATA_PATH}meta.txt"
+
 FULL_LOGGING_FILE_NAME = "full_logging"
 FULL_MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}/{FULL_LOGGING_FILE_NAME}.txt"
 
@@ -237,7 +238,8 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    TABLE_BOT_PKL_FILE,
                    VR_IS_ON_FILE,
                    SHA_TRACK_NAMES_FILE,
-                   ROOM_DATA_TRACKING_DATABASE_FILE
+                   ROOM_DATA_TRACKING_DATABASE_FILE,
+                   JSON_META_FILE
                    }
 
 LEFT_ARROW_EMOTE = '\u25c0'
