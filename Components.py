@@ -182,15 +182,16 @@ class SubmitButton(discord.ui.Button['PictureView']):
             args = [f'{self.rt_ct}update', str(self.tier), str(self.num_races)]
             msg = InteractionUtils.create_proxy_msg(interaction, args)
 
-            self.view.children.remove(self)
-            await self.view.message.edit(view=self.view)
-
             async def submit_table():
                 try:
                     if self.rt_ct.lower() == 'ct':
                         await commands.LoungeCommands.ct_mogi_update(common.client,self.channel_bot,msg,args,common.client.lounge_submissions)
                     else:
                         await commands.LoungeCommands.rt_mogi_update(common.client,self.channel_bot,msg,args,common.client.lounge_submissions)
+                    
+                    # self.view.children.remove(self)
+                    # await self.view.message.edit(view=self.view)
+                    await self.view.on_timeout() #remove picture button as well, since table has been submitted
                 except Exception as e:
                     await InteractionUtils.handle_component_exception(e, msg, self.view.prefix)
 
@@ -210,7 +211,7 @@ class PictureView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         allowed = botUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'interaction')
         if not allowed: 
-            await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
+            await interaction.response.send_message("You cannot use this button.", ephemeral=True)
             return False
 
         if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child and doesn't have cooldown
@@ -251,6 +252,7 @@ class RejectButton(discord.ui.Button['SuggestionView']):
     
     async def callback(self, interaction: discord.Interaction):
         self.view.bot.resolved_errors.add(self.view.current_error['id'])
+        self.view.errors.pop()
 
         # await self.view.on_timeout()
         await self.view.next_suggestion()
@@ -284,6 +286,7 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
 
         await self.view.message.channel.send(f"{author_str} - "+command_mes)
         self.view.bot.semi_resolved_errors.add(self.view.current_error['id'])
+        self.view.errors.pop()
         await self.view.next_suggestion()
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
@@ -325,12 +328,13 @@ class SuggestionView(discord.ui.View):
         super().__init__(timeout=120)
         self.bot = bot
         self.prefix = prefix
-        self.errors = errors
         self.is_lounge = lounge
         self.selected_values = None
         self.message = None
 
-        self.current_error = self.errors.pop()
+        self.bot.getRoom().watch_suggestions(self, errors, self.bot.channel_id)
+        self.errors = self.bot.getRoom().suggestion_errors
+        self.current_error = self.errors[-1]
         self.create_suggestion()
 
     async def on_timeout(self) -> None:
@@ -340,6 +344,16 @@ class SuggestionView(discord.ui.View):
             pass
         self.stop()
         self.clear_items()
+        try:
+            self.bot.getRoom().stop_watching_suggestions()
+        except AttributeError: # room has already been destroyed/cleaned up
+            pass
+
+    async def refresh_suggestions(self):
+        """Race removal happened and buttons must be updated."""
+        self.errors = self.bot.getRoom().suggestion_errors
+        print(self.errors)
+        await self.next_suggestion()
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
         await InteractionUtils.on_component_error(error, interaction, self.prefix)
@@ -360,7 +374,7 @@ class SuggestionView(discord.ui.View):
     
     async def next_suggestion(self):
         if len(self.errors) > 0:
-            self.current_error = self.errors.pop()
+            self.current_error = self.errors[-1]
             self.clear_items()
             self.create_suggestion()
             await self.message.edit(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", view=self)

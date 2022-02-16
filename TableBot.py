@@ -470,7 +470,7 @@ class ChannelBot(object):
         try:
             await last_wp_message[self.channel_id].edit(view=None)
             last_wp_message.pop(self.channel_id, None)
-        except:
+        except Exception:
             pass
     
     def add_sug_view(self, view):
@@ -510,8 +510,6 @@ class ChannelBot(object):
 
     def reset(self):
         self.destroy()
-        self.room = None
-        self.war = None
         self.prev_command_sw = False
         self.manualWarSetUp = False
         self.last_used = datetime.now()

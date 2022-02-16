@@ -2240,7 +2240,7 @@ class TablingCommands:
         this_bot.add_save_state(message.content)
         this_bot.getRoom().forceRoomSize(raceNum, roomSize)
         mes = "Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + "."
-        if dont_send: return mes + " Make sure to give the correct DC points using `?edit`."
+        if dont_send: return mes + " Give DC points with `/edit`, if necessary."
         await message.channel.send(mes)
     
 
@@ -2270,7 +2270,7 @@ class TablingCommands:
             this_bot.getRoom().forceRoomSize(raceNum, roomSize)
             mes = "Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + "."
             if not dont_send: await message.channel.send(mes)
-            return mes + " Make sure to give the missing players their DC points by using `?edit`."
+            return mes + " Give DC points with `/edit`, if necessary."
 
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2416,7 +2416,7 @@ class TablingCommands:
                     pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
 
                     # Lounge submission button
-                    if not this_bot.has_been_lounge_submitted and len(this_bot.room.races) == 12 and message.channel.guild.id == common.MKW_LOUNGE_SERVER_ID:
+                    if not this_bot.has_been_lounge_submitted and len(this_bot.room.races) == (this_bot.war.numberOfGPs*4) and message.channel.guild.id == common.MKW_LOUNGE_SERVER_ID:
                         type, tier = common.get_channel_type_and_tier(this_bot.channel_id, this_bot.room.races)
                         if type and tier:
                             pic_view.add_item(Components.SubmitButton(this_bot, type, tier, len(this_bot.room.races)))
