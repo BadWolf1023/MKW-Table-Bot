@@ -6,7 +6,6 @@ import UtilityFunctions
 import asyncio
 import TimerDebuggers
 import common
-import botUtils
 
 class ManualTeamsModal(discord.ui.Modal):
     def __init__(self, bot, prefix, is_lounge, view):

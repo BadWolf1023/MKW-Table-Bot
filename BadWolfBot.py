@@ -17,7 +17,6 @@ import AbuseTracking
 import TagAIShell
 from data_tracking import DataTracker
 import InteractionUtils
-import botUtils
 
 #External library imports for this file
 import discord
@@ -211,6 +210,8 @@ elif common.running_beta and not common.beta_is_real:
     common.mkw_lounge_staff_roles.add(common.BAD_WOLF_SERVER_EVERYONE_ROLE_ID)
     lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.BAD_WOLF_SERVER_ID, common.main_lounge_can_report_table)
 
+def createEmptyTableBot(server_id=None, channel_id=None):
+    return TableBot.ChannelBot(server_id=server_id, channel_id=channel_id)
 
 def get_prefix(bot,msg: discord.Message) -> str:
     prefix = common.default_prefix
@@ -437,7 +438,7 @@ class BadWolfBot(discord.Bot):
         if server_id not in self.table_bots:
             self.table_bots[server_id] = {}
         if channel_id not in self.table_bots[server_id]:
-            self.table_bots[server_id][channel_id] = botUtils.createEmptyTableBot(server_id, channel_id)
+            self.table_bots[server_id][channel_id] = createEmptyTableBot(server_id, channel_id)
         self.table_bots[server_id][channel_id].updatedLastUsed()
         return self.table_bots[server_id][channel_id]
 
@@ -451,7 +452,7 @@ class BadWolfBot(discord.Bot):
         await AbuseTracking.blacklisted_user_check(message)
         await AbuseTracking.abuse_track_check(message)
 
-        botUtils.log_command_sent(message)
+        log_command_sent(message)
 
         is_lounge_server = InteractionUtils.check_lounge_server_id(interaction.guild.id)
         if common.running_beta and not is_lounge_server: #is_lounge_server is True if in Bad Wolf's server if beta is running
@@ -462,8 +463,8 @@ class BadWolfBot(discord.Bot):
         
         this_bot = self.check_create_channel_bot(message)
         
-        if not botUtils.commandIsAllowed(is_lounge_server, interaction.user, this_bot, command):
-            return await botUtils.send_lounge_locked_message(message, this_bot)
+        if not commandIsAllowed(is_lounge_server, interaction.user, this_bot, command):
+            return await send_lounge_locked_message(message, this_bot)
 
         await self.process_application_commands(interaction)
     
@@ -551,14 +552,14 @@ class BadWolfBot(discord.Bot):
             await AbuseTracking.blacklisted_user_check(message)
             await AbuseTracking.abuse_track_check(message)
                     
-            botUtils.log_command_sent(message)
+            log_command_sent(message)
             
             this_bot:TableBot.ChannelBot = self.check_create_channel_bot(message)
             if is_lounge_server and this_bot.isFinishedLounge():
                 this_bot.freeLock()
             
-            if not botUtils.commandIsAllowed(is_lounge_server, message.author, this_bot, args[0]):
-                await botUtils.send_lounge_locked_message(message, this_bot)
+            if not commandIsAllowed(is_lounge_server, message.author, this_bot, args[0]):
+                await send_lounge_locked_message(message, this_bot)
             else:
                 await self.process_message_commands(message, args, command, this_bot, server_prefix, is_lounge_server)
         except Exception as e:
@@ -572,9 +573,9 @@ class BadWolfBot(discord.Bot):
             await common.safe_send(message,
                                    "MKW Table Bot is missing permissions and cannot do this command. Contact your admins. The bot needs the following permissions:\n- Send Messages\n- Read Message History\n- Manage Messages (Lounge only)\n- Add Reactions\n- Manage Reactions\n- Embed Links\n- Attach files\n\nIf the bot has all of these permissions, make sure you're not overriding them with a role's permissions. If you can't figure out your role permissions, granting the bot Administrator role should work.")
         except TableBotExceptions.BlacklistedUser:
-            botUtils.log_command_sent(message)
+            log_command_sent(message)
         except TableBotExceptions.WarnedUser:
-            botUtils.log_command_sent(message)
+            log_command_sent(message)
         except TableBotExceptions.TableNotLoaded as not_loaded:
             await common.safe_send(message,f"{not_loaded}")
         except TableBotExceptions.NotBadWolf as not_bad_wolf_exception:
@@ -612,7 +613,7 @@ class BadWolfBot(discord.Bot):
             await common.safe_send(message,
                                    "A HTTP request timed out. Please wait a few seconds until trying again.")
         except TableBotExceptions.WiimmfiSiteFailure:
-            logging_info = botUtils.log_command_sent(message,extra_text="Error info: MKWX inaccessible, other error.")
+            logging_info = log_command_sent(message,extra_text="Error info: MKWX inaccessible, other error.")
             await common.safe_send(message,
                                    "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")
             await self.send_to_503_channel(logging_info)

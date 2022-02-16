@@ -3,7 +3,6 @@ from discord.commands import slash_command, Option, CommandPermission, SlashComm
 from discord.ext import commands as ext_commands
 import commands
 import common
-import botUtils
 import InteractionUtils
 
 REQUIRED_PERMISSIONS = [CommandPermission(role, 1, True, common.MKW_LOUNGE_SERVER_ID) for role in list(common.reporter_plus_roles)] #+ [CommandPermission(common.properties["admin_id"], 2, True)]
