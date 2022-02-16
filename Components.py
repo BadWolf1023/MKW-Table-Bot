@@ -352,7 +352,7 @@ class SuggestionView(discord.ui.View):
     async def refresh_suggestions(self):
         """Race removal happened and buttons must be updated."""
         self.errors = self.bot.getRoom().suggestion_errors
-        print(self.errors)
+        # print(self.errors)
         await self.next_suggestion()
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
