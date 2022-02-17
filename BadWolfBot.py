@@ -92,6 +92,7 @@ GET_SUBSTITUTIONS_TERMS = {"subs", "substitutes", "substitutions", "getsubs", "a
 INTERACTIONS = {'interaction'}
 
 #General commands that do not require a war to be started (stateless commands)
+PAGE_TERMS = {"page", "pages", "playerpage", "playerpages"}
 FC_TERMS = {"fc"}
 LOUNGE_NAME_TERMS = {"lounge", "loungename", "ln"}
 GET_FLAG_TERMS = {"getflag", "gf"}
@@ -470,6 +471,7 @@ class BadWolfBot(discord.Bot):
             pass
     
     async def slash_interaction_pre_invoke(self, ctx: discord.ApplicationContext, args=None):
+        
         message = InteractionUtils.create_proxy_msg(ctx.interaction, ctx=ctx, args=args)
 
         is_lounge_server = InteractionUtils.check_lounge_server(message)
@@ -523,7 +525,7 @@ class BadWolfBot(discord.Bot):
             server_prefix = ServerFunctions.get_server_prefix(message.guild.id)
             message_has_prefix, is_mention, _ = self.has_prefix(message.content, server_prefix)
             if is_mention:
-                message.raw_mentions.pop(0)
+                message.mentions.pop(0)
 
             #Message doesn't start with the server's prefix and isn't ?help
             if self.should_send_help(message):
@@ -541,7 +543,9 @@ class BadWolfBot(discord.Bot):
                 return       
         
             args = [arg.lower() for arg in command.split()]
-            if message.channel.category_id in TEMPORARY_VR_CATEGORIES and args[0] not in ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS:
+            main_command = args[0].lower()
+            
+            if message.channel.category_id in TEMPORARY_VR_CATEGORIES and main_command not in ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS:
                 return
                 
             await AbuseTracking.blacklisted_user_check(message)
@@ -553,7 +557,7 @@ class BadWolfBot(discord.Bot):
             if is_lounge_server and this_bot.isFinishedLounge():
                 this_bot.freeLock()
             
-            if not commandIsAllowed(is_lounge_server, message.author, this_bot, args[0]):
+            if not commandIsAllowed(is_lounge_server, message.author, this_bot, main_command):
                 await send_lounge_locked_message(message, this_bot)
             else:
                 await self.process_message_commands(message, args, command, this_bot, server_prefix, is_lounge_server)
@@ -626,10 +630,11 @@ class BadWolfBot(discord.Bot):
             pass
     
     async def process_message_commands(self, message, args, command, this_bot, server_prefix, is_lounge_server):
-        Stats.log_command(args[0])
+        main_command = args[0].lower()
+        Stats.log_command(main_command)
 
         #Core commands
-        if args[0] in RESET_TERMS:
+        if main_command in RESET_TERMS:
             await commands.TablingCommands.reset_command(message, self.table_bots)          
 
         elif this_bot.manualWarSetUp:
@@ -638,39 +643,39 @@ class BadWolfBot(discord.Bot):
         elif this_bot.prev_command_sw:
             await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in GARBAGE_COLLECT_TERMS:
+        elif main_command in GARBAGE_COLLECT_TERMS:
             await commands.BadWolfCommands.garbage_collect_command(message)
                 
-        elif args[0] in START_WAR_TERMS:
+        elif main_command in START_WAR_TERMS:
             await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
         
-        elif args[0] in TABLE_TEXT_TERMS:
+        elif main_command in TABLE_TEXT_TERMS:
             await commands.TablingCommands.table_text_command(message, this_bot, args, server_prefix, is_lounge_server)
-        elif args[0] in WAR_PICTURE_TERMS:
+        elif main_command in WAR_PICTURE_TERMS:
             await commands.TablingCommands.war_picture_command(message, this_bot, args, server_prefix, is_lounge_server)
             
                 
         #Lounge reporting updates
-        elif args[0] in TOTAL_CLEAR_TERMS:
+        elif main_command in TOTAL_CLEAR_TERMS:
             await commands.BadWolfCommands.total_clear_command(message, self.lounge_submissions)
                 
-        elif args[0] in LOUNGE_RT_MOGI_UPDATE_TERMS:
+        elif main_command in LOUNGE_RT_MOGI_UPDATE_TERMS:
             await commands.LoungeCommands.rt_mogi_update(self, this_bot, message, args, self.lounge_submissions)
         
-        elif args[0] in LOUNGE_CT_MOGI_UPDATE_TERMS:
+        elif main_command in LOUNGE_CT_MOGI_UPDATE_TERMS:
             await commands.LoungeCommands.ct_mogi_update(self, this_bot, message, args, self.lounge_submissions)
             
-        elif args[0] in LOUNGE_TABLE_SUBMISSION_APPROVAL_TERMS:
+        elif main_command in LOUNGE_TABLE_SUBMISSION_APPROVAL_TERMS:
             await commands.LoungeCommands.approve_submission_command(self, message, args, self.lounge_submissions)
             
-        elif args[0] in LOUNGE_TABLE_SUBMISSION_DENY_TERMS:
+        elif main_command in LOUNGE_TABLE_SUBMISSION_DENY_TERMS:
             await commands.LoungeCommands.deny_submission_command(self, message, args, self.lounge_submissions)
             
-        elif args[0] in LOUNGE_PENDING_TABLE_SUBMISSION_TERMS:
+        elif main_command in LOUNGE_PENDING_TABLE_SUBMISSION_TERMS:
             await commands.LoungeCommands.pending_submissions_command(message, self.lounge_submissions)
             
         #Fun commands
-        elif args[0] in STATS_TERMS:
+        elif main_command in STATS_TERMS:
             num_wars = self.getNumActiveWars()
             stats_str = Stats.stats(num_wars, self)
             if stats_str is None:
@@ -678,98 +683,98 @@ class BadWolfBot(discord.Bot):
             else:
                 await message.channel.send(stats_str)
         
-        elif (args[0] in ["badwolf"]) or (len(args) > 1 and (args[0] in ["bad"] and args[1] in ["wolf"])):
+        elif (main_command in ["badwolf"]) or (len(args) > 1 and (main_command in ["bad"] and args[1] in ["wolf"])):
             await message.channel.send(file=discord.File(common.BADWOLF_PICTURE_FILE))    
         
-        elif args[0] in INVITE_TERMS:
+        elif main_command in INVITE_TERMS:
             await message.channel.send(f"**If you're on a mobile device, you'll need to use this link to invite the bot:** {common.INVITE_LINK}\n\nIf you're on a computer, refer to the picture below: {bot_invite_picture}")              
         
             
-        elif args[0] in RACE_RESULTS_TERMS:
+        elif main_command in RACE_RESULTS_TERMS:
             await commands.TablingCommands.race_results_command(message, this_bot, args, server_prefix, is_lounge_server)
                         
-        elif args[0] in REMOVE_RACE_TERMS:
+        elif main_command in REMOVE_RACE_TERMS:
             await commands.TablingCommands.remove_race_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in SUBSTITUTE_TERMS:
+        elif main_command in SUBSTITUTE_TERMS:
             await commands.TablingCommands.substitute_player_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in GET_SUBSTITUTIONS_TERMS:
+        elif main_command in GET_SUBSTITUTIONS_TERMS:
             await commands.TablingCommands.get_subs_command(message, this_bot, server_prefix, is_lounge_server)
         
-        elif args[0] in TRANSFER_TABLE_TERMS:
+        elif main_command in TRANSFER_TABLE_TERMS:
             await commands.TablingCommands.transfer_table_command(message, this_bot, args, server_prefix, is_lounge_server, self.table_bots, self)
                 
-        elif args[0] in SET_CTGP_REGION_TERMS:
+        elif main_command in SET_CTGP_REGION_TERMS:
             await commands.BotAdminCommands.change_ctgp_region_command(message, args)
         
-        elif args[0] in VR_ON_TERMS:
+        elif main_command in VR_ON_TERMS:
             await commands.BotAdminCommands.global_vr_command(message, on=True)
                 
-        elif args[0] in VR_OFF_TERMS:
+        elif main_command in VR_OFF_TERMS:
             await commands.BotAdminCommands.global_vr_command(message, on=False)
                 
-        elif args[0] in QUICK_START_TERMS:
+        elif main_command in QUICK_START_TERMS:
             await help_documentation.send_quickstart(message)
             
-        elif args[0] in TUTORIAL_TERMS:
+        elif main_command in TUTORIAL_TERMS:
             await message.channel.send("https://www.youtube.com/watch?v=fCQnfo06_RI")                      
         
-        elif args[0] in HELP_TERMS:
+        elif main_command in HELP_TERMS:
             await help_documentation.send_help(message, is_lounge_server, args, server_prefix)
         
         #Utility commands
-        elif args[0] in EARLY_DC_TERMS:
+        elif main_command in EARLY_DC_TERMS:
             await commands.TablingCommands.early_dc_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in CHANGE_ROOM_SIZE_TERMS:
+        elif main_command in CHANGE_ROOM_SIZE_TERMS:
             await commands.TablingCommands.change_room_size_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in QUICK_EDIT_TERMS:
-            # if args[0] in DEPRECATED_QUICK_EDIT_TERMS:
-            #     await message.channel.send(f"**NOTE: The command `{server_prefix}{args[0]}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")
+        elif main_command in QUICK_EDIT_TERMS:
+            # if main_command in DEPRECATED_QUICK_EDIT_TERMS:
+            #     await message.channel.send(f"**NOTE: The command `{server_prefix}{main_command}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")
             await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in CHANGE_PLAYER_TAG_TERMS:
+        elif main_command in CHANGE_PLAYER_TAG_TERMS:
             await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge_server, command)
         
-        elif args[0] in CHANGE_PLAYER_NAME_TERMS:
+        elif main_command in CHANGE_PLAYER_NAME_TERMS:
             await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge_server, command)
         
-        elif args[0] in EDIT_PLAYER_SCORE_TERMS:
+        elif main_command in EDIT_PLAYER_SCORE_TERMS:
             await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge_server, command)
         
-        elif args[0] in PLAYER_PENALTY_TERMS:
+        elif main_command in PLAYER_PENALTY_TERMS:
             # if False:
             #     await message.channel.send(f"Use the `{server_prefix}addpoints` command instead.")
             await commands.TablingCommands.player_penalty_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in TEAM_PENALTY_TERMS:
+        elif main_command in TEAM_PENALTY_TERMS:
             await commands.TablingCommands.team_penalty_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in FCS_TERMS:
+        elif main_command in FCS_TERMS:
             await commands.TablingCommands.fcs_command(message, this_bot, args, server_prefix, is_lounge_server)
             
-        elif args[0] in GET_FLAG_TERMS:
+        elif main_command in GET_FLAG_TERMS:
             await commands.OtherCommands.get_flag_command(message, server_prefix)
                 
-        elif args[0] in LOUNGE_NAME_TERMS:
+        elif main_command in LOUNGE_NAME_TERMS:
             await commands.OtherCommands.lounge_name_command(message)
             
-        elif args[0] in SET_FLAG_TERMS:
+        elif main_command in SET_FLAG_TERMS:
             await commands.OtherCommands.set_flag_command(message, args)
             
-        elif args[0] in RXX_TERMS:
+        elif main_command in RXX_TERMS:
             await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge_server)
                 
-        elif args[0] in SERVER_USAGE_TERMS:
+        elif main_command in SERVER_USAGE_TERMS:
             await commands.BadWolfCommands.server_process_memory_command(message)
             
-        elif args[0] in LOUNGE_WHO_IS_TERMS:
+        elif main_command in LOUNGE_WHO_IS_TERMS:
             await commands.LoungeCommands.who_is_command(self, message, args)
-        elif args[0] in LOOKUP_TERMS:
+        elif main_command in LOOKUP_TERMS:
             await commands.LoungeCommands.lookup_command(self, message, args)
-        elif args[0] in TABLE_BOT_MEMORY_USAGE_TERMS:
+        elif main_command in TABLE_BOT_MEMORY_USAGE_TERMS:
             commands.BadWolfCommands.is_badwolf_check(message.author, "cannot display table bot internal memory usage")
             load_mes = await message.channel.send("Calculating memory usage...")
             size_str = ""
@@ -798,35 +803,38 @@ class BadWolfBot(discord.Bot):
             await load_mes.delete()
             await message.channel.send(size_str)
     
-        elif args[0] in SET_PREFIX_TERMS:
+        elif main_command in SET_PREFIX_TERMS:
             await commands.ServerDefaultCommands.change_server_prefix_command(message, args)
             
-        elif args[0] in ALL_PLAYERS_TERMS:
+        elif main_command in ALL_PLAYERS_TERMS:
             await commands.TablingCommands.all_players_command(message, this_bot, server_prefix, is_lounge_server)
         
-        elif args[0] in FC_TERMS:
+        elif main_command in FC_TERMS:
             await commands.OtherCommands.fc_command(message, args, command)
+
+        elif main_command in PAGE_TERMS:
+            await commands.OtherCommands.player_page_command(message, args, command)
         
-        elif args[0] in MII_TERMS:
+        elif main_command in MII_TERMS:
             await commands.OtherCommands.mii_command(message, args, command)
         
-        elif args[0] in SET_WAR_NAME_TERMS:
+        elif main_command in SET_WAR_NAME_TERMS:
             await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, is_lounge_server, command)
             
-        elif args[0] in LOG_TERMS:
+        elif main_command in LOG_TERMS:
             await message.channel.send("This command has been removed. You can report a bug in Bad Wolf's server if necessary using the invite code: K937DqM")
             #await commands.OtherCommands.log_feedback_command(message, args, command)
         
-        elif args[0] in GET_LOGS_TERMS:
+        elif main_command in GET_LOGS_TERMS:
             await commands.BadWolfCommands.get_logs_command(message)
         
-        elif args[0] in ADD_SHA_TERMS:
+        elif main_command in ADD_SHA_TERMS:
             await commands.BotAdminCommands.add_sha_track(message, args, command)
             
-        elif args[0] in REMOVE_SHA_TERMS:
+        elif main_command in REMOVE_SHA_TERMS:
             await commands.BotAdminCommands.remove_sha_track(message, args)
         
-        elif args[0] in {'close', 'stopbot', 'disconnect', 'kill'} and common.is_bad_wolf(message.author):
+        elif main_command in {'close', 'stopbot', 'disconnect', 'kill'} and common.is_bad_wolf(message.author):
             try:
                 self.save_data()
                 self.destroy_all_tablebots()
@@ -838,99 +846,99 @@ class BadWolfBot(discord.Bot):
             await self.close()
             # sys.exit()
             
-        elif args[0] in RACES_TERMS:
+        elif main_command in RACES_TERMS:
             await commands.TablingCommands.display_races_played_command(message, this_bot, server_prefix, is_lounge_server)
         
-        elif args[0] in PLAYER_DISCONNECT_TERMS:
+        elif main_command in PLAYER_DISCONNECT_TERMS:
             await commands.TablingCommands.disconnections_command(message, this_bot, args, server_prefix, is_lounge_server)
             
         #Admin commands     
-        elif args[0] in DUMP_DATA_TERMS:
+        elif main_command in DUMP_DATA_TERMS:
             await commands.BadWolfCommands.dump_data_command(message, self.pickle_tablebots)
         
-        elif args[0] in BLACKLIST_USER_TERMS:
+        elif main_command in BLACKLIST_USER_TERMS:
             await commands.BotAdminCommands.blacklist_user_command(message, args, command)
                 
-        elif args[0] in UNDO_TERMS:
+        elif main_command in UNDO_TERMS:
             await commands.TablingCommands.undo_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in REDO_TERMS:
+        elif main_command in REDO_TERMS:
             await commands.TablingCommands.redo_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in LIST_UNDOS_TERMS:
+        elif main_command in LIST_UNDOS_TERMS:
             await commands.TablingCommands.get_undos_command(message, this_bot, server_prefix, is_lounge_server)
         
-        elif args[0] in LIST_REDOS_TERMS:
+        elif main_command in LIST_REDOS_TERMS:
             await commands.TablingCommands.get_redos_command(message, this_bot, server_prefix, is_lounge_server)
         
-        elif args[0] in VERIFY_ROOM_TERMS:
+        elif main_command in VERIFY_ROOM_TERMS:
             if commands.vr_is_on:
                 await commands.OtherCommands.vr_command(this_bot, message, args, command)
         
-        elif args[0] in WORLDWIDE_TERMS:
+        elif main_command in WORLDWIDE_TERMS:
             await commands.OtherCommands.wws_command(self, this_bot, message, ww_type=Race.RT_WW_REGION)
         
-        elif args[0] in CTWW_TERMS:
+        elif main_command in CTWW_TERMS:
             await commands.OtherCommands.wws_command(self, this_bot, message, ww_type=Race.CTGP_CTWW_REGION)  
         
-        elif args[0] in BATTLES_TERMS:
+        elif main_command in BATTLES_TERMS:
             await commands.OtherCommands.wws_command(self, this_bot, message, ww_type=Race.BATTLE_REGION)
         
-        elif args[0] in MERGE_ROOM_TERMS:
+        elif main_command in MERGE_ROOM_TERMS:
             await commands.TablingCommands.merge_room_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in ADD_BOT_ADMIN_TERMS:
+        elif main_command in ADD_BOT_ADMIN_TERMS:
             await commands.BadWolfCommands.add_bot_admin_command(message, args)
                 
-        elif args[0] in REMOVE_BOT_ADMIN_TERMS:
+        elif main_command in REMOVE_BOT_ADMIN_TERMS:
             await commands.BadWolfCommands.remove_bot_admin_command(message, args)
 
-        elif args[0] in BLACKLIST_WORD_TERMS:
+        elif main_command in BLACKLIST_WORD_TERMS:
             await commands.BotAdminCommands.add_blacklisted_word_command(message, args)
         
-        elif args[0] in REMOVE_BLACKLISTED_WORD_TERMS:
+        elif main_command in REMOVE_BLACKLISTED_WORD_TERMS:
             await commands.BotAdminCommands.remove_blacklisted_word_command(message, args)
                     
-        elif args[0] in TABLE_THEME_TERMS:
+        elif main_command in TABLE_THEME_TERMS:
             await commands.TablingCommands.table_theme_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in SERVER_DEFAULT_TABLE_THEME_TERMS:
+        elif main_command in SERVER_DEFAULT_TABLE_THEME_TERMS:
             await commands.ServerDefaultCommands.theme_setting_command(message, this_bot, args, server_prefix)
         
-        elif args[0] in GRAPH_TERMS:
+        elif main_command in GRAPH_TERMS:
             await commands.TablingCommands.table_graph_command(message, this_bot, args, server_prefix, is_lounge_server)
         
-        elif args[0] in SERVER_DEFAULT_GRAPH_TERMS:
+        elif main_command in SERVER_DEFAULT_GRAPH_TERMS:
             await commands.ServerDefaultCommands.graph_setting_command(message, this_bot, args, server_prefix)
         
-        elif args[0] in SERVER_DEFAULT_MII_TERMS:
+        elif main_command in SERVER_DEFAULT_MII_TERMS:
             await commands.ServerDefaultCommands.mii_setting_command(message, this_bot, args, server_prefix)
     
-        elif args[0] in SERVER_DEFAULT_LARGE_TIME_TERMS:
+        elif main_command in SERVER_DEFAULT_LARGE_TIME_TERMS:
             await commands.ServerDefaultCommands.large_time_setting_command(message, this_bot, args, server_prefix)
         
-        elif args[0] in SERVER_SETTINGS_TERMS:
+        elif main_command in SERVER_SETTINGS_TERMS:
             await commands.ServerDefaultCommands.show_settings_command(message, this_bot, server_prefix)
 
-        elif args[0] in DISPLAY_GP_SIZE_TERMS:
+        elif main_command in DISPLAY_GP_SIZE_TERMS:
             await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)
             
-        elif args[0] in POPULAR_TRACKS_TERMS:
+        elif main_command in POPULAR_TRACKS_TERMS:
             await commands.StatisticCommands.popular_tracks_command(self, message, args, server_prefix, command, is_top_tracks=True)
         
-        elif args[0] in UNPOPULAR_TRACKS_TERMS:
+        elif main_command in UNPOPULAR_TRACKS_TERMS:
             await commands.StatisticCommands.popular_tracks_command(self, message, args, server_prefix, command, is_top_tracks=False)
 
-        elif args[0] in BEST_TRACK_TERMS:
+        elif main_command in BEST_TRACK_TERMS:
             await commands.StatisticCommands.player_tracks_command(self, message, args, server_prefix, command, sort_asc=False)
 
-        elif args[0] in WORST_TRACK_TERMS:
+        elif main_command in WORST_TRACK_TERMS:
             await commands.StatisticCommands.player_tracks_command(self, message, args, server_prefix, command, sort_asc=True)
 
-        elif args[0] in TOP_PLAYERS_TERMS:
+        elif main_command in TOP_PLAYERS_TERMS:
             await commands.StatisticCommands.top_players_command(self, message, args, server_prefix, command)
         
-        elif args[0] in RECORD_TERMS:
+        elif main_command in RECORD_TERMS:
             await commands.StatisticCommands.record_command(self, message,args,server_prefix,command)
 
         else:

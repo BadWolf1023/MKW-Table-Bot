@@ -165,6 +165,19 @@ class MiscSlash(ext_commands.Cog):
         if player: args.append(player)
 
         await commands.OtherCommands.fc_command(message, args, message.content)
+
+    @slash_command(name="page",
+    description="Get player page link(s) for yourself or someone else",
+    guild_ids=GUILDS)
+    async def _get_page(
+        self,
+        ctx: discord.ApplicationContext,
+        player: Option(str, "Lounge name, FC, Discord user (mention), or Discord ID", required=False, default=None)
+    ):
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command]
+        if player: args.append(player)
+        await commands.OtherCommands.player_page_command(message, args, message.content)
     
     @slash_command(name='mii',
     description="Get a Lounge player's last used Mii",
