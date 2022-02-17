@@ -56,6 +56,7 @@ class Mii(KaitaiStruct):
         self._io.align_to_byte()
         self.mii_name = self._io.read_bytes(20).decode(u"utf-16be")
         self.mii_name, _, _ = self.mii_name.partition('\x00')
+        self.mii_name = self.mii_name.strip()
         self.body_height = self._io.read_u1()
         self.body_weight = self._io.read_u1()
         self.avatar_id = [None] * (4)
@@ -131,6 +132,8 @@ class Mii(KaitaiStruct):
         mii_name = UtilityFunctions.process_name(self.mii_name)
         mii_name = mii_name if len(mii_name) > 0 else '\u200b'
         fc = self.FC if len(self.FC) > 0 else '\u200b'
+        #print(f"Mii name: '{mii_name}'\nLen: {len(mii_name)}")
+        #print(ord(mii_name))
         embed.add_field(name="**Mii Name**",value=mii_name)
         embed.add_field(name="**Gender**",value=f"{'Female' if self.gender else 'Male'}")
         
