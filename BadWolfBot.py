@@ -460,7 +460,22 @@ class BadWolfBot(discord.Bot):
         
         if not commandIsAllowed(is_lounge_server, interaction.user, this_bot, command):
             return await send_lounge_locked_message(message, this_bot)
-
+            
+        full_command_name = []
+        command_level = interaction.data
+        while command_level:
+            full_command_name.append(command_level['name'])
+            if "options" in command_level: # check for nested options
+                new_level = None
+                for option in command_level['options']:
+                    if 'options' in option: #there is a nested option
+                        new_level = option
+                        break
+                command_level = new_level
+        
+        full_command_name = " ".join(full_command_name)
+        print(full_command_name)
+        Stats.log_command(full_command_name)
         await self.process_application_commands(interaction)
     
     async def on_connect(self):

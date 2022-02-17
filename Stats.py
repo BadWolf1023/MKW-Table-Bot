@@ -28,7 +28,7 @@ def initialize():
 
 def save_metadata():
     counts = meta["command_count"]
-    meta["command_count"] = { k:counts[k] for k in sorted(counts.keys(),reverse=True)}
+    meta["command_count"] = {k:counts[k] for k in sorted(counts.keys(),reverse=True)}
 
     with open(common.JSON_META_FILE,'w') as f:
         json.dump(meta, f)
