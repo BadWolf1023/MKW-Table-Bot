@@ -269,8 +269,8 @@ class ChannelBot(object):
         if not self.is_table_loaded():
             return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.NO_ROOM_LOADED)
         self.room.add_races(rxx, room_races)
-        # Make call to database to add data
-        await DataTracker.RoomTracker.add_data(self)
+        # Important: We do NOT want to add data to database when this is called. The previous races are MODIFIED, we should NOT add modified races to the database - the new races will be added to the database when they call room.update()
+        # await DataTracker.RoomTracker.add_data(self)
         self.room.apply_tabler_adjustments()
         asyncio.create_task(self.room.populate_miis()) # We must create this task after adjustments are applied since the adjustments applied to the new races may affect which miis we pull
         if self.getWar() is None:  # The caller should have ensured that a war is set - dangerous game to play!
