@@ -2076,20 +2076,23 @@ class TablingCommands:
             await message.channel.send("An unknown error occurred when trying to merge rooms. No changes made.")
 
     @staticmethod
-    def get_room_load_failure_message(message: discord.Message, smart_type: SmartTypes.SmartLookupTypes, status: WiimmfiSiteFunctions.RoomLoadStatus) -> str:
-        failure_message = "General room failure. Report this to a Table Bot developer if you see it."
-        descriptive, pronoun = smart_type.get_clean_smart_print(message)
+    def get_room_load_failure_message(message: discord.Message, smart_type: SmartTypes.SmartLookupTypes, status: WiimmfiSiteFunctions.RoomLoadStatus) -> str: 
         if status.status is status.FAILED_REQUEST:
-            failure_message =  "Couldn't access the Wiimmfi website. Wait a minute, then try again."
-        elif status.status is status.NO_KNOWN_FCS:
-            failure_message = f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"
-        elif status.status is status.NOT_ON_FRONT_PAGE:
-            failure_message = f"Could not find {descriptive} in a room, {pronoun} don't seem to be playing right now."
-        elif status.status is status.HAS_NO_RACES:
-            failure_message = f"Found {descriptive} in a room, **but that room hasn't finished the first race.** Run this command again **after** {pronoun} have finished the first race."
+            return "Couldn't access the Wiimmfi website. Wait a minute, then try again."
+            
+        descriptive, pronoun = smart_type.get_clean_smart_print(message)
+        if status.status is status.NO_KNOWN_FCS:
+            return f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"
+        
+        if status.status is status.NOT_ON_FRONT_PAGE:
+            return f"Could not find {descriptive} in a room, {pronoun} don't seem to be playing right now."
+        
+        if status.status is status.HAS_NO_RACES:
             if smart_type.get_type() is smart_type.RXX:
-                failure_message = f"Could not load the room for {descriptive}, {pronoun} may be more than 24 hours old, or **{pronoun} didn't finish the first race.**"
-        return failure_message
+                return f"Could not load the room for {descriptive}, {pronoun} may be more than 24 hours old, or **{pronoun} didn't finish the first race.**"
+            return f"Found {descriptive} in a room, **but that room hasn't finished the first race.** Run this command again **after** {pronoun} have finished the first race."
+        
+        return "General room failure. Report this to a Table Bot developer if you see it."
 
 
     @staticmethod
