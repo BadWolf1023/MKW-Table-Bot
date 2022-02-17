@@ -32,9 +32,11 @@ def convert_key_to_command(key):
     }
     return map[key]
 
-async def safe_defer(ctx):
+async def safe_defer(ctx: discord.ApplicationContext):
     try:
-        await ctx.defer()
+        await asyncio.sleep(1.5)
+        if not ctx.responded:
+            await ctx.defer()
     except:
         pass
 
