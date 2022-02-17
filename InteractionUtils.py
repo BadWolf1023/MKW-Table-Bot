@@ -77,7 +77,6 @@ def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
     proxyMsg.author = interaction.user
     proxyMsg.proxy = True
     proxyMsg.mentions = build_mentions(interaction.data)
-    print(proxyMsg.mentions)
     return proxyMsg
 
 def build_msg_content(data, args = None):
