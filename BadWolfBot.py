@@ -92,6 +92,7 @@ GET_SUBSTITUTIONS_TERMS = {"subs", "substitutes", "substitutions", "getsubs", "a
 INTERACTIONS = {'interaction'}
 
 #General commands that do not require a war to be started (stateless commands)
+PAGE_TERMS = {"page", "playerpage"}
 FC_TERMS = {"fc"}
 LOUNGE_NAME_TERMS = {"lounge", "loungename", "ln"}
 GET_FLAG_TERMS = {"getflag", "gf"}
