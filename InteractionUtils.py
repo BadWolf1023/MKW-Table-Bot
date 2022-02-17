@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import SmartTypes as ST
 import common
 
 def check_lounge_server(message):
@@ -32,9 +33,11 @@ def convert_key_to_command(key):
     }
     return map[key]
 
-async def safe_defer(ctx):
+async def safe_defer(ctx: discord.ApplicationContext):
     try:
-        await ctx.defer()
+        await asyncio.sleep(1.5)
+        if not ctx.responded:
+            await ctx.defer()
     except:
         pass
 
@@ -64,18 +67,18 @@ class ChannelWrapper():
 
 def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
     proxyMsg = discord.Object(id=interaction.id)
-
+    #print(interaction)
+    #for attr in dir(interaction):
+    #    try:
+    #        print(f"{attr}: {getattr(interaction, attr)}")
+    #    except:
+    #        print(f"Can't get value for: {attr}")
     proxyMsg.channel = ChannelWrapper(interaction.channel, ctx)
     proxyMsg.guild = interaction.guild
     proxyMsg.content = build_msg_content(interaction.data, args)
     proxyMsg.author = interaction.user
     proxyMsg.proxy = True
-    proxyMsg.raw_mentions = []
-
-    for i in proxyMsg.content.split(' '):
-        if i.startswith('<@') and i.endswith('>'):
-            proxyMsg.raw_mentions.append(i)
-    
+    proxyMsg.mentions = build_mentions(interaction.data)
     return proxyMsg
 
 def build_msg_content(data, args = None):
@@ -86,6 +89,30 @@ def build_msg_content(data, args = None):
     for arg in raw_args: 
         args.append(str(arg.get('value', '')))
     return '/' + ' '.join(args)
+
+def build_mentions(data):
+    result = []
+    found_discord_ids = []
+    for option in data.get('options', []):
+        smart_type_value = ST.SmartLookupTypes(option.get('value', ''))
+        if smart_type_value.is_discord_mention():
+            found_discord_ids.append(smart_type_value.modified_original)
+    
+    resolved_data = data.get('resolved', {})
+    users = resolved_data.get('users', {})
+    members = resolved_data.get('members', {})
+    for discord_id in found_discord_ids:
+        user_json = users.get(discord_id, None)
+        member_json = members.get(discord_id, None)
+        if user_json is None:
+            continue
+        user = discord.User(state=None, data=user_json)
+        if member_json is not None:
+            nickname = member_json.get('nick', None)
+            if nickname is not None:
+                user.name = nickname
+        result.append(user)
+    return result
 
 async def on_component_error(error: Exception, interaction: discord.Interaction, prefix):
     message = None

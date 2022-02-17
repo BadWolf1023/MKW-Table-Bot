@@ -151,6 +151,20 @@ class SmartLookupTypes:
 
     def is_rxx(self):
         return self._original_type is SmartLookupTypes.RXX
+    def is_fc(self):
+        return self._original_type is SmartLookupTypes.FC
+    def is_lounge_name(self):
+        return self._original_type is SmartLookupTypes.LOUNGE_NAME
+    def is_fc_list(self):
+        return self._original_type is SmartLookupTypes.FC_LIST
+    def is_discord_id(self):
+        return self._original_type is SmartLookupTypes.DISCORD_ID
+    def is_self_discord_id(self):
+        return self._original_type is SmartLookupTypes.SELF_DISCORD_ID
+    def is_discord_mention(self):
+        return self._original_type is SmartLookupTypes.RAW_DISCORD_MENTION
+    def is_unknown(self):
+        return self._original_type is SmartLookupTypes.UNKNOWN
 
     def get_smart_print(self) -> Tuple[str, str]:
         '''Based on the type, returns a 2-tuple of strings that most informational messages can use
