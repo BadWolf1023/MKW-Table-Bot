@@ -92,7 +92,7 @@ GET_SUBSTITUTIONS_TERMS = {"subs", "substitutes", "substitutions", "getsubs", "a
 INTERACTIONS = {'interaction'}
 
 #General commands that do not require a war to be started (stateless commands)
-PAGE_TERMS = {"page", "playerpage"}
+PAGE_TERMS = {"page", "pages", "playerpage", "playerpages"}
 FC_TERMS = {"fc"}
 LOUNGE_NAME_TERMS = {"lounge", "loungename", "ln"}
 GET_FLAG_TERMS = {"getflag", "gf"}
@@ -807,6 +807,9 @@ class BadWolfBot(discord.Bot):
         
         elif args[0] in FC_TERMS:
             await commands.OtherCommands.fc_command(message, args, command)
+
+        elif args[0] in PAGE_TERMS:
+            await commands.OtherCommands.player_page_command(message, args, command)
         
         elif args[0] in MII_TERMS:
             await commands.OtherCommands.mii_command(message, args, command)

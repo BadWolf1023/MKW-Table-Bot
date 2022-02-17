@@ -121,7 +121,7 @@ def fix_fc_text(fc:str) -> int:
     #Takes an FC in the format xxxx-xxxx-xxxx and converts it into a usable int for wiifc
     return int(fc.replace("-",""))
 
-def wiifc(pid, id4) -> Tuple[int, int]:
+def wiifc(pid, id4=b'RMCJ') -> Tuple[int, int]:
     ''' Return a tuple containing the 32-bit PID and the
         resulting friend code using the Wii algorithm. '''
     name = bytes([
@@ -135,6 +135,9 @@ def wiifc(pid, id4) -> Tuple[int, int]:
         int(id4[0])])
     hash_ = int(hashlib.md5(name).hexdigest()[:2], 16) >> 1
     return (pid & 0xFFFFFFFF), ((hash_ << 32) | (pid & 0xFFFFFFFF))
+
+def fc_to_pid(fc: str) -> int:
+    return wiifc(fix_fc_text(fc))[0]
 
 def mii_data_is_corrupt(mii_data:str):
     return mii_data == b''
@@ -210,7 +213,7 @@ async def get_mii_data_for_pids(pids:Dict[int, str]) -> str:
 async def get_mii_data_for_fcs(fcs:Set[str]):
     if len(fcs) == 0:
         return {}
-    pids_mapping = {wiifc(fix_fc_text(fc), b'RMCJ')[0]:fc for fc in fcs}
+    pids_mapping = {fc_to_pid(fc):fc for fc in fcs}
     mii_datas = await get_mii_data_for_pids(pids_mapping)
     if mii_datas is None:
         return None

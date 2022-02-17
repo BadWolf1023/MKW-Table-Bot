@@ -866,6 +866,28 @@ class OtherCommands:
         await message.channel.send(fcs[0])
 
     @staticmethod
+    async def player_page_command(message:discord.Message, args:List[str], old_command:str):
+        to_load = SmartTypes.create_you_discord_id(message.author.id)
+        args = old_command.split()
+        if len(args) > 1:
+            to_load = " ".join(old_command.split()[1:])
+        smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
+        descriptive, pronoun = smart_type.get_clean_smart_print(message)
+        await smart_type.lounge_api_update()
+        fcs = smart_type.get_fcs()
+        if fcs is None:
+            await message.channel.send(f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?")
+            return
+        players_pages = [f"{WiimmfiSiteFunctions.SUB_MKWX_URL}p{MiiPuller.fc_to_pid(fc)}" for fc in fcs]
+        player_pages_str = "\n".join(players_pages)
+        if smart_type.is_fc():
+            to_send = f"""{SmartTypes.capitalize(SmartTypes.possessive(descriptive))} player page:\n\n{player_pages_str}"""
+        else:
+            to_send = f"""{SmartTypes.capitalize(SmartTypes.possessive(descriptive))} player pages, sorted by most recent usage:\n\n{player_pages_str}"""
+        await message.channel.send(to_send)
+    
+
+    @staticmethod
     async def mii_command(message:discord.Message, args:List[str], old_command:str):
         if common.MII_COMMAND_DISABLED and not common.is_bad_wolf(message.author):
             await message.channel.send("To ensure Table Bot remains stable and can access the website, miis have been disabled at this time.")
@@ -2088,7 +2110,7 @@ class TablingCommands:
             return f"Could not find {descriptive} in a room, {pronoun} don't seem to be playing right now."
         
         if status.status is status.HAS_NO_RACES:
-            if smart_type.get_type() is smart_type.RXX:
+            if smart_type.is_rxx():
                 return f"Could not load the room for {descriptive}, {pronoun} may be more than 24 hours old, or **{pronoun} didn't finish the first race.**"
             return f"Found {descriptive} in a room, **but that room hasn't finished the first race.** Run this command again **after** {pronoun} have finished the first race."
         
