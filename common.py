@@ -188,8 +188,6 @@ BOT_ADMINS_FILE = f"{DATA_PATH}bot_admins.txt"
 
 ERROR_LOGS_FILE = f"{LOGGING_PATH}error_logs.txt"
 
-FEEDBACK_LOGS_FILE = f"{LOGGING_PATH}feedback_logs.txt"
-
 #To be clear (and you can check the main loop that this is true), table bot does not log all messages
 #It only logs commands that are sent to it
 MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}messages_logging.txt"
@@ -209,13 +207,11 @@ DEFAULT_MII_FILE = f"{SERVER_SETTINGS_PATH}server_mii_defaults.txt"
 
 ERROR_LOGGING_TYPE = "error"
 MESSAGE_LOGGING_TYPE = "messagelogging"
-FEEDBACK_LOGGING_TYPE = "feedback"
 FULL_MESSAGE_LOGGING_TYPE = "fullmessagelogging"
 
 ALL_PATHS = {LOGGING_PATH, SERVER_SETTINGS_PATH, DATA_PATH}
 
 FILES_TO_BACKUP = {ERROR_LOGS_FILE,
-                   FEEDBACK_LOGS_FILE,
                    MESSAGE_LOGGING_FILE,
                    FULL_MESSAGE_LOGGING_FILE,
                    DEFAULT_LARGE_TIME_FILE,
@@ -477,8 +473,6 @@ def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
     logging_file = MESSAGE_LOGGING_FILE
     if logging_type == ERROR_LOGGING_TYPE:
         logging_file = ERROR_LOGS_FILE
-    if logging_type == FEEDBACK_LOGGING_TYPE:
-        logging_file = FEEDBACK_LOGS_FILE
     if logging_type == MESSAGE_LOGGING_TYPE:
         logging_file = MESSAGE_LOGGING_FILE
     if logging_type == FULL_MESSAGE_LOGGING_TYPE:

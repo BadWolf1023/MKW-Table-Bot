@@ -151,9 +151,6 @@ class BadWolfCommands:
     @staticmethod
     async def get_logs_command(message:discord.Message):
         BadWolfCommands.is_badwolf_check(message.author, "cannot give logs")
-
-        if os.path.exists(common.FEEDBACK_LOGS_FILE):
-            await message.channel.send(file=discord.File(common.FEEDBACK_LOGS_FILE))
         if os.path.exists(common.ERROR_LOGS_FILE):
             await message.channel.send(file=discord.File(common.ERROR_LOGS_FILE))
         if os.path.exists(common.MESSAGE_LOGGING_FILE):
