@@ -101,7 +101,7 @@ class StatisticsSlash(ext_commands.Cog):
             args.append("min="+str(min_plays))
 
         message.content = ' '.join(args).lower()
-        await commands.StatisticCommands.top_players_command(self.bot, message, args, server_prefix)
+        await commands.StatisticCommands.top_players_command(message, args, server_prefix)
     
     @slash_command(
         name="besttracks",

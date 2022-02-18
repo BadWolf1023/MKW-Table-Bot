@@ -659,7 +659,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         await paginator.send(message)
 
     @staticmethod
-    async def top_players_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str):
+    async def top_players_command(message: discord.Message, args: List[str], server_prefix: str):
         error_message = f"""Here are examples of how to use this command:
 - Top Maple Treeway players: `{server_prefix}topplayers treeway`
 - Top BC3 players in Tier 5: `{server_prefix}topplayers bc3 t5`
