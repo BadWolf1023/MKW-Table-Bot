@@ -138,13 +138,13 @@ class BotOwnerCommands:
     This class contains all of the commands that are private and only available to me"""
 
     @staticmethod
-    def is_bot_owner_check(author, failure_message):
+    def is_bot_owner_check(author: discord.User, failure_message: str) -> bool:
         if not common.is_bot_owner(author):
             raise TableBotExceptions.NotBadWolf(failure_message)
         return True
 
     @staticmethod
-    async def get_logs_command(message:discord.Message):
+    async def get_logs_command(message: discord.Message):
         BotOwnerCommands.is_bot_owner_check(message.author, "cannot give logs")
         if os.path.exists(common.ERROR_LOGS_FILE):
             await message.channel.send(file=discord.File(common.ERROR_LOGS_FILE))
@@ -159,9 +159,9 @@ class BotOwnerCommands:
 
     #Adds or removes a discord ID to/from the bot admins
     @staticmethod
-    async def bot_admin_change(message:discord.Message, args:List[str], adding=True):
-        if len(args) <= 1:
-            await message.channel.send("Give a Discord ID.")
+    async def bot_admin_change(message: discord.Message, args: List[str], adding=True):
+        if len(args) != 2:
+            await message.channel.send(f"Here's how to use this command: `?{args[0]} discordID`")
             return
 
         admin_id = args[1]
@@ -179,37 +179,37 @@ class BotOwnerCommands:
 
 
     @staticmethod
-    async def add_bot_admin_command(message:discord.Message, args:List[str]):
+    async def add_bot_admin_command(message: discord.Message, args: List[str]):
         BotOwnerCommands.is_bot_owner_check(message.author, "cannot add bot admin")
         await BotOwnerCommands.bot_admin_change(message, args, adding=True)
 
     @staticmethod
-    async def remove_bot_admin_command(message:discord.Message, args:List[str]):
+    async def remove_bot_admin_command(message: discord.Message, args: List[str]):
         BotOwnerCommands.is_bot_owner_check(message.author, "cannot remove bot admin")
         await BotOwnerCommands.bot_admin_change(message, args, adding=False)
 
     @staticmethod
-    async def server_process_memory_command(message:discord.Message):
+    async def server_process_memory_command(message: discord.Message):
         BotOwnerCommands.is_bot_owner_check(message.author, "cannot show server memory usage")
         command_output = subprocess.check_output('top -b -o +%MEM | head -n 22', shell=True, text=True)
         await message.channel.send(command_output)
 
 
     @staticmethod
-    async def garbage_collect_command(message:discord.Message):
+    async def garbage_collect_command(message: discord.Message):
         BotOwnerCommands.is_bot_owner_check(message.author, "cannot garbage collect")
         gc.collect()
         await message.channel.send("Collected")
 
 
     @staticmethod
-    async def total_clear_command(message:discord.Message, lounge_update_data):
+    async def total_clear_command(message: discord.Message, lounge_update_data: Lounge.Lounge):
         BotOwnerCommands.is_bot_owner_check(message.author, "cannot clear lounge table submission cooldown tracking")
         lounge_update_data.update_cooldowns.clear()
         await message.channel.send("Cleared.")
 
     @staticmethod
-    async def dump_data_command(message:discord.Message, data_dump_function):
+    async def dump_data_command(message: discord.Message, data_dump_function: Callable):
         BotOwnerCommands.is_bot_owner_check(message.author, "cannot dump data")
         successful = await UserDataProcessing.dump_data()
         data_dump_function()
@@ -221,61 +221,65 @@ class BotOwnerCommands:
 
 
 """================ Bot Admin Commands =================="""
-#TODO: Refactor these - target the waterfall-like if-statements
 class BotAdminCommands:
     """There is no point to this class, other than for organization purposes.
     This class contains the commands that only Bot Admins can do"""
 
     @staticmethod
-    async def add_sha_track(message:discord.Message, args:List[str]):
+    async def add_sha_track(message: discord.Message, args: List[str]):
         BotAdminCommands.is_sha_adder_check(message.author, "cannot add sha track")
         if len(args) < 3:
             await message.channel.send("Requires 2 args `SHA, track_name`")
             return
-        if not UtilityFunctions.is_hex(args[1]):
-            await message.channel.send(f"The given track is not an SHA: {args[1]}")
-            return
+        track_sha = args[1]
         given_track_name = " ".join(args[2:])
-        if args[1] in Race.sha_track_name_mappings:
-            await message.channel.send(f"The given track is already in SHA mappings with the following name: {args[1]}\nOverwriting...")
-        Race.sha_track_name_mappings[args[1]] = given_track_name
-        await message.channel.send(f"Added: {args[1]} -> {given_track_name}")
+        if not UtilityFunctions.is_hex(track_sha):
+            await message.channel.send(f"The given track is not an SHA: {track_sha}")
+            return
+        if track_sha in Race.sha_track_name_mappings:
+            await message.channel.send(f"The given track is already in SHA mappings with the following name: {track_sha}\nOverwriting...")
+        Race.sha_track_name_mappings[track_sha] = given_track_name
+        await message.channel.send(f"Added: {track_sha} -> {given_track_name}")
 
     @staticmethod
-    async def remove_sha_track(message:discord.Message, args:List[str]):
+    async def remove_sha_track(message: discord.Message, args: List[str]):
         BotAdminCommands.is_sha_adder_check(message.author, "cannot remove sha track")
         if len(args) != 2:
             await message.channel.send("Requires 1 args `SHA`")
             return
-        if not UtilityFunctions.is_hex(args[1]):
-            await message.channel.send(f"The given track is not an SHA: {args[1]}")
+        track_sha = args[1]
+        if not UtilityFunctions.is_hex(track_sha):
+            await message.channel.send(f"The given track is not an SHA: {track_sha}")
             return
-        if args[1] not in Race.sha_track_name_mappings:
+        if track_sha not in Race.sha_track_name_mappings:
             await message.channel.send(f"The given track is not in SHA mappings. Current mappings: {'  |  '.join([str(k)+' : '+str(v) for k,v in Race.sha_track_name_mappings.items()])}")
             return
-        given_track_name = Race.sha_track_name_mappings[args[1]]
-        del Race.sha_track_name_mappings[args[1]]
-        await message.channel.send(f"Removed: {args[1]} -> {given_track_name}")
+        removed_track_name = Race.sha_track_name_mappings.pop(track_sha)
+        await message.channel.send(f"Removed: {track_sha} -> {removed_track_name}")
 
     @staticmethod
-    def is_bot_admin_check(author, failure_message):
+    def is_bot_admin_check(author: discord.User, failure_message: str) -> bool:
         if not common.is_bot_admin(author):
             raise TableBotExceptions.NotBotAdmin(failure_message)
         return True
 
     @staticmethod
-    def is_sha_adder_check(author, failure_message):
+    def is_sha_adder_check(author: discord.User, failure_message: str) -> bool:
         if not (common.is_bot_admin(author) or common.is_sha_adder(author)):
             raise TableBotExceptions.NotBotAdmin(failure_message)
         return True
 
     @staticmethod
-    async def blacklisted_word_change(message:discord.Message, args:List[str], adding=True):
-        if len(args) <= 1:
+    async def blacklisted_word_change(message: discord.Message, args: List[str], adding=True):
+        if len(args) < 2:
             to_send = "Give a word to blacklist." if adding else "Specify a word to remove from the blacklist."
             await message.channel.send(to_send)
             return
-        word = str(args[1].strip())
+        if len(args) > 2:
+            await message.channel.send("The given word cannot have spaces.")
+            return
+
+        word = args[1]
         success = UtilityFunctions.add_blacklisted_word(word) if adding else UtilityFunctions.remove_blacklisted_word(word)
         if success:
             to_send = f"Blacklisted the word: {word}" if adding else f"Removed this word from the blacklist: {word}"
@@ -284,52 +288,57 @@ class BotAdminCommands:
             await message.channel.send("Something went wrong. Try again.")
 
     @staticmethod
-    async def remove_blacklisted_word_command(message:discord.Message, args:List[str]):
+    async def remove_blacklisted_word_command(message: discord.Message, args: List[str]):
         BotAdminCommands.is_bot_admin_check(message.author, "cannot remove blacklisted word")
         await BotAdminCommands.blacklisted_word_change(message, args, adding=False)
 
     @staticmethod
-    async def add_blacklisted_word_command(message:discord.Message, args:List[str]):
+    async def add_blacklisted_word_command(message: discord.Message, args: List[str]):
         BotAdminCommands.is_bot_admin_check(message.author, "cannot add blacklisted word")
         await BotAdminCommands.blacklisted_word_change(message, args, adding=True)
 
 
     @staticmethod
-    async def blacklist_user_command(message:discord.Message, args:List[str]):
+    async def blacklist_user_command(message: discord.Message, args: List[str]):
         BotAdminCommands.is_bot_admin_check(message.author, "cannot blacklist user")
-
         if len(args) < 2:
             await message.channel.send(f"Give a Discord ID to blacklist. If you do not specify a reason for blacklisting a user, the given discord ID will be **removed** from the blacklist. To blacklist a discord ID, give a reason. `?{args[0]} <discordID> (reason)`")
             return
 
-        if len(args) == 2:
-            if UserDataProcessing.add_Blacklisted_user(args[1], ""):
-                await message.channel.send("Removed blacklist for " + args[1])
-            else:
-                await message.channel.send("Blacklist failed.")
+        discord_id = args[1]
+        reason = " ".join(args[2:])
+        smart_type = SmartTypes.SmartLookupTypes(discord_id, allowed_types={SmartTypes.SmartLookupTypes.DISCORD_ID})
+        if not smart_type.is_discord_id():
+            await message.channel.send(f"{discord_id} is not a valid discord ID.")
             return
-        if UserDataProcessing.add_Blacklisted_user(args[1], " ".join(args[2:])):
-            await message.channel.send("Blacklisted " + args[1])
-        else:
+        discord_id = smart_type.modified_original
+        success = UserDataProcessing.add_Blacklisted_user(discord_id, reason)
+        if not success:
             await message.channel.send("Blacklist failed.")
-
-    @staticmethod
-    async def change_ctgp_region_command(message:discord.Message, args:List[str]):
-        BotAdminCommands.is_bot_admin_check(message.author, "cannot change CTGP CTWW region")
-        if len(args) <= 1:
-            await message.channel.send("You must give a new CTGP region to use for displaying CTGP WWs.")
+            return
+        if reason:
+            await message.channel.send(f"Blacklisted the discord id {discord_id}")
         else:
-            Race.set_ctgp_region(args[1])
-            await message.channel.send(f"CTGP WW Region set to: {args[1]}")
+            await message.channel.send(f"Removed the discord id {discord_id} from the blacklist")
+            
 
     @staticmethod
-    async def global_vr_command(message:discord.Message, on=True):
-        BotAdminCommands.is_bot_admin_check(message.author, "cannot change vr on/off")
+    async def change_ctgp_region_command(message: discord.Message, args: List[str]):
+        BotAdminCommands.is_bot_admin_check(message.author, "cannot change CTGP CTWW region")
+        if len(args) != 2:
+            await message.channel.send(f"You must give a new CTGP region to use for displaying CTGP WWs. For example, `?{args[0]} vs_40`")
+        else:
+            new_ctgp_region = args[1]
+            Race.set_ctgp_region(new_ctgp_region)
+            await message.channel.send(f"CTGP WW Region set to: {new_ctgp_region}")
 
+    @staticmethod
+    async def global_vr_command(message: discord.Message, on=True):
+        BotAdminCommands.is_bot_admin_check(message.author, "cannot change vr on/off")
         global vr_is_on
         vr_is_on = on
         dump_vr_is_on()
-        await message.channel.send(f"Turned !vr/?vr {'on' if on else 'off'}.")
+        await message.channel.send(f"Turned ?vr {'on' if on else 'off'}.")
 
 
 """================ Statistic Commands =================="""
