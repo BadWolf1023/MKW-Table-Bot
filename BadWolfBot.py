@@ -496,15 +496,6 @@ class BadWolfBot(discord.Bot):
             error = error.original
         await self.handle_exception(error,message,server_prefix)
     
-    async def simulate_on_message(self, message, args, command, this_bot, server_prefix, is_lounge_server):
-        """
-        Method to convert raw slash command (`/raw`) into args to be parsed as a command.
-        """
-        args = [arg.lower() for arg in args]
-
-        await self.process_message_commands(message, args, command, this_bot, server_prefix, is_lounge_server)
-            
-    
     async def on_message(self, message: discord.Message):
         """
         On_message bot event overridden - could refactor into bot.commands, but a lot of work
@@ -542,7 +533,7 @@ class BadWolfBot(discord.Bot):
             if command_is_spam(command):
                 return       
         
-            args = [arg.lower() for arg in command.split()]
+            args = command.split()
             main_command = args[0].lower()
             
             if message.channel.category_id in TEMPORARY_VR_CATEGORIES and main_command not in ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS:
@@ -560,7 +551,7 @@ class BadWolfBot(discord.Bot):
             if not commandIsAllowed(is_lounge_server, message.author, this_bot, main_command):
                 await send_lounge_locked_message(message, this_bot)
             else:
-                await self.process_message_commands(message, args, command, this_bot, server_prefix, is_lounge_server)
+                await self.process_message_commands(message, args, this_bot, server_prefix, is_lounge_server)
         except Exception as e:
             await self.handle_exception(e,message,server_prefix)
 
@@ -629,7 +620,7 @@ class BadWolfBot(discord.Bot):
         else:
             pass
     
-    async def process_message_commands(self, message, args, command, this_bot, server_prefix, is_lounge_server):
+    async def process_message_commands(self, message, args, this_bot, server_prefix, is_lounge_server):
         main_command = args[0].lower()
         Stats.log_command(main_command)
 
@@ -829,7 +820,7 @@ class BadWolfBot(discord.Bot):
             await commands.BadWolfCommands.get_logs_command(message)
         
         elif main_command in ADD_SHA_TERMS:
-            await commands.BotAdminCommands.add_sha_track(message, args, command)
+            await commands.BotAdminCommands.add_sha_track(message, args)
             
         elif main_command in REMOVE_SHA_TERMS:
             await commands.BotAdminCommands.remove_sha_track(message, args)

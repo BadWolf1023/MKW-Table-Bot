@@ -29,7 +29,7 @@ class AdminSlash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, sha, track]
         
-        await commands.BotAdminCommands.add_sha_track(message, args, message.content)
+        await commands.BotAdminCommands.add_sha_track(message, args)
 
     @sha.command(name="remove",
     description="Remove a SHA-track mapping",

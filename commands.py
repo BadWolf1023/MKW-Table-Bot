@@ -231,7 +231,7 @@ class BotAdminCommands:
     This class contains the commands that only Bot Admins can do"""
 
     @staticmethod
-    async def add_sha_track(message:discord.Message, args:List[str], command):
+    async def add_sha_track(message:discord.Message, args:List[str]):
         BotAdminCommands.is_sha_adder_check(message.author, "cannot add sha track")
         if len(args) < 3:
             await message.channel.send("Requires 2 args `SHA, track_name`")

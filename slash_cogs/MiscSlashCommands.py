@@ -28,7 +28,7 @@ class MiscSlash(ext_commands.Cog):
         args = input.split() #split the raw string
         message.content = input
         
-        await self.bot.simulate_on_message(message, args, message.content, this_bot, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge)
         
     @slash_command(name="settings",
     description="Show your Table Bot server settings",
