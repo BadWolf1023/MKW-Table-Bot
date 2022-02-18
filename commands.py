@@ -1252,7 +1252,7 @@ class LoungeCommands:
 
 
     @staticmethod
-    async def __submission_action_command__(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge, is_approval=True):
+    async def _submission_action_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge, is_approval=True):
         if len(args) < 2:
             await message.channel.send("The way to use this command is: ?" + args[0] + " submissionID")
             return
@@ -1339,7 +1339,7 @@ class LoungeCommands:
         LoungeCommands.correct_server_check(message.guild, "cannot approve table submission", lounge_server_updates.server_id)
         LoungeCommands.has_authority_in_server_check(message.author, "cannot approve table submission", authority_check=lounge_server_updates.report_table_authority_check)
         LoungeCommands.updater_channel_check(message.channel, "cannot approve table submission", lounge_server_updates.get_updater_channel_ids())
-        await LoungeCommands.__submission_action_command__(client, message, args, lounge_server_updates, is_approval=True)
+        await LoungeCommands._submission_action_command(client, message, args, lounge_server_updates, is_approval=True)
 
 
     @staticmethod
@@ -1347,7 +1347,7 @@ class LoungeCommands:
         LoungeCommands.correct_server_check(message.guild, "cannot deny table submission", lounge_server_updates.server_id)
         LoungeCommands.has_authority_in_server_check(message.author, "cannot deny table submission", authority_check=lounge_server_updates.report_table_authority_check)
         LoungeCommands.updater_channel_check(message.channel, "cannot deny table submission", lounge_server_updates.get_updater_channel_ids())
-        await LoungeCommands.__submission_action_command__(client, message, args, lounge_server_updates, is_approval=False)
+        await LoungeCommands._submission_action_command(client, message, args, lounge_server_updates, is_approval=False)
 
 
     @staticmethod
@@ -1384,14 +1384,14 @@ class ServerDefaultCommands:
         return True
     
     @staticmethod
-    async def show_settings_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str):
+    async def show_settings_command(message: discord.Message):
         server_id = message.guild.id
         server_name = message.guild.name
         await message.channel.send(ServerFunctions.get_server_settings(server_name, server_id))
 
 
     @staticmethod
-    async def large_time_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
+    async def large_time_setting_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str):
         if not common.running_beta or common.beta_is_real:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change server default for hiding large times on tables")
 
@@ -1402,7 +1402,7 @@ class ServerDefaultCommands:
             return
 
         elif len(args) > 1:
-            setting = args[1:]
+            setting = lower_args(args[1:])
             if len(setting) > 1:
                 setting = [e.strip(',') for e in setting]
             valid = False
@@ -1410,7 +1410,7 @@ class ServerDefaultCommands:
                 valid = False
             else:
                 try:
-                    setting = ','.join(setting).strip().lower()
+                    setting = ','.join(setting).strip()
                     setting = ServerFunctions.parse_ILT_setting(setting)
                     valid = True
                 except (ValueError, IndexError):

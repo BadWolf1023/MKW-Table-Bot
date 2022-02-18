@@ -904,7 +904,7 @@ class BadWolfBot(discord.Bot):
             await commands.ServerDefaultCommands.large_time_setting_command(message, this_bot, args, server_prefix)
         
         elif main_command in SERVER_SETTINGS_TERMS:
-            await commands.ServerDefaultCommands.show_settings_command(message, this_bot, server_prefix)
+            await commands.ServerDefaultCommands.show_settings_command(message)
 
         elif main_command in DISPLAY_GP_SIZE_TERMS:
             await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)

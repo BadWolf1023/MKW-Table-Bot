@@ -40,7 +40,7 @@ class MiscSlash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         
-        await commands.ServerDefaultCommands.show_settings_command(message, this_bot, server_prefix)
+        await commands.ServerDefaultCommands.show_settings_command(message)
     
     setting = SlashCommandGroup("setting", "Change your Table Bot server settings", guild_ids=GUILDS)
     
