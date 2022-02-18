@@ -164,7 +164,7 @@ class MiscSlash(ext_commands.Cog):
         args = [command]
         if player: args.append(player)
 
-        await commands.OtherCommands.fc_command(message, args, message.content)
+        await commands.OtherCommands.fc_command(message, args)
 
     @slash_command(name="page",
     description="Get player page link(s) for yourself or someone else",

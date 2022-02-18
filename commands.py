@@ -852,11 +852,10 @@ class OtherCommands:
 
 
     @staticmethod
-    async def fc_command(message:discord.Message, args:List[str], old_command:str):
+    async def fc_command(message:discord.Message, args:List[str]):
         to_load = SmartTypes.create_you_discord_id(message.author.id)
-        args = old_command.split()
         if len(args) > 1:
-            to_load = " ".join(old_command.split()[1:])
+            to_load = " ".join(args[1:])
         smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
         await smart_type.lounge_api_update()
         fcs = smart_type.get_fcs()

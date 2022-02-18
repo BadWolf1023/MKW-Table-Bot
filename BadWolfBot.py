@@ -801,7 +801,7 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.all_players_command(message, this_bot, server_prefix, is_lounge_server)
         
         elif main_command in FC_TERMS:
-            await commands.OtherCommands.fc_command(message, args, command)
+            await commands.OtherCommands.fc_command(message, args)
 
         elif main_command in PAGE_TERMS:
             await commands.OtherCommands.player_page_command(message, args, command)
