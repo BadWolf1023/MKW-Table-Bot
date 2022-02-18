@@ -1031,7 +1031,7 @@ class LoungeCommands:
 
     @staticmethod
     async def who_is_command(message: discord.Message, args: List[str]):
-        if not common.author_is_lounge_staff(message.author):
+        if not common.is_prod or not common.author_is_lounge_staff(message.author):
             raise TableBotExceptions.NotLoungeStaff("Not staff in MKW Lounge")
         command_name = args[0]
         to_lookup = None
@@ -1518,7 +1518,6 @@ class ServerDefaultCommands:
 
 
 """================== Tabling Commands =================="""
-#TODO: Refactor these
 class TablingCommands:
 
     @staticmethod
