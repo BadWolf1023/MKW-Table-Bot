@@ -188,6 +188,11 @@ class SmartLookupTypes:
         return f"{self.modified_original}", "it"
 
     def get_clean_smart_print(self, message):
+        '''Based on the type, returns a 2-tuple of strings that most informational messages can use
+        The first index in the tuple is a descriptive of the SmartLookupType type along with the actual modified type.
+        If the given type was a discord mention, the display name of that member will be returned if it can be found, otherwise the discord ID of the mention will be used
+        The second index is the correct grammatical pronoun of the type (eg they, you, it)
+        '''
         descriptive, pronoun = self.get_smart_print()
         if self.get_type() is self.RAW_DISCORD_MENTION:
             for mention in message.mentions:
