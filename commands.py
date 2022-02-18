@@ -1685,15 +1685,14 @@ class TablingCommands:
             await message.channel.send(example_help(server_prefix, command))
             return
 
-        player = args[1:-1]
-        amount = args[-1]
+        player_arg, amount_arg = " ".join(args[1:-1]), args[-1]
         players = this_bot.getRoom().get_sorted_player_list()
-        player_num, playerErrorMessage = get_player_room_index(message, player, this_bot.getRoom(), server_prefix, command)
-        if not UtilityFunctions.is_int(amount):
+        player_num, playerErrorMessage = get_player_room_index(message, player_arg, this_bot.getRoom(), server_prefix, command)
+        if not UtilityFunctions.is_int(amount_arg):
             await message.channel.send(f"The penalty amount must be a number. {example_help(server_prefix, command)}")
             return
         else:
-            amount =  int(amount)
+            amount =  int(amount_arg)
 
         if player_num is None:
             await message.channel.send(playerErrorMessage)
@@ -1786,36 +1785,34 @@ class TablingCommands:
     @staticmethod
     async def change_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
+        command_name = args[0]
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += "\n**To edit the GP3 score of the 7th player on the list to 37 points:** *" + server_prefix + "edit 7 3 37*"
+            to_send += f"\n**To edit the GP3 score of the 7th player on the list to 37 points:** *{server_prefix}{command_name} 7 3 37*"
             await message.channel.send(to_send)
             return
 
-        if len(args) != 4:
-            await message.channel.send("Do " + server_prefix + "edit for an example on how to use this command.")
+        if len(args) < 4:
+            await message.channel.send(example_help(server_prefix, command_name))
             return
 
-        player = args[1].strip() #TODO: Can we support player names with spaces?
-        player_num, error_message = get_player_room_index(message, player, this_bot.getRoom(), server_prefix, "edit")
+        player_arg, gp_arg, amount_arg = " ".join(args[1:-2]), args[-2], args[-1]
+        player_num, error_message = get_player_room_index(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
         if player_num is None:
             await message.channel.send(error_message)
             return
-
-        gp_num = args[2]
-        amount = args[3]
-        if not UtilityFunctions.is_int(gp_num) or not UtilityFunctions.is_int(amount):
-            await message.channel.send(f"GP Number and amount must all be numbers. Do {server_prefix}edit for an example on how to use this command.")
+            
+        if not UtilityFunctions.is_int(gp_arg) or not UtilityFunctions.is_int(amount_arg):
+            await message.channel.send(f"GP Number and amount must all be numbers. {example_help(server_prefix, command_name)}")
             return
         else:
-            gp_num = int(gp_num)
-            amount = int(amount)
+            gp_num = int(gp_arg)
+            amount = int(amount_arg)
 
 
-        numGPs = this_bot.getWar().numberOfGPs
-        if gp_num < 1 or gp_num > numGPs:
-            await message.channel.send(f"The current table is only set to {numGPs} GPs. Your GP number was: {gp_num}")
+        table_gps = this_bot.getWar().numberOfGPs
+        if gp_num < 1 or gp_num > table_gps:
+            await message.channel.send(f"The current table is only set to {table_gps} GPs. Your GP number was: {gp_num}")
             return
 
         players = this_bot.getRoom().get_sorted_player_list()
