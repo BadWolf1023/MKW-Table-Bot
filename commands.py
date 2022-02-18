@@ -727,15 +727,14 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         await paginator.send(message)
 
     @staticmethod
-    async def record_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str, command:str):
+    async def record_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str):
         error_message = f"Usage: `{server_prefix}record player_name (num_days)`"
 
         if len(args) == 1:
             await message.channel.send(error_message)
             return
-        else:
-            command = " ".join(args[1:])
 
+        command = " ".join(args[1:])
         days = None
         matches = [x[0] for x in re.findall('((^|\s)\d+d?($|\s))',command)]
         if len(matches) > 0:

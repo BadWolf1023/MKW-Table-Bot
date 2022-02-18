@@ -930,7 +930,7 @@ class BadWolfBot(discord.Bot):
             await commands.StatisticCommands.top_players_command(self, message, args, server_prefix, command)
         
         elif main_command in RECORD_TERMS:
-            await commands.StatisticCommands.record_command(self, message,args,server_prefix,command)
+            await commands.StatisticCommands.record_command(self, message,args,server_prefix)
 
         else:
             raise TableBotExceptions.CommandNotFound
