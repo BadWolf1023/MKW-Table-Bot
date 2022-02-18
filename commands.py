@@ -1841,7 +1841,7 @@ class TablingCommands:
 
     #Code is quite similar to chane_player_tag_command, potential refactor opportunity?
     @staticmethod
-    async def change_player_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
+    async def change_player_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
 
         if len(args) < 3:
@@ -1851,8 +1851,8 @@ class TablingCommands:
             return
 
 
-        playerNum = command.split()[1].strip()
-        new_name = " ".join(command.split()[2:])
+        playerNum = args[1].strip()
+        new_name = " ".join(args[2:])
         players = this_bot.getRoom().get_sorted_player_list()
         if playerNum.isnumeric():
             playerNum = int(playerNum)
@@ -1880,7 +1880,7 @@ class TablingCommands:
                 await message.channel.send(UtilityFunctions.process_name(players[_playerNum-1][1] + UserDataProcessing.lounge_add(players[_playerNum-1][0])) + " name set to: " + UtilityFunctions.process_name(new_name))
 
     @staticmethod
-    async def change_player_tag_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
+    async def change_player_tag_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
 
 
@@ -1896,8 +1896,8 @@ class TablingCommands:
             return
 
         elif len(args) >= 3:
-            playerNum = command.split()[1].strip()
-            new_tag = " ".join(command.split()[2:])
+            playerNum = args[1].strip()
+            new_tag = " ".join(args[2:])
             players = this_bot.getRoom().get_sorted_player_list()
             if playerNum.isnumeric():
                 playerNum = int(playerNum)

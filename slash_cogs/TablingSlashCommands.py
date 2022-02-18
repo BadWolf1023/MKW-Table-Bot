@@ -209,7 +209,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, player, name]
         
-        await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge, message.content)
+        await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge)
 
     @slash_command(name="changetag",
     description="Change a player's tag",
@@ -223,7 +223,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, player, tag]
         
-        await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge, message.content)
+        await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge)
 
     @slash_command(name="earlydc",
     description="Fix player incorrectly missing from race 1 of GP",

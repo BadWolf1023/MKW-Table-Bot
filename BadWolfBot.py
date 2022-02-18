@@ -727,10 +727,10 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in CHANGE_PLAYER_TAG_TERMS:
-            await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge_server, command)
+            await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in CHANGE_PLAYER_NAME_TERMS:
-            await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge_server, command)
+            await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in EDIT_PLAYER_SCORE_TERMS:
             await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge_server, command)
