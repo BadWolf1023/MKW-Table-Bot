@@ -172,8 +172,12 @@ class BadWolfCommands:
             await message.channel.send("Give a Discord ID.")
             return
 
-        admin_id = str(args[1].strip())
-
+        admin_id = args[1]
+        smart_type = SmartTypes.SmartLookupTypes(admin_id, allowed_types={SmartTypes.SmartLookupTypes.DISCORD_ID})
+        if not smart_type.is_discord_id():
+            await message.channel.send(f"{admin_id} is not a valid discord ID.")
+            return
+        admin_id = smart_type.modified_original
         success = UtilityFunctions.addBotAdmin(admin_id) if adding else UtilityFunctions.removeBotAdmin(admin_id)
         if success:
             add_or_remove = "Added" if adding else "Removed"
@@ -1801,7 +1805,6 @@ class TablingCommands:
             gp_num = int(gp_arg)
             amount = int(amount_arg)
 
-
         table_gps = this_bot.getWar().numberOfGPs
         if gp_num < 1 or gp_num > table_gps:
             await message.channel.send(f"The current table is only set to {table_gps} GPs. Your GP number was: {gp_num}")
@@ -2107,17 +2110,16 @@ class TablingCommands:
             this_bot.add_save_state(message.content)
             this_bot.getWar().setWarName(" ".join(args[1:]))
             await message.channel.send("War name set!")
+
     @staticmethod
     async def get_undos_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
         undo_list = this_bot.get_undo_list()
         await message.channel.send(undo_list)
 
     @staticmethod
     async def get_redos_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-        
         redo_list = this_bot.get_redo_list()
         await message.channel.send(redo_list)
 
@@ -2126,7 +2128,6 @@ class TablingCommands:
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
 
         do_all = True if (len(args)>1 and args[1].strip().lower() == "all") else False
-    
         undone_command = this_bot.restore_last_save_state(do_all=do_all)
         if undone_command is False:
             await message.channel.send("No commands to undo.")
