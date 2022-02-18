@@ -177,7 +177,7 @@ class MiscSlash(ext_commands.Cog):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command]
         if player: args.append(player)
-        await commands.OtherCommands.player_page_command(message, args, message.content)
+        await commands.OtherCommands.player_page_command(message, args)
     
     @slash_command(name='mii',
     description="Get a Lounge player's last used Mii",
