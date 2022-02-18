@@ -308,7 +308,7 @@ class ChannelBot(object):
     def getWPCooldownSeconds(self) -> int:
         if self.should_send_mii_notification:
             self.should_send_mii_notification = False
-        # if common.in_testing_server:
+        # if common.is_dev:
         #     return -1
         if self.lastWPTime is None:
             return -1
@@ -321,7 +321,7 @@ class ChannelBot(object):
         self.roomLoadTime = datetime.now()
 
     def getRLCooldownSeconds(self) -> int:
-        if common.in_testing_server:
+        if common.is_dev:
             return -1
         if self.roomLoadTime is None:
             return -1

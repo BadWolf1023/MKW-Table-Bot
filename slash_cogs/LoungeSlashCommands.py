@@ -5,8 +5,12 @@ import commands
 import common
 import InteractionUtils
 
-REQUIRED_PERMISSIONS = [CommandPermission(role, 1, True, common.MKW_LOUNGE_SERVER_ID) for role in list(common.reporter_plus_roles)]
-GUILDS = [common.MKW_LOUNGE_SERVER_ID] if common.is_prod else common.SLASH_GUILDS
+REQUIRED_PERMISSIONS = [CommandPermission(role, 1, True, (common.TABLE_BOT_DISCORD_SERVER_ID if common.is_beta else common.MKW_LOUNGE_SERVER_ID)) for role in list(common.reporter_plus_roles)]
+GUILDS = [common.MKW_LOUNGE_SERVER_ID]
+if common.is_beta:
+    GUILDS = [common.TABLE_BOT_DISCORD_SERVER_ID]
+elif common.is_dev:
+    GUILDS = common.SLASH_GUILDS
 EMPTY_CHAR = "\u200b"
 
 class TableTextModal(discord.ui.Modal):

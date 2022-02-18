@@ -1012,19 +1012,19 @@ class OtherCommands:
 class LoungeCommands:
 
     @staticmethod
-    def has_authority_in_server_check(author: discord.User, failure_message: str, authority_check=common.author_is_lounge_staff) -> bool:
+    def has_authority_in_server_check(author: discord.User, failure_message: str, authority_check) -> bool:
         if not authority_check(author):
             raise TableBotExceptions.NotStaff(failure_message)
         return True
 
     @staticmethod
-    def correct_server_check(guild: discord.Guild, failure_message: str, server_id=common.MKW_LOUNGE_SERVER_ID) -> bool:
-        if guild.id != server_id or (common.running_beta and common.beta_is_real):
+    def correct_server_check(guild: discord.Guild, failure_message: str, server_id) -> bool:
+        if guild.id != server_id:
             raise TableBotExceptions.WrongServer(failure_message)
         return True
 
     @staticmethod
-    def updater_channel_check(channel: discord.TextChannel, failure_message: str, valid_channel_ids={common.MKW_LOUNGE_RT_UPDATER_CHANNEL, common.MKW_LOUNGE_CT_UPDATER_CHANNEL}) -> bool:
+    def updater_channel_check(channel: discord.TextChannel, failure_message: str, valid_channel_ids: Set[int]) -> bool:
         if channel.id not in valid_channel_ids:
             raise TableBotExceptions.WrongUpdaterChannel(failure_message)
         return True
@@ -1392,7 +1392,7 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def large_time_setting_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str):
-        if not common.running_beta or common.beta_is_real:
+        if not common.is_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change server default for hiding large times on tables")
 
         server_id = message.guild.id
@@ -1427,7 +1427,7 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def mii_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        if not common.running_beta or common.beta_is_real:
+        if not common.is_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change miis default for this server")
 
         server_id = message.guild.id
@@ -1451,7 +1451,7 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def graph_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        if not common.running_beta or common.beta_is_real:
+        if not common.is_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change default graph for this server")
 
         server_id = message.guild.id
@@ -1473,7 +1473,7 @@ class ServerDefaultCommands:
 
     @staticmethod
     async def theme_setting_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str):
-        if not common.running_beta or common.beta_is_real:
+        if not common.is_beta:
             ServerDefaultCommands.server_admin_check(message.author, "cannot change default table theme for this server")
 
         server_id = message.guild.id
@@ -2356,7 +2356,7 @@ class TablingCommands:
                     pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
 
                     # Lounge submission button
-                    if not this_bot.has_been_lounge_submitted and len(this_bot.room.races) == (this_bot.war.numberOfGPs*4) and message.channel.guild.id == common.MKW_LOUNGE_SERVER_ID:
+                    if not this_bot.has_been_lounge_submitted and len(this_bot.room.races) == (this_bot.war.numberOfGPs*4) and is_lounge_server:
                         type, tier = common.get_channel_type_and_tier(this_bot.channel_id, this_bot.room.races)
                         if type and tier:
                             pic_view.add_item(Components.SubmitButton(this_bot, type, tier, len(this_bot.room.races)))

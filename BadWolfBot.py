@@ -11,7 +11,6 @@ import commands
 import Lounge
 import TableBotExceptions
 import common
-import MogiUpdate
 import URLShortener
 import AbuseTracking
 import TagAIShell
@@ -171,6 +170,7 @@ finished_on_ready = False
 REGISTER_SLASH_COMMANDS = True #whether the bot should register its slash commands (since there is no reason to use slash commands until April 2022)
 
 
+
 SLASH_EXTENSIONS = [
     'slash_cogs.TablingSlashCommands', 
     'slash_cogs.AdminSlashCommands', 
@@ -182,31 +182,10 @@ SLASH_EXTENSIONS = [
 
 switch_status = True
 
-lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.MKW_LOUNGE_SERVER_ID, common.main_lounge_can_report_table)
+lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.MKW_LOUNGE_SERVER_ID, common.author_is_reporter_plus)
+if common.is_beta:
+    lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.TABLE_BOT_DISCORD_SERVER_ID, lambda _: True)
 
-if common.in_testing_server:
-    #common.MKW_LOUNGE_SERVER_ID = common.BAD_WOLF_SERVER_ID
-    MogiUpdate.rt_summary_channels.clear()
-    MogiUpdate.rt_summary_channels.update({"1":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID})
-    MogiUpdate.ct_summary_channels.clear()
-    MogiUpdate.ct_summary_channels.update({"1":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID})
-    common.mkw_lounge_staff_roles.clear()
-    common.mkw_lounge_staff_roles.update(common.BAD_WOLF_SERVER_STAFF_ROLES)
-    lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.BAD_WOLF_SERVER_ID, common.main_lounge_can_report_table)
-    lounge_submissions.channels_mapping = common.TESTING_SERVER_LOUNGE_UPDATES
-    common.BOT_ABUSE_REPORT_CHANNEL_ID = 776031312048947230
-    #TEMPORARY_VR_CATEGORIES.append(740574341187633232)
-
-elif common.running_beta and not common.beta_is_real:
-    common.MKW_LOUNGE_SERVER_ID = common.BAD_WOLF_SERVER_ID
-    MogiUpdate.rt_summary_channels.clear()
-    MogiUpdate.rt_summary_channels.update({"1":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID})
-    MogiUpdate.ct_summary_channels.clear()
-    MogiUpdate.ct_summary_channels.update({"1":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID})
-    common.mkw_lounge_staff_roles.clear()
-    common.mkw_lounge_staff_roles.update(common.BAD_WOLF_SERVER_STAFF_ROLES)
-    common.mkw_lounge_staff_roles.add(common.BAD_WOLF_SERVER_EVERYONE_ROLE_ID)
-    lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.BAD_WOLF_SERVER_ID, common.main_lounge_can_report_table)
 
 def createEmptyTableBot(server_id=None, channel_id=None):
     return TableBot.ChannelBot(server_id=server_id, channel_id=channel_id)
@@ -312,10 +291,11 @@ class BadWolfBot(discord.Bot):
     #"finished" in Lounge - the definition of what is finished can be found in the ChannelBot class
     @tasks.loop(minutes=1)
     async def freeFinishedTableBotsLounge(self):
-        if common.MKW_LOUNGE_SERVER_ID in self.table_bots:
-            for lounge_bot_channel_id in self.table_bots[common.MKW_LOUNGE_SERVER_ID]:
-                if self.table_bots[common.MKW_LOUNGE_SERVER_ID][lounge_bot_channel_id].isFinishedLounge(): 
-                    self.table_bots[common.MKW_LOUNGE_SERVER_ID][lounge_bot_channel_id].freeLock()
+        lock_server_id = common.TABLE_BOT_DISCORD_SERVER_ID if common.is_beta else common.MKW_LOUNGE_SERVER_ID
+        if lock_server_id in self.table_bots:
+            for lounge_bot_channel_id in self.table_bots[lock_server_id]:
+                if self.table_bots[lock_server_id][lounge_bot_channel_id].isFinishedLounge(): 
+                    self.table_bots[lock_server_id][lounge_bot_channel_id].freeLock()
 
     #This function will run every 15 min, removing any table bots that are
     #inactive, as defined by TableBot.isinactive() (currently 2.5 hours)
@@ -449,9 +429,7 @@ class BadWolfBot(discord.Bot):
 
         log_command_sent(message)
 
-        is_lounge_server = InteractionUtils.check_lounge_server_id(interaction.guild.id)
-        if common.running_beta and not is_lounge_server: #is_lounge_server is True if in Bad Wolf's server if beta is running
-            return
+        is_lounge_server = InteractionUtils.simulating_lounge_server(interaction)
         
         if interaction.channel.category_id in TEMPORARY_VR_CATEGORIES and command not in ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS:
             return
@@ -473,7 +451,7 @@ class BadWolfBot(discord.Bot):
         
         message = InteractionUtils.create_proxy_msg(ctx.interaction, ctx=ctx, args=args)
 
-        is_lounge_server = InteractionUtils.check_lounge_server(message)
+        is_lounge_server = InteractionUtils.simulating_lounge_server(message)
         
         this_bot = self.check_create_channel_bot(message)
         if is_lounge_server and this_bot.isFinishedLounge():
@@ -505,13 +483,13 @@ class BadWolfBot(discord.Bot):
             return
         if not finished_on_ready:
             return
-        if common.running_beta and not InteractionUtils.check_lounge_server(message): #lounge server is Bad Wolf's server if beta is running
+        if common.is_beta and not InteractionUtils.check_beta_server(message):
             return
 
         server_prefix = '?'
         try:
             #server_id = message.guild.id   
-            is_lounge_server = message.guild.id == common.MKW_LOUNGE_SERVER_ID
+            is_lounge_server = InteractionUtils.simulating_lounge_server(message)
             server_prefix = ServerFunctions.get_server_prefix(message.guild.id)
             message_has_prefix, is_mention, _ = self.has_prefix(message.content, server_prefix)
             if is_mention:
@@ -578,7 +556,7 @@ class BadWolfBot(discord.Bot):
         except TableBotExceptions.NotStaff as not_staff_exception:
             await common.safe_send(message,f"You are not staff in this server: {not_staff_exception}")
         except TableBotExceptions.WrongServer as wrong_server_exception:
-            if common.running_beta:
+            if common.is_beta:
                 await common.safe_send(message,
                                        f"{wrong_server_exception}: **I am not <@735782213118853180>. Use <@735782213118853180> in <#389521626645004302> to submit your table.**")
             else:

@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 import numpy as np
 import aiohttp
 import TableBotExceptions
-from collections import namedtuple,defaultdict
+from collections import defaultdict
 import discord
 from pathlib import Path
 import ssl
@@ -21,7 +21,6 @@ import TimerDebuggers
 sslcontext = ssl.create_default_context(cafile=certifi.where())
 
 version = "12.0.0" #Final release from Bad Wolf, stabilizing various things and releasing beta commands
-
 main = None
 client = None
 
@@ -70,10 +69,6 @@ is_dev = properties['mode'] == 'dev'
 is_beta = properties['mode'] == 'beta'
 is_prod = properties['mode'] == 'prod'
 
-in_testing_server = is_dev
-running_beta = is_beta
-beta_is_real = False
-
 DISABLE_MKWX_COMMANDS = False
 LIMIT_MKWX_COMMANDS = False
 STUB_MKWX = False
@@ -118,10 +113,8 @@ MKW_TABLE_BOT_CENTRAL_SERVER_ID = 739733336871665696 #Same as "Bad Wolf's Server
 SLASH_GUILDS = None
 if is_beta:
     SLASH_GUILDS = [MKW_TABLE_BOT_CENTRAL_SERVER_ID]
-elif (not is_prod) and ('slash_command_server' in properties):
+elif is_dev and ('slash_command_server' in properties):
     SLASH_GUILDS = [properties['slash_command_server']]
-else:
-    SLASH_GUILDS = None
 
 needPermissionCommands = set()
 
@@ -251,26 +244,12 @@ TABLEBOT_SERVER_INVITE_CODE = "K937DqM"
 
 OWNERS = {BAD_WOLF_ID,CW_ID,ANDREW_ID} if is_dev else {BAD_WOLF_ID,ANDREW_ID}
 
-#Lounge stuff
-MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=1&event_data="
-MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=2&event_data="
-MKW_LOUNGE_RT_UPDATER_LINK = MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK
-MKW_LOUNGE_CT_UPDATER_LINK = MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK
-MKW_LOUNGE_RT_UPDATER_CHANNEL = 758161201682841610
-MKW_LOUNGE_CT_UPDATER_CHANNEL = 758161224202059847
 MKW_LOUNGE_SERVER_ID = 387347467332485122
-
-BAD_WOLF_SERVER_ID = 739733336871665696
-BAD_WOLF_SERVER_TESTER_ID = 740575809713995776
-BAD_WOLF_SERVER_ADMIN_ID = 740659173695553667
-BAD_WOLF_SERVER_EVERYONE_ROLE_ID = 739733336871665696
-BAD_WOLF_SERVER_BETA_TESTING_ONE_CHANNEL_ID = 860645585143857213
-BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID = 860645644804292608
-BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID = 863242314461085716
-BAD_WOLF_SERVER_STAFF_ROLES = set([BAD_WOLF_SERVER_TESTER_ID, BAD_WOLF_SERVER_ADMIN_ID])
-BAD_WOLF_SERVER_NORMAL_TESTING_ONE_CHANNEL_ID = 861453709305315349
-BAD_WOLF_SERVER_NORMAL_TESTING_TWO_CHANNEL_ID = 863234379718721546
-BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID = 863238405269749760
+TABLE_BOT_DISCORD_SERVER_ID = 739733336871665696
+TABLE_BOT_SERVER_BETA_TWO_CHANNEL_ID = 860645644804292608
+TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID = 863242314461085716
+if is_beta:
+    MKW_LOUNGE_SERVER_ID = TABLE_BOT_DISCORD_SERVER_ID
 
 
 #Rather than using the builtin set declaration {}, I did an iterable because BadWolfBot.py kept giving an error in Eclipse, even though everything ran fine - this seems to have suppressed the error which was giving me major OCD
@@ -284,16 +263,23 @@ mkw_lounge_staff_roles = set([387347888935534593, #Boss
                             ])
                             #   BAD_WOLF_SERVER_ADMIN_ID]) #Admin in test server
 
+if is_beta:
+    mkw_lounge_staff_roles.clear()
+    TABLE_BOT_SERVER_EVERYONE_ROLE_ID = 739733336871665696
+    mkw_lounge_staff_roles.add(TABLE_BOT_SERVER_EVERYONE_ROLE_ID)
+
 reporter_plus_roles = set([393600567781621761, #RT Updater
                               520808645252874240, #CT Updater
                               389252697284542465, #RT Reporter
                               520808674411937792 #CT Reporter
                               ]) | mkw_lounge_staff_roles
 
-table_bot_support_plus_roles = reporter_plus_roles | set([748367398905708634])
+        
+MKW_LOUNGE_TABLE_BOT_SUPPORT_ROLE_ID = 748367398905708634
+table_bot_support_plus_roles = reporter_plus_roles | {MKW_LOUNGE_TABLE_BOT_SUPPORT_ROLE_ID}
 
 SHA_ADDERS = [
-    683193773055934474, # Fear#1616
+    683193773055934474 # Fear#1616
 ]
 
 #Bot Admin information
@@ -306,7 +292,6 @@ botAdmins = set()
 BOT_ABUSE_REPORT_CHANNEL_ID = 766272946091851776
 ERROR_LOGS_CHANNEL_ID = 942264377984315442
 ERROR_LOGS_CHANNEL = None
-CLOUD_FLARE_REPORT_CHANNEL_ID = 888551356238020618
 SPAM_THRESHOLD = 13
 WARN_THRESHOLD = 13
 AUTO_BAN_THRESHOLD = 18
@@ -325,51 +310,11 @@ def author_is_lounge_staff(message_author: discord.User) -> bool:
     return author_has_role_in(message_author, mkw_lounge_staff_roles) or is_bot_owner(message_author)
 
 def author_is_reporter_plus(message_author: discord.User) -> bool:
-    return author_has_role_in(message_author, reporter_plus_roles)
+    return author_has_role_in(message_author, reporter_plus_roles) or is_bot_owner(message_author)
 
 def author_is_table_bot_support_plus(message_author: discord.User) -> bool:
-    return author_has_role_in(message_author, table_bot_support_plus_roles)
+    return author_has_role_in(message_author, table_bot_support_plus_roles) or is_bot_owner(message_author)
 
-def main_lounge_can_report_table(message_author: discord.User) -> bool:
-    return author_is_reporter_plus(message_author) or message_author.id == BAD_WOLF_ID
-
-
-
-LoungeUpdateChannels = namedtuple('LoungeUpdateChannels', ['updater_channel_id_primary', 'updater_link_primary', 'preview_link_primary', 'type_text_primary',
-                                                         'updater_channel_id_secondary', 'updater_link_secondary', 'preview_link_secondary', 'type_text_secondary'])
-
-TESTING_SERVER_LOUNGE_UPDATES = LoungeUpdateChannels(
-    updater_channel_id_primary=BAD_WOLF_SERVER_NORMAL_TESTING_TWO_CHANNEL_ID,
-    updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
-    preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
-    type_text_primary="RT",
-    updater_channel_id_secondary=BAD_WOLF_SERVER_NORMAL_TESTING_TWO_CHANNEL_ID,
-    updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
-    preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
-    type_text_secondary="CT")
-
-lounge_channel_mappings = {
-    MKW_LOUNGE_SERVER_ID:LoungeUpdateChannels(
-            updater_channel_id_primary=MKW_LOUNGE_RT_UPDATER_CHANNEL,
-            updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
-            preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
-            type_text_primary="RT",
-            updater_channel_id_secondary=MKW_LOUNGE_CT_UPDATER_CHANNEL,
-            updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
-            preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
-            type_text_secondary="CT"
-        ),
-    BAD_WOLF_SERVER_ID:LoungeUpdateChannels(
-            updater_channel_id_primary=BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID,
-            updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
-            preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
-            type_text_primary="RT",
-            updater_channel_id_secondary=BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID,
-            updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
-            preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
-            type_text_secondary="CT"
-        )
-    }
 
 # dict of channel IDs to tier numbers
 RXX_LOCKER_NAME = "rxx_locker"
@@ -442,11 +387,6 @@ def is_bot_admin(author):
 
 def is_sha_adder(author):
     return author.id in SHA_ADDERS
-
-def throw_if_not_lounge(guild):
-    if guild.id != MKW_LOUNGE_SERVER_ID:
-        raise TableBotExceptions.NotLoungeServer()
-    return True
 
 def check_create(file_name):
     if not os.path.isfile(file_name):
