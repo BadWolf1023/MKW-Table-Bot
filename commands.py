@@ -581,7 +581,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         await paginator.send(message)
 
     @staticmethod
-    async def player_tracks_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str, sort_asc=False):
+    async def player_tracks_command(message: discord.Message, args: List[str], server_prefix: str, sort_asc=False):
         adjective = "worst" if sort_asc else "best"
         error_message = f"""Here are examples of how to use this command:
 - Your {adjective} RTs: `{server_prefix}{args[0]} rt`
