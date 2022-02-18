@@ -1928,7 +1928,7 @@ class TablingCommands:
     #Refactor this method to make it more readable
     @staticmethod
     @TimerDebuggers.timer_coroutine
-    async def start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str, permission_check:Callable):
+    async def start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, permission_check:Callable):
         await mkwx_check(message, "Start war command disabled.")
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
@@ -1940,7 +1940,7 @@ class TablingCommands:
         author_id = message.author.id
         message_id = message.id
         author_name = message.author.display_name
-        
+        command = " ".join(args)
         yes_terms = {'on', 'yes', 'true'}
         no_terms = {'off', 'no', 'false'}
 

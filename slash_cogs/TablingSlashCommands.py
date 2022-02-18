@@ -63,7 +63,7 @@ class Table_Slash(ext_commands.Cog):
             miis = 'miis='+miis
             args.append(miis)
         
-        await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge, message.content, common.author_is_table_bot_support_plus)
+        await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge, common.author_is_table_bot_support_plus)
         
     
     @slash_command(name='wp',
@@ -463,8 +463,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command]
         if category: args.append(category)
-        
-        await help_documentation.send_help(message, is_lounge, args, server_prefix)
+        await help_documentation.send_help(message, args, server_prefix, is_lounge)
 
 def setup(bot):
     bot.add_cog(Table_Slash(bot))

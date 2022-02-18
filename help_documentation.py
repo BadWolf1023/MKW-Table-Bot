@@ -104,7 +104,7 @@ def get_help_files(args:List[str]):
     return default_help_key, HELP_KEY_FILES[default_help_key]
 
 
-async def send_help(message: discord.Message, is_lounge_server, args:List[str], prefix=common.default_prefix):
+async def send_help(message: discord.Message, args:List[str], prefix=common.default_prefix, is_lounge_server=False):
     embed = discord.Embed(description="- [Help Documentation](https://www.github.com/BadWolf1023/MKW-Table-Bot/wiki)\n"
                                             f"- [Discord Server](https://discord.gg/{common.TABLEBOT_SERVER_INVITE_CODE})\n"
                                             f"- [Invite the bot]({common.INVITE_LINK})")

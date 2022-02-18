@@ -522,7 +522,7 @@ class BadWolfBot(discord.Bot):
             if self.should_send_help(message):
                 await AbuseTracking.blacklisted_user_check(message)
                 await AbuseTracking.abuse_track_check(message)
-                await help_documentation.send_help(message, is_lounge_server, [], server_prefix)
+                await help_documentation.send_help(message, [], server_prefix, is_lounge_server)
                 return
                 
             if not message_has_prefix:
@@ -638,7 +638,7 @@ class BadWolfBot(discord.Bot):
             await commands.BadWolfCommands.garbage_collect_command(message)
                 
         elif main_command in START_WAR_TERMS:
-            await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
+            await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, common.author_is_table_bot_support_plus)
         
         elif main_command in TABLE_TEXT_TERMS:
             await commands.TablingCommands.table_text_command(message, this_bot, args, server_prefix, is_lounge_server)
@@ -712,7 +712,7 @@ class BadWolfBot(discord.Bot):
             await message.channel.send("https://www.youtube.com/watch?v=fCQnfo06_RI")                      
         
         elif main_command in HELP_TERMS:
-            await help_documentation.send_help(message, is_lounge_server, args, server_prefix)
+            await help_documentation.send_help(message, args, server_prefix, is_lounge_server)
         
         #Utility commands
         elif main_command in EARLY_DC_TERMS:
