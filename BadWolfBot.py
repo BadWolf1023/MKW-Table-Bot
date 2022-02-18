@@ -927,7 +927,7 @@ class BadWolfBot(discord.Bot):
             await commands.StatisticCommands.player_tracks_command(self, message, args, server_prefix, sort_asc=True)
 
         elif main_command in TOP_PLAYERS_TERMS:
-            await commands.StatisticCommands.top_players_command(self, message, args, server_prefix, command)
+            await commands.StatisticCommands.top_players_command(self, message, args, server_prefix)
         
         elif main_command in RECORD_TERMS:
             await commands.StatisticCommands.record_command(self, message,args,server_prefix)

@@ -660,7 +660,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         await paginator.send(message)
 
     @staticmethod
-    async def top_players_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str, command:str):
+    async def top_players_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str):
         error_message = f"""Here are examples of how to use this command:
 - Top Maple Treeway players: `{server_prefix}topplayers treeway`
 - Top BC3 players in Tier 5: `{server_prefix}topplayers bc3 t5`
@@ -668,7 +668,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 - Top BC3 players during the last week: `{server_prefix}topplayers bc3 7d`
 """
 
-        tier,number_of_days,min_count,track_lookup_name = StatisticCommands.parse_track_args(command.lower())
+        tier,number_of_days,min_count,track_lookup_name = StatisticCommands.parse_track_args(" ".join(args).lower())
 
         if not track_lookup_name:
             await message.channel.send(
