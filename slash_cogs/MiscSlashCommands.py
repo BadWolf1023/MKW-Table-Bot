@@ -205,8 +205,9 @@ class MiscSlash(ext_commands.Cog):
         player: Option(str, PLAYER_ARG_DESCRIPTION, required=False, default=None)
     ):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
-        
-        await commands.OtherCommands.lounge_name_command(message)
+        args = [command]
+        if player: args.append(player)
+        await commands.OtherCommands.lounge_name_command(message, args)
 
 
 def setup(bot):

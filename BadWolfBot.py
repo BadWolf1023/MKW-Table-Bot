@@ -749,7 +749,7 @@ class BadWolfBot(discord.Bot):
             await commands.OtherCommands.get_flag_command(message, args, server_prefix)
                 
         elif main_command in LOUNGE_NAME_TERMS:
-            await commands.OtherCommands.lounge_name_command(message)
+            await commands.OtherCommands.lounge_name_command(message, args)
             
         elif main_command in SET_FLAG_TERMS:
             await commands.OtherCommands.set_flag_command(message, args)

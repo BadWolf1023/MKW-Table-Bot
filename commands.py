@@ -824,15 +824,14 @@ class OtherCommands:
         if flag_code not in UserDataProcessing.valid_flag_codes:
             await message.channel.send(f"This is not a valid flag code. For a list of flags and their codes, please visit: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
             return
-            
+
         UserDataProcessing.add_flag(author_id, flag_code)
         await message.channel.send("Your flag was successfully added and will now be displayed on tables.")
 
         
     @staticmethod
-    async def lounge_name_command(message:discord.Message):
+    async def lounge_name_command(message: discord.Message, args: List[str]):
         to_load = SmartTypes.create_you_discord_id(message.author.id)
-        args = message.content.split()
         if len(args) > 1:
             to_load = " ".join(args[1:])
         smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
@@ -847,7 +846,7 @@ class OtherCommands:
 
 
     @staticmethod
-    async def fc_command(message:discord.Message, args:List[str]):
+    async def fc_command(message: discord.Message, args: List[str]):
         to_load = SmartTypes.create_you_discord_id(message.author.id)
         if len(args) > 1:
             to_load = " ".join(args[1:])
