@@ -2492,62 +2492,53 @@ class TablingCommands:
     @staticmethod
     async def quick_edit_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
+        command_name = args[0]
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += "\n**To change the placement of the 8th player on the list for the 7th race to 4th place, do:** *" + server_prefix + "changeplace 8 7 4*"
+            to_send += f"\n**To change the placement of the 8th player on the list for the 7th race to 4th place, do:** *{server_prefix}{command_name} 8 7 4*"
             await message.channel.send(to_send)
-        elif len(args) == 4:
-            # playerNum = command.split()[1].strip()
-            playerNum = args[1].strip()
-            raceNum = args[2]
-            placement = args[3]
-            players = this_bot.getRoom().get_sorted_player_list()
+            return
+        if len(args) < 4:
+            await message.channel.send(example_help(server_prefix, command_name))
+            return
 
-            if not raceNum.isnumeric():
-                await message.channel.send("The race number must be a number.")
-            elif not placement.isnumeric():
-                await message.channel.send("The placement number must be a number.")
-            else:
+        
+        player_arg, race_arg, placement_arg = " ".join(args[1:-2]), args[-2], args[3]
+        player_num, player_error_message = get_player_room_index(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
+        if player_num is None:
+            await message.channel.send(player_error_message)
+            return
 
-                if not playerNum.isnumeric():
-                    lounge_name = str(copy.copy(playerNum))
-                    loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
-                    for _playerNum, (fc, _) in enumerate(players, 1):
-                        if fc in loungeNameFCs:
-                            break
-                    else:
-                        _playerNum = None
+        if not UtilityFunctions.is_int(race_arg):
+            await message.channel.send(f"The race number must be a number. {example_help(server_prefix, command_name)}")
+            return
+        if not UtilityFunctions.is_int(placement_arg):
+            await message.channel.send(f"The placement number must be a number. {example_help(server_prefix, command_name)}")
+            return
+        race_num = int(race_arg)
+        placement_num = int(placement_arg)
+        
+        players = this_bot.getRoom().get_sorted_player_list()
+        player_fc, mii_name = players[player_num-1]
+        player_name = UserDataProcessing.proccessed_lounge_add(mii_name, player_fc)
+    
+        if race_num < 1 or race_num > len(this_bot.getRoom().races):
+            await message.channel.send(f"The room hasn't played race #{race_num}")
+            return
+        
+        if placement_num < 1 or placement_num > len(this_bot.getRoom().races[race_num-1].placements):
+            await message.channel.send(f"Race #{race_num} only has {len(this_bot.getRoom().races[race_num-1].placements)} racers, cannot change their place.")
+            return
 
+        if not this_bot.getRoom().races[race_num-1].FCInPlacements(player_fc):
+            await message.channel.send(f"{player_name} is not in race #{race_num}")
+            return
 
-                    if _playerNum is None:
-                        await message.channel.send("Could not find Lounge name " + UtilityFunctions.clean_for_output(str(lounge_name)) + " in this room.")
-                    playerNum = _playerNum
-                else:
-                    playerNum = int(playerNum)
-                if playerNum is not None:
-                    raceNum = int(raceNum)
-                    placement = int(placement)
-                    if playerNum < 1 or playerNum > len(players):
-                        await message.channel.send("The player number must be on this list (between 1 and " + str(len(players)) + ").")
-                    elif raceNum < 1 or raceNum > len(this_bot.getRoom().races):
-                        await message.channel.send("The room hasn't played race #" + str(raceNum))
-                    elif placement < 1 or placement > len(this_bot.getRoom().races[raceNum-1].placements):
-                        await message.channel.send("Race #" + str(raceNum) + " only has " + str(len(this_bot.getRoom().races[raceNum-1].placements)) + "racers, cannot change their place.")
-                    else:
-                        playerFC = players[playerNum-1][0]
-                        if this_bot.getRoom().races[raceNum-1].FCInPlacements(playerFC):
-                            this_bot.add_save_state(message.content)
-                            #TODO: This needs to call change placement on ROOM, not Race
-                            this_bot.getRoom().changePlacement(raceNum, playerFC, placement)
-                            mes = "Changed " + UtilityFunctions.clean_for_output(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " place to " + str(placement) + " for race #" + str(raceNum) + ".")
-                            if not dont_send: await message.channel.send(mes)
-                            return mes
-                        else:
-                            await message.channel.send(UtilityFunctions.clean_for_output(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0]) + " is not in race #" + str(raceNum)))
-
-        else:
-            await message.channel.send("Do " + server_prefix + "changeplace to learn how to use this command.")
+        this_bot.add_save_state(message.content)
+        this_bot.getRoom().changePlacement(race_num, player_fc, placement_num)
+        mes = f"Changed {player_name} place to {placement_num} for race #{race_num}"
+        if not dont_send: await message.channel.send(mes)
+        return mes
 
 
     @staticmethod
