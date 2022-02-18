@@ -864,7 +864,7 @@ class BadWolfBot(discord.Bot):
         
         elif main_command in VERIFY_ROOM_TERMS:
             if commands.vr_is_on:
-                await commands.OtherCommands.vr_command(this_bot, message, args)
+                await commands.OtherCommands.vr_command(message, this_bot, args)
         
         elif main_command in WORLDWIDE_TERMS:
             await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.RT_WW_REGION)

@@ -969,7 +969,7 @@ class OtherCommands:
 
 
     @staticmethod
-    async def vr_command(this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str]):
+    async def vr_command(message: discord.Message, this_bot: TableBot.ChannelBot, args: List[str]):
         await mkwx_check(message, "VR command disabled.")
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
