@@ -1712,12 +1712,12 @@ class TablingCommands:
     @staticmethod
     async def substitute_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-        command = args[0]
-        example_error_message = f"Do `{server_prefix}{command}` for an example of how to use this command."
+        command_name = args[0]
+        example_error_message = f"Do `{server_prefix}{command_name}` for an example of how to use this command."
         #Command information for user if command is run with no args
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"\n**Example:** If the 2nd player on the list subbed in on race 9 for the 1st player on the list, you would do: `{server_prefix}{command} 2 1 9`"
+            to_send += f"\n**Example:** If the 2nd player on the list subbed in on race 9 for the 1st player on the list, you would do: `{server_prefix}{command_name} 2 1 9`"
             await message.channel.send(to_send)
             return
 
@@ -1740,8 +1740,8 @@ class TablingCommands:
             await message.channel.send(f"Because your table was started as a {this_bot.getWar().getNumberOfGPS()} GP table, the last possible race someone can sub in is race #{this_bot.getWar().getNumberOfRaces()}")
             return
 
-        sub_in_num, sub_in_error_message = get_player_number_in_room(message, sub_in_arg, this_bot.getRoom(), server_prefix, "sub")
-        sub_out_num, sub_out_error_message = get_player_number_in_room(message, sub_out_arg, this_bot.getRoom(), server_prefix, "sub")
+        sub_in_num, sub_in_error_message = get_player_number_in_room(message, sub_in_arg, this_bot.getRoom(), server_prefix, command_name)
+        sub_out_num, sub_out_error_message = get_player_number_in_room(message, sub_out_arg, this_bot.getRoom(), server_prefix, command_name)
         if sub_in_num is None:
             await message.channel.send(sub_in_error_message)
             return
