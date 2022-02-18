@@ -969,7 +969,7 @@ class OtherCommands:
 
 
     @staticmethod
-    async def vr_command(this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str], old_command:str):
+    async def vr_command(this_bot:TableBot.ChannelBot, message:discord.Message, args:List[str]):
         await mkwx_check(message, "VR command disabled.")
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
@@ -982,7 +982,7 @@ class OtherCommands:
         front_race = None
         to_load = SmartTypes.create_you_discord_id(message.author.id)
         if len(args) > 1:
-            to_load = " ".join(old_command.split()[1:])
+            to_load = " ".join(args[1:])
         smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
         status, front_race = await this_bot.verify_room_smart(smart_type)
         if not status:
