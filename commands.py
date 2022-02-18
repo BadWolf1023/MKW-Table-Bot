@@ -887,7 +887,7 @@ class OtherCommands:
     
 
     @staticmethod
-    async def mii_command(message:discord.Message, args:List[str], old_command:str):
+    async def mii_command(message:discord.Message, args:List[str]):
         if common.MII_COMMAND_DISABLED and not common.is_bad_wolf(message.author):
             await message.channel.send("To ensure Table Bot remains stable and can access the website, miis have been disabled at this time.")
             return
@@ -895,7 +895,7 @@ class OtherCommands:
 
         to_load = SmartTypes.create_you_discord_id(message.author.id)
         if len(args) > 1:
-            to_load = " ".join(old_command.split()[1:])
+            to_load = " ".join(args[1:])
         smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
         await smart_type.lounge_api_update()
         fcs = smart_type.get_fcs()

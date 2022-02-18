@@ -191,7 +191,7 @@ class MiscSlash(ext_commands.Cog):
         args = [command]
         if player: args.append(player)
         
-        await commands.OtherCommands.mii_command(message, args, message.content)
+        await commands.OtherCommands.mii_command(message, args)
     
     @slash_command(name="loungename",
     description="Get a player's Lounge name",

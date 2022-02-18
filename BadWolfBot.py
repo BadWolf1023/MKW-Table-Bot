@@ -807,7 +807,7 @@ class BadWolfBot(discord.Bot):
             await commands.OtherCommands.player_page_command(message, args)
         
         elif main_command in MII_TERMS:
-            await commands.OtherCommands.mii_command(message, args, command)
+            await commands.OtherCommands.mii_command(message, args)
         
         elif main_command in SET_WAR_NAME_TERMS:
             await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, is_lounge_server, command)
