@@ -129,7 +129,7 @@ class Mii(KaitaiStruct):
                                             colour = Mii.mii_color_dict[self.favorite_color]
                                         )
         
-        mii_name = UtilityFunctions.process_name(self.mii_name)
+        mii_name = UtilityFunctions.clean_for_output(self.mii_name)
         mii_name = mii_name if len(mii_name) > 0 else '\u200b'
         fc = self.FC if len(self.FC) > 0 else '\u200b'
         #print(f"Mii name: '{mii_name}'\nLen: {len(mii_name)}")

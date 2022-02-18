@@ -199,7 +199,7 @@ class SmartLookupTypes:
                 if str(mention.id) == self.modified_original:
                     descriptive = str(mention.name)
                     break
-        return UtilityFunctions.process_name(descriptive), pronoun
+        return UtilityFunctions.clean_for_output(descriptive), pronoun
 
 def to_be_conjugation(pronoun: str):
     conjugations = {"i": "am",

@@ -132,10 +132,10 @@ class War(object):
         result = ""
         playerNum = 0
         for teamTag, fc_players in self.temporary_tag_data.items():
-            result += f"**Tag: {UtilityFunctions.process_name(teamTag)}** \n"
+            result += f"**Tag: {UtilityFunctions.clean_for_output(teamTag)}** \n"
             for fc, playerName in fc_players:
                 playerNum += 1
-                result += f"\t{playerNum}. {UtilityFunctions.process_name(playerName)}{UserDataProcessing.lounge_add(fc)}\n"
+                result += f"\t{playerNum}. {UtilityFunctions.clean_for_output(playerName)}{UserDataProcessing.lounge_add(fc)}\n"
             
         return result
         
