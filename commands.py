@@ -131,7 +131,10 @@ def ensure_table_loaded_check(channel_bot: TableBot.ChannelBot, server_prefix: s
         return True
     error_message = get_room_not_loaded_message(server_prefix, is_lounge_server, custom_message)
     raise TableBotExceptions.TableNotLoaded(error_message)
-    
+
+def lower_args(args: List[str]) -> List[str]:
+    '''Takes a list of strings and returns a list with those strings in lower case form'''
+    return [arg.lower() for arg in args]
 
 """============== Bad Wolf only commands ================"""
 #TODO: Refactor these - target the waterfall-like if-statements
