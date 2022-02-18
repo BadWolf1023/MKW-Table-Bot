@@ -125,7 +125,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, player, str(gp), str(score)]
 
-        await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge, message.content)
+        await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge)
     
     @slash_command(name='cp',
     description="Change a player's finish position in a race",

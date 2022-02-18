@@ -1784,7 +1784,7 @@ class TablingCommands:
 
 
     @staticmethod
-    async def change_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, command:str):
+    async def change_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
 
         if len(args) == 1:
@@ -1798,7 +1798,7 @@ class TablingCommands:
             return
 
 
-        playerNum = command.split()[1].strip()
+        playerNum = args[1].strip() #TODO: Can we support player names with spaces?
         GPNum = args[2]
         amount = args[3]
         players = this_bot.getRoom().get_sorted_player_list()
