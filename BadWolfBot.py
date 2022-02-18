@@ -651,10 +651,10 @@ class BadWolfBot(discord.Bot):
             await commands.BadWolfCommands.total_clear_command(message, self.lounge_submissions)
                 
         elif main_command in LOUNGE_RT_MOGI_UPDATE_TERMS:
-            await commands.LoungeCommands.rt_mogi_update(self, this_bot, message, args, self.lounge_submissions)
+            await commands.LoungeCommands.rt_mogi_update(self, message, this_bot, args, self.lounge_submissions)
         
         elif main_command in LOUNGE_CT_MOGI_UPDATE_TERMS:
-            await commands.LoungeCommands.ct_mogi_update(self, this_bot, message, args, self.lounge_submissions)
+            await commands.LoungeCommands.ct_mogi_update(self, message, this_bot, args, self.lounge_submissions)
             
         elif main_command in LOUNGE_TABLE_SUBMISSION_APPROVAL_TERMS:
             await commands.LoungeCommands.approve_submission_command(self, message, args, self.lounge_submissions)
