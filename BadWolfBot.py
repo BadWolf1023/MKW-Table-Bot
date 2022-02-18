@@ -761,9 +761,9 @@ class BadWolfBot(discord.Bot):
             await commands.BotOwnerCommands.server_process_memory_command(message)
             
         elif main_command in LOUNGE_WHO_IS_TERMS:
-            await commands.LoungeCommands.who_is_command(self, message, args)
+            await commands.LoungeCommands.who_is_command(message, args)
         elif main_command in LOOKUP_TERMS:
-            await commands.LoungeCommands.lookup_command(self, message, args)
+            await commands.LoungeCommands.lookup_command(message, args)
         elif main_command in TABLE_BOT_MEMORY_USAGE_TERMS:
             commands.BotOwnerCommands.is_bot_owner_check(message.author, "cannot display table bot internal memory usage")
             load_mes = await message.channel.send("Calculating memory usage...")

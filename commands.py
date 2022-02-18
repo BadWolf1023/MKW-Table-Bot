@@ -1012,29 +1012,28 @@ class OtherCommands:
 class LoungeCommands:
 
     @staticmethod
-    def has_authority_in_server_check(author, failure_message, authority_check=common.author_is_lounge_staff):
+    def has_authority_in_server_check(author: discord.User, failure_message: str, authority_check=common.author_is_lounge_staff) -> bool:
         if not authority_check(author):
             raise TableBotExceptions.NotStaff(failure_message)
         return True
 
-
     @staticmethod
-    def correct_server_check(guild, failure_message, server_id=common.MKW_LOUNGE_SERVER_ID):
+    def correct_server_check(guild: discord.Guild, failure_message: str, server_id=common.MKW_LOUNGE_SERVER_ID) -> bool:
         if guild.id != server_id or (common.running_beta and common.beta_is_real):
             raise TableBotExceptions.WrongServer(failure_message)
         return True
 
     @staticmethod
-    def updater_channel_check(channel, failure_message, valid_channel_ids={common.MKW_LOUNGE_RT_UPDATER_CHANNEL, common.MKW_LOUNGE_CT_UPDATER_CHANNEL}):
+    def updater_channel_check(channel: discord.TextChannel, failure_message: str, valid_channel_ids={common.MKW_LOUNGE_RT_UPDATER_CHANNEL, common.MKW_LOUNGE_CT_UPDATER_CHANNEL}) -> bool:
         if channel.id not in valid_channel_ids:
             raise TableBotExceptions.WrongUpdaterChannel(failure_message)
         return True
 
     @staticmethod
-    async def who_is_command(client, message:discord.Message, args:List[str]):
+    async def who_is_command(message: discord.Message, args: List[str]):
         if not common.author_is_lounge_staff(message.author):
             raise TableBotExceptions.NotLoungeStaff("Not staff in MKW Lounge")
-
+        command_name = args[0]
         to_lookup = None
         lookup_limit = common.WHO_IS_LIMIT
         if len(args) > 1 and UtilityFunctions.isint(args[1]):
@@ -1044,7 +1043,7 @@ class LoungeCommands:
             lookup_limit = None
 
         if to_lookup is None:
-            await message.channel.send("To find a user, give their discord ID: `?whois DiscordID`")
+            await message.channel.send(f"To find a user, give their discord ID: `?{command_name} DiscordID`")
             return
 
         to_delete = await message.channel.send("Looking up user, this may take a minute. Please wait...")
@@ -1058,15 +1057,14 @@ class LoungeCommands:
 
 
     @staticmethod
-    async def lookup_command(client, message:discord.Message, args:List[str]):
+    async def lookup_command(message: discord.Message, args: List[str]):
         if not common.is_bot_owner(message.author):
             raise TableBotExceptions.NotLoungeStaff("Not staff in MKW Lounge")
 
         if len(args) <= 1:
             await message.channel.send("Give something.")
             return
-        full_lookup = message.content.strip("? ")[len(args[0]):].strip()
-
+        full_lookup = " ".join(args[1:])
         to_delete = await message.channel.send("Looking up, please wait...")
         all_commands = Stats.hard_check(full_lookup, None)
         await to_delete.delete()
@@ -1082,8 +1080,8 @@ class LoungeCommands:
 
     #TODO: Refactor this - in an rushed effort to release this, the code is sloppy.
     #It should be refactored as this is some of the worst code in TableBot
-    @staticmethod
-    async def __mogi_update__(client, message: discord.Message, this_bot: TableBot.ChannelBot, args: List[str], lounge_server_updates: Lounge.Lounge, is_primary=True):
+    @staticmethod  # TODO: It seems this method will break when slash commands try to use it with tabletext
+    async def _mogi_update(client, message: discord.Message, this_bot: TableBot.ChannelBot, args: List[str], lounge_server_updates: Lounge.Lounge, is_primary=True):
         command_incorrect_format_message = "The format of this command is: `?" + args[0] + " TierNumber RacesPlayed (TableText)`\n- **TierNumber** must be a number. For RTs, between 1 and 8. For CTs, between 1 and 7. If you are trying to submit a squadqueue table, **TierNumber** should be: squadqueue\n-**RacesPlayed** must be a number, between 1 and 32."
         cooldown = lounge_server_updates.get_user_update_submit_cooldown(message.author.id)
         updater_channel_id, updater_link, preview_link, type_text = lounge_server_updates.get_information(is_primary)
@@ -1244,13 +1242,13 @@ class LoungeCommands:
     @staticmethod
     async def ct_mogi_update(client, message: discord.Message, this_bot: TableBot.ChannelBot, args: List[str], lounge_server_updates: Lounge.Lounge):
         LoungeCommands.correct_server_check(message.guild, "cannot submit table update for CT mogi", lounge_server_updates.server_id)
-        await LoungeCommands.__mogi_update__(client, message, this_bot, args, lounge_server_updates, is_primary=False)
+        await LoungeCommands._mogi_update(client, message, this_bot, args, lounge_server_updates, is_primary=False)
 
 
     @staticmethod
     async def rt_mogi_update(client, message: discord.Message, this_bot: TableBot.ChannelBot, args: List[str], lounge_server_updates: Lounge.Lounge):
         LoungeCommands.correct_server_check(message.guild, "cannot submit table update for RT mogi", lounge_server_updates.server_id)
-        await LoungeCommands.__mogi_update__(client, message, this_bot, args, lounge_server_updates, is_primary=True)
+        await LoungeCommands._mogi_update(client, message, this_bot, args, lounge_server_updates, is_primary=True)
 
 
     @staticmethod
