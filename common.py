@@ -174,7 +174,6 @@ FC_DISCORD_ID_FILE = f"{DATA_PATH}discord_id_FCS.txt"
 DISCORD_ID_LOUNGES_FILE = f"{DATA_PATH}discord_id_lounges.txt"
 DISCORD_ID_FLAGS_FILE = f"{DATA_PATH}discord_id_flags.txt"
 FLAG_CODES_FILE = f"{DATA_PATH}flag_codes.txt"
-FLAG_EXCEPTION_FILE = f"{DATA_PATH}flag_exceptions.txt"
 
 PRIVATE_INFO_FILE = f'{DATA_PATH}private.txt'
 STATS_FILE = f"{DATA_PATH}stats.txt"
@@ -231,7 +230,6 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    FC_DISCORD_ID_FILE,
                    DISCORD_ID_FLAGS_FILE,
                    DISCORD_ID_LOUNGES_FILE,
-                   FLAG_EXCEPTION_FILE,
                    LOUNGE_ID_COUNTER_FILE,
                    LOUNGE_TABLE_UPDATES_FILE,
                    STATS_FILE,

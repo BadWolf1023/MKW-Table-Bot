@@ -119,7 +119,7 @@ class MiscSlash(ext_commands.Cog):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, flag]
         
-        await commands.OtherCommands.set_flag_command(message, args, self.bot.user_flag_exceptions)
+        await commands.OtherCommands.set_flag_command(message, args)
     
     @flags.command(name="remove",
     description="Remove your table flag")
@@ -129,7 +129,7 @@ class MiscSlash(ext_commands.Cog):
     ):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command]
-        await commands.OtherCommands.set_flag_command(message, args, self.bot.user_flag_exceptions)
+        await commands.OtherCommands.set_flag_command(message, args)
     
     @flags.command(name="show",
     description="Display your currently set flag for Table Bot")
