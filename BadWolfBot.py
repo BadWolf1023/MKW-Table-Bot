@@ -915,10 +915,10 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)
             
         elif main_command in POPULAR_TRACKS_TERMS:
-            await commands.StatisticCommands.popular_tracks_command(self, message, args, server_prefix, is_top_tracks=True)
+            await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, is_top_tracks=True)
         
         elif main_command in UNPOPULAR_TRACKS_TERMS:
-            await commands.StatisticCommands.popular_tracks_command(self, message, args, server_prefix, is_top_tracks=False)
+            await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, is_top_tracks=False)
 
         elif main_command in BEST_TRACK_TERMS:
             await commands.StatisticCommands.player_tracks_command(self, message, args, server_prefix, sort_asc=False)

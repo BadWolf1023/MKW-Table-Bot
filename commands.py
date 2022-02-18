@@ -546,7 +546,7 @@ class StatisticCommands:
         return latest_track
 
     @staticmethod
-    async def popular_tracks_command(client, message:discord.Message, args:List[str], server_prefix:str, is_top_tracks=True):
+    async def popular_tracks_command(message:discord.Message, args:List[str], server_prefix:str, is_top_tracks=True):
         error_message = f"""Here are 3 examples of how to use this command:
 Most played CTs of all time: `{server_prefix}{args[0]} ct`
 Most played RTs in the past week: `{server_prefix}{args[0]} rt 7d`

@@ -53,7 +53,7 @@ class StatisticsSlash(ext_commands.Cog):
             args.append(tier)
         
         
-        await commands.StatisticCommands.popular_tracks_command(self.bot, message, args, server_prefix, is_top_tracks=True)
+        await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, is_top_tracks=True)
     
     @slash_command(
         name='unpopulartracks',
@@ -75,7 +75,7 @@ class StatisticsSlash(ext_commands.Cog):
         if tier is not None:
             args.append(tier)
 
-        await commands.StatisticCommands.popular_tracks_command(self.bot, message, args, server_prefix, is_top_tracks=False)
+        await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, is_top_tracks=False)
     
     @slash_command(
         name='topplayers',
