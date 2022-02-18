@@ -101,7 +101,7 @@ def get_player_number_in_room(message: discord.Message, name: str, room: TableBo
 
 
 async def mkwx_check(message, error_message):
-    if common.is_bad_wolf(message.author):
+    if common.is_bot_owner(message.author):
         return True
 
     if common.DISABLE_MKWX_COMMANDS:
@@ -112,11 +112,6 @@ async def mkwx_check(message, error_message):
         if common.LIMITED_CHANNEL_IDS is not None and message.channel.id in common.LIMITED_CHANNEL_IDS:
             return True
         raise TableBotExceptions.CommandDisabled(error_message)
-
-def is_badwolf_check(author, failure_message):
-        if not common.is_bad_wolf(author):
-            raise TableBotExceptions.NotBadWolf(failure_message)
-        return True
 
 def get_room_not_loaded_message(server_prefix: str, is_lounge_server=False, custom_message=None):
     if custom_message is not None:
@@ -136,21 +131,21 @@ def lower_args(args: List[str]) -> List[str]:
     '''Takes a list of strings and returns a list with those strings in lower case form'''
     return [arg.lower() for arg in args]
 
-"""============== Bad Wolf only commands ================"""
+"""============== Bot Owner only commands ================"""
 #TODO: Refactor these - target the waterfall-like if-statements
 class BadWolfCommands:
     """There is no point to this class, other than for organization purposes.
     This class contains all of the commands that are private and only available to me"""
 
     @staticmethod
-    def is_badwolf_check(author, failure_message):
-        if not common.is_bad_wolf(author):
+    def is_bot_owner_check(author, failure_message):
+        if not common.is_bot_owner(author):
             raise TableBotExceptions.NotBadWolf(failure_message)
         return True
 
     @staticmethod
     async def get_logs_command(message:discord.Message):
-        BadWolfCommands.is_badwolf_check(message.author, "cannot give logs")
+        BadWolfCommands.is_bot_owner_check(message.author, "cannot give logs")
         if os.path.exists(common.ERROR_LOGS_FILE):
             await message.channel.send(file=discord.File(common.ERROR_LOGS_FILE))
         if os.path.exists(common.MESSAGE_LOGGING_FILE):
@@ -185,37 +180,37 @@ class BadWolfCommands:
 
     @staticmethod
     async def add_bot_admin_command(message:discord.Message, args:List[str]):
-        BadWolfCommands.is_badwolf_check(message.author, "cannot add bot admin")
+        BadWolfCommands.is_bot_owner_check(message.author, "cannot add bot admin")
         await BadWolfCommands.bot_admin_change(message, args, adding=True)
 
     @staticmethod
     async def remove_bot_admin_command(message:discord.Message, args:List[str]):
-        BadWolfCommands.is_badwolf_check(message.author, "cannot remove bot admin")
+        BadWolfCommands.is_bot_owner_check(message.author, "cannot remove bot admin")
         await BadWolfCommands.bot_admin_change(message, args, adding=False)
 
     @staticmethod
     async def server_process_memory_command(message:discord.Message):
-        BadWolfCommands.is_badwolf_check(message.author, "cannot show server memory usage")
+        BadWolfCommands.is_bot_owner_check(message.author, "cannot show server memory usage")
         command_output = subprocess.check_output('top -b -o +%MEM | head -n 22', shell=True, text=True)
         await message.channel.send(command_output)
 
 
     @staticmethod
     async def garbage_collect_command(message:discord.Message):
-        BadWolfCommands.is_badwolf_check(message.author, "cannot garbage collect")
+        BadWolfCommands.is_bot_owner_check(message.author, "cannot garbage collect")
         gc.collect()
         await message.channel.send("Collected")
 
 
     @staticmethod
     async def total_clear_command(message:discord.Message, lounge_update_data):
-        BadWolfCommands.is_badwolf_check(message.author, "cannot clear lounge table submission cooldown tracking")
+        BadWolfCommands.is_bot_owner_check(message.author, "cannot clear lounge table submission cooldown tracking")
         lounge_update_data.update_cooldowns.clear()
         await message.channel.send("Cleared.")
 
     @staticmethod
     async def dump_data_command(message:discord.Message, data_dump_function):
-        BadWolfCommands.is_badwolf_check(message.author, "cannot dump data")
+        BadWolfCommands.is_bot_owner_check(message.author, "cannot dump data")
         successful = await UserDataProcessing.dump_data()
         data_dump_function()
         if successful:
@@ -880,7 +875,7 @@ class OtherCommands:
 
     @staticmethod
     async def mii_command(message:discord.Message, args:List[str]):
-        if common.MII_COMMAND_DISABLED and not common.is_bad_wolf(message.author):
+        if common.MII_COMMAND_DISABLED and not common.is_bot_owner(message.author):
             await message.channel.send("To ensure Table Bot remains stable and can access the website, miis have been disabled at this time.")
             return
         await mkwx_check(message, "Mii command disabled.")
@@ -1038,7 +1033,7 @@ class LoungeCommands:
         if len(args) > 1 and UtilityFunctions.isint(args[1]):
             to_lookup = int(args[1])
 
-        if len(args) > 2 and common.is_bad_wolf(message.author) and args[2].lower() == "all":
+        if len(args) > 2 and common.is_bot_owner(message.author) and args[2].lower() == "all":
             lookup_limit = None
 
         if to_lookup is None:
@@ -1057,7 +1052,7 @@ class LoungeCommands:
 
     @staticmethod
     async def lookup_command(client, message:discord.Message, args:List[str]):
-        if not common.is_bad_wolf(message.author):
+        if not common.is_bot_owner(message.author):
             raise TableBotExceptions.NotLoungeStaff("Not staff in MKW Lounge")
 
         if len(args) <= 1:
