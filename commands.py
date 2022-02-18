@@ -405,8 +405,7 @@ class StatisticCommands:
         return None, f"{UtilityFunctions.process_name(original_arg)} must be the number of days"
 
     @staticmethod
-    def validate_tracks_args(command:str):
-        args = command.split()
+    def validate_tracks_args(args: List[str]):
         if len(args) < 2:
             return None, None, None, "Please specify for **rts** or **cts**."
 
@@ -547,13 +546,13 @@ class StatisticCommands:
         return latest_track
 
     @staticmethod
-    async def popular_tracks_command(client, message:discord.Message, args:List[str], server_prefix:str, command:str, is_top_tracks=True):
+    async def popular_tracks_command(client, message:discord.Message, args:List[str], server_prefix:str, is_top_tracks=True):
         error_message = f"""Here are 3 examples of how to use this command:
 Most played CTs of all time: `{server_prefix}{args[0]} ct`
 Most played RTs in the past week: `{server_prefix}{args[0]} rt 7d`
 Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t4 5d`"""
 
-        is_ct, tier, number_of_days, specific_error = StatisticCommands.validate_tracks_args(command)
+        is_ct, tier, number_of_days, specific_error = StatisticCommands.validate_tracks_args(args)
 
         if specific_error is not None:
             full_error_message = f"**Error:** {specific_error}\n\n{error_message}"
