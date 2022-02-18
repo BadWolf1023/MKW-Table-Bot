@@ -927,7 +927,7 @@ class OtherCommands:
             mii.clean_up()
 
     @staticmethod
-    async def wws_command(this_bot: TableBot.ChannelBot, message: discord.Message, ww_type=Race.RT_WW_REGION):
+    async def wws_command(message: discord.Message, this_bot: TableBot.ChannelBot, ww_type=Race.RT_WW_REGION):
         await mkwx_check(message, "WWs command disabled.")
 
         rlCooldown = this_bot.getRLCooldownSeconds()

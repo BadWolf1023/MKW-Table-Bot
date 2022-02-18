@@ -867,13 +867,13 @@ class BadWolfBot(discord.Bot):
                 await commands.OtherCommands.vr_command(this_bot, message, args, command)
         
         elif main_command in WORLDWIDE_TERMS:
-            await commands.OtherCommands.wws_command(this_bot, message, ww_type=Race.RT_WW_REGION)
+            await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.RT_WW_REGION)
         
         elif main_command in CTWW_TERMS:
-            await commands.OtherCommands.wws_command(this_bot, message, ww_type=Race.CTGP_CTWW_REGION)  
+            await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.CTGP_CTWW_REGION)  
         
         elif main_command in BATTLES_TERMS:
-            await commands.OtherCommands.wws_command(this_bot, message, ww_type=Race.BATTLE_REGION)
+            await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.BATTLE_REGION)
         
         elif main_command in MERGE_ROOM_TERMS:
             await commands.TablingCommands.merge_room_command(message, this_bot, args, server_prefix, is_lounge_server)
