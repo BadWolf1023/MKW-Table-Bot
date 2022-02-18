@@ -921,10 +921,10 @@ class BadWolfBot(discord.Bot):
             await commands.StatisticCommands.popular_tracks_command(self, message, args, server_prefix, command, is_top_tracks=False)
 
         elif main_command in BEST_TRACK_TERMS:
-            await commands.StatisticCommands.player_tracks_command(self, message, args, server_prefix, command, sort_asc=False)
+            await commands.StatisticCommands.player_tracks_command(self, message, args, server_prefix, sort_asc=False)
 
         elif main_command in WORST_TRACK_TERMS:
-            await commands.StatisticCommands.player_tracks_command(self, message, args, server_prefix, command, sort_asc=True)
+            await commands.StatisticCommands.player_tracks_command(self, message, args, server_prefix, sort_asc=True)
 
         elif main_command in TOP_PLAYERS_TERMS:
             await commands.StatisticCommands.top_players_command(self, message, args, server_prefix, command)

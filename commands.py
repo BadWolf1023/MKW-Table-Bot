@@ -582,7 +582,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         await paginator.send(message)
 
     @staticmethod
-    async def player_tracks_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str, command: str, sort_asc=False):
+    async def player_tracks_command(client: discord.Client, message: discord.Message, args: List[str], server_prefix: str, sort_asc=False):
         adjective = "worst" if sort_asc else "best"
         error_message = f"""Here are examples of how to use this command:
 - Your {adjective} RTs: `{server_prefix}{args[0]} rt`
@@ -594,7 +594,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         def get_full_error_message(specific_error: str) -> str:
             return f"**Error:** {specific_error}\n\n{error_message}"
 
-        is_ct, rest = StatisticCommands.parse_track_type(command.lower())
+        is_ct, rest = StatisticCommands.parse_track_type(" ".join(args).lower())
         # if is_ct is None:
         #     is_ct = False
         tier, number_of_days, min_count, rest = StatisticCommands.parse_track_args(rest, is_ct)

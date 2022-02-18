@@ -130,7 +130,7 @@ class StatisticsSlash(ext_commands.Cog):
             args.append("min="+str(min_plays))
 
         message.content = ' '.join(args).lower()
-        await commands.StatisticCommands.player_tracks_command(self.bot, message, args, server_prefix, message.content)
+        await commands.StatisticCommands.player_tracks_command(self.bot, message, args, server_prefix, sort_asc=False)
 
     @slash_command(
         name="worsttracks",
@@ -159,7 +159,7 @@ class StatisticsSlash(ext_commands.Cog):
             args.append("min="+str(min_plays))
 
         message.content = ' '.join(args).lower()
-        await commands.StatisticCommands.player_tracks_command(self.bot, message, args, server_prefix, message.content, sort_asc=True)
+        await commands.StatisticCommands.player_tracks_command(self.bot, message, args, server_prefix, sort_asc=True)
     
     @slash_command(
         name='record',
