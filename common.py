@@ -322,7 +322,7 @@ def author_has_role_in(message_author, role_ids):
     return False
 
 def author_is_lounge_staff(message_author):
-    return author_has_role_in(message_author, mkw_lounge_staff_roles) or is_bad_wolf(message_author)
+    return author_has_role_in(message_author, mkw_lounge_staff_roles) or is_bot_owner(message_author)
 
 def author_is_reporter_plus(message_author):
     return author_has_role_in(message_author, reporter_plus_roles)
@@ -434,11 +434,11 @@ def get_channel_type_and_tier(channel_id, races):
         return "ct", CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[channel_id]
     return None, None
 
-def is_bad_wolf(author):
+def is_bot_owner(author):
     return author.id in OWNERS
 
 def is_bot_admin(author):
-    return str(author.id) in botAdmins or is_bad_wolf(author)
+    return str(author.id) in botAdmins or is_bot_owner(author)
 
 def is_sha_adder(author):
     return author.id in SHA_ADDERS

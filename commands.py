@@ -133,7 +133,7 @@ def lower_args(args: List[str]) -> List[str]:
 
 """============== Bot Owner only commands ================"""
 #TODO: Refactor these - target the waterfall-like if-statements
-class BadWolfCommands:
+class BotOwnerCommands:
     """There is no point to this class, other than for organization purposes.
     This class contains all of the commands that are private and only available to me"""
 
@@ -145,7 +145,7 @@ class BadWolfCommands:
 
     @staticmethod
     async def get_logs_command(message:discord.Message):
-        BadWolfCommands.is_bot_owner_check(message.author, "cannot give logs")
+        BotOwnerCommands.is_bot_owner_check(message.author, "cannot give logs")
         if os.path.exists(common.ERROR_LOGS_FILE):
             await message.channel.send(file=discord.File(common.ERROR_LOGS_FILE))
         if os.path.exists(common.MESSAGE_LOGGING_FILE):
@@ -180,37 +180,37 @@ class BadWolfCommands:
 
     @staticmethod
     async def add_bot_admin_command(message:discord.Message, args:List[str]):
-        BadWolfCommands.is_bot_owner_check(message.author, "cannot add bot admin")
-        await BadWolfCommands.bot_admin_change(message, args, adding=True)
+        BotOwnerCommands.is_bot_owner_check(message.author, "cannot add bot admin")
+        await BotOwnerCommands.bot_admin_change(message, args, adding=True)
 
     @staticmethod
     async def remove_bot_admin_command(message:discord.Message, args:List[str]):
-        BadWolfCommands.is_bot_owner_check(message.author, "cannot remove bot admin")
-        await BadWolfCommands.bot_admin_change(message, args, adding=False)
+        BotOwnerCommands.is_bot_owner_check(message.author, "cannot remove bot admin")
+        await BotOwnerCommands.bot_admin_change(message, args, adding=False)
 
     @staticmethod
     async def server_process_memory_command(message:discord.Message):
-        BadWolfCommands.is_bot_owner_check(message.author, "cannot show server memory usage")
+        BotOwnerCommands.is_bot_owner_check(message.author, "cannot show server memory usage")
         command_output = subprocess.check_output('top -b -o +%MEM | head -n 22', shell=True, text=True)
         await message.channel.send(command_output)
 
 
     @staticmethod
     async def garbage_collect_command(message:discord.Message):
-        BadWolfCommands.is_bot_owner_check(message.author, "cannot garbage collect")
+        BotOwnerCommands.is_bot_owner_check(message.author, "cannot garbage collect")
         gc.collect()
         await message.channel.send("Collected")
 
 
     @staticmethod
     async def total_clear_command(message:discord.Message, lounge_update_data):
-        BadWolfCommands.is_bot_owner_check(message.author, "cannot clear lounge table submission cooldown tracking")
+        BotOwnerCommands.is_bot_owner_check(message.author, "cannot clear lounge table submission cooldown tracking")
         lounge_update_data.update_cooldowns.clear()
         await message.channel.send("Cleared.")
 
     @staticmethod
     async def dump_data_command(message:discord.Message, data_dump_function):
-        BadWolfCommands.is_bot_owner_check(message.author, "cannot dump data")
+        BotOwnerCommands.is_bot_owner_check(message.author, "cannot dump data")
         successful = await UserDataProcessing.dump_data()
         data_dump_function()
         if successful:

@@ -634,7 +634,7 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in GARBAGE_COLLECT_TERMS:
-            await commands.BadWolfCommands.garbage_collect_command(message)
+            await commands.BotOwnerCommands.garbage_collect_command(message)
                 
         elif main_command in START_WAR_TERMS:
             await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, common.author_is_table_bot_support_plus)
@@ -647,7 +647,7 @@ class BadWolfBot(discord.Bot):
                 
         #Lounge reporting updates
         elif main_command in TOTAL_CLEAR_TERMS:
-            await commands.BadWolfCommands.total_clear_command(message, self.lounge_submissions)
+            await commands.BotOwnerCommands.total_clear_command(message, self.lounge_submissions)
                 
         elif main_command in LOUNGE_RT_MOGI_UPDATE_TERMS:
             await commands.LoungeCommands.rt_mogi_update(self, message, this_bot, args, self.lounge_submissions)
@@ -758,14 +758,14 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge_server)
                 
         elif main_command in SERVER_USAGE_TERMS:
-            await commands.BadWolfCommands.server_process_memory_command(message)
+            await commands.BotOwnerCommands.server_process_memory_command(message)
             
         elif main_command in LOUNGE_WHO_IS_TERMS:
             await commands.LoungeCommands.who_is_command(self, message, args)
         elif main_command in LOOKUP_TERMS:
             await commands.LoungeCommands.lookup_command(self, message, args)
         elif main_command in TABLE_BOT_MEMORY_USAGE_TERMS:
-            commands.BadWolfCommands.is_badwolf_check(message.author, "cannot display table bot internal memory usage")
+            commands.BotOwnerCommands.is_bot_owner_check(message.author, "cannot display table bot internal memory usage")
             load_mes = await message.channel.send("Calculating memory usage...")
             size_str = ""
 
@@ -812,7 +812,7 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in GET_LOGS_TERMS:
-            await commands.BadWolfCommands.get_logs_command(message)
+            await commands.BotOwnerCommands.get_logs_command(message)
         
         elif main_command in ADD_SHA_TERMS:
             await commands.BotAdminCommands.add_sha_track(message, args)
@@ -820,7 +820,7 @@ class BadWolfBot(discord.Bot):
         elif main_command in REMOVE_SHA_TERMS:
             await commands.BotAdminCommands.remove_sha_track(message, args)
         
-        elif main_command in {'close', 'stopbot', 'disconnect', 'kill'} and common.is_bad_wolf(message.author):
+        elif main_command in {'close', 'stopbot', 'disconnect', 'kill'} and common.is_bot_owner(message.author):
             try:
                 self.save_data()
                 self.destroy_all_tablebots()
@@ -840,7 +840,7 @@ class BadWolfBot(discord.Bot):
             
         #Admin commands     
         elif main_command in DUMP_DATA_TERMS:
-            await commands.BadWolfCommands.dump_data_command(message, self.pickle_tablebots)
+            await commands.BotOwnerCommands.dump_data_command(message, self.pickle_tablebots)
         
         elif main_command in BLACKLIST_USER_TERMS:
             await commands.BotAdminCommands.blacklist_user_command(message, args)
@@ -874,10 +874,10 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.merge_room_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in ADD_BOT_ADMIN_TERMS:
-            await commands.BadWolfCommands.add_bot_admin_command(message, args)
+            await commands.BotOwnerCommands.add_bot_admin_command(message, args)
                 
         elif main_command in REMOVE_BOT_ADMIN_TERMS:
-            await commands.BadWolfCommands.remove_bot_admin_command(message, args)
+            await commands.BotOwnerCommands.remove_bot_admin_command(message, args)
 
         elif main_command in BLACKLIST_WORD_TERMS:
             await commands.BotAdminCommands.add_blacklisted_word_command(message, args)
