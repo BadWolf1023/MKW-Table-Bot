@@ -239,7 +239,7 @@ class BotAdminCommands:
         if not UtilityFunctions.is_hex(args[1]):
             await message.channel.send(f"The given track is not an SHA: {args[1]}")
             return
-        given_track_name = " ".join(command.split()[2:])
+        given_track_name = " ".join(args[2:])
         if args[1] in Race.sha_track_name_mappings:
             await message.channel.send(f"The given track is already in SHA mappings with the following name: {args[1]}\nOverwriting...")
         Race.sha_track_name_mappings[args[1]] = given_track_name
