@@ -10,6 +10,7 @@ EMPTY_CHAR = "\u200b"
 GUILDS = common.SLASH_GUILDS
 SETTING_PERMISSIONS = [CommandPermission("owner", 2, True)]
 
+PLAYER_ARG_DESCRIPTION = "Lounge name, FC, Discord user (mention), or Discord ID"
 class MiscSlash(ext_commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -135,11 +136,13 @@ class MiscSlash(ext_commands.Cog):
     description="Display your currently set flag for Table Bot")
     async def _get_flag(
         self,
-        ctx: discord.ApplicationContext
+        ctx: discord.ApplicationContext,
+        player: Option(str, PLAYER_ARG_DESCRIPTION, required=False, default=None)
     ):  
         command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx)
-
-        await commands.OtherCommands.get_flag_command(message, server_prefix)
+        args = [command]
+        if player: args.append(player)
+        await commands.OtherCommands.get_flag_command(message, args, server_prefix)
     
     @slash_command(
         name="flags",
@@ -158,7 +161,7 @@ class MiscSlash(ext_commands.Cog):
     async def _get_fc(
         self,
         ctx: discord.ApplicationContext,
-        player: Option(str, "Lounge name/Discord mention/FC", required=False, default=None)
+        player: Option(str, PLAYER_ARG_DESCRIPTION, required=False, default=None)
     ):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command]
@@ -172,7 +175,7 @@ class MiscSlash(ext_commands.Cog):
     async def _get_page(
         self,
         ctx: discord.ApplicationContext,
-        player: Option(str, "Lounge name, FC, Discord user (mention), or Discord ID", required=False, default=None)
+        player: Option(str, PLAYER_ARG_DESCRIPTION, required=False, default=None)
     ):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command]
@@ -185,7 +188,7 @@ class MiscSlash(ext_commands.Cog):
     async def _get_mii(
         self,
         ctx: discord.ApplicationContext,
-        player: Option(str, "Lounge name/Discord mention/FC", required=False, default=None)
+        player: Option(str, PLAYER_ARG_DESCRIPTION, required=False, default=None)
     ):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command]
@@ -199,7 +202,7 @@ class MiscSlash(ext_commands.Cog):
     async def _get_lounge(
         self,
         ctx: discord.ApplicationContext,
-        player: Option(str, "FC/Discord mention/Discord ID", required=False, default=None)
+        player: Option(str, PLAYER_ARG_DESCRIPTION, required=False, default=None)
     ):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         

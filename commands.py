@@ -32,7 +32,7 @@ import TimerDebuggers
 #Other library imports, other people codes
 import math
 from tabulate import tabulate
-from typing import List, Set, Union
+from typing import List, Set, Union, Tuple
 from collections.abc import Callable
 import urllib
 import copy
@@ -368,7 +368,7 @@ class StatisticCommands:
         return [r for r in track_data if r[0]]
 
     @staticmethod
-    def validate_rts_cts_arg(arg):
+    def validate_rts_cts_arg(arg: str) -> Union[Tuple[bool, None], Tuple[None, str]]:
         is_ct = None
         if arg.lower() in StatisticCommands.valid_rt_options:
             is_ct = False
@@ -380,7 +380,7 @@ class StatisticCommands:
         return is_ct, None
 
     @staticmethod
-    def validate_tier_arg(arg, is_ct):
+    def validate_tier_arg(arg: str, is_ct: bool) -> Union[Tuple[int, None], Tuple[None, str]]:
         original_arg = arg
         rt_ct_error_string = "CT" if is_ct else "RT"
         arg = arg.lower()
@@ -396,7 +396,7 @@ class StatisticCommands:
         return tier, None
 
     @staticmethod
-    def validate_days_arg(arg):
+    def validate_days_arg(arg: str) -> Union[Tuple[int, None], Tuple[None, str]]:
         original_arg = arg
         arg = arg.lower().replace("d", "")
         days = None
@@ -409,7 +409,7 @@ class StatisticCommands:
         return None, f"{UtilityFunctions.clean_for_output(original_arg)} must be the number of days"
 
     @staticmethod
-    def validate_tracks_args(args: List[str]):
+    def validate_tracks_args(args: List[str]) -> Tuple:
         if len(args) < 2:
             return None, None, None, "Please specify for **rts** or **cts**."
 
@@ -446,7 +446,7 @@ class StatisticCommands:
         raise TableBotExceptions.UnreachableCode()
 
     @staticmethod
-    def parse_track_type(command):
+    def parse_track_type(command: str) -> Tuple[Union[bool, None], str]:
         is_ct = None
         rt_regex = f"\s({'|'.join(StatisticCommands.valid_rt_options)})(\s|$)"
         ct_regex = f"\s({'|'.join(StatisticCommands.valid_ct_options)})(\s|$)"
@@ -462,7 +462,7 @@ class StatisticCommands:
         return is_ct, command
 
     @staticmethod
-    def parse_track_args(command, is_ct=False):
+    def parse_track_args(command: str, is_ct=False) -> Tuple[Union[int, None], Union[int, None], Union[int, None], Union[str, None]]:
         min_leaderboard_count = 0
         min_regex = '(min|min_count|min_races|min_plays)=(\d+)'
         if m := re.search(min_regex,command):
@@ -511,7 +511,7 @@ class StatisticCommands:
         return f"**{message_title}**\n```\n{tracks_played_str}```"
 
     @staticmethod
-    async def get_track_name(track_lookup):
+    async def get_track_name(track_lookup):  # TODO: This method returns multiple types (Tuple and List) which is probably a mistake
         for track_name, value in Race.track_name_abbreviation_mappings.items():
             try:
                 if isinstance(value, tuple):
@@ -550,7 +550,7 @@ class StatisticCommands:
         return latest_track
 
     @staticmethod
-    async def popular_tracks_command(message:discord.Message, args:List[str], server_prefix:str, is_top_tracks=True):
+    async def popular_tracks_command(message: discord.Message, args: List[str], server_prefix: str, is_top_tracks=True):
         error_message = f"""Here are 3 examples of how to use this command:
 Most played CTs of all time: `{server_prefix}{args[0]} ct`
 Most played RTs in the past week: `{server_prefix}{args[0]} rt 7d`
@@ -587,12 +587,13 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
     @staticmethod
     async def player_tracks_command(message: discord.Message, args: List[str], server_prefix: str, sort_asc=False):
         adjective = "worst" if sort_asc else "best"
+        command_name = args[0]
         error_message = f"""Here are examples of how to use this command:
-- Your {adjective} RTs: `{server_prefix}{args[0]} rt`
-- Somebody else's {adjective} RTs: `{server_prefix}{args[0]} rt [player_name]`
-- Your {adjective} RTs in the past week: `{server_prefix}{args[0]} rt 7d`
-- Your {adjective} RTs in Tier 4: `{server_prefix}{args[0]} rt t4`
-- Your {adjective} CTs with at least 10 plays: `{server_prefix}{args[0]} ct min=10`
+- Your {adjective} RTs: `{server_prefix}{command_name} rt`
+- Somebody else's {adjective} RTs: `{server_prefix}{command_name} rt [player_name]`
+- Your {adjective} RTs in the past week: `{server_prefix}{command_name} rt 7d`
+- Your {adjective} RTs in Tier 4: `{server_prefix}{command_name} rt t4`
+- Your {adjective} CTs with at least 10 plays: `{server_prefix}{command_name} ct min=10`
 """
         def get_full_error_message(specific_error: str) -> str:
             return f"**Error:** {specific_error}\n\n{error_message}"
@@ -613,6 +614,8 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         descriptive, pronoun = smart_type.get_clean_smart_print(message)
         fcs = smart_type.get_fcs()
         lounge_name = smart_type.get_lounge_name()
+        if lounge_name is None:
+            lounge_name = descriptive
 
         if fcs is None:
             await message.channel.send(get_full_error_message(f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?"))
@@ -664,11 +667,12 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
     @staticmethod
     async def top_players_command(message: discord.Message, args: List[str], server_prefix: str):
+        command_name = args[0]
         error_message = f"""Here are examples of how to use this command:
-- Top Maple Treeway players: `{server_prefix}topplayers treeway`
-- Top BC3 players in Tier 5: `{server_prefix}topplayers bc3 t5`
-- Top BC3 players with at least 20 plays: `{server_prefix}topplayers bc3 min=20`
-- Top BC3 players during the last week: `{server_prefix}topplayers bc3 7d`
+- Top Maple Treeway players: `{server_prefix}{command_name} treeway`
+- Top BC3 players in Tier 5: `{server_prefix}{command_name} bc3 t5`
+- Top BC3 players with at least 20 plays: `{server_prefix}{command_name} bc3 min=20`
+- Top BC3 players during the last week: `{server_prefix}{command_name} bc3 7d`
 """
 
         tier,number_of_days,min_count,track_lookup_name = StatisticCommands.parse_track_args(" ".join(args).lower())
@@ -730,8 +734,9 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         await paginator.send(message)
 
     @staticmethod
-    async def record_command(message: discord.Message, args: List[str], server_prefix: str):
-        error_message = f"Usage: `{server_prefix}record player_name (num_days)`"
+    async def record_command(message: discord.Message, args: List[str], server_prefix: str):  # TODO: This might have broken with new case for args
+        command_name = args[0]
+        error_message = f"Usage: `{server_prefix}{command_name} player_name (num_days)`"
 
         if len(args) == 1:
             await message.channel.send(error_message)
@@ -780,9 +785,8 @@ class OtherCommands:
     This class contains all of the non administrative "stateless" commands"""
 
     @staticmethod
-    async def get_flag_command(message:discord.Message, server_prefix:str):
+    async def get_flag_command(message: discord.Message, args: List[str], server_prefix: str):
         to_load = SmartTypes.create_you_discord_id(message.author.id)
-        args = message.content.split()
         if len(args) > 1:
             to_load = " ".join(args[1:])
         smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
@@ -809,27 +813,22 @@ class OtherCommands:
         await message.channel.send(file=file, embed=embed)
 
     @staticmethod
-    async def set_flag_command(message:discord.Message, args:List[str]):
+    async def set_flag_command(message: discord.Message, args: List[str]):
         author_id = message.author.id
-        if len(args) > 1:
-            if len(args) >= 2:
-                if args[1].lower() not in UserDataProcessing.valid_flag_codes:
-                    await message.channel.send(f"This is not a valid flag code. For a list of flags and their codes, please visit: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
-                    return
-
-                if args[1].lower() == "none":
-                    UserDataProcessing.add_flag(author_id, "")
-                    await message.channel.send(f"Your flag was successfully removed. If you want to add a flag again in the future, pick a flag code from this website: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
-                    return
-
-                UserDataProcessing.add_flag(author_id, args[1].lower())
-                await message.channel.send("Your flag was successfully added and will now be displayed on tables.")
-                return
-
-        elif len(args) == 1:
+        flag_code = args[1].lower() if len(args) > 1 else None
+        if flag_code is None or flag_code == "none":
             UserDataProcessing.add_flag(author_id, "")
             await message.channel.send(f"Your flag was successfully removed. If you want to add a flag again in the future, pick a flag code from this website: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+            return
 
+        if flag_code not in UserDataProcessing.valid_flag_codes:
+            await message.channel.send(f"This is not a valid flag code. For a list of flags and their codes, please visit: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+            return
+            
+        UserDataProcessing.add_flag(author_id, flag_code)
+        await message.channel.send("Your flag was successfully added and will now be displayed on tables.")
+
+        
     @staticmethod
     async def lounge_name_command(message:discord.Message):
         to_load = SmartTypes.create_you_discord_id(message.author.id)
