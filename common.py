@@ -18,9 +18,14 @@ import certifi
 import dill
 import TimerDebuggers
 
-sslcontext = ssl.create_default_context(cafile=certifi.where())
+# I don't know the exact details because I'm not extremely familiar with how SSL certification actually works, but
+# this was necessary at one point because a main SSL certificate list expired a while ago,
+# but the issuer messed up the deploy of new certificate lists to machines (Windows, linux, etc)
+# This caused the old (revoked) SSL certificate file to be used on the machine, and Lorenzi's (and many other websites) certificates were "expired", throwing all types of SSL errors
+# Rather than blindly connecting to websites and turning SSL off, we can use a manually downloaded SSL certificate list from the issuer
+# and use that file on disk for SSL verification instead.
+sslcontext = ssl.create_default_context(cafile=certifi.where()) 
 
-version = "12.0.0" #Final release from Bad Wolf, stabilizing various things and releasing beta commands
 main = None
 client = None
 
@@ -29,7 +34,6 @@ if False: # for IDE autocompletion
     client: BadWolfBot.BadWolfBot = None
 
 PROPERTIES_FILE = f"properties.json"
-
 EXAMPLE_PROPERTIES_FILE = "example_properties.json"
 properties = json.load(open(PROPERTIES_FILE if os.path.exists(PROPERTIES_FILE) else EXAMPLE_PROPERTIES_FILE)) 
 
