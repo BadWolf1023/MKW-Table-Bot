@@ -69,7 +69,7 @@ async def send_missing_permissions(channel:discord.TextChannel, content=None, de
 #If the given name was a number, checks to see if the number is actually on the player list and returns the integer version of that index if it is found
 #If no FCs of the given player were found on the table, or if the integer given is out of range, an error message is returned
 #Returns playerNumber, errorMessage - errorMessage will be None is a playerNumber is found. playerNumber will be None if no playerNumber could be found.
-def get_player_room_index(message: discord.Message, name: str, room: TableBot.Room.Room, server_prefix: str, command_name: str):
+def get_player_room_number(message: discord.Message, name: str, room: TableBot.Room.Room, server_prefix: str, command_name: str):
     players = room.get_sorted_player_list()
     playerNum = None
 
@@ -1687,7 +1687,7 @@ class TablingCommands:
 
         player_arg, amount_arg = " ".join(args[1:-1]), args[-1]
         players = this_bot.getRoom().get_sorted_player_list()
-        player_num, playerErrorMessage = get_player_room_index(message, player_arg, this_bot.getRoom(), server_prefix, command)
+        player_num, playerErrorMessage = get_player_room_number(message, player_arg, this_bot.getRoom(), server_prefix, command)
         if not UtilityFunctions.is_int(amount_arg):
             await message.channel.send(f"The penalty amount must be a number. {example_help(server_prefix, command)}")
             return
@@ -1740,8 +1740,8 @@ class TablingCommands:
             await message.channel.send(f"Because your table was started as a {this_bot.getWar().getNumberOfGPS()} GP table, the last possible race someone can sub in is race #{this_bot.getWar().getNumberOfRaces()}")
             return
 
-        sub_in_num, sub_in_error_message = get_player_room_index(message, sub_in_arg, this_bot.getRoom(), server_prefix, "sub")
-        sub_out_num, sub_out_error_message = get_player_room_index(message, sub_out_arg, this_bot.getRoom(), server_prefix, "sub")
+        sub_in_num, sub_in_error_message = get_player_room_number(message, sub_in_arg, this_bot.getRoom(), server_prefix, "sub")
+        sub_out_num, sub_out_error_message = get_player_room_number(message, sub_out_arg, this_bot.getRoom(), server_prefix, "sub")
         if sub_in_num is None:
             await message.channel.send(sub_in_error_message)
             return
@@ -1797,7 +1797,7 @@ class TablingCommands:
             return
 
         player_arg, gp_arg, amount_arg = " ".join(args[1:-2]), args[-2], args[-1]
-        player_num, error_message = get_player_room_index(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
+        player_num, error_message = get_player_room_number(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
         if player_num is None:
             await message.channel.send(error_message)
             return
@@ -1839,7 +1839,7 @@ class TablingCommands:
         player = args[1]
         new_name = " ".join(args[2:])
         players = this_bot.getRoom().get_sorted_player_list()
-        player_num, playerErrorMessage = get_player_room_index(message, player, this_bot.getRoom(), server_prefix, "changename")
+        player_num, playerErrorMessage = get_player_room_number(message, player, this_bot.getRoom(), server_prefix, "changename")
         if player_num is None:
             await message.channel.send(playerErrorMessage)
             return
@@ -1865,7 +1865,7 @@ class TablingCommands:
 
         player_arg, tag_arg = " ".join(args[1:-1]), args[-1]
         players = this_bot.getRoom().get_sorted_player_list()
-        player_num, player_error_message = get_player_room_index(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
+        player_num, player_error_message = get_player_room_number(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
         if player_num is None:
             await message.channel.send(player_error_message)
             return
@@ -2504,7 +2504,7 @@ class TablingCommands:
 
         
         player_arg, race_arg, placement_arg = " ".join(args[1:-2]), args[-2], args[3]
-        player_num, player_error_message = get_player_room_index(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
+        player_num, player_error_message = get_player_room_number(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
         if player_num is None:
             await message.channel.send(player_error_message)
             return
