@@ -12,7 +12,7 @@ import common
 from datetime import datetime, timedelta
 
 from data_tracking import DataTracker
-import UtilityFunctions
+import UtilityFunctions as UF
 
 seperator = "="
 
@@ -36,7 +36,10 @@ valid_flag_codes = set()
 DEFAULT_LAST_USED_DATE = datetime(year=2020,month=8,day=1, hour=1, minute=0, second=0, microsecond=1)
 
 def proccessed_lounge_add(mii_name, fc, lounge_replace=True):
-    return f"{UtilityFunctions.clean_for_output(mii_name)}{lounge_add(fc, lounge_replace)}"
+    '''Stars out blacklisted words in given mii name, escapes Discord markdown, and adds the lounge name for the given FC if one is found.
+    (Also escapes markdown for the lounge addition to prevent clever syntax abused)'''
+    lounge_addition = UF.escape_mentions(UF.escape_markdown(lounge_add(fc, lounge_replace)))
+    return f"{UF.clean_for_output(mii_name)}{lounge_addition}"
 
 def lounge_add(fc, lounge_replace=True):
     if lounge_replace:
