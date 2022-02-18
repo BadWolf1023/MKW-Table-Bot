@@ -1852,48 +1852,29 @@ class TablingCommands:
     @staticmethod
     async def change_player_tag_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
-
+        command_name = args[0]
         if this_bot.getWar().is_ffa():
-            to_send = "You cannot change a player's tag in an FFA. FFAs have no teams."
-            await message.channel.send(to_send)
+            await message.channel.send("You cannot change a player's tag in an FFA. FFAs have no teams.")
             return
 
         if len(args) < 3:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += "\n**To change the tag of the 8th player on the list to KG, do:** *" + server_prefix + "changetag 8 KG*"
+            to_send += f"\n**To change the tag of the 8th player on the list to KG, do:** *{server_prefix}{command_name} 8 KG*"
             await message.channel.send(to_send)
             return
 
-        elif len(args) >= 3:
-            playerNum = args[1].strip()
-            new_tag = " ".join(args[2:])
-            players = this_bot.getRoom().get_sorted_player_list()
-            if playerNum.isnumeric():
-                playerNum = int(playerNum)
-                if playerNum < 1 or playerNum > len(players):
-                    await message.channel.send("The player number must be on this list (between 1 and " + str(len(players)) + "). Do " + server_prefix + "changetag for an example on how to use this command.")
-                else:
-                    this_bot.add_save_state(message.content)
-                    this_bot.getWar().setTeamForFC(players[playerNum-1][0], new_tag)
-                    await message.channel.send(UtilityFunctions.clean_for_output(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0])) + " tag set to: " + UtilityFunctions.clean_for_output(new_tag))
-            else:
-                lounge_name = str(copy.copy(playerNum))
-                loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
-                for _playerNum, (fc, _) in enumerate(players, 1):
-                    if fc in loungeNameFCs:
-                        break
-                else:
-                    _playerNum = None
-
-
-                if _playerNum is None:
-                    await message.channel.send("Could not find Lounge name " + UtilityFunctions.clean_for_output(str(lounge_name)) + " in this room.")
-                else:
-                    this_bot.add_save_state(message.content)
-                    this_bot.getWar().setTeamForFC(players[_playerNum-1][0], new_tag)
-                    await message.channel.send(UtilityFunctions.clean_for_output(players[_playerNum-1][1] + UserDataProcessing.lounge_add(players[_playerNum-1][0])) + " tag set to: " + UtilityFunctions.clean_for_output(new_tag))
-
+        player_arg, tag_arg = " ".join(args[1:-1]), args[-1]
+        players = this_bot.getRoom().get_sorted_player_list()
+        player_num, player_error_message = get_player_room_index(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
+        if player_num is None:
+            await message.channel.send(player_error_message)
+            return
+        player_fc, mii_name = players[player_num-1]
+        player_name = UserDataProcessing.proccessed_lounge_add(mii_name, player_fc)
+        this_bot.add_save_state(message.content)
+        new_tag = UtilityFunctions.clean_for_output(tag_arg)
+        this_bot.getWar().setTeamForFC(player_fc, new_tag)
+        await message.channel.send(f"{player_name} tag set to: {new_tag}")
 
     #Refactor this method to make it more readable
     @staticmethod
