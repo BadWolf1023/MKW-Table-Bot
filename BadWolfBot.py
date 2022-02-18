@@ -629,7 +629,7 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.reset_command(message, self.table_bots)          
 
         elif this_bot.manualWarSetUp:
-            await commands.TablingCommands.manual_war_setup(message, this_bot, server_prefix, is_lounge_server, command)
+            await commands.TablingCommands.manual_war_setup(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif this_bot.prev_command_sw:
             await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix, is_lounge_server)

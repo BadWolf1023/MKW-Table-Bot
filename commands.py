@@ -2459,7 +2459,7 @@ class TablingCommands:
             await message.channel.send(f"Table Bot has a bug, and this mkwx room triggered it. I cannot tally your scores. You should join the Table Bot server by using the invite code *{common.TABLEBOT_SERVER_INVITE_CODE}* and tell developers what happened and for them to check error logs.")
 
     @staticmethod
-    async def manual_war_setup(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool, command:str):
+    async def manual_war_setup(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server, custom_message=f"Unexpected error. Somehow, there is no room loaded. Recommend the command: {server_prefix}reset")
 
         fc_tag = this_bot.getWar().getConvertedTempTeams()
@@ -2469,7 +2469,8 @@ class TablingCommands:
                 if cur_ind == index:
                     fc_tag[fc] = teamTag
                     break
-
+        
+        command = " ".join(args)
         teamBlob = command.split("/")
         for team in teamBlob:
             teamArgs = team.split()

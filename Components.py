@@ -25,8 +25,9 @@ class ManualTeamsModal(discord.ui.Modal):
         message = InteractionUtils.create_proxy_msg(interaction)
         message.content = self.children[0].value
         response = await interaction.response.send_message('Manual teams processed.')
+        args = message.content.split()
         try:
-            await commands.TablingCommands.manual_war_setup(message, self.bot, self.prefix, self.is_lounge, message.content)
+            await commands.TablingCommands.manual_war_setup(message, self.bot, args, self.prefix, self.is_lounge)
         except Exception as error:
             await response.edit_original_message(content='An error occurred while creating manual teams.')
             return await InteractionUtils.on_component_error(error, interaction, self.prefix)
