@@ -848,7 +848,7 @@ class BadWolfBot(discord.Bot):
             await commands.BadWolfCommands.dump_data_command(message, self.pickle_tablebots)
         
         elif main_command in BLACKLIST_USER_TERMS:
-            await commands.BotAdminCommands.blacklist_user_command(message, args, command)
+            await commands.BotAdminCommands.blacklist_user_command(message, args)
                 
         elif main_command in UNDO_TERMS:
             await commands.TablingCommands.undo_command(message, this_bot, args, server_prefix, is_lounge_server)

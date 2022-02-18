@@ -299,21 +299,20 @@ class BotAdminCommands:
 
 
     @staticmethod
-    async def blacklist_user_command(message:discord.Message, args:List[str], command:str):
+    async def blacklist_user_command(message:discord.Message, args:List[str]):
         BotAdminCommands.is_bot_admin_check(message.author, "cannot blacklist user")
 
-        if len(args) < 2:
+        if len(args) < 2 or :
             await message.channel.send(f"Give a Discord ID to blacklist. If you do not specify a reason for blacklisting a user, the given discord ID will be **removed** from the blacklist. To blacklist a discord ID, give a reason. `?{args[0]} <discordID> (reason)`")
             return
 
         if len(args) == 2:
             if UserDataProcessing.add_Blacklisted_user(args[1], ""):
-                await message.channel.send("Removed blacklist for " + command.split()[1])
+                await message.channel.send("Removed blacklist for " + args[1])
             else:
                 await message.channel.send("Blacklist failed.")
             return
-
-        if UserDataProcessing.add_Blacklisted_user(args[1], " ".join(command.split()[2:])):
+        if UserDataProcessing.add_Blacklisted_user(args[1], " ".join(args[2:])):
             await message.channel.send("Blacklisted " + args[1])
         else:
             await message.channel.send("Blacklist failed.")

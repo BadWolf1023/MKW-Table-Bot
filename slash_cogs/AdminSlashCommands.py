@@ -60,7 +60,7 @@ class AdminSlash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, user, reason]
 
-        await commands.BotAdminCommands.blacklist_user_command(message, args, command)
+        await commands.BotAdminCommands.blacklist_user_command(message, args)
     
     @blacklist_user.command(name="remove",
     description="Remove a user from Table Bot's blacklisted users",
@@ -73,7 +73,7 @@ class AdminSlash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, user]
         
-        await commands.BotAdminCommands.blacklist_user_command(message, args, command)
+        await commands.BotAdminCommands.blacklist_user_command(message, args)
 
     @blacklist_word.command(name="add",
     description="Blacklist a word from being used with Table Bot",
