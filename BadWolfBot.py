@@ -678,7 +678,7 @@ class BadWolfBot(discord.Bot):
             await message.channel.send(file=discord.File(common.BADWOLF_PICTURE_FILE))    
         
         elif main_command in INVITE_TERMS:
-            await message.channel.send(f"**If you're on a mobile device, you'll need to use this link to invite the bot:** {common.INVITE_LINK}\n\nIf you're on a computer, refer to the picture below: {bot_invite_picture}")              
+            await message.channel.send(f"{bot_invite_picture}\n\n**Are you on mobile and you don't see this button? Update your Discord app and it should appear!**")              
         
             
         elif main_command in RACE_RESULTS_TERMS:
