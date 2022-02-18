@@ -178,7 +178,7 @@ class StatisticsSlash(ext_commands.Cog):
         if days is not None:
             args.append(str(days)+'d')
 
-        await commands.StatisticCommands.record_command(self, message, args, server_prefix)
+        await commands.StatisticCommands.record_command(message, args, server_prefix)
     
 
 def setup(bot):
