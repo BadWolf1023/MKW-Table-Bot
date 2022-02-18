@@ -860,7 +860,7 @@ class OtherCommands:
         await message.channel.send(fcs[0])
 
     @staticmethod
-    async def player_page_command(message:discord.Message, args:List[str]):
+    async def player_page_command(message: discord.Message, args: List[str]):
         to_load = SmartTypes.create_you_discord_id(message.author.id)
         if len(args) > 1:
             to_load = " ".join(args[1:])
@@ -881,7 +881,7 @@ class OtherCommands:
     
 
     @staticmethod
-    async def mii_command(message:discord.Message, args:List[str]):
+    async def mii_command(message: discord.Message, args: List[str]):
         if common.MII_COMMAND_DISABLED and not common.is_bot_owner(message.author):
             await message.channel.send("To ensure Table Bot remains stable and can access the website, miis have been disabled at this time.")
             return
