@@ -440,7 +440,7 @@ class Table_Slash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
 
-        await commands.OtherCommands.wws_command(None, this_bot, message) #can refactor wws_command to get rid of `client` argument (no longer needed)
+        await commands.OtherCommands.wws_command(this_bot, message)
     
     @slash_command(name='ctwws',
     description="Show all active CT Worldwide rooms",
@@ -451,7 +451,7 @@ class Table_Slash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
 
-        await commands.OtherCommands.wws_command(None, this_bot, message, ww_type=Race.CTGP_CTWW_REGION) #can refactor wws_command to get rid of `client` argument (no longer needed)
+        await commands.OtherCommands.wws_command(this_bot, message, ww_type=Race.CTGP_CTWW_REGION)
     
     @slash_command(name='help',
     description="Show help for Table Bot",
