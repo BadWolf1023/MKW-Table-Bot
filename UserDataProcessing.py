@@ -12,6 +12,7 @@ import common
 from datetime import datetime, timedelta
 
 from data_tracking import DataTracker
+import UtilityFunctions
 
 seperator = "="
 
@@ -34,6 +35,9 @@ valid_flag_codes = set()
 #datetime(year, month, day[, hour[, minute[, second[, microsecond[,tzinfo]]]]])
 DEFAULT_LAST_USED_DATE = datetime(year=2020,month=8,day=1, hour=1, minute=0, second=0, microsecond=1)
 
+def proccessed_lounge_add(mii_name, fc, lounge_replace=True):
+    return f"{UtilityFunctions.clean_for_output(mii_name)}{lounge_add(fc, lounge_replace)}"
+
 def lounge_add(fc, lounge_replace=True):
     if lounge_replace:
         fc_did = fc_discordId
@@ -41,13 +45,6 @@ def lounge_add(fc, lounge_replace=True):
         if fc in fc_did and fc_did[fc][0] in did_lounge:
             return " - (" + did_lounge[fc_did[fc][0]] + ")"
     return ""
-
-def lounge_add_no_dash(fc, lounge_replace=True):
-    if not lounge_replace: return
-    fc_did = fc_discordId
-    did_lounge = discordId_lounges
-    if fc in fc_did and fc_did[fc][0] in did_lounge:
-        return " (" + did_lounge[fc_did[fc][0]] + ")"
 
 def lounge_get(fc, lounge_replace=True):
     if lounge_replace:
