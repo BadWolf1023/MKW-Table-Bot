@@ -302,7 +302,7 @@ class BotAdminCommands:
     async def blacklist_user_command(message:discord.Message, args:List[str]):
         BotAdminCommands.is_bot_admin_check(message.author, "cannot blacklist user")
 
-        if len(args) < 2 or :
+        if len(args) < 2:
             await message.channel.send(f"Give a Discord ID to blacklist. If you do not specify a reason for blacklisting a user, the given discord ID will be **removed** from the blacklist. To blacklist a discord ID, give a reason. `?{args[0]} <discordID> (reason)`")
             return
 
