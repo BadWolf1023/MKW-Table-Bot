@@ -1652,7 +1652,8 @@ class TablingCommands:
             break
 
         player_fc = missing_per_race[race-1][index][0]
-        player_name = UtilityFunctions.clean_for_output(str(missing_per_race[race-1][index][1]) + UserDataProcessing.lounge_add(player_fc))
+        mii_name = missing_per_race[race-1][index][1]
+        player_name = UserDataProcessing.proccessed_lounge_add(mii_name, player_fc)
         if on_or_before in ["on", "during", "midrace", "results", "onresults"]:
             this_bot.add_save_state(message.content)
             this_bot.getRoom().edit_dc_status(player_fc, race, 'on')
@@ -1672,51 +1673,52 @@ class TablingCommands:
     @staticmethod
     async def player_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
+        command = args[0]
 
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += "\n**To give the 2nd player on the list a 15 point penalty:** *" + server_prefix + "penalty 2 15*"
+            to_send += f"\n**To give the 2nd player on the list a 15 point penalty:** *{server_prefix}{command} 2 15*"
             await message.channel.send(to_send)
             return
 
-        if len(args) != 3:
-            await message.channel.send(example_help(server_prefix, args[0]))
+        if len(args) < 3:
+            await message.channel.send(example_help(server_prefix, command))
             return
 
-        player = args[1]
-        amount = args[2]
+        player = args[1:-1]
+        amount = args[-1]
         players = this_bot.getRoom().get_sorted_player_list()
-        player_num, playerErrorMessage = get_player_room_index(message, player, this_bot.getRoom(), server_prefix, "pen")
+        player_num, playerErrorMessage = get_player_room_index(message, player, this_bot.getRoom(), server_prefix, command)
+        if not UtilityFunctions.is_int(amount):
+            await message.channel.send(f"The penalty amount must be a number. {example_help(server_prefix, command)}")
+            return
+        else:
+            amount =  int(amount)
 
-        if UtilityFunctions.isint(amount):
-            amount = int(amount)
-
-        if not isinstance(amount, int):
-            return await message.channel.send(f"The penalty amount must be a number. {example_help(server_prefix, args[0])}")
-        elif player_num is None:
-            return await message.channel.send(playerErrorMessage)
-
+        if player_num is None:
+            await message.channel.send(playerErrorMessage)
+            return
+        player_fc, mii_name = players[player_num-1]
         this_bot.add_save_state(message.content)
-        this_bot.getRoom().addPlayerPenalty(players[player_num-1][0], amount)
-        await message.channel.send(UtilityFunctions.clean_for_output(players[player_num-1][1] + UserDataProcessing.lounge_add(players[player_num-1][0]) + " given a " + str(amount) + " point penalty."))
+        this_bot.getRoom().addPlayerPenalty(player_fc, amount)
+        player_name = UserDataProcessing.proccessed_lounge_add(mii_name, player_fc)
+        await message.channel.send(f"{player_name} given a {amount} point penalty.")
 
     @staticmethod
     async def get_subs_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-        
         subs_string = this_bot.getRoom().get_room_subs()
-
         await message.channel.send(subs_string)
 
     @staticmethod
     async def substitute_player_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
-        example_error_message = f"Do `{server_prefix}sub` for an example of how to use this command."
+        command = args[0]
+        example_error_message = f"Do `{server_prefix}{command}` for an example of how to use this command."
         #Command information for user if command is run with no args
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"\n**Example:** If the 2nd player on the list subbed in on race 9 for the 1st player on the list, you would do: `{server_prefix}{args[0]} 2 1 9`"
+            to_send += f"\n**Example:** If the 2nd player on the list subbed in on race 9 for the 1st player on the list, you would do: `{server_prefix}{command} 2 1 9`"
             await message.channel.send(to_send)
             return
 
@@ -1725,59 +1727,60 @@ class TablingCommands:
             await message.channel.send(example_error_message)
             return
 
-        subInNum, subInErrorMessage = get_player_room_index(message, args[1], this_bot.getRoom(), server_prefix, "sub")
-        subOutNum, subOutErrorMessage = get_player_room_index(message, args[2], this_bot.getRoom(), server_prefix, "sub")
-
         #If race number isn't a valid number, send error message
-        raceNum = args[3]
-        if not UtilityFunctions.isint(raceNum):
+        _, sub_in_arg, sub_out_arg, race_num_arg = args
+        if not UtilityFunctions.is_int(race_num_arg):
             await message.channel.send(f"The race number must be a number. {example_error_message}")
             return
-        raceNum = int(raceNum)
+        race_num = int(race_num_arg)
 
-        if raceNum < 2:
+        if race_num < 2:
             await message.channel.send(f"The race number that the sub began to play must be race 2 or later. {example_error_message}")
             return
-        if raceNum > this_bot.getWar().getNumberOfRaces():
+        if race_num > this_bot.getWar().getNumberOfRaces():
             await message.channel.send(f"Because your table was started as a {this_bot.getWar().getNumberOfGPS()} GP table, the last possible race someone can sub in is race #{this_bot.getWar().getNumberOfRaces()}")
             return
 
-        if subInNum is None:
-            await message.channel.send(subInErrorMessage)
+        sub_in_num, sub_in_error_message = get_player_room_index(message, sub_in_arg, this_bot.getRoom(), server_prefix, "sub")
+        sub_out_num, sub_out_error_message = get_player_room_index(message, sub_out_arg, this_bot.getRoom(), server_prefix, "sub")
+        if sub_in_num is None:
+            await message.channel.send(sub_in_error_message)
             return
-        if subOutNum is None:
-            await message.channel.send(subOutErrorMessage)
+        if sub_out_num is None:
+            await message.channel.send(sub_out_error_message)
             return
 
-        if subInNum == subOutNum:
+        if sub_in_num == sub_out_num:
             await message.channel.send("Someone cannot sub in for themselves.")
             return
 
-        subOutFC, subOutMiiName = this_bot.getRoom().getPlayerAtIndex(subOutNum-1)
-        subInFC, subInMiiName = this_bot.getRoom().getPlayerAtIndex(subInNum-1)
-        if this_bot.getRoom().fc_subbed_in(subInFC):
+        sub_out_fc, sub_out_mii_name = this_bot.getRoom().getPlayerAtIndex(sub_out_num-1)
+        sub_in_fc, sub_in_mii_name = this_bot.getRoom().getPlayerAtIndex(sub_in_num-1)
+        if this_bot.getRoom().fc_subbed_in(sub_in_fc):
             await message.channel.send(f"The person you are trying to sub in has subbed in for someone else already on the table.")
             return
-        if this_bot.getRoom().fc_subbed_out(subOutFC):
+        if this_bot.getRoom().fc_subbed_out(sub_out_fc):
             await message.channel.send(f"The person you are trying to sub out has already subbed out on the table.")
             return
-        if this_bot.getRoom().fc_subbed_in(subOutFC):
+        if this_bot.getRoom().fc_subbed_in(sub_out_fc):
             await message.channel.send(f"Currently, MKW Table Bot does not support double subs. Maybe in the future!")
             return
 
-        subOutStartRace = 1
-        subOutEndRace = raceNum - 1
-        subOutScores = SK.get_race_scores_for_fc(subOutFC, this_bot)[subOutStartRace-1:subOutEndRace]
-        subOutName = UserDataProcessing.lounge_get(subOutFC)
-        subOutTag = this_bot.getWar().getTeamForFC(subOutFC)
-        if subOutName == "":
-            subOutName = subOutMiiName
-        subInStartRace = raceNum
-        subInEndRace = this_bot.getWar().getNumberOfRaces()
+        sub_out_start_race = 1
+        sub_out_end_race = race_num - 1
+        sub_out_scores = SK.get_race_scores_for_fc(sub_out_fc, this_bot)[sub_out_start_race-1:sub_out_end_race]
+        sub_out_name = UserDataProcessing.lounge_get(sub_out_fc)
+        sub_out_tag = this_bot.getWar().getTeamForFC(sub_out_fc)
+        if sub_out_name == "":
+            sub_out_name = sub_out_mii_name
+        sub_in_start_race = race_num
+        sub_in_end_race = this_bot.getWar().getNumberOfRaces()
         this_bot.add_save_state(message.content)
-        this_bot.getRoom().add_sub(subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores)
-        this_bot.getWar().setTeamForFC(subInFC, subOutTag)
-        await message.channel.send(f"Got it. **{UtilityFunctions.clean_for_output(subInMiiName + UserDataProcessing.lounge_add(subInFC))}** subbed in for **{UtilityFunctions.clean_for_output(subOutMiiName + UserDataProcessing.lounge_add(subOutFC))}** on race #{subInStartRace}")
+        this_bot.getRoom().add_sub(sub_in_fc, sub_in_start_race, sub_in_end_race, sub_out_fc, sub_out_name, sub_out_start_race, sub_out_end_race, sub_out_scores)
+        this_bot.getWar().setTeamForFC(sub_in_fc, sub_out_tag)
+        sub_in_player_name = UserDataProcessing.proccessed_lounge_add(sub_in_mii_name, sub_in_fc)
+        sub_out_player_name = UserDataProcessing.proccessed_lounge_add(sub_out_mii_name, sub_out_fc)
+        await message.channel.send(f"Got it. **{sub_in_player_name}** subbed in for **{sub_out_player_name}** on race #{sub_in_start_race}")
 
 
     @staticmethod
@@ -1816,50 +1819,38 @@ class TablingCommands:
             return
 
         players = this_bot.getRoom().get_sorted_player_list()
+        player_fc, mii_name = players[player_num-1]
+        player_name = UserDataProcessing.proccessed_lounge_add(mii_name, player_fc)
+
         this_bot.add_save_state(message.content)
-        this_bot.getWar().addEdit(players[player_num-1][0], gp_num, amount)
-        to_send = f"{UtilityFunctions.clean_for_output(players[player_num-1][1])}{UserDataProcessing.lounge_add(players[player_num-1][0])} GP{gp_num} score edited to {amount} points."
+        this_bot.getWar().addEdit(player_fc, gp_num, amount)
+        to_send = f"{player_name} GP{gp_num} score edited to {amount} points."
         await message.channel.send()
 
     #Code is quite similar to chane_player_tag_command, potential refactor opportunity?
     @staticmethod
     async def change_player_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
+        command_name = args[0]
+        
         if len(args) < 3:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += "\n**To change the name of the 8th player on the list to \"joe\", do:** *" + server_prefix + "changename 8 joe*"
+            to_send += f"""\n**To change the name of the 8th player on the list to "joe", do:** *{server_prefix}{command_name} 8 joe*"""
             await message.channel.send(to_send)
             return
 
-
-        playerNum = args[1].strip()
+        player = args[1]
         new_name = " ".join(args[2:])
         players = this_bot.getRoom().get_sorted_player_list()
-        if playerNum.isnumeric():
-            playerNum = int(playerNum)
-            if playerNum < 1 or playerNum > len(players):
-                await message.channel.send("The player number must be on this list (between 1 and " + str(len(players)) + "). Do " + server_prefix + "changename for an example on how to use this command.")
-            else:
-                this_bot.add_save_state(message.content)
-                this_bot.getRoom().setNameForFC(players[playerNum-1][0], new_name)
-                await message.channel.send(UtilityFunctions.clean_for_output(players[playerNum-1][1] + UserDataProcessing.lounge_add(players[playerNum-1][0])) + " name set to: " + UtilityFunctions.clean_for_output(new_name))
-        else:
-            lounge_name = str(copy.copy(playerNum))
-            loungeNameFCs = UserDataProcessing.getFCsByLoungeName(lounge_name)
-            for _playerNum, (fc, _) in enumerate(players, 1):
-                if fc in loungeNameFCs:
-                    break
-            else:
-                _playerNum = None
-
-
-            if _playerNum is None:
-                await message.channel.send("Could not find Lounge name " + UtilityFunctions.clean_for_output(str(lounge_name)) + " in this room.")
-            else:
-                this_bot.add_save_state(message.content)
-                this_bot.getRoom().setNameForFC(players[_playerNum-1][0], new_name)
-                await message.channel.send(UtilityFunctions.clean_for_output(players[_playerNum-1][1] + UserDataProcessing.lounge_add(players[_playerNum-1][0])) + " name set to: " + UtilityFunctions.clean_for_output(new_name))
+        player_num, playerErrorMessage = get_player_room_index(message, player, this_bot.getRoom(), server_prefix, "changename")
+        if player_num is None:
+            await message.channel.send(playerErrorMessage)
+            return
+        player_fc, mii_name = players[player_num-1]
+        player_name = UserDataProcessing.proccessed_lounge_add(mii_name, player_fc)
+        this_bot.add_save_state(message.content)
+        this_bot.getRoom().setNameForFC(player_fc, new_name)
+        await message.channel.send(f"{player_name} name set to: {UtilityFunctions.clean_for_output(new_name)}")
 
     @staticmethod
     async def change_player_tag_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
