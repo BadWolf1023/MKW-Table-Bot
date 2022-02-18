@@ -2154,14 +2154,13 @@ class TablingCommands:
         await message.channel.send(this_bot.getRoom().get_players_list_string())
 
     @staticmethod
-    async def set_war_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, old_command:str):
+    async def set_war_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
         if len(args) < 2:
             await message.channel.send("No war name given. War name not set.")
         else:
             this_bot.add_save_state(message.content)
-            this_bot.getWar().setWarName(old_command[len(server_prefix)+len("setwarname"):].strip())
+            this_bot.getWar().setWarName(" ".join(args[1:]))
             await message.channel.send("War name set!")
     @staticmethod
     async def get_undos_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):

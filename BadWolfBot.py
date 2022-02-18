@@ -810,7 +810,7 @@ class BadWolfBot(discord.Bot):
             await commands.OtherCommands.mii_command(message, args)
         
         elif main_command in SET_WAR_NAME_TERMS:
-            await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, is_lounge_server, command)
+            await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, is_lounge_server)
             
         elif main_command in LOG_TERMS:
             await message.channel.send("This command has been removed. You can report a bug in Bad Wolf's server if necessary using the invite code: K937DqM")
