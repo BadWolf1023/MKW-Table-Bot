@@ -321,16 +321,16 @@ def author_has_role_in(message_author, role_ids):
             return True
     return False
 
-def author_is_lounge_staff(message_author):
+def author_is_lounge_staff(message_author: discord.User) -> bool:
     return author_has_role_in(message_author, mkw_lounge_staff_roles) or is_bot_owner(message_author)
 
-def author_is_reporter_plus(message_author):
+def author_is_reporter_plus(message_author: discord.User) -> bool:
     return author_has_role_in(message_author, reporter_plus_roles)
 
-def author_is_table_bot_support_plus(message_author):
+def author_is_table_bot_support_plus(message_author: discord.User) -> bool:
     return author_has_role_in(message_author, table_bot_support_plus_roles)
 
-def main_lounge_can_report_table(message_author):
+def main_lounge_can_report_table(message_author: discord.User) -> bool:
     return author_is_reporter_plus(message_author) or message_author.id == BAD_WOLF_ID
 
 
