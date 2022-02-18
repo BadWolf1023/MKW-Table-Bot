@@ -825,14 +825,6 @@ class OtherCommands:
             UserDataProcessing.add_flag(author_id, "")
             await message.channel.send(f"Your flag was successfully removed. If you want to add a flag again in the future, pick a flag code from this website: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
 
-
-    @staticmethod
-    async def log_feedback_command(message:discord.Message, args:List[str], command:str):
-        if len(args) > 1:
-            to_log = f"{message.author} - {message.author.id}: {command}"
-            common.log_text(to_log, common.FEEDBACK_LOGGING_TYPE)
-            await message.channel.send("Logged")
-
     @staticmethod
     async def lounge_name_command(message:discord.Message):
         to_load = SmartTypes.create_you_discord_id(message.author.id)
@@ -1687,7 +1679,7 @@ class TablingCommands:
 
         player_arg, amount_arg = " ".join(args[1:-1]), args[-1]
         players = this_bot.getRoom().get_sorted_player_list()
-        player_num, playerErrorMessage = get_player_number_in_room(message, player_arg, this_bot.getRoom(), server_prefix, command)
+        player_num, error_message = get_player_number_in_room(message, player_arg, this_bot.getRoom(), server_prefix, command)
         if not UtilityFunctions.is_int(amount_arg):
             await message.channel.send(f"The penalty amount must be a number. {example_help(server_prefix, command)}")
             return
@@ -1695,7 +1687,7 @@ class TablingCommands:
             amount =  int(amount_arg)
 
         if player_num is None:
-            await message.channel.send(playerErrorMessage)
+            await message.channel.send(error_message)
             return
         player_fc, mii_name = players[player_num-1]
         this_bot.add_save_state(message.content)
@@ -1839,9 +1831,9 @@ class TablingCommands:
         player = args[1]
         new_name = " ".join(args[2:])
         players = this_bot.getRoom().get_sorted_player_list()
-        player_num, playerErrorMessage = get_player_number_in_room(message, player, this_bot.getRoom(), server_prefix, "changename")
+        player_num, error_message = get_player_number_in_room(message, player, this_bot.getRoom(), server_prefix, command_name)
         if player_num is None:
-            await message.channel.send(playerErrorMessage)
+            await message.channel.send(error_message)
             return
         player_fc, mii_name = players[player_num-1]
         player_name = UserDataProcessing.proccessed_lounge_add(mii_name, player_fc)
@@ -1865,9 +1857,9 @@ class TablingCommands:
 
         player_arg, tag_arg = " ".join(args[1:-1]), args[-1]
         players = this_bot.getRoom().get_sorted_player_list()
-        player_num, player_error_message = get_player_number_in_room(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
+        player_num, error_message = get_player_number_in_room(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
         if player_num is None:
-            await message.channel.send(player_error_message)
+            await message.channel.send(error_message)
             return
         player_fc, mii_name = players[player_num-1]
         player_name = UserDataProcessing.proccessed_lounge_add(mii_name, player_fc)
@@ -2504,9 +2496,9 @@ class TablingCommands:
 
         
         player_arg, race_arg, placement_arg = " ".join(args[1:-2]), args[-2], args[3]
-        player_num, player_error_message = get_player_number_in_room(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
+        player_num, error_message = get_player_number_in_room(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
         if player_num is None:
-            await message.channel.send(player_error_message)
+            await message.channel.send(error_message)
             return
 
         if not UtilityFunctions.is_int(race_arg):

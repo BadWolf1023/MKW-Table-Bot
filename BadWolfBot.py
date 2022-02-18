@@ -104,7 +104,6 @@ BATTLES_TERMS = {"battle", "battles", "btww", "btwws", "battleww", "battlewws", 
 VERIFY_ROOM_TERMS = {"vr", "verifyroom"}
 STATS_TERMS = {"stats", "stat"}
 INVITE_TERMS = {"invite"}
-LOG_TERMS = {"log"}
 
 #Player/Meta commands (also stateless)
 POPULAR_TRACKS_TERMS = {"populartracks", "populartrack", "pt", "pts", "hottrack", "hottracks"}
@@ -811,10 +810,6 @@ class BadWolfBot(discord.Bot):
         
         elif main_command in SET_WAR_NAME_TERMS:
             await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, is_lounge_server)
-            
-        elif main_command in LOG_TERMS:
-            await message.channel.send("This command has been removed. You can report a bug in Bad Wolf's server if necessary using the invite code: K937DqM")
-            #await commands.OtherCommands.log_feedback_command(message, args, command)
         
         elif main_command in GET_LOGS_TERMS:
             await commands.BadWolfCommands.get_logs_command(message)
