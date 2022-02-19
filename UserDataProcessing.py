@@ -21,13 +21,13 @@ fc_discord_id_file_is_open = False
 discordId_lounges_file_is_open = False
 discordId_flags_file_is_open = False
 
-fc_discordId = {}
-discordId_fc = {}
+fc_discordId = {} # Contains friend codes mapped to a Tuple[associated discord id, datetime that the friend code was last used]
+discordId_fc = {} # Contains discord ids codes mapped to a Tuple[associated friend code, datetime that the friend code was last used]
 
-discordId_lounges = {}
-lounges_discordId = {}
+discordId_lounges = {}  # Contains discord IDs mapped to the correct capitalization and spacing of their Lounge name
+lounges_discordId = {}  # Contains a lookup version of someone's Lounge name mapped to their discord ID
 
-discordId_flags = {}
+discordId_flags = {}  # Contains discord IDs mapped to the the flag code for that user
 blacklisted_users = {}
 
 valid_flag_codes = set()
