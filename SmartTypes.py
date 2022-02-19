@@ -112,7 +112,11 @@ class SmartLookupTypes:
         elif self._original_type is SmartLookupTypes.DISCORD_ID or self._original_type is SmartLookupTypes.RAW_DISCORD_MENTION or self._original_type is SmartLookupTypes.SELF_DISCORD_ID:
             lounge_name = UserDataProcessing.get_lounge(self.modified_original)
         elif self._original_type is SmartLookupTypes.LOUNGE_NAME:
-            lounge_name = self.modified_original
+            discord_id = self.get_discord_id()
+            if discord_id is None:
+                lounge_name = self.modified_original
+            else:
+                lounge_name = UserDataProcessing.get_lounge(discord_id)
 
         return None if lounge_name == '' else lounge_name
 
