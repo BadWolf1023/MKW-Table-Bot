@@ -34,7 +34,7 @@ class StatisticsSlash(ext_commands.Cog):
     
     @slash_command(
         name='populartracks',
-        description="Displays the most popular/played played tracks",
+        description="Display the most popular/played tracks",
         guild_ids=GUILDS
     )
     async def _popular_tracks(
@@ -57,7 +57,7 @@ class StatisticsSlash(ext_commands.Cog):
     
     @slash_command(
         name='unpopulartracks',
-        description="Displays the least popular/played tracks",
+        description="Display the least popular/played tracks",
         guild_ids=GUILDS
     )
     async def _unpopular_tracks(
@@ -79,7 +79,7 @@ class StatisticsSlash(ext_commands.Cog):
     
     @slash_command(
         name='topplayers',
-        description="Displays the top players of a particular track",
+        description="Display the top players of a particular track",
         guild_ids=GUILDS
     )
     async def _top_players(

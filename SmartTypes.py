@@ -240,7 +240,7 @@ def possessive(name: str):
     if name in possessive_forms:
         return possessive_forms[name]
     if name.lower() in possessive_forms:
-        return possessive[name.lower()]
+        return possessive_forms[name.lower()]
     return f"{name}'" if name.lower().endswith('s') else f"{name}'s"
     
 def capitalize(name: str):

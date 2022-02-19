@@ -587,7 +587,6 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
                                                                  is_ct, is_top_tracks, tier=tier,
                                                                  number_of_days=number_of_days)
 
-        # await paginate(message, len(tracks_played)/number_tracks, get_page_callback, client)
         pages = [get_page_callback(page) for page in range(int(num_pages))]
         paginator = ComponentPaginator.MessagePaginator(pages, show_indicator=True, timeout=common.embed_page_time.seconds)
         await paginator.send(message)
@@ -815,7 +814,7 @@ class OtherCommands:
         if flag.startswith("cl_") and flag.endswith("u"): #Remap this specific flag code to a specific picture
             image_name += 'cl_C3B1u.png'
 
-        embed = discord.Embed(title=f"{SmartTypes.capitalize(SmartTypes.possessive(descriptive))} flag", colour = discord.Colour.dark_blue())
+        embed = discord.Embed(title=f"{SmartTypes.capitalize(SmartTypes.possessive(descriptive))} flag", colour = discord.Colour.dark_blue(), description=flag)
         file = discord.File(f"{common.FLAG_IMAGES_PATH}{image_name}", filename=image_name)
         embed.set_thumbnail(url=f"attachment://{image_name}")
         await message.channel.send(file=file, embed=embed)
@@ -1095,7 +1094,7 @@ class LoungeCommands:
         updater_channel_id, updater_link, preview_link, type_text = lounge_server_updates.get_information(is_primary)
 
         if cooldown > 0:
-            await message.channel.send("You have already submitted a table very recently. Please wait " + str(cooldown) + " more seconds before submitting another table.", delete_after=10)
+            await message.channel.send(f"You have already submitted a table very recently. Please wait {cooldown} more seconds before submitting another table.", delete_after=10)
             return
 
         if len(args) < 3:
@@ -1179,7 +1178,7 @@ class LoungeCommands:
 
                     embed = discord.Embed(
                                         title = "",
-                                        description="[Click to preview this update]("+ updater_link + ")",
+                                        description=f"[Click to preview this update]({updater_link})",
                                         colour = discord.Colour.dark_red()
                                     )
                     file = discord.File(table_image_path)
@@ -1216,9 +1215,9 @@ class LoungeCommands:
 
                     file = discord.File(table_image_path)
                     embed = discord.Embed(
-                                        title = "Successfully submitted to " + type_text + " Reporters and " + type_text + " Updaters",
-                                        description="[Click to preview this update]("+ preview_link + ")",
-                                        colour = discord.Colour.dark_red()
+                                        title=f"Successfully submitted to {type_text} Reporters and {type_text} Updaters",
+                                        description=f"[Click to preview this update]({preview_link})",
+                                        colour=discord.Colour.dark_red()
                                     )
                     embed.add_field(name='Submission ID', value=str(id_to_submit))
                     embed.add_field(name='Races Played', value=str(races_played))
@@ -1262,7 +1261,7 @@ class LoungeCommands:
     @staticmethod
     async def _submission_action_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge, is_approval=True):
         if len(args) < 2:
-            await message.channel.send("The way to use this command is: ?" + args[0] + " submissionID")
+            await message.channel.send(f"The way to use this command is: `?{args[0]} submissionID`.")
             return
 
         submissionID = args[1]
@@ -1288,7 +1287,7 @@ class LoungeCommands:
                     submissionEmbed.remove_field(6)
                     submissionEmbed.remove_field(5)
                     submissionEmbed.set_field_at(3, name="Approved by:", value=message.author.mention)
-                    submissionEmbed.set_field_at(4, name="Approval link:", value="[Message](" + submissionMessage.jump_url + ")")
+                    submissionEmbed.set_field_at(4, name="Approval link:", value=f"[Message]({submissionMessage.jump_url})")
 
                     summaryChannelRetrieved = True
                     if summaryChannelID is None:
@@ -1339,7 +1338,7 @@ class LoungeCommands:
             else:
                 await message.channel.send("I couldn't find this submission ID. Make sure you have the right submission ID.")
         else:
-            await message.channel.send("The way to use this command is: ?" + args[0] + " submissionID - submissionID must be a number")
+            await message.channel.send(f"The way to use this command is: `?{args[0]} submissionID` - `submissionID` must be a number")
 
 
     @staticmethod
@@ -1375,7 +1374,6 @@ class LoungeCommands:
         if to_send == "":
             to_send = "No pending submissions."
         await message.channel.send(to_send)
-
 
 
 
@@ -1970,8 +1968,10 @@ class TablingCommands:
                 for teamNumber in range(0, min(this_bot.getWar().numberOfTeams, len(players))):
                     dummy_teams[players[teamNumber][0]] = str(teamNumber)
                 this_bot.getWar().setTeams(dummy_teams)
-                await message2.edit(this_bot.get_room_started_message(), view=Components.PictureView(this_bot, server_prefix, is_lounge_server))
-                TableBot.last_wp_message[this_bot.channel_id] = message2
+                # await message2.edit(this_bot.get_room_started_message(), view=Components.PictureView(this_bot, server_prefix, is_lounge_server))
+                # TableBot.last_wp_message[this_bot.channel_id] = message2
+                await message2.edit(content=this_bot.get_room_started_message())
+                await TablingCommands.war_picture_command(message2, this_bot, ['wp'], server_prefix, is_lounge_server)
             this_bot.setShouldSendNotification(True)
 
             
@@ -1998,9 +1998,12 @@ class TablingCommands:
             await message.channel.send(f'''**Warning:** *the number of players in the room doesn't match your table format and teams. **Table started, but teams might be incorrect.***''')
 
         this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
-        view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
-        await view.send(message, this_bot.get_room_started_message())
-        TableBot.last_wp_message[this_bot.channel_id] = view.message
+        # view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+        # await view.send(message, this_bot.get_room_started_message())
+        # TableBot.last_wp_message[this_bot.channel_id] = view.message
+        await message.channel.send(this_bot.get_room_started_message())
+        await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
+
 
     @staticmethod
     @TimerDebuggers.timer_coroutine
@@ -2172,8 +2175,8 @@ class TablingCommands:
 
         this_bot.add_save_state(message.content)
         this_bot.getRoom().forceRoomSize(raceNum, roomSize)
-        mes = "Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + "."
-        if dont_send: return mes + " Give DC points with ?edit if necessary."
+        mes = f"Changed room size to {roomSize} players for race #{raceNum}."
+        if dont_send: return mes + " Give DC points with `?edit` if necessary."
         await message.channel.send(mes)
     
 
@@ -2201,9 +2204,9 @@ class TablingCommands:
         else:
             this_bot.add_save_state(message.content)
             this_bot.getRoom().forceRoomSize(raceNum, roomSize)
-            mes = "Changed room size to " + str(roomSize) + " players for race #" + str(raceNum) + "."
+            mes = f"Changed room size to {roomSize} players for race #{raceNum}."
             if not dont_send: await message.channel.send(mes)
-            return mes + " Give DC points with ?edit if necessary."
+            return mes + " Give DC points with `?edit` if necessary."
 
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2230,7 +2233,7 @@ class TablingCommands:
         
         wpCooldown = this_bot.getWPCooldownSeconds()
         if wpCooldown > 0:
-            await message.channel.send("Wait " + str(wpCooldown) + " more seconds before using this command.", delete_after=5.0)
+            await message.channel.send(f"Wait {wpCooldown} more seconds before using this command.", delete_after=5.0)
             return
 
         server_id = message.guild.id
@@ -2329,7 +2332,7 @@ class TablingCommands:
             else:
                 embed = discord.Embed(
                     title = "",
-                    description="[Edit this table on Lorenzi's website](" + common.base_url_edit_table_lorenzi + display_url_table_text + ")",
+                    description=f"[Edit this table on Lorenzi's website]({common.base_url_edit_table_lorenzi + display_url_table_text})",
                     colour = discord.Colour.dark_blue()
                 )
 
@@ -2429,9 +2432,12 @@ class TablingCommands:
         else:
             this_bot.manualWarSetUp = False
             this_bot.getWar().setTeams(fc_tag)
-            view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
-            await view.send(message, this_bot.get_room_started_message())
-            TableBot.last_wp_message[this_bot.channel_id] = view.message
+            # view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+            # await view.send(message, this_bot.get_room_started_message())
+            # TableBot.last_wp_message[this_bot.channel_id] = view.message
+            await message.channel.send(this_bot.get_room_started_message())
+            await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
+
 
     @staticmethod
     async def remove_race_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2613,65 +2619,12 @@ def get_suggestion(errors, last_race, bot):
     chosen_suggestion = None
     race, possible_suggestions = errors[-1]
 
-    # pick only suggestions from the last race
-    # if last_race != race:
-    #     return None
-
-    # mark all suggestions this race as resolved
-    # for sug in possible_suggestions:
-    #     bot.resolved_errors.add(sug['id'])
-
     for priorityType in ['tie', 'missing_player', 'blank_player', 'gp_missing_1', 'large_time', 'gp_missing']:
         for sug in possible_suggestions:
             if sug['type'] == priorityType:
                 chosen_suggestion = sug
-                # chosen_suggestion['race'] = race
                 return chosen_suggestion  
     return None
-
-async def paginate(message, num_pages, get_page_callback, client):
-    authorized_user = message.author.id
-    msg = await message.channel.send(get_page_callback(0))
-
-    def check(reaction, user):
-        return reaction.message.id == msg.id and authorized_user == user.id \
-               and str(reaction.emoji) in {common.LEFT_ARROW_EMOTE, common.RIGHT_ARROW_EMOTE}
-
-    embed_page_start_time = datetime.now()
-    current_page = 0
-
-    await msg.add_reaction(common.LEFT_ARROW_EMOTE)
-    await msg.add_reaction(common.RIGHT_ARROW_EMOTE)
-    while (datetime.now() - embed_page_start_time) < common.embed_page_time:
-
-        timeout_time_delta = common.embed_page_time - (datetime.now() - embed_page_start_time)
-        timeout_seconds = timeout_time_delta.total_seconds()
-        if timeout_seconds <= 0:
-            break
-
-        try:
-            reaction, user = await client.wait_for('reaction_add', timeout=timeout_seconds, check=check)
-            if str(reaction.emoji) == common.LEFT_ARROW_EMOTE:
-                current_page = max((current_page - 1), 0)
-            else:
-                current_page = min((current_page + 1), num_pages)
-
-            curRoomTxt = get_page_callback(current_page)
-
-            try:
-                await msg.edit(content=curRoomTxt)
-            except discord.errors.Forbidden:
-                await send_missing_permissions(msg.channel)
-            except discord.errors.NotFound:
-                break
-        except:
-            pass
-
-    try:
-        await msg.clear_reaction(common.LEFT_ARROW_EMOTE)
-        await msg.clear_reaction(common.RIGHT_ARROW_EMOTE)
-    except:
-        pass
 
 valid_gp_flags = ["gp=", "gps=", "setgps="]
 def getNumGPs(args, defaultGPs=3):
@@ -2755,7 +2708,6 @@ def get_max_specified_race(args):
     if len(args)>1 and UtilityFunctions.isint(args[1]) and int(args[1]) > 0:
         return int(args[1])
 
-    
     return None
 
 

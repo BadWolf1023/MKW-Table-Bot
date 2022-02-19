@@ -91,6 +91,10 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
 
     
     async def callback(self, interaction: discord.Interaction):
+        if self.view.responded:
+            return
+
+        self.view.responded = True
         self.disabled = True
         for ind, child in enumerate(self.view.children):
             child.disabled = True
@@ -98,7 +102,8 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
                 self.view.children.pop(ind)
 
         self.view.stop()
-        await common.safe_edit(interaction.message, view=self.view)
+        # await common.safe_edit(interaction.message, view=self.view)
+        await interaction.response.edit_message(view=self.view)
 
         message = InteractionUtils.create_proxy_msg(interaction, [self.cat])
         await commands.TablingCommands.after_start_war_command(message, self.view.bot, [self.cat], self.view.prefix, self.view.is_lounge)
@@ -110,6 +115,7 @@ class ConfirmView(discord.ui.View):
         self.bot = bot
         self.prefix = prefix
         self.is_lounge = is_lounge
+        self.responded = False
         self.add_item(ConfirmButton('Yes'))
         self.add_item(ConfirmButton('No'))
     
@@ -123,10 +129,15 @@ class ConfirmView(discord.ui.View):
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
             return False
+        
+        if self.responded: 
+            return False
+
         if not self.bot.prev_command_sw:
             await self.delete(interaction)
             await interaction.followup.send("This has already been responded to.", ephemeral=True)
             return False
+
         return allowed
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
@@ -146,6 +157,7 @@ class PictureButton(discord.ui.Button['PictureView']):
         cooldown = bot.getWPCooldownSeconds()
         super().__init__(style=discord.ButtonStyle.gray if (cooldown > 0) else discord.ButtonStyle.primary, label='Update', row=0)
         self.bot = bot
+        self.responded = False
         asyncio.create_task(self.activate())
 
     async def activate(self):
@@ -159,6 +171,10 @@ class PictureButton(discord.ui.Button['PictureView']):
 
     @TimerDebuggers.timer_coroutine
     async def callback(self, interaction: discord.Interaction):
+        if self.responded:
+            return
+
+        self.responded = True
         msg = InteractionUtils.create_proxy_msg(interaction, ['wp'])
 
         await common.safe_edit(interaction.message, view=None)
@@ -173,29 +189,37 @@ class SubmitButton(discord.ui.Button['PictureView']):
         self.channel_bot = channel_bot
         self.rt_ct = rt_ct
         self.num_races = num_races
+        self.responded = False
 
     @TimerDebuggers.timer_coroutine
     async def callback(self, interaction: discord.Interaction):
-        if not self.channel_bot.has_been_lounge_submitted:
-            self.channel_bot.has_been_lounge_submitted = True
+        if self.channel_bot.has_been_lounge_submitted:
+            return await interaction.response.send_message("Table has already been submitted.", ephemeral=True)
+        
+        if self.responded:
+            return await interaction.response.send_message("This button has already been used.", ephemeral=True)
 
-            args = [f'{self.rt_ct}update', str(self.tier), str(self.num_races)]
-            message = InteractionUtils.create_proxy_msg(interaction, args)
+        self.channel_bot.has_been_lounge_submitted = True
 
-            self.view.children.remove(self)
-            await common.safe_edit(self.view.message, view=self.view)
+        args = [f'{self.rt_ct}update', str(self.tier), str(self.num_races)]
+        message = InteractionUtils.create_proxy_msg(interaction, args)
 
-            async def submit_table():
-                try:
-                    if self.rt_ct.lower() == 'ct':
-                        await commands.LoungeCommands.ct_mogi_update(common.client, message, self.channel_bot, args, common.client.lounge_submissions)
-                    else:
-                        await commands.LoungeCommands.rt_mogi_update(common.client, message, self.channel_bot, args, common.client.lounge_submissions)
-                except Exception as e:
-                    await InteractionUtils.handle_component_exception(e, message, self.view.prefix)
+        self.responded = True
+        self.view.children.remove(self)
+        await common.safe_edit(self.view.message, view=self)
 
-            asyncio.create_task(submit_table())
-            return
+        async def submit_table():
+            try:
+                if self.rt_ct.lower() == 'ct':
+                    await commands.LoungeCommands.ct_mogi_update(common.client, message, self.channel_bot, args, common.client.lounge_submissions)
+                else:
+                    await commands.LoungeCommands.rt_mogi_update(common.client, message, self.channel_bot, args, common.client.lounge_submissions)
+                
+                # await self.view.on_timeout() #remove picture button as well, since table has been submitted
+            except Exception as e:
+                await InteractionUtils.handle_component_exception(e, message, self.view.prefix)
+
+        asyncio.create_task(submit_table())
 
 class PictureView(discord.ui.View):
     def __init__(self, bot, prefix, is_lounge_server):
@@ -214,6 +238,10 @@ class PictureView(discord.ui.View):
             return False
 
         if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child and doesn't have cooldown
+            if self.children[-1].channel_bot.has_been_lounge_submitted:
+                await interaction.response.send_message("Table has already been submitted.", ephemeral=True)
+                return False
+
             return True
 
         cooldown = self.bot.getWPCooldownSeconds()
@@ -250,10 +278,16 @@ class RejectButton(discord.ui.Button['SuggestionView']):
         super().__init__(style=discord.ButtonStyle.danger, label="Discard")
     
     async def callback(self, interaction: discord.Interaction):
-        self.view.bot.resolved_errors.add(self.view.current_error['id'])
-        self.view.errors.pop()
+        if self.view.current_error['id'] in self.view.responded:
+            return
 
-        # await self.view.on_timeout()
+        self.view.responded.add(self.view.current_error['id'])
+        self.view.bot.resolved_errors.add(self.view.current_error['id'])
+        try:
+            self.view.errors.pop()
+        except IndexError:
+            pass
+
         await self.view.next_suggestion()
 
 class SuggestionButton(discord.ui.Button['SuggestionView']):
@@ -266,8 +300,10 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
         super().__init__(style=discord.ButtonStyle.secondary, label=label, disabled=confirm)
     
     async def callback(self, interaction: discord.Interaction):
-        server_prefix = self.view.prefix
+        if self.error['id'] in self.view.responded: # don't process callback if the error has been responded to
+            return
 
+        server_prefix = self.view.prefix
         args = get_command_args(self.error, self.value if not self.confirm else self.view.selected_values, self.view.bot)
         message = InteractionUtils.create_proxy_msg(interaction, args)
 
@@ -283,9 +319,16 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
         command_mes = await command_mapping[self.error['type']](message, self.view.bot, args, server_prefix, self.view.is_lounge, dont_send=True)
         author_str = interaction.user.display_name
 
+        self.view.responded.add(self.view.current_error['id'])
+
         await self.view.message.channel.send(f"{author_str} - "+command_mes)
         self.view.bot.semi_resolved_errors.add(self.view.current_error['id'])
-        self.view.errors.pop()
+
+        try:
+            self.view.errors.pop()
+        except IndexError:
+            pass #rare case where it hits here (people click the button at almost the exact same time), error should be ignored
+
         await self.view.next_suggestion()
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
@@ -330,6 +373,7 @@ class SuggestionView(discord.ui.View):
         self.is_lounge = lounge
         self.selected_values = None
         self.message = None
+        self.responded = set()
 
         self.bot.getRoom().watch_suggestions(self, errors, self.bot.channel_id)
         self.errors = self.bot.getRoom().suggestion_errors
@@ -369,6 +413,12 @@ class SuggestionView(discord.ui.View):
         allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, InteractionUtils.convert_key_to_command(self.current_error['type']))
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True, delete_after=3.0)
+            return False
+        
+        if self.current_error['id'] in self.responded:
+            await interaction.response.send_message("This button has already been used.", ephemeral=True)
+            return False
+
         return allowed
     
     async def next_suggestion(self):
