@@ -51,12 +51,6 @@ import traceback
 
 vr_is_on = False
 
-async def sendRoomWarNotLoaded(message: discord.Message, serverPrefix:str, is_lounge=False):
-    if is_lounge:
-        return await message.channel.send(f"Room is not loaded! Use the command `{serverPrefix}sw mogiformat numberOfTeams` to load a room.")
-    else:
-        return await message.channel.send(f"Room is not loaded! Use the command `{serverPrefix}sw warformat numberOfTeams (LoungeName/rxx/FC) (gps=numberOfGPs) (psb=on/off) (miis=yes/no)` to start a war.")
-
 def updateData(id_lounge, fc_id):
     UserDataProcessing.smartUpdate(id_lounge, fc_id)
 
@@ -117,9 +111,9 @@ def get_room_not_loaded_message(server_prefix: str, is_lounge_server=False, cust
     if custom_message is not None:
         return custom_message.replace("{server_prefix}", server_prefix)
     elif is_lounge_server:
-        return f"Room is not loaded! Use the command `{server_prefix}sw mogiformat numberOfTeams` to load a room."
+        return f"Table has not been started! Use the command `{server_prefix}sw mogiformat numberOfTeams` to start a table."
     else:
-        return f"Room is not loaded! Use the command `{server_prefix}sw warformat numberOfTeams (LoungeName/rxx/FC) (gps=numberOfGPs) (psb=on/off) (miis=yes/no)` to start a war."
+        return f"Table has not been started! Use the command `{server_prefix}sw warformat numberOfTeams (LoungeName/rxx/FC) (gps=numberOfGPs) (psb=on/off) (miis=yes/no)` to start a table."
 
 def ensure_table_loaded_check(channel_bot: TableBot.ChannelBot, server_prefix: str, is_lounge_server=False, custom_message=None):
     if channel_bot.is_table_loaded():
@@ -1550,50 +1544,47 @@ class TablingCommands:
     @staticmethod
     async def team_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
+        command_name = args[0]
         if this_bot.getWar().is_ffa():
-            await message.channel.send("You can't give team penalties in FFAs. Do " + server_prefix + "penalty to give an individual player a penalty in an FFA.")
+            await message.channel.send(f"You can't give team penalties in FFAs. Do `{server_prefix}pen` to give an individual player a penalty in an FFA.")
             return
 
+        teams = sorted(this_bot.getWar().getTags())
         if len(args) == 1:
-            teams = sorted(this_bot.getWar().getTags())
             to_send = ""
-            for team_num, team in enumerate(teams, 1):
-                to_send += UtilityFunctions.clean_for_output(str(team_num)) + ". " + team + "\n"
-            to_send += "\n**To give the 2nd team on the list a 15 point penalty:** *" + server_prefix + "teampenalty 2 15*"
+            for team_arg, team in enumerate(teams, 1):
+                to_send += f"{team_arg}. {UtilityFunctions.clean_for_output(team)}\n"
+            or_str = f" or `{server_prefix}{command_name} {UtilityFunctions.clean_for_output(teams[0])} 15`" if len(teams) > 0 else ''
+            to_send += f"\n**To give the first team on the list a 15 point penalty, do:** `{server_prefix}{command_name} 1 15`{or_str}"
             await message.channel.send(to_send)
             return
-
-        if len(args) != 3:
-            await message.channel.send(example_help(server_prefix, args[0]))
+        if len(args) < 3:
+            await message.channel.send(example_help(server_prefix, command_name))
             return
 
-        teamNum = args[1]
-        amount = args[2]
-        teams = sorted(this_bot.getWar().getTags())
-        if not teamNum.isnumeric():
-            for ind, team in enumerate(teams):
-                if team.lower() == teamNum:
-                    teamNum = ind + 1
-                    break
+        team_arg = " ".join(args[1:-1])
+        amount_arg = args[-1]        
+        if UtilityFunctions.is_int(team_arg):
+            team_num = int(team_arg)
         else:
-            teamNum = int(teamNum)
-        if not amount.isnumeric():
-            if len(amount) > 0 and amount[0] == '-':
-                if amount[1:].isnumeric():
-                    amount = int(amount[1:]) * -1
-        else:
-            amount = int(amount)
+            team_num = (teams.index(team_arg)+1) if team_arg in teams else None
+        if team_num is None:
+            await message.channel.send(f"The team must be a number of the exact tag of the team. {example_help(server_prefix, command_name)}")
+            return
+        elif team_num < 1 or team_num > len(teams):
+            await message.channel.send(f"The team number must be on the team list (between 1 and {len(teams)}). {example_help(server_prefix, args[0])}")
+            return
 
-
-        if not isinstance(teamNum, int) or not isinstance(amount, int):
-            await message.channel.send(f"Both the team number and the penalty amount must be numbers. {example_help(server_prefix, args[0])}")
-        elif teamNum < 1 or teamNum > len(teams):
-            await message.channel.send(f"The team number must be on this list (between 1 and {len(teams)}). {example_help(server_prefix, args[0])}")
+        if UtilityFunctions.is_int(amount_arg):
+            amount = int(amount_arg)
         else:
-            this_bot.add_save_state(message.content)
-            this_bot.getWar().addTeamPenalty(teams[teamNum-1], amount)
-            await message.channel.send(UtilityFunctions.clean_for_output(teams[teamNum-1] + " given a " + str(amount) + " point penalty."))
+            await message.channel.send(f"The penalty amount must be a number. {example_help(server_prefix, command_name)}")
+            return
+
+        this_bot.add_save_state(message.content)
+        team_tag = teams[team_num-1]
+        this_bot.getWar().addTeamPenalty(team_tag, amount)
+        await message.channel.send(f"Tag **{UtilityFunctions.clean_for_output(team_tag)}** given a {amount} point penalty.")
 
 
     @staticmethod
@@ -1812,8 +1803,7 @@ class TablingCommands:
 
         this_bot.add_save_state(message.content)
         this_bot.getWar().addEdit(player_fc, gp_num, amount)
-        to_send = f"{player_name} GP{gp_num} score edited to {amount} points."
-        await message.channel.send()
+        await message.channel.send(f"{player_name} GP{gp_num} score edited to {amount} points.")
 
     #Code is quite similar to chane_player_tag_command, potential refactor opportunity?
     @staticmethod
@@ -1871,7 +1861,7 @@ class TablingCommands:
     @staticmethod
     @TimerDebuggers.timer_coroutine
     async def start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, permission_check:Callable):
-        await mkwx_check(message, "Start war command disabled.")
+        await mkwx_check(message, "Start table command disabled.")
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
             await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.", delete_after=5.0)
@@ -1925,10 +1915,10 @@ class TablingCommands:
         try:
             war = War.War(warFormat, num_teams_arg, message.id, numgps, ignoreLargeTimes=ignoreLargeTimes, displayMiis=useMiis)
         except TableBotExceptions.InvalidWarFormatException:
-            await message.channel.send("War format was incorrect. Valid options: FFA, 1v1, 2v2, 3v3, 4v4, 5v5, 6v6. War not created.")
+            await message.channel.send("Table format was incorrect. Valid options: FFA, 1v1, 2v2, 3v3, 4v4, 5v5, 6v6. Table not started.")
             return
         except TableBotExceptions.InvalidNumberOfPlayersException:
-            await message.channel.send("Too many players based on the teams and war format. War not created.")
+            await message.channel.send("Too many players based on the teams and table format. Table not started.")
             return
         except TableBotExceptions.InvalidNumPlayersInputException:
             await message.channel.send("Invalid number of players. The number of players must be an number.")
@@ -1994,7 +1984,7 @@ class TablingCommands:
         players = list(this_bot.getRoom().get_fc_to_name_dict(1, numGPS*4).items())
 
         if len(players) != this_bot.getWar().get_num_players():
-            await message.channel.send(f'''**Warning:** *the number of players in the room doesn't match your war format and teams. **Table started, but teams might be incorrect.***''')
+            await message.channel.send(f'''**Warning:** *the number of players in the room doesn't match your table format and teams. **Table started, but teams might be incorrect.***''')
 
         this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
         view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
@@ -2098,14 +2088,14 @@ class TablingCommands:
         await message.channel.send(this_bot.getRoom().get_sorted_player_list_string())
 
     @staticmethod
-    async def set_war_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+    async def set_table_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
         if len(args) < 2:
-            await message.channel.send("No war name given. War name not set.")
+            await message.channel.send("No table name given. Table name not set.")
         else:
             this_bot.add_save_state(message.content)
             this_bot.getWar().setWarName(" ".join(args[1:]))
-            await message.channel.send("War name set!")
+            await message.channel.send("Table name set!")
 
     @staticmethod
     async def get_undos_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
@@ -2249,7 +2239,7 @@ class TablingCommands:
         old_room_fcs = set(this_bot.getRoom().get_fc_to_name_dict(1, this_bot.getWar().numberOfGPs*4))
         update_status = await this_bot.update_table()
         if not update_status:
-            failure_message = "General room failure, war picture. Report this to a Table Bot developer if you see it."
+            failure_message = "General room failure, table picture. Report this to a Table Bot developer if you see it."
             if update_status.status is update_status.HAS_NO_RACES:
                 failure_message =  "The room has does not have any races, so I cannot give you a table."
             elif update_status.status is update_status.NO_ROOM_LOADED:
@@ -2462,17 +2452,17 @@ class TablingCommands:
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
 
         if len(args) != 2:
-            await message.channel.send(f"The syntax of this command is `{server_prefix}{args[0]} <displaySize>`")
+            await message.channel.send(f"Here's how to use this command: `{server_prefix}{args[0]} races_per_gp`")
             return
 
         new_size = args[1]
         if not new_size.isnumeric():
-            await message.channel.send(f"displaySize must be a number. For example, `{server_prefix}{args[0]} 1`")
+            await message.channel.send(f"`races_per_gp` must be a number. For example, `{server_prefix}{args[0]} 1`")
             return
 
         new_size = int(new_size)
         if new_size < 1 or new_size > 32:
-            await message.channel.send(f"displaySize must be between 1 and 32. For example, `{server_prefix}{args[0]} 1`")
+            await message.channel.send(f"`races_per_gp` must be between 1 and 32. For example, `{server_prefix}{args[0]} 1`")
         else:
             this_bot.add_save_state(message.content)
             this_bot.set_race_size(new_size)
@@ -2484,7 +2474,7 @@ class TablingCommands:
         command_name = args[0]
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"\n**To change the placement of the 8th player on the list for the 7th race to 4th place, do:** *{server_prefix}{command_name} 8 7 4*"
+            to_send += f"\n**To change the placement of the 8th player on the list for the 7th race to 4th place, do:** `{server_prefix}{command_name} 8 7 4`"
             await message.channel.send(to_send)
             return
         if len(args) < 4:
@@ -2826,4 +2816,4 @@ def load_vr_is_on():
                 print(f"Could not read in '{common.VR_IS_ON_FILE}'")
 
 def example_help(server_prefix:str, original_command:str):
-    return f"Do {server_prefix}{original_command} for an example on how to use this command."
+    return f"Do `{server_prefix}{original_command}` for an example on how to use this command."

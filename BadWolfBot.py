@@ -63,7 +63,7 @@ TEAM_PENALTY_TERMS = {"teampen", "teampenalty"}
 EDIT_PLAYER_SCORE_TERMS = {"edit"}
 PLAYER_DISCONNECT_TERMS = {"dc", "dcs"}
 MERGE_ROOM_TERMS = {"mr", "mergeroom"}
-SET_WAR_NAME_TERMS = {"setwarname"}
+SET_WAR_NAME_TERMS = {"setwarname", "settablename"}
 CHANGE_PLAYER_NAME_TERMS = {'changename', 'cn'}
 CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag', 'setteam', 'settag', 'ct'}
 CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize", "crs"}
@@ -76,7 +76,7 @@ GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
 DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
 
 
-#Commands that require a war to be started, but don't modify the war/room/table in any way
+#Commands that require a table to be started, but don't modify the war/room/table in any way
 TABLE_TEXT_TERMS = {"tt", "tabletext"}
 WAR_PICTURE_TERMS = {"wp", "warpicture", "wo", "w;", "w["}
 RACE_RESULTS_TERMS = {"rr", "raceresults"}
@@ -90,7 +90,7 @@ GET_SUBSTITUTIONS_TERMS = {"subs", "substitutes", "substitutions", "getsubs", "a
 #Button interactions (only people in room can use buttons in Lounge; however, this isn't applied to the commands)
 INTERACTIONS = {'interaction'}
 
-#General commands that do not require a war to be started (stateless commands)
+#General commands that do not require a table to be started (stateless commands)
 PAGE_TERMS = {"page", "pages", "playerpage", "playerpages"}
 FC_TERMS = {"fc"}
 LOUNGE_NAME_TERMS = {"lounge", "loungename", "ln"}
@@ -566,7 +566,7 @@ class BadWolfBot(discord.Bot):
                                    f"Use this command in the appropriate updater channel: {wrong_updater_channel_exception}")
         except TableBotExceptions.WarSetupStillRunning:
             await common.safe_send(message,
-                                   f"I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
+                                   f"I'm still trying to set up your table. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your table again.")
         except discord.errors.DiscordServerError:
             await common.safe_send(message,
                                    "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")

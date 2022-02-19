@@ -134,7 +134,7 @@ class ChannelBot(object):
         return players.index(player)+1
 
     def get_room_started_message(self):
-        started_war_str = "FFA started" if self.getWar().isFFA() else "War started"
+        started_war_str = "FFA started" if self.getWar().isFFA() else "Table started"
         if self.getWar().ignoreLargeTimes:
             started_war_str += " (ignoring errors for large finish times)"
         started_war_str += f". {self.getRoom().getRXXText()}"

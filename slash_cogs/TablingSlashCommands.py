@@ -31,7 +31,7 @@ class Table_Slash(ext_commands.Cog):
     #TODO: implement
 
     @slash_command(name='sw',
-    description= 'Load a room and start tabling a war',
+    description= 'Start a table',
     guild_ids=common.SLASH_GUILDS)
     @TimerDebuggers.timer_coroutine
     async def _start_war(

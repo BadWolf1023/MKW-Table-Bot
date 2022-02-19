@@ -157,9 +157,9 @@ class Room(object):
     
     def get_room_subs(self):
         if not self.had_subs():
-            return "No subs this war."
+            return "No subs for this table."
         
-        ret = "*Subs this war:*"
+        ret = "*Subs for this table:*"
         
         for ind, (sub_in_fc, sub_data) in enumerate(self.sub_ins.items(), 1):
             subInName = UserDataProcessing.proccessed_lounge_add(self.getMiiNameByFC(sub_in_fc), sub_in_fc)
