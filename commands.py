@@ -1555,7 +1555,7 @@ class TablingCommands:
             for team_arg, team in enumerate(teams, 1):
                 to_send += f"{team_arg}. {UtilityFunctions.clean_for_output(team)}\n"
             or_str = f" or `{server_prefix}{command_name} {UtilityFunctions.clean_for_output(teams[0])} 15`" if len(teams) > 0 else ''
-            to_send += f"\n**To give the first team on the list a 15 point penalty, do:** `{server_prefix}{command_name} 1 15`{or_str}"
+            to_send += f"\n**To give the first tag on the list a 15 point penalty, do:** `{server_prefix}{command_name} 1 15`{or_str}"
             await message.channel.send(to_send)
             return
         if len(args) < 3:
@@ -1569,10 +1569,10 @@ class TablingCommands:
         else:
             team_num = (teams.index(team_arg)+1) if team_arg in teams else None
         if team_num is None:
-            await message.channel.send(f"The team must be a number of the exact tag of the team. {example_help(server_prefix, command_name)}")
+            await message.channel.send(f"The tag must either be a number or the exact tag of a team. {example_help(server_prefix, command_name)}")
             return
         elif team_num < 1 or team_num > len(teams):
-            await message.channel.send(f"The team number must be on the team list (between 1 and {len(teams)}). {example_help(server_prefix, args[0])}")
+            await message.channel.send(f"The tag number must be on the tag list (between 1 and {len(teams)}). {example_help(server_prefix, args[0])}")
             return
 
         if UtilityFunctions.is_int(amount_arg):
