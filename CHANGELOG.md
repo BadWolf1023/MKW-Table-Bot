@@ -19,7 +19,7 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - Minor bug fixes
 - If you haven't used the bot in the last 2.5 hours, your war will be reset
 
-### Version 2.1.0
+## Version 2.1.0
 **Released on 08-11-2020**
 - Advanced tag recognition AI
 - ?sw now has a sui format, which will ignore all large times: ?sw 5v5 2 BadWolf sui=yes
@@ -33,11 +33,11 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - Improved Tag Recognition AI
 - TableBot now officially supports Lounge names (it connects with an API and pulls Lounge data now)
 
-### Version 3.0.1
+## Version 3.0.1
 **Released on 08-20-2020**
 - Emergency update to address tag AI crashing bot
 
-### Version 3.1.0
+## Version 3.1.0
 **Released on 08-23-2020**
 - Administrative tools added (bot admins now exist with the plethora of bot admin commands)
 - Text fixes
@@ -47,7 +47,7 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - Added special locking mechanisms for Lounge, only start wars for yourself in Lounge, Lounge staff can use all commands, bot becomes unlocked automatically after room ends race #12
 - (And so Lounge brings in MKW Table Bot)
 
-### Version 4.1.0
+## Version 4.1.0
 **Released on 08-28-2020**
 - ?changeroomsize and ?earlydc released
 
@@ -65,11 +65,11 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - Alpha beta pruning in the tag AI
 - New ?vr command
 
-### Version 5.0.1
+## Version 5.0.1
 **Released on 10-06-2020**
 - Added limited functionality in certain categories for Lounge
 
-### Version 5.1.0
+## Version 5.1.0
 **Released on 10-23-2020**
 - ?changename command added
 - ?rtmogiupdate and ?ctmogiupdate commands added for Lounge (no sub support!)
@@ -83,18 +83,18 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - ?removerace command added
 - This was intended to be the final release for Table Bot...
 
-### Version 6.0.1
+## Version 6.0.1
 **Released on 11-21-2020**
 - Tag AI crashes Table Bot, patch is issued.
 
-### Version 6.0.2
+## Version 6.0.2
 **Released on 01-31-2021**
 - More support added for tableupdate commands
 
 ### 04-18-2021
 - MKW Table Bot has reached 1 million commands, with 500,000 table pictures sent, and is in 600 servers
 
-### Version 6.0.3
+## Version 6.0.3
 **Released on 04-19-2021**
 - For Lounge, anyone in the room for a started table can edit the table now
 
@@ -108,14 +108,14 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 **Released on 05-09-2021**
 - Added ?wws, ?ctwws, ?battles commands
 
-### Version 8.1.0
+## Version 8.1.0
 **Released on 05-17-2021**
 - Added ?tabletext command
 
 ### 05-19-2021
 - TableBot is bug free
 
-### Version 8.2.0
+## Version 8.2.0
 **Released on 05-26-2021**
 - Added ?undo command - Table Bot now stores a history
 - ?quickedit supports Lounge names now
@@ -125,11 +125,11 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - Added mii heads to the footer of table
 - Added ?sw miis=off to turn them off
 
-### Version 9.0.1
+## Version 9.0.1
 **Released on 06-11-2021**
 - Disabled ?mii command and removed miis in footer (memory crash)
 
-### Version 9.0.2
+## Version 9.0.2
 **Released on 06-12-2021**
 - Fixed memory crash, enabled ?mii command and add miis in footer again
 
@@ -154,42 +154,42 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - Bring back green header
 - Shortened Links (tinyurl) for MKW Lounge mogi updates. Discord locks on iOS when long links are clicked, so this should provide iOS users with a way to load the mmr preview link or admin panel link without locking.
 
-### Version 11.1.0
+## Version 11.1.0
 **Released on 08-06-2021**
 - Mid GP subs now supported for mogi updates. Mogi updates can be between 1 and 32 race submissions.
 - Documentation updated for table submission help.
 - Abuse tracking updated
 
-### Version 11.2.0
+## Version 11.2.0
 **Released on 10-25-2021**
 - New tag AI is implemented, which is faster and more accurate in determining correct teams.
 
-### Version 11.3.0
+## Version 11.3.0
 **Released on 11-19-2021**
 - Miis on table image are no longer cropped; rather, they are resized to fit.
 - Custom track SHA names are fixed.
-- Special Grand Star Cup ?wp command
-- Miis pulled multiple at a time instead of one at a time. This fixed issues with miis missing from tables.
+- Special Grand Star Cup ?wp command.
+- Miis pulled multiple at a time instead of one at a time. This fixes issues with miis missing from tables.
 
-### Version 11.4.0
+## Version 11.4.0
 **Released on 12-18-2021**
 - Ability to add rewards/bonuses to players via `?penalty` using negative numbers.
 - `?redo` command
 - Data tracking commands `?populartracks` and `?unpopulartracks` added.
 
-### Version 11.5.0
+## Version 11.5.0
 **Released on 12-27-2021**
 - Ability to specify max races for `?wp` and `?tt`
 - Bug fixes for `?redo`
 - Bug fixes for `?help` not sending because of Discord character limits
 
-### Version 11.6.0
+## Version 11.6.0
 **Released on 01-13-2022**
 - Email protected names (Cloudflare protection) now display correctly.
 - Patch issued regarding bug where certain Lounge names didn't work for commands.
 - New player stat-tracking commands: `?besttracks`, `?worsttracks`, and `?topplayers`.
 
-### Version 11.7.0
+## Version 11.7.0
 **Released on 11-30-2022**
 - `?record` command added.
 
@@ -204,7 +204,7 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - `IgnoreLargeTimes` server setting updated to allow for specific format settings, making it much more customizable.
 - Command `?copyfrom` allows users to copy a table from another channel to their current channel.
 
-### Version 12.1.0
+## Version 12.1.0
 **Released on TBD**
 - If users do not have a flag set, flags are automatically added to the tables based on the user's mii location data.
 
