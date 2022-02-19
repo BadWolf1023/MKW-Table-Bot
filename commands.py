@@ -107,13 +107,27 @@ async def mkwx_check(message, error_message):
             return True
         raise TableBotExceptions.CommandDisabled(error_message)
 
-def get_room_not_loaded_message(server_prefix: str, is_lounge_server=False, custom_message=None):
+def get_room_not_loaded_message(server_prefix: str, is_lounge_server=False, custom_message=None, incorrect_use=False):
+    BULLET_POINT = '\u2022'
+    ROOM_LOAD_EXAMPLES = [
+            # Example goal: starting a table with teams, starting a table for yourself
+            f"  {BULLET_POINT} Table a 2v2 room with 5 teams that you're in: `{server_prefix}sw 2v2 5`",
+            # Example goal: starting an FFA table, starting a table for a player who isn't registered in Lounge
+            f"  {BULLET_POINT} Table an FFA room with 12 players that the FC 1000-2010-9010 is in: `{server_prefix}sw FFA 12 1000-2010-9010`",
+            # Example goal: starting a table for a player who is registered in Lounge, show that spaces are allowed, show that capitalization does not matter
+            f"""  {BULLET_POINT} Table a 3v3 room with 2 teams that someone with the Lounge name "Jack Ryan" (mention them in the command if you don't know their Lounge name) is in: `{server_prefix}sw 3v3 2 Jack ryan`""",
+            # Example goal: starting a table for a room that has ended
+            f"  {BULLET_POINT} Has the room already ended? Use the `{server_prefix}page playername` command, find the room on the website that you want to table, then use the rxx number in the URL (eg r4203018): `{server_prefix}sw 2v2 6 r4203018`"
+            ]
+    example_str = "**Here are some examples to get you started:\n**" + "\n".join(ROOM_LOAD_EXAMPLES)
     if custom_message is not None:
         return custom_message.replace("{server_prefix}", server_prefix)
+    elif incorrect_use:
+        return f"Hmm, that's not how to use this command. {example_str}"
     elif is_lounge_server:
-        return f"Table has not been started! Use the command `{server_prefix}sw mogiformat numberOfTeams` to start a table."
+        return f"Table has not been started! Use the command `{server_prefix}sw mogiformat numberofteams` to start a table.\n\n{example_str}"
     else:
-        return f"Table has not been started! Use the command `{server_prefix}sw warformat numberOfTeams (LoungeName/rxx/FC) (gps=numberOfGPs) (psb=on/off) (miis=yes/no)` to start a table."
+        return f"Table has not been started! Use the command `{server_prefix}sw warformat numberofteams (LoungeName/rxx/FC) (gps=numberOfGPs) (psb=on/off) (miis=yes/no)` to start a table.\n\n{example_str}"
 
 def ensure_table_loaded_check(channel_bot: TableBot.ChannelBot, server_prefix: str, is_lounge_server=False, custom_message=None):
     if channel_bot.is_table_loaded():
@@ -1555,7 +1569,7 @@ class TablingCommands:
             for team_arg, team in enumerate(teams, 1):
                 to_send += f"{team_arg}. {UtilityFunctions.clean_for_output(team)}\n"
             or_str = f" or `{server_prefix}{command_name} {UtilityFunctions.clean_for_output(teams[0])} 15`" if len(teams) > 0 else ''
-            to_send += f"\n**To give the first tag on the list a 15 point penalty, do:** `{server_prefix}{command_name} 1 15`{or_str}"
+            to_send += f"\n**To give the first tag on the list a 15 point penalty:** `{server_prefix}{command_name} 1 15`{or_str}"
             await message.channel.send(to_send)
             return
         if len(args) < 3:
@@ -1563,22 +1577,24 @@ class TablingCommands:
             return
 
         team_arg = " ".join(args[1:-1])
-        amount_arg = args[-1]        
+        amount_arg = args[-1]
+        cleaned_team_arg = UtilityFunctions.clean_for_output(team_arg)  
+        cleaned_amount_arg = UtilityFunctions.clean_for_output(amount_arg)
         if UtilityFunctions.is_int(team_arg):
             team_num = int(team_arg)
         else:
             team_num = (teams.index(team_arg)+1) if team_arg in teams else None
         if team_num is None:
-            await message.channel.send(f"The tag must either be a number or the exact tag of a team. {example_help(server_prefix, command_name)}")
+            await message.channel.send(f"The given tag `{cleaned_team_arg}` is neither a number nor the exact tag of a team. {example_help(server_prefix, command_name)}")
             return
         elif team_num < 1 or team_num > len(teams):
-            await message.channel.send(f"The tag number must be on the tag list (between 1 and {len(teams)}). {example_help(server_prefix, args[0])}")
+            await message.channel.send(f"The given tag number `{team_num}` is not on the tag list (it should be between 1 and {len(teams)}). {example_help(server_prefix, command_name)}")
             return
 
         if UtilityFunctions.is_int(amount_arg):
             amount = int(amount_arg)
         else:
-            await message.channel.send(f"The penalty amount must be a number. {example_help(server_prefix, command_name)}")
+            await message.channel.send(f"The penalty amount `{cleaned_amount_arg}` is not a number. {example_help(server_prefix, command_name)}")
             return
 
         this_bot.add_save_state(message.content)
@@ -1590,45 +1606,39 @@ class TablingCommands:
     @staticmethod
     async def disconnections_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
+        command_name = args[0]
         if len(args) == 1:
             had_DCS, DC_List_String = this_bot.getRoom().getDCListString(this_bot.getWar().getNumberOfGPS(), True)
             if had_DCS:
-                DC_List_String += "\nIf the first disconnection on this list was on results: **" + server_prefix + "dc 1 onresults**\n" +\
-                "If they were not on results, do **" + server_prefix + "dc 1 before**"
+                DC_List_String += f"\nIf the first disconnection on this list was on results, do `{server_prefix}{command_name} 1 onresults`\nIf they were not on results, do `{server_prefix}{command_name} 1 before`"
             await message.channel.send(DC_List_String)
             return
 
         if len(args) < 3:
-            await message.channel.send("You must give a dc number on the list and if they were on results or not. Run " + server_prefix + "dcs for more information.")
+            await message.channel.send(example_help(server_prefix, 'dcs'))
             return
 
         missing_per_race = this_bot.getRoom().getMissingOnRace(this_bot.getWar().numberOfGPs, include_blank=False)
         merged = list(itertools.chain(*missing_per_race))
-        disconnection_number = args[1]
-        if not disconnection_number.isnumeric():
-            await message.channel.send(UtilityFunctions.clean_for_output(str(disconnection_number)) + " is not a number on the dcs list. Do " + server_prefix + "dcs for an example on how to use this command.")
+        disconnection_arg = args[1]
+        if not UtilityFunctions.is_int(disconnection_arg):
+            await message.channel.send(f"`{UtilityFunctions.clean_for_output(disconnection_arg)}` is not a number on the dcs list. {example_help(server_prefix, 'dcs')}")
             return
-        if int(disconnection_number) > len(merged):
-            await message.channel.send("There have not been this many DCs. Run " + server_prefix + "dcs to learn how to use this command.")
-            return
-        if int(disconnection_number) < 1:
-            await message.channel.send("You must give a DC number on the list. Run " + server_prefix + "dcs to learn how to use this command.")
+        disconnection_number = int(disconnection_arg)
+        if disconnection_number < 1 or disconnection_number > len(merged):
+            await message.channel.send(f"""The given DC number `{disconnection_number}` is not on the dcs list. {example_help(server_prefix, 'dcs')}""")
             return
 
-        disconnection_number = int(disconnection_number)
         on_or_before = args[2].lower().strip("\n").strip()
-        race, index = 0, 0
+        race, index = 0, 0  # TODO: This doesn't look very good
         counter = 0
         for missing in missing_per_race:
             race += 1
-
             for _ in missing:
                 counter += 1
                 if counter == disconnection_number:
                     break
                 index+=1
-
             else:
                 index=0
                 continue
@@ -1640,17 +1650,18 @@ class TablingCommands:
         if on_or_before in ["on", "during", "midrace", "results", "onresults"]:
             this_bot.add_save_state(message.content)
             this_bot.getRoom().edit_dc_status(player_fc, race, 'on')
-            mes = "Saved: " + player_name + ' was on results for race #' + str(race)       
-            if not dont_send: await message.channel.send(mes)             
-            return mes
-        if on_or_before in ["before", "prior", "beforerace", "notonresults", "noresults", "off"]:
+            to_send = f"Saved: {player_name} was on results for race #{race}"
+        elif on_or_before in ["before", "prior", "beforerace", "notonresults", "noresults", "off"]:
             this_bot.add_save_state(message.content)
             this_bot.getRoom().edit_dc_status(player_fc, race, 'before')
-            mes = "Saved: " + player_name + ' was not on results for race #' + str(race)
-            if not dont_send: await message.channel.send(mes)                  
-            return mes 
-        
-        await message.channel.send('"' + UtilityFunctions.clean_for_output(str(on_or_before)) + '" needs to be either "on" or "before". Do ' + server_prefix + "dcs for an example on how to use this command.")
+            to_send = f"Saved: {player_name} was not on results for race #{race}"
+        else:
+            await message.channel.send(f"""`{UtilityFunctions.clean_for_output(on_or_before)}` must be either `on` or `before`. {example_help(server_prefix, 'dcs')}""")
+            return
+
+        if dont_send:
+            return to_send
+        await message.channel.send(to_send) 
 
 
     @staticmethod
@@ -1900,7 +1911,7 @@ class TablingCommands:
 
         args = command.split()
         if len(args) < 3:
-            await message.channel.send(f"Do `{server_prefix}quickstart` for help on how to use this command.")
+            await message.channel.send(get_room_not_loaded_message(server_prefix, is_lounge_server, incorrect_use=True))
             return
         
         war_format_arg = args[1].lower()
