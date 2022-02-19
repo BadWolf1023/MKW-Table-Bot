@@ -57,7 +57,7 @@ def lounge_get(fc, lounge_replace=True):
             return did_lounge[fc_did[fc][0]]
     return ""
 
-def lounge_get_fill(fc, name, lounge_replace=True):
+def lounge_name_or_mii_name(fc, name, lounge_replace=True):
     """Return lounge name if player has one"""
     loungeName = lounge_get(fc, lounge_replace)
     if loungeName=="":

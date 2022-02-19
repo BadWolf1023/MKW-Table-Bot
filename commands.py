@@ -1955,7 +1955,7 @@ class TablingCommands:
         this_bot.freeLock()
         this_bot.getRoom().setSetupUser(author_id,  message.author.display_name)
         if this_bot.getWar() is not None:
-            players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numgps*4).items())
+            players = list(this_bot.getRoom().get_fc_to_name_dict(1, numgps*4).items())
             tags_player_fcs = TagAIShell.determineTags(players, this_bot.getWar().playersPerTeam)
             this_bot.getWar().set_temp_team_tags(tags_player_fcs)
 
@@ -1991,7 +1991,7 @@ class TablingCommands:
             #return await message.channel.send(f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  `@MKW Table Bot A 2 3 / B 1 4 / Player 5 6` (**you must use my bot mention as the prefix or the `/raw` slash command**)")
 
         numGPS = this_bot.getWar().numberOfGPs
-        players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, numGPS*4).items())
+        players = list(this_bot.getRoom().get_fc_to_name_dict(1, numGPS*4).items())
 
         if len(players) != this_bot.getWar().get_num_players():
             await message.channel.send(f'''**Warning:** *the number of players in the room doesn't match your war format and teams. **Table started, but teams might be incorrect.***''')
@@ -2095,7 +2095,7 @@ class TablingCommands:
     @staticmethod
     async def all_players_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-        await message.channel.send(this_bot.getRoom().get_players_list_string())
+        await message.channel.send(this_bot.getRoom().get_sorted_player_list_string())
 
     @staticmethod
     async def set_war_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2246,7 +2246,7 @@ class TablingCommands:
             await prev_message_edit(prev_message)
         else:
             message2 = await message.channel.send("Updating room...")
-        old_room_fcs = set(this_bot.getRoom().getFCPlayerListStartEnd(1, this_bot.getWar().numberOfGPs*4))
+        old_room_fcs = set(this_bot.getRoom().get_fc_to_name_dict(1, this_bot.getWar().numberOfGPs*4))
         update_status = await this_bot.update_table()
         if not update_status:
             failure_message = "General room failure, war picture. Report this to a Table Bot developer if you see it."
@@ -2263,7 +2263,7 @@ class TablingCommands:
         include_up_to_str = up_to and up_to<len(this_bot.getRoom().getRaces())
 
         
-        new_room_fcs = set(this_bot.getRoom().getFCPlayerListStartEnd(1, this_bot.getWar().numberOfGPs*4))
+        new_room_fcs = set(this_bot.getRoom().get_fc_to_name_dict(1, this_bot.getWar().numberOfGPs*4))
         added_fcs = new_room_fcs.difference(old_room_fcs)
         if added_fcs:
             await SmartTypes.SmartLookupTypes(added_fcs).lounge_api_update()

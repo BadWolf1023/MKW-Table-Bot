@@ -157,7 +157,8 @@ class Placement:
         return minutes*60+seconds+milliseconds/1000
     
     def __str__(self):
-        to_return = f"{self.place}. {UtilityFunctions.clean_for_output(self.player.name + UserDataProcessing.lounge_add(self.player.FC))} - "
+        
+        to_return = f"{self.place}. {UserDataProcessing.proccessed_lounge_add(self.player.name, self.player.FC)} - "
         if self.is_disconnected():
             to_return += "DISCONNECTED"
         else:

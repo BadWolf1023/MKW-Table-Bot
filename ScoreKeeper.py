@@ -52,7 +52,7 @@ def print_scores(fc_score, fc_player):
 def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePts=3, server_id=None):
     #disconnections = curRoom.getMissingOnRace()
     fc_score = {}
-    fc_player = curRoom.getFCPlayerListStartEnd(startRace, endRace)
+    fc_player = curRoom.get_fc_to_name_dict(startRace, endRace)
     for fc in fc_player:
         fc_score[fc] = []
     #If the races completed is less than the start race, no one has score anything yet - That's in the future!
@@ -171,7 +171,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     for x in range(numGPs):
         GPs.append(calculateGPScoresDCS(x+1, room, missingRacePts, server_id))
         
-    fcs_players = room.getFCPlayerListStartEnd(1, numGPs*4)
+    fcs_players = room.get_fc_to_name_dict(1, numGPs*4)
     
     
     FC_table_str = {}

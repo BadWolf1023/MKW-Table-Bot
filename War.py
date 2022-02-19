@@ -135,7 +135,7 @@ class War(object):
             result += f"**Tag: {UtilityFunctions.clean_for_output(teamTag)}** \n"
             for fc, playerName in fc_players:
                 playerNum += 1
-                result += f"\t{playerNum}. {UtilityFunctions.clean_for_output(playerName)}{UserDataProcessing.lounge_add(fc)}\n"
+                result += f"\t{playerNum}. {UserDataProcessing.proccessed_lounge_add(playerName, fc)}\n"
             
         return result
         
