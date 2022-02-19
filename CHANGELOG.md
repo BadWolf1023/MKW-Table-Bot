@@ -194,7 +194,7 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - `?record` command added.
 
 ## Version 12.0.0
-**released 02-04-2022**
+**Released on 02-04-2022**
 - Major dependency change: discord.py -> pycord
 - Table Bot supports Discord Components and Interactions.
 - Buttons are displayed to confirm and update rooms.
