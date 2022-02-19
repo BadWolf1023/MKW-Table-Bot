@@ -76,7 +76,6 @@ TABLE_THEME_TERMS = {'style', 'theme', 'tablestyle', 'tabletheme'}
 GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
 DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
 
-
 #Commands that require a war to be started, but don't modify the war/room/table in any way
 TABLE_TEXT_TERMS = {"tt", "tabletext"}
 WAR_PICTURE_TERMS = {"wp", "warpicture", "wo", "w;", "w["}
@@ -466,16 +465,17 @@ class BadWolfBot(discord.Bot):
         command_level = interaction.data
         while command_level:
             full_command_name.append(command_level['name'])
-            if "options" in command_level: # check for nested options
-                new_level = None
-                for option in command_level['options']:
-                    if 'options' in option: #there is a nested option
-                        new_level = option
-                        break
-                command_level = new_level
+            if "options" not in command_level: # check for nested options
+                break
+
+            new_level = None
+            for option in command_level['options']:
+                if 'options' in option: #there is a nested option
+                    new_level = option
+                    break
+            command_level = new_level
         
         full_command_name = " ".join(full_command_name)
-        print(full_command_name)
         Stats.log_command(full_command_name)
         await self.process_application_commands(interaction)
     

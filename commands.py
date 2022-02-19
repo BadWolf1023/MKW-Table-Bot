@@ -797,7 +797,7 @@ class OtherCommands:
         if flag.startswith("cl_") and flag.endswith("u"): #Remap this specific flag code to a specific picture
             image_name += 'cl_C3B1u.png'
 
-        embed = discord.Embed(title=f"{SmartTypes.capitalize(SmartTypes.possessive(descriptive))} flag", colour = discord.Colour.dark_blue())
+        embed = discord.Embed(title=f"{SmartTypes.capitalize(SmartTypes.possessive(descriptive))} flag", colour = discord.Colour.dark_blue(), description=flag)
         file = discord.File(f"{common.FLAG_IMAGES_PATH}{image_name}", filename=image_name)
         embed.set_thumbnail(url=f"attachment://{image_name}")
         await message.channel.send(file=file, embed=embed)
@@ -1579,9 +1579,10 @@ class TablingCommands:
         teamNum = args[1]
         amount = args[2]
         teams = sorted(this_bot.getWar().getTags())
+        
         if not teamNum.isnumeric():
             for ind, team in enumerate(teams):
-                if team.lower() == teamNum:
+                if team.lower() == teamNum.lower():
                     teamNum = ind + 1
                     break
         else:
