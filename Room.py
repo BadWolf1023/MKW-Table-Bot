@@ -282,7 +282,7 @@ class Room(object):
     
     
     def getMiiNameByFC(self, FC):
-        player_list = self.get_fc_to_name_dict(endrace=None)
+        player_list = self.get_fc_to_name_dict()
         if FC in player_list:
             return player_list[FC]
         return "no name"
@@ -317,10 +317,10 @@ class Room(object):
         self.name_changes[FC] = name
     
     def getFCs(self):
-        return self.get_fc_to_name_dict(endrace=None).keys()
+        return self.get_fc_to_name_dict().keys()
     
     def getPlayers(self):
-        return self.get_fc_to_name_dict(endrace=None).values()
+        return self.get_fc_to_name_dict().values()
     
             
     def setRaces(self, races):
@@ -546,10 +546,10 @@ class Room(object):
         self.populating = populating
 
     def get_room_FCs(self):
-        return self.get_fc_to_name_dict(endrace=None).keys()
+        return self.get_fc_to_name_dict().keys()
     
     def getPlayers(self):
-        return self.get_fc_to_name_dict(endrace=None).values()
+        return self.get_fc_to_name_dict().values()
 
 
     async def populate_miis(self):
