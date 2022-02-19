@@ -442,7 +442,7 @@ class Room(object):
                         status_str = f"DCed **{self.dc_on_or_before[raceNum][fc]}**"
                         confirm_str = " - *Tabler confirmed*"
 
-                    build_string += UtilityFunctions.clean_for_output(player + UserDataProcessing.lounge_add(fc, replace_lounge)) + f"** {status_str} race #" + str(raceNum) + " (" + str(self.races[raceNum-1].getTrackNameWithoutAuthor()) + f"){confirm_str}\n"
+                    build_string += f"{UserDataProcessing.proccessed_lounge_add(player, fc, replace_lounge)} ** {status_str} race #{raceNum} ({self.races[raceNum-1].getTrackNameWithoutAuthor()}){confirm_str}\n"
                     counter+=1
             return True, build_string
     
@@ -498,11 +498,11 @@ class Room(object):
     
     #method that returns the players in a consistent, sorted order - first by getTagSmart, then by FC (for tie breaker)
     #What is returned is a list of tuples (fc, player_name)
-    def get_sorted_player_list(self, startrace=1, endrace=12):
+    def get_sorted_player_list(self, startrace=None, endrace=None):
         players = list(self.get_fc_to_name_dict(startrace, endrace).items())
         return sorted(players, key=lambda x: (TagAIShell.getTag(x[1]), x[0]))
        
-    def get_sorted_player_list_string(self, startrace=1, endrace=12, lounge_replace=True, include_fc=False):
+    def get_sorted_player_list_string(self, startrace=None, endrace=None, lounge_replace=True, include_fc=False):
         players = self.get_sorted_player_list(startrace, endrace)
         to_build = ""
         for counter, (fc, player) in enumerate(players, 1):

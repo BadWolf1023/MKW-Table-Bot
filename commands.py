@@ -1539,7 +1539,7 @@ class TablingCommands:
     @staticmethod
     async def fcs_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-        await message.channel.send(this_bot.getRoom().getFCPlayerListString())
+        await message.channel.send(this_bot.getRoom().get_sorted_player_list_string(include_fc=True))
 
 
     @staticmethod
