@@ -101,7 +101,8 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
                 self.view.children.pop(ind)
 
         self.view.stop()
-        await common.safe_edit(interaction.message, view=self.view)
+        # await common.safe_edit(interaction.message, view=self.view)
+        await interaction.response.edit_message(view=self.view)
 
         message = InteractionUtils.create_proxy_msg(interaction, [self.cat])
         await commands.TablingCommands.after_start_war_command(message, self.view.bot, [self.cat], self.view.prefix, self.view.is_lounge)

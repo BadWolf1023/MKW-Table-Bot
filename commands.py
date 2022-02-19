@@ -1579,7 +1579,7 @@ class TablingCommands:
         teamNum = args[1]
         amount = args[2]
         teams = sorted(this_bot.getWar().getTags())
-        
+
         if not teamNum.isnumeric():
             for ind, team in enumerate(teams):
                 if team.lower() == teamNum.lower():
@@ -2025,8 +2025,10 @@ class TablingCommands:
                 for teamNumber in range(0, min(this_bot.getWar().numberOfTeams, len(players))):
                     dummy_teams[players[teamNumber][0]] = str(teamNumber)
                 this_bot.getWar().setTeams(dummy_teams)
-                await message2.edit(this_bot.get_room_started_message(), view=Components.PictureView(this_bot, server_prefix, is_lounge_server))
-                TableBot.last_wp_message[this_bot.channel_id] = message2
+                # await message2.edit(this_bot.get_room_started_message(), view=Components.PictureView(this_bot, server_prefix, is_lounge_server))
+                # TableBot.last_wp_message[this_bot.channel_id] = message2
+                await message2.edit(content=this_bot.get_room_started_message())
+                await TablingCommands.war_picture_command(message2, this_bot, ['wp'], server_prefix, is_lounge_server)
             this_bot.setShouldSendNotification(True)
 
             
@@ -2053,9 +2055,12 @@ class TablingCommands:
             await message.channel.send(f'''**Warning:** *the number of players in the room doesn't match your war format and teams. **Table started, but teams might be incorrect.***''')
 
         this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
-        view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
-        await view.send(message, this_bot.get_room_started_message())
-        TableBot.last_wp_message[this_bot.channel_id] = view.message
+        # view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+        # await view.send(message, this_bot.get_room_started_message())
+        # TableBot.last_wp_message[this_bot.channel_id] = view.message
+        await message.channel.send(this_bot.get_room_started_message())
+        await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
+
 
     @staticmethod
     @TimerDebuggers.timer_coroutine
@@ -2486,9 +2491,12 @@ class TablingCommands:
         else:
             this_bot.manualWarSetUp = False
             this_bot.getWar().setTeams(fc_tag)
-            view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
-            await view.send(message, this_bot.get_room_started_message())
-            TableBot.last_wp_message[this_bot.channel_id] = view.message
+            # view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+            # await view.send(message, this_bot.get_room_started_message())
+            # TableBot.last_wp_message[this_bot.channel_id] = view.message
+            await message.channel.send(this_bot.get_room_started_message())
+            await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
+
 
     @staticmethod
     async def remove_race_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
