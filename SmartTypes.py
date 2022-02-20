@@ -112,7 +112,11 @@ class SmartLookupTypes:
         elif self._original_type is SmartLookupTypes.DISCORD_ID or self._original_type is SmartLookupTypes.RAW_DISCORD_MENTION or self._original_type is SmartLookupTypes.SELF_DISCORD_ID:
             lounge_name = UserDataProcessing.get_lounge(self.modified_original)
         elif self._original_type is SmartLookupTypes.LOUNGE_NAME:
-            lounge_name = self.modified_original
+            discord_id = self.get_discord_id()
+            if discord_id is None:
+                lounge_name = self.modified_original
+            else:
+                lounge_name = UserDataProcessing.get_lounge(discord_id)
 
         return None if lounge_name == '' else lounge_name
 
@@ -188,13 +192,18 @@ class SmartLookupTypes:
         return f"{self.modified_original}", "it"
 
     def get_clean_smart_print(self, message):
+        '''Based on the type, returns a 2-tuple of strings that most informational messages can use
+        The first index in the tuple is a descriptive of the SmartLookupType type along with the actual modified type.
+        If the given type was a discord mention, the display name of that member will be returned if it can be found, otherwise the discord ID of the mention will be used
+        The second index is the correct grammatical pronoun of the type (eg they, you, it)
+        '''
         descriptive, pronoun = self.get_smart_print()
         if self.get_type() is self.RAW_DISCORD_MENTION:
             for mention in message.mentions:
                 if str(mention.id) == self.modified_original:
                     descriptive = str(mention.name)
                     break
-        return UtilityFunctions.process_name(descriptive), pronoun
+        return UtilityFunctions.clean_for_output(descriptive), pronoun
 
 def to_be_conjugation(pronoun: str):
     conjugations = {"i": "am",

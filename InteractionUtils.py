@@ -3,17 +3,16 @@ import discord
 import SmartTypes as ST
 import common
 
-def check_lounge_server(message):
-    return message.guild.id == common.MKW_LOUNGE_SERVER_ID
+def simulating_lounge_server(message_or_interaction):
+    if common.is_beta and check_beta_server(message_or_interaction):
+        return True
+    return check_lounge_server(message_or_interaction)
 
-def check_beta_server(message):
-    return message.guild.id == common.MKW_LOUNGE_SERVER_ID
+def check_lounge_server(message_or_interaction):
+    return message_or_interaction.guild.id == common.MKW_LOUNGE_SERVER_ID
 
-def check_lounge_server_id(id):
-    return id == common.MKW_LOUNGE_SERVER_ID
-
-def check_beta_server_id(id):
-    return check_lounge_server_id(id)
+def check_beta_server(message_or_interaction):
+    return message_or_interaction.guild.id == common.TABLE_BOT_DISCORD_SERVER_ID
 
 def bot_admin_check(ctx: discord.ApplicationContext):
     can = common.is_bot_admin(ctx.author)

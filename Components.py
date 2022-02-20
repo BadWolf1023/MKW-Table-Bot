@@ -25,8 +25,9 @@ class ManualTeamsModal(discord.ui.Modal):
         message = InteractionUtils.create_proxy_msg(interaction)
         message.content = self.children[0].value
         response = await interaction.response.send_message('Manual teams processed.')
+        args = message.content.split()
         try:
-            await commands.TablingCommands.manual_war_setup(message, self.bot, self.prefix, self.is_lounge, message.content)
+            await commands.TablingCommands.manual_war_setup(message, self.bot, args, self.prefix, self.is_lounge)
         except Exception as error:
             await response.edit_original_message(content='An error occurred while creating manual teams.')
             return await InteractionUtils.on_component_error(error, interaction, self.prefix)
@@ -211,7 +212,7 @@ class SubmitButton(discord.ui.Button['PictureView']):
         self.channel_bot.has_been_lounge_submitted = True
 
         args = [f'{self.rt_ct}update', str(self.tier), str(self.num_races)]
-        msg = InteractionUtils.create_proxy_msg(interaction, args)
+        message = InteractionUtils.create_proxy_msg(interaction, args)
 
         self.responded = True
         self.view.children.remove(self)
@@ -220,13 +221,13 @@ class SubmitButton(discord.ui.Button['PictureView']):
         async def submit_table():
             try:
                 if self.rt_ct.lower() == 'ct':
-                    await commands.LoungeCommands.ct_mogi_update(common.client,self.channel_bot,msg,args,common.client.lounge_submissions)
+                    await commands.LoungeCommands.ct_mogi_update(common.client, message, self.channel_bot, args, common.client.lounge_submissions)
                 else:
-                    await commands.LoungeCommands.rt_mogi_update(common.client,self.channel_bot,msg,args,common.client.lounge_submissions)
+                    await commands.LoungeCommands.rt_mogi_update(common.client, message, self.channel_bot, args, common.client.lounge_submissions)
                 
                 await self.view.on_timeout() #remove picture button as well, since table has been submitted
             except Exception as e:
-                await InteractionUtils.handle_component_exception(e, msg, self.view.prefix)
+                await InteractionUtils.handle_component_exception(e, message, self.view.prefix)
 
         asyncio.create_task(submit_table())
 

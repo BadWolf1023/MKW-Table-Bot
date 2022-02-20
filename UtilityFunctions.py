@@ -28,7 +28,7 @@ def remove_blacklisted(name:str, get_blacklisted_words=get_blw):
     return name, False
             
 
-def process_name(name:str, get_blacklisted_words=get_blw):
+def clean_for_output(name:str, get_blacklisted_words=get_blw):
     had_blacklisted = True
     while had_blacklisted:
         name, had_blacklisted = remove_blacklisted(name, get_blacklisted_words)
@@ -256,7 +256,6 @@ def is_fc(fc):
 
 def is_discord_mention(discord_mention_str):
     return re.match("^<@(!)?\d{7,20}>$", discord_mention_str.strip()) is not None
-
 
     
 def initialize():

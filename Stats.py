@@ -272,7 +272,7 @@ def stats(num_bots:int, client=None, stats_file=common.STATS_FILE, commands_logg
     str_build += "Number of people who have used MKW Table Bot: **" + str(len(users)) + "**\n"
     str_build += "First user ever: **Chippy#8126" + "**\n"                
     str_build += "\n"
-    str_build += "Number of war pictures generated: **" + str(war_picture_count) + "**\n"
+    str_build += "Number of table pictures generated: **" + str(war_picture_count) + "**\n"
     str_build += "Total commands MKW Table Bot has recieved: **" + str(total_commands) + "**\n"
     str_build += "\n"
     #4133

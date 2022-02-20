@@ -157,14 +157,14 @@ class Room(object):
     
     def get_room_subs(self):
         if not self.had_subs():
-            return "No subs this war."
+            return "No subs for this table."
         
-        ret = "*Subs this war:*"
+        ret = "*Subs for this table:*"
         
         for ind, (sub_in_fc, sub_data) in enumerate(self.sub_ins.items(), 1):
-            subInName = self.getMiiNameByFC(sub_in_fc) + UserDataProcessing.lounge_add(sub_in_fc)
+            subInName = UserDataProcessing.proccessed_lounge_add(self.getMiiNameByFC(sub_in_fc), sub_in_fc)
             sub_out_fc = sub_data[2]
-            subOutName = self.getMiiNameByFC(sub_out_fc) + UserDataProcessing.lounge_add(sub_out_fc)
+            subOutName = UserDataProcessing.proccessed_lounge_add(self.getMiiNameByFC(sub_out_fc), sub_out_fc)
             race = sub_data[0]
             ret+=f"\n\t{ind}. **{subInName}** subbed in for **{subOutName}** on race {race}."
         
@@ -209,12 +209,11 @@ class Room(object):
             subInStartRace = sub_data[0]
             if race_num != subInStartRace:
                 continue
-            
-            subInName = self.getMiiNameByFC(sub_in_fc) + UserDataProcessing.lounge_add(sub_in_fc)
+            subInName = UserDataProcessing.proccessed_lounge_add(self.getMiiNameByFC(sub_in_fc), sub_in_fc)
             if sub_in_fc in self.getNameChanges():
-                subInName = self.getNameChanges()[sub_in_fc]
-            suboutName = sub_data[3]
-            sub_str_list.append(f"Tabler subbed in {UtilityFunctions.process_name(subInName)} for {UtilityFunctions.process_name(suboutName)} this race")
+                subInName = UtilityFunctions.clean_for_output(self.getNameChanges()[sub_in_fc])
+            suboutName = UtilityFunctions.clean_for_output(sub_data[3])
+            sub_str_list.append(f"Tabler subbed in {subInName} for {suboutName} this race")
         return sub_str_list
     
     def add_sub(self, subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores):
@@ -275,41 +274,15 @@ class Room(object):
         return fcPlacementDict
 
     
-    def getFCPlayerList(self, startrace=1,endrace=12):
-        fcNameDict = {}
-        if endrace is None:
-            endrace = len(self.races)
-        for race in self.races[startrace-1:endrace]:
-            for placement in race.getPlacements():
-                FC, name = placement.get_fc_and_name()
-                fcNameDict[FC] = name
-        return fcNameDict
-    
-    def getFCPlayerListString(self, startrace=1,endrace=12, lounge_replace=True):
-        FCPL = self.getFCPlayerList(startrace, endrace)
-        to_build = ""
-        for fc, name in FCPL.items():
-            to_build += fc + ": " + UtilityFunctions.process_name(name + UserDataProcessing.lounge_add(fc, lounge_replace)) + "\n"
-        return to_build
-    
     def getPlayerPenalities(self):
         return self.playerPenalties
         
     def addPlayerPenalty(self, fc, amount):
         self.playerPenalties[fc] += amount
-        
     
-    def getFCPlayerListStartEnd(self, startRace, endRace):
-        fcNameDict = {}
-        for raceNumber, race in enumerate(self.races, 1):
-            if raceNumber >= startRace and raceNumber <= endRace: 
-                for placement in race.getPlacements():
-                    FC, name = placement.get_fc_and_name()
-                    fcNameDict[FC] = name
-        return fcNameDict
     
     def getMiiNameByFC(self, FC):
-        player_list = self.getFCPlayerList(endrace=None)
+        player_list = self.get_fc_to_name_dict()
         if FC in player_list:
             return player_list[FC]
         return "no name"
@@ -344,10 +317,10 @@ class Room(object):
         self.name_changes[FC] = name
     
     def getFCs(self):
-        return self.getFCPlayerList(endrace=None).keys()
+        return self.get_fc_to_name_dict().keys()
     
     def getPlayers(self):
-        return self.getFCPlayerList(endrace=None).values()
+        return self.get_fc_to_name_dict().values()
     
             
     def setRaces(self, races):
@@ -379,7 +352,7 @@ class Room(object):
         GPPlayers = []
         missingPlayers = []
         for GPNum in range(numGPS):
-            GPPlayers.append(self.getFCPlayerListStartEnd((GPNum*4)+1, (GPNum+1)*4))
+            GPPlayers.append(self.get_fc_to_name_dict((GPNum*4)+1, (GPNum+1)*4))
         
         for raceNum, race in enumerate(self.races):
             thisGPPlayers = GPPlayers[int(raceNum/4)]
@@ -396,7 +369,7 @@ class Room(object):
         missingPlayers = [] #players who were missing or had a blank time 
 
         for GPNum in range(numGPS):
-            GPPlayers.append(self.getFCPlayerListStartEnd((GPNum*4)+1, (GPNum+1)*4))
+            GPPlayers.append(self.get_fc_to_name_dict((GPNum*4)+1, (GPNum+1)*4))
         
         wentMissingThisGP = []
         for raceNum, race in enumerate(self.races[0:numGPS*4]):
@@ -427,7 +400,7 @@ class Room(object):
             for fc, status in players.items():
                 if status == 'on':
                     if race-1 < len(missingPlayers):
-                        missingPlayers[race-1].append((fc, self.getFCPlayerList()[fc]))
+                        missingPlayers[race-1].append((fc, self.get_fc_to_name_dict()[fc]))
 
         for missingPlayersOnRace in missingPlayers:
             missingPlayersOnRace.sort()
@@ -469,7 +442,7 @@ class Room(object):
                         status_str = f"DCed **{self.dc_on_or_before[raceNum][fc]}**"
                         confirm_str = " - *Tabler confirmed*"
 
-                    build_string += UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, replace_lounge)) + f"** {status_str} race #" + str(raceNum) + " (" + str(self.races[raceNum-1].getTrackNameWithoutAuthor()) + f"){confirm_str}\n"
+                    build_string += f"{UserDataProcessing.proccessed_lounge_add(player, fc, replace_lounge)} ** {status_str} race #{raceNum} ({self.races[raceNum-1].getTrackNameWithoutAuthor()}){confirm_str}\n"
                     counter+=1
             return True, build_string
     
@@ -507,31 +480,36 @@ class Room(object):
             return player_list[index]
         except IndexError:
             raise
+
+    def get_fc_to_name_dict(self, start_race=None, end_race=None):
+        if start_race is None:
+            start_race = 1
+        if end_race is None:
+            end_race = len(self.races)
+
+        fcNameDict = {}
+        for raceNumber, race in enumerate(self.races, 1):
+            if raceNumber >= start_race and raceNumber <= end_race: 
+                for placement in race.getPlacements():
+                    FC, name = placement.get_fc_and_name()
+                    fcNameDict[FC] = name
+        return fcNameDict
+
     
     #method that returns the players in a consistent, sorted order - first by getTagSmart, then by FC (for tie breaker)
     #What is returned is a list of tuples (fc, player_name)
-    def get_sorted_player_list(self, startrace=1, endrace=12):
-        players = list(self.getFCPlayerListStartEnd(startrace, endrace).items())
+    def get_sorted_player_list(self, startrace=None, endrace=None):
+        players = list(self.get_fc_to_name_dict(startrace, endrace).items())
         return sorted(players, key=lambda x: (TagAIShell.getTag(x[1]), x[0]))
        
-       
-    def get_sorted_player_list_string(self, startrace=1, endrace=12, lounge_replace=True):
+    def get_sorted_player_list_string(self, startrace=None, endrace=None, lounge_replace=True, include_fc=False):
         players = self.get_sorted_player_list(startrace, endrace)
         to_build = ""
-        for list_num, (fc, player) in enumerate(players, 1):
-            to_build += str(list_num) + ". " + UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, lounge_replace)) + "\n"
+        for counter, (fc, player) in enumerate(players, 1):
+            fc_str = f" - {fc}" if include_fc else ""
+            to_build += f"{counter}. {UserDataProcessing.proccessed_lounge_add(player, fc, lounge_replace)}{fc_str}\n"
         return to_build
-            
-            
-    def get_players_list_string(self, startrace=1, endrace=12, lounge_replace=True):
-        player_list = self.get_sorted_player_list(startrace, endrace)
-        build_str = ""
-        for counter, (fc, player) in enumerate(player_list, 1):
-            build_str += str(counter) + ". " + UtilityFunctions.process_name(player)
-            if lounge_replace:
-                build_str += UtilityFunctions.process_name(UserDataProcessing.lounge_add(fc, lounge_replace))
-            build_str += "\n"
-        return build_str     
+
     
     def getNumberOfGPS(self):
         return int((len(self.races)-1)/4)+1
@@ -568,10 +546,10 @@ class Room(object):
         self.populating = populating
 
     def get_room_FCs(self):
-        return self.getFCPlayerList(endrace=None).keys()
+        return self.get_fc_to_name_dict().keys()
     
     def getPlayers(self):
-        return self.getFCPlayerList(endrace=None).values()
+        return self.get_fc_to_name_dict().values()
 
 
     async def populate_miis(self):
@@ -678,7 +656,7 @@ class Room(object):
             num += 1
         if len(string_build) < 1:
             string_build = "No races played yet."
-        return UtilityFunctions.process_name(string_build)
+        return UtilityFunctions.clean_for_output(string_build)
     
     def get_loungenames_in_room(self):
         all_fcs = self.getFCs()

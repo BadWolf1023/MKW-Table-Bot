@@ -31,7 +31,7 @@ class Table_Slash(ext_commands.Cog):
     #TODO: implement
 
     @slash_command(name='sw',
-    description= 'Load a room and start tabling a war',
+    description= 'Start a table',
     guild_ids=common.SLASH_GUILDS)
     @TimerDebuggers.timer_coroutine
     async def _start_war(
@@ -63,7 +63,7 @@ class Table_Slash(ext_commands.Cog):
             miis = 'miis='+miis
             args.append(miis)
         
-        await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge, message.content, common.author_is_table_bot_support_plus)
+        await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge, common.author_is_table_bot_support_plus)
         
     
     @slash_command(name='wp',
@@ -125,7 +125,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, player, str(gp), str(score)]
 
-        await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge, message.content)
+        await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge)
     
     @slash_command(name='cp',
     description="Change a player's finish position in a race",
@@ -225,7 +225,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, player, name]
         
-        await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge, message.content)
+        await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge)
 
     @slash_command(name="changetag",
     description="Change a player's tag",
@@ -239,7 +239,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, player, tag]
         
-        await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge, message.content)
+        await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge)
 
     @slash_command(name="earlydc",
     description="Fix player incorrectly missing from race 1 of GP",
@@ -442,8 +442,7 @@ class Table_Slash(ext_commands.Cog):
         args = [command]
         if players: args.append(players)
         
-        
-        await commands.OtherCommands.vr_command(this_bot, message, args, message.content)
+        await commands.OtherCommands.vr_command(message, this_bot, args)
     
     @slash_command(name='wws',
     description="Show all active RT Worldwide rooms",
@@ -454,7 +453,7 @@ class Table_Slash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
 
-        await commands.OtherCommands.wws_command(None, this_bot, message) #can refactor wws_command to get rid of `client` argument (no longer needed)
+        await commands.OtherCommands.wws_command(message, this_bot)
     
     @slash_command(name='ctwws',
     description="Show all active CT Worldwide rooms",
@@ -465,7 +464,7 @@ class Table_Slash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
 
-        await commands.OtherCommands.wws_command(None, this_bot, message, ww_type=Race.CTGP_CTWW_REGION) #can refactor wws_command to get rid of `client` argument (no longer needed)
+        await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.CTGP_CTWW_REGION)
     
     @slash_command(name='help',
     description="Show help for Table Bot",

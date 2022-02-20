@@ -211,7 +211,7 @@ def generate_footer_section_for_team(miis:List[Mii.Mii], team_tag="No Tag", heig
     canvas_for_text = ImageDraw.Draw(pil_image)
     #Put mii names on footer, above the mii pictures
     for index, mii in enumerate(miis.values()):
-        mii_name = mii.lounge_name if mii.lounge_name != "" else UtilityFunctions.process_name(mii.mii_name)
+        mii_name = mii.lounge_name if mii.lounge_name != "" else UtilityFunctions.clean_for_output(mii.mii_name)
         mii_name_start_location_x = mii_padding_outside_left + (index * (mii_dimension + mii_padding_inside))
         mii_name_end_location_x = mii_name_start_location_x + mii_dimension
         mii_name_start_location_y = MII_NAME_BASE_Y_LOCATION
@@ -247,7 +247,7 @@ def generate_footer_section_for_team(miis:List[Mii.Mii], team_tag="No Tag", heig
         canvas_for_text.text((mii_name_start_location_x,mii_name_start_location_y), mii_name, MII_NAME_TEXT_COLOR, font=mii_font)
     
     #Put team name on footer, centered above mii names
-    team_tag = UtilityFunctions.process_name(team_tag)
+    team_tag = UtilityFunctions.clean_for_output(team_tag)
     team_tag_font_size = 30
     _team_tag_max_height = TEAM_TAG_TEXT_MAX_HEIGHT
     should_increase_team_tag_size = any(True for letter in TEAM_TAG_CHAR_SET_TO_INCREASE_SIZE if letter in team_tag)

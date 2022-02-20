@@ -53,7 +53,7 @@ class StatisticsSlash(ext_commands.Cog):
             args.append(tier)
         
         
-        await commands.StatisticCommands.popular_tracks_command(self.bot, message, args, server_prefix, message.content)
+        await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, is_top_tracks=True)
     
     @slash_command(
         name='unpopulartracks',
@@ -75,7 +75,7 @@ class StatisticsSlash(ext_commands.Cog):
         if tier is not None:
             args.append(tier)
 
-        await commands.StatisticCommands.popular_tracks_command(self.bot, message, args, server_prefix, message.content, is_top_tracks=False)
+        await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, is_top_tracks=False)
     
     @slash_command(
         name='topplayers',
@@ -101,7 +101,7 @@ class StatisticsSlash(ext_commands.Cog):
             args.append("min="+str(min_plays))
 
         message.content = ' '.join(args).lower()
-        await commands.StatisticCommands.top_players_command(self.bot, message, args, server_prefix, message.content)
+        await commands.StatisticCommands.top_players_command(message, args, server_prefix)
     
     @slash_command(
         name="besttracks",
@@ -130,7 +130,7 @@ class StatisticsSlash(ext_commands.Cog):
             args.append("min="+str(min_plays))
 
         message.content = ' '.join(args).lower()
-        await commands.StatisticCommands.player_tracks_command(self.bot, message, args, server_prefix, message.content)
+        await commands.StatisticCommands.player_tracks_command(message, args, server_prefix, sort_asc=False)
 
     @slash_command(
         name="worsttracks",
@@ -159,7 +159,7 @@ class StatisticsSlash(ext_commands.Cog):
             args.append("min="+str(min_plays))
 
         message.content = ' '.join(args).lower()
-        await commands.StatisticCommands.player_tracks_command(self.bot, message, args, server_prefix, message.content, sort_asc=True)
+        await commands.StatisticCommands.player_tracks_command(message, args, server_prefix, sort_asc=True)
     
     @slash_command(
         name='record',
@@ -178,7 +178,7 @@ class StatisticsSlash(ext_commands.Cog):
         if days is not None:
             args.append(str(days)+'d')
 
-        await commands.StatisticCommands.record_command(self, message, args, server_prefix, message.content)
+        await commands.StatisticCommands.record_command(message, args, server_prefix)
     
 
 def setup(bot):
