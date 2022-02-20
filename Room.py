@@ -364,7 +364,7 @@ class Room(object):
             missingPlayers.append(missingPlayersThisRace)
         return missingPlayers
     
-    def getMissingOnRace(self, numGPS, include_blank = False):
+    def getMissingOnRace(self, numGPS, include_blank=False):
         GPPlayers = []
         missingPlayers = [] #players who were missing or had a blank time 
 
@@ -389,6 +389,7 @@ class Room(object):
             for placement in race.placements:
                 if placement.is_manual_DC() and placement.get_fc() not in wentMissingThisGP:
                     wentMissingThisGP.append(placement.get_fc())
+                    missingPlayersThisRace.append(placement.get_fc_and_name())
                 # if placement.is_disconnected() and placement.get_fc() not in wentMissingThisGP:
                 #     wentMissingThisGP.append(placement.get_fc())
                 #     if include_blank:
@@ -396,11 +397,11 @@ class Room(object):
 
             missingPlayers.append(missingPlayersThisRace)
 
-        for race, players in self.dc_on_or_before.items():
-            for fc, status in players.items():
-                if status == 'on':
-                    if race-1 < len(missingPlayers):
-                        missingPlayers[race-1].append((fc, self.get_fc_to_name_dict()[fc]))
+        # for race, players in self.dc_on_or_before.items():
+        #     for fc, status in players.items():
+        #         if status == 'on':
+        #             if race-1 < len(missingPlayers):
+        #                 missingPlayers[race-1].append((fc, self.get_fc_to_name_dict()[fc]))
 
         for missingPlayersOnRace in missingPlayers:
             missingPlayersOnRace.sort()
