@@ -1581,7 +1581,9 @@ class TablingCommands:
         if UtilityFunctions.is_int(team_arg):
             team_num = int(team_arg)
         else:
-            team_num = (teams.index(team_arg)+1) if team_arg in teams else None
+            lowered_teams = [team.lower() for team in teams]
+
+            team_num = (lowered_teams.index(team_arg.lower())+1) if team_arg.lower() in lowered_teams else None
         if team_num is None:
             await message.channel.send(f"The given tag `{cleaned_team_arg}` is neither a number nor the exact tag of a team. {example_help(server_prefix, command_name)}")
             return
