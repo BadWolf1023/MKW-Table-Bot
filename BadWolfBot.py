@@ -546,9 +546,9 @@ class BadWolfBot(discord.Bot):
             else:
                 await self.process_message_commands(message, args, this_bot, server_prefix, is_lounge_server)
         except Exception as e:
-            await self.handle_exception(e,message,server_prefix)
+            await self.handle_exception(e,message,server_prefix, this_bot)
 
-    async def handle_exception(self, error, message: discord.Message, server_prefix):
+    async def handle_exception(self, error: Exception, message: discord.Message, server_prefix: str, this_bot: TableBot.ChannelBot):
         try:
             raise error
         except (discord.errors.Forbidden,ext_commands.BotMissingPermissions):
@@ -605,7 +605,7 @@ class BadWolfBot(discord.Bot):
         except (ext_commands.CommandNotFound,TableBotExceptions.CommandNotFound):
             await common.safe_send(message,f"Not a valid command. For more help, do the command: `{server_prefix}help`")
         except Exception as e:
-            common.log_traceback(traceback)
+            common.log_traceback(traceback, this_bot, message)
             self.lounge_submissions.clear_user_cooldown(message.author)
             await common.safe_send(message,
                                    f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: `{server_prefix}reset`")

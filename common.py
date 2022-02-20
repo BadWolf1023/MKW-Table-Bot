@@ -4,6 +4,7 @@ Created on Jun 12, 2021
 @author: willg
 '''
 import asyncio
+import io
 import json
 import os
 from datetime import datetime, timedelta, timezone
@@ -405,13 +406,47 @@ def full_command_log(message, extra_text=""):
 def log_error(text):
     return log_text(text, logging_type=ERROR_LOGGING_TYPE)
 
-def log_traceback(traceback):
+def create_temp_file(filename, content, dir='.'):
+    with open(dir+filename, 'w', encoding='utf-8') as file:
+        file.write(content)
+    return io.BytesIO(open(dir+filename, 'rb').read())
+
+def delete_file(filename):
+    try:
+        os.remove(filename)
+    except Exception:
+        pass
+
+def log_traceback(traceback, channel_bot=None, message=None):
     if is_prod or is_beta:
-        asyncio.create_task(ERROR_LOGS_CHANNEL.send(f"```\n{traceback.format_exc()}\n```"))
+        info = ''
+        file = None
+        if channel_bot and message and channel_bot.is_table_loaded():
+            info, file = extra_error_log(channel_bot, message)
+        asyncio.create_task(ERROR_LOGS_CHANNEL.send(f"```\n{traceback.format_exc()}\n```\n{info}", file=file))
 
     with open(ERROR_LOGS_FILE, "a+", encoding="utf-8") as f:
         f.write(f"\n{str(datetime.now())}: \n")
         traceback.print_exc(file=f)
+
+def extra_error_log(channel_bot, message):
+    file = None
+    info = f"**Trigger message:** `{message.content}`"
+
+    if len(channel_bot.save_states)>0:
+        commands = 'Command history:\n' + '\n'.join([state[0] for state in channel_bot.save_states])
+        filename = f'temp_commands_file_{channel_bot.channel_id}.txt'
+        commands_file = create_temp_file(filename, commands, './temp/')
+        delete_file(f'./temp/{filename}')
+        file = discord.File(fp=commands_file, filename=filename)
+
+    if len(channel_bot.room.rLIDs)>0:
+        rxxs = [f'https://wiimmfi.de/stats/mkwx/list/{rxx}' for rxx in channel_bot.room.rLIDs]
+        rxx_string = '\n'.join(rxxs)
+        info += "\n\n**rxx history:**\n" + rxx_string + '\n\u200b'
+
+    return info, file
+    
     
 def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
     logging_file = MESSAGE_LOGGING_FILE
