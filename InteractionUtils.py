@@ -19,7 +19,7 @@ def bot_admin_check(ctx: discord.ApplicationContext):
     can = common.is_bot_admin(ctx.author)
     return can 
 
-def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bot, command:str):
+def commandIsAllowed(isLoungeServer:bool, message_author: discord.Member, this_bot, command: str):
     return common.main.commandIsAllowed(isLoungeServer,message_author,this_bot,command)
 
 def convert_key_to_command(key):
@@ -27,7 +27,7 @@ def convert_key_to_command(key):
         'blank_player': 'dc',
         'missing_player': 'dc',
         'gp_missing': 'changeroomsize',
-        'gp_missing_1': 'dc',
+        'gp_missing_1': 'earlydc',
         'tie': 'changeposition',
         'large_time': 'changeposition'
     }
@@ -81,8 +81,9 @@ def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
     proxyMsg.mentions = build_mentions(interaction.data)
     return proxyMsg
 
-def build_msg_content(data, args = None):
-    if args: return '/' + ' '.join(args)
+def build_msg_content(data, args=None):
+    if args: 
+        return '/' + ' '.join(args)
 
     args = [data.get('name', '')]
     raw_args = data.get('options', [])
@@ -116,12 +117,14 @@ def build_mentions(data):
 
 async def on_component_error(error: Exception, interaction: discord.Interaction, prefix):
     message = None
-    original = await interaction.original_message()
 
     if interaction.message:
         message = interaction.message
-    elif original:
-        message = original
+    if not message:
+        try:
+            message = await interaction.original_message()
+        except Exception:
+            pass
     
     if message:
         await handle_component_exception(error, message, prefix)

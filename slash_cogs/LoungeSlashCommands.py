@@ -74,7 +74,12 @@ class TableTextView(discord.ui.View):
         await self.message.edit(view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.chan_bot, 'interaction')
+        can_interact = interaction.channel.permissions_for(interaction.user).send_messages
+        if not can_interact:
+            await interaction.response.send_message("You cannot interact with this.", ephermeral=True)
+            return False
+
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.chan_bot, 'restricted_interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot interact with this button.", ephemeral=True)
             return False

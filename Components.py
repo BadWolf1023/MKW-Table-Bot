@@ -61,7 +61,12 @@ class ManualTeamsView(discord.ui.View):
         await self.message.edit(view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'interaction')
+        can_interact = interaction.channel.permissions_for(interaction.user).send_messages
+        if not can_interact:
+            await interaction.response.send_message("You cannot interact with this.", ephermeral=True)
+            return False
+
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot interact with this button.", ephemeral=True)
             return False
@@ -124,7 +129,12 @@ class ConfirmView(discord.ui.View):
         await common.safe_edit(interaction.message, view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'interaction')
+        can_interact = interaction.channel.permissions_for(interaction.user).send_messages
+        if not can_interact:
+            await interaction.response.send_message("You cannot interact with this.", ephermeral=True)
+            return False
+
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
             return False
@@ -231,12 +241,17 @@ class PictureView(discord.ui.View):
         self.add_item(PictureButton(self.bot))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'interaction')
-        if not allowed:
-            await interaction.response.send_message("You cannot use this buttons.", ephemeral=True)
+        can_interact = interaction.channel.permissions_for(interaction.user).send_messages
+        if not can_interact:
+            await interaction.response.send_message("You cannot interact with this.", ephermeral=True)
             return False
 
-        if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child and doesn't have cooldown
+        if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child
+            allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'restricted_interaction')
+            if not allowed:
+                await interaction.response.send_message("You cannot use this button.", ephemeral=True)
+                return False
+
             if self.children[-1].channel_bot.has_been_lounge_submitted:
                 await interaction.response.send_message("Table has already been submitted.", ephemeral=True)
                 return False
@@ -408,7 +423,12 @@ class SuggestionView(discord.ui.View):
         self.message: discord.Message = await messageable.send(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", file=file, embed=embed, view=self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, InteractionUtils.convert_key_to_command(self.current_error['type']))
+        can_interact = interaction.channel.permissions_for(interaction.user).send_messages
+        if not can_interact:
+            await interaction.response.send_message("You cannot interact with this.", ephermeral=True)
+            return False
+
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction') # InteractionUtils.convert_key_to_command(self.current_error['type'])
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True, delete_after=3.0)
             return False
