@@ -431,7 +431,7 @@ def log_traceback(traceback, channel_bot=None, message=None):
 
 def extra_error_log(channel_bot, message):
     file = None
-    info = f"**Trigger message:** `{message.content}`"
+    info = f"**Trigger command:** `{message.content}`"
 
     if len(channel_bot.save_states)>0:
         commands = 'Command history:\n' + '\n'.join([state[0] for state in channel_bot.save_states])
