@@ -202,7 +202,7 @@ class BadWolfBot(discord.Bot):
         super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS) #debug_guilds=common.SLASH_GUILDS
         self.table_bots = dict()
         self.lounge_submissions = lounge_submissions
-        self.mention = None
+        self.mentions = None
         # self.sug_views = {}
         # self.pic_views = {}
 
@@ -214,8 +214,10 @@ class BadWolfBot(discord.Bot):
     #Note, the caller must ensure that the given string has a prefix by using has_prefix to ensure proper behaviour
     #lstrip won't work here (go read the documentation and find a scenario that it wouldn't work in)
     def strip_prefix(self, command, pref=common.default_prefix):
-        if self.mention in command:
-            new_command = command[len(self.mention):]
+        if self.mentions[0] in command:
+            new_command = command[len(self.mentions[0]):]
+        elif self.mentions[1] in command:
+            new_command = command[len(self.mentions[1]):]
         else:
             new_command = command[len(pref):]
         new_command = new_command.lstrip()
@@ -225,10 +227,10 @@ class BadWolfBot(discord.Bot):
     def has_prefix(self, command, pref=common.default_prefix):
         if type(command) != type(""):
             return False, False, None
-        if len(command) < len(pref) and len(command) < len(self.mention):
+        if len(command) < len(pref) and len(command) < len(self.mentions[1]):
             return False, False, None
 
-        if command.startswith(self.mention):
+        if command.startswith(self.mentions[0]) or command.startswith(self.mentions[1]):
             return True, True, f'@{self.user.name} '
         if command.startswith(pref):
             return True, False, pref
@@ -242,7 +244,8 @@ class BadWolfBot(discord.Bot):
         return str_msg.lower() in VERIFY_ROOM_TERMS
     
     def should_send_help(self, message):
-        return message.content.strip().lower() in ["?help"] or (self.user.mentioned_in(message) and 'help' in message.content.strip().lower())
+        content = message.content.strip().lower()
+        return content in ["?help"] or (any([mention in content for mention in self.mentions]) and 'help' in content)
     
     async def on_ready(self):
         global finished_on_ready
@@ -282,7 +285,7 @@ class BadWolfBot(discord.Bot):
         except RuntimeError:
             print("checkBotAbuse task already started")
 
-        self.mention = f'<@!{self.user.id}>'
+        self.mentions = [f'<@!{self.user.id}>', f'<@{self.user.id}>']
     
         finished_on_ready = True
         print(f"Logged in as {self.user}")
