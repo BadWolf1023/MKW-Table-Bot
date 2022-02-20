@@ -8,7 +8,7 @@ EMPTY_CHAR = '\u200b'
 
 allowed = common.botAdmins | common.OWNERS
 
-REQUIRED_PERMISSIONS = [CommandPermission(id,2,True) for id in allowed]
+REQUIRED_PERMISSIONS = [CommandPermission(int(id),2,True) for id in allowed]
 GUILDS = [common.MKW_TABLE_BOT_CENTRAL_SERVER_ID] if common.is_prod else common.SLASH_GUILDS
 
 class AdminSlash(ext_commands.Cog):

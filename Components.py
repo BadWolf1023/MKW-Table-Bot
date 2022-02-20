@@ -233,7 +233,7 @@ class PictureView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'interaction')
         if not allowed:
-            await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
+            await interaction.response.send_message("You cannot use this buttons.", ephemeral=True)
             return False
 
         if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child and doesn't have cooldown
