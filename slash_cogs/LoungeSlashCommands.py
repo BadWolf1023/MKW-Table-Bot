@@ -93,7 +93,7 @@ class TableTextView(discord.ui.View):
         return allowed
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        await InteractionUtils.on_component_error(error, interaction, self.prefix)
+        await InteractionUtils.on_component_error(error, interaction, self.prefix, self.chan_bot)
     
     async def send(self, messageable, content=None, embed=None, file=None):
         if hasattr(messageable, 'channel'):

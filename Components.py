@@ -30,7 +30,7 @@ class ManualTeamsModal(discord.ui.Modal):
             await commands.TablingCommands.manual_war_setup(message, self.bot, args, self.prefix, self.is_lounge)
         except Exception as error:
             await response.edit_original_message(content='An error occurred while creating manual teams.')
-            return await InteractionUtils.on_component_error(error, interaction, self.prefix)
+            return await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
         await self.view.message.edit(view=None)
         
 
@@ -78,7 +78,7 @@ class ManualTeamsView(discord.ui.View):
         return allowed
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        await InteractionUtils.on_component_error(error, interaction, self.prefix)
+        await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
     
     async def send(self, messageable, content=None, embed=None, file=None):
         if hasattr(messageable, 'channel'):
@@ -151,7 +151,7 @@ class ConfirmView(discord.ui.View):
         return allowed
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        await InteractionUtils.on_component_error(error, interaction, self.prefix)
+        await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
     
     async def send(self, messageable, content=None, file=None, embed=None):
         if hasattr(messageable, 'channel'):
@@ -227,7 +227,7 @@ class SubmitButton(discord.ui.Button['PictureView']):
                 
                 await self.view.on_timeout() #remove picture button as well, since table has been submitted
             except Exception as e:
-                await InteractionUtils.handle_component_exception(e, message, self.view.prefix)
+                await InteractionUtils.handle_component_exception(e, message, self.view.prefix, self.view.bot)
 
         asyncio.create_task(submit_table())
 
@@ -275,7 +275,7 @@ class PictureView(discord.ui.View):
             await common.safe_edit(self.message, view=None)
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        await InteractionUtils.on_component_error(error, interaction, self.prefix)
+        await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
 
     async def send(self, messageable, content=None, file=None, embed=None):
         if hasattr(messageable, 'channel'):
@@ -413,7 +413,7 @@ class SuggestionView(discord.ui.View):
         await self.next_suggestion()
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        await InteractionUtils.on_component_error(error, interaction, self.prefix)
+        await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
         
     async def send(self, messageable, file=None, embed=None):
         if hasattr(messageable, 'channel'):

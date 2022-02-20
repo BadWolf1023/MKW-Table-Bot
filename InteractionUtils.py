@@ -114,7 +114,7 @@ def build_mentions(data):
         result.append(user)
     return result
 
-async def on_component_error(error: Exception, interaction: discord.Interaction, prefix):
+async def on_component_error(error: Exception, interaction: discord.Interaction, prefix: str, channel_bot):
     message = None
 
     if interaction.message:
@@ -126,12 +126,12 @@ async def on_component_error(error: Exception, interaction: discord.Interaction,
             pass
     
     if message:
-        await handle_component_exception(error, message, prefix)
+        await handle_component_exception(error, message, prefix, channel_bot)
     else:
         common.log_error("Exception raised on Component interaction could not be caught because there was no message from the interaction. THIS IS A BUG.")
         common.log_traceback("NO MESSAGE FROM INTERACTION ERROR. InteractionUtils.py -> on_component_error()")
         await common.safe_send(message,
                                 f"Internal bot error. This exception occurred and could not be handled: no message from interaction on_error(). Try `/reset`. Please report this error at the MKW Table Bot server: https://discord.gg/K937DqM")
 
-async def handle_component_exception(error, message, server_prefix):
-    await common.client.handle_exception(error,message,server_prefix)
+async def handle_component_exception(error, message, server_prefix, channel_bot):
+    await common.client.handle_exception(error,message,server_prefix, channel_bot)
