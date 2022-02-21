@@ -487,10 +487,14 @@ class BadWolfBot(discord.Bot):
         message = ctx.message
         if not message: message = InteractionUtils.create_proxy_msg(ctx.interaction,ctx=ctx)
         server_prefix = '/'
+        try:
+            channel_bot = self.table_bots[ctx.guild_id][ctx.channel_id]
+        except KeyError:
+            channel_bot = None
 
         if isinstance(error,discord.ApplicationCommandInvokeError):
             error = error.original
-        await self.handle_exception(error,message,server_prefix)
+        await self.handle_exception(error,message,server_prefix, channel_bot)
     
     async def on_message(self, message: discord.Message):
         """
