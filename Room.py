@@ -45,8 +45,8 @@ class Room(object):
         self.name_changes = {}
         self.removed_races = []
         
-        #Key will be the race number, value will be a list of all the placements changed for the race
-        self.placement_history = defaultdict(list)
+        #Key will be the race number, value will be a list of all the placements changed for the race (including manual DC placements)
+        self.placement_history: defaultdict[int, List[Dict[str, Any]]] = defaultdict(list)
         
         #Dictionary - key is race number, value is the number of players for the race that the tabler specified
         self.forcedRoomSize = defaultdict(int) #This contains the races that have their size changed by the tabler - when a race is removed, we
@@ -56,13 +56,12 @@ class Room(object):
         
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
         self.dc_on_or_before = defaultdict(dict)
-        self.manual_dc_placements: defaultdict[int, List[Dict[str, Any]]] = defaultdict(list) #maps race to manually configured DC placements (on/before)
+        # self.manual_dc_placements: defaultdict[int, List[Dict[str, Any]]] = defaultdict(list) #maps race to manually configured DC placements (on/before)
 
         self.set_up_user = setup_discord_id
         self.set_up_user_display_name = setup_display_name
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         self.sub_ins = {}
-        # TODO: is_freed indicates if a Lounge table lock is freed or not
         self.is_freed = False
         
         self.miis: Dict[str, Mii.Mii] = {}
@@ -93,13 +92,11 @@ class Room(object):
         return self.dc_on_or_before
     def get_subs(self):
         return self.sub_ins
-    def get_manual_dc_placements(self):
-        return self.manual_dc_placements
     def get_event_id(self):
         return self.event_id
     
-    
     def watch_suggestions(self, view, errors, channel_id):
+        """Watch suggestions view so that it updates automatically on race removals and state changes."""
         watched_suggestions[channel_id] = view #store active channel suggestion view
         self.suggestion_errors = errors
         self.channel_id = channel_id
@@ -142,14 +139,20 @@ class Room(object):
         return False
     
     def placements_changed_for_racenum(self, race_num):
-        return race_num in self.placement_history and len(self.placement_history[race_num]) > 0
+        if race_num in self.placement_history:
+            race_placement_changes = self.placement_history[race_num]
+            # manual DC placements do not count as placement changes and should not trigger the warning
+            race_placement_changes = [i for i in race_placement_changes if i['type']=='change'] 
+
+        return race_num in self.placement_history and len(race_placement_changes) > 0
     
     def changePlacement(self, race_num, player_FC, new_placement):
         #We need to get their original placement on the race
         original_placement = self.races[race_num-1].getPlacementNumber(player_FC)
-        position_change = (original_placement, new_placement)
+        position_change_payload = (original_placement, new_placement)
+        position_change = {'type': 'change', 'payload': position_change_payload}
         self.placement_history[race_num].append(position_change)        
-        self.races[race_num-1].applyPlacementChanges([position_change])
+        self.races[race_num-1].applyPlacementChanges([position_change_payload])
 
     
     def had_subs(self):
@@ -235,7 +238,6 @@ class Room(object):
                 self.forcedRoomSize = generic_dictionary_shifter(self.forcedRoomSize, race_num)
                 self.dc_on_or_before = generic_dictionary_shifter(self.dc_on_or_before, race_num)
                 self.placement_history = generic_dictionary_shifter(self.placement_history, race_num)
-                self.manual_dc_placements = generic_dictionary_shifter(self.manual_dc_placements, race_num)
                 for sub_data in self.sub_ins.values():
                     subout_start_race = sub_data[4]
                     subout_end_race = sub_data[5]
@@ -458,14 +460,14 @@ class Room(object):
                 player_obj = self.get_player_from_FC(player_fc)
                 DC_placement = Placement.Placement(player_obj, 'DC')
 
-                add_dict = {'type': 'add', 'payload': DC_placement}
-                self.manual_dc_placements[raceNum].append(add_dict)
+                add_dict = {'type': 'add', 'payload': player_fc}
+                self.placement_history[raceNum].append(add_dict)
                 race.addPlacement(DC_placement)
                 
         else: #STATUS=BEFORE
             if race.FCInPlacements(player_fc): #player was on results and should be removed from placements
                 remove_dict = {'type': 'remove', 'payload': player_fc}
-                self.manual_dc_placements[raceNum].append(remove_dict)
+                self.placement_history[raceNum].append(remove_dict)
                 race.remove_placement_by_FC(player_fc)
     
     def get_player_from_FC(self, FC):
@@ -618,23 +620,20 @@ class Room(object):
         #Next, we need to renumber the races
         self.fix_race_numbers()
 
-        #Then, add/remove manual DC placements
-        for raceNum, race in enumerate(self.races, 1):
-            if raceNum in self.manual_dc_placements: #manual DC placements found for this race
-                items = self.manual_dc_placements[raceNum]
-                for p in items:
-                    if p['type'] == 'add':
-                        # player_obj = self.get_player_from_FC(p['payload'])
-                        # DC_placement = Placement.Placement(player_obj, 'DC')
-                        race.addPlacement(p['payload'])
-                    else:
-                        race.remove_placement_by_FC(p['payload'])
-
-
-        #Next, we apply position changes
+        #Next, we apply position changes/modifications (including manual DC placements)
         for race_number, race in enumerate(self.races, 1):
             if race_number in self.placement_history:
-                race.applyPlacementChanges(self.placement_history[race_number])
+                items = self.placement_history[race_number]
+                for p in items:
+                    payload = p['payload']
+                    if p['type'] == 'add':
+                        player_obj = self.get_player_from_FC(payload)
+                        DC_placement = Placement.Placement(player_obj, 'DC')
+                        race.addPlacement(DC_placement)
+                    elif p['type'] == 'remove':
+                        race.remove_placement_by_FC(payload)
+                    else:
+                        race.applyPlacementChanges([payload])
         
     def getRacesPlayed(self):
         return [r.track for r in self.races]
@@ -726,11 +725,10 @@ class Room(object):
         
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
         save_state['dc_on_or_before'] = deepcopy(self.dc_on_or_before)
-        save_state['manual_dc_placements'] = deepcopy(self.manual_dc_placements)
         save_state['forcedRoomSize'] = self.forcedRoomSize.copy()
         save_state['rLIDs'] = self.rLIDs.copy()
         save_state['races'] = deepcopy(self.races)
-        save_state['placement_history'] = copy(self.placement_history)
+        save_state['placement_history'] = deepcopy(self.placement_history)
         save_state['sub_ins'] = deepcopy(self.sub_ins)
         save_state['suggestion_errors'] = deepcopy(self.suggestion_errors)
         
