@@ -5,8 +5,12 @@ import commands
 import common
 import InteractionUtils
 
-REQUIRED_PERMISSIONS = [CommandPermission(role, 1, True, common.MKW_LOUNGE_SERVER_ID) for role in list(common.reporter_plus_roles)]
-GUILDS = [common.MKW_LOUNGE_SERVER_ID] if common.is_prod else common.SLASH_GUILDS
+REQUIRED_PERMISSIONS = [CommandPermission(role, 1, True, (common.TABLE_BOT_DISCORD_SERVER_ID if common.is_beta else common.MKW_LOUNGE_SERVER_ID)) for role in list(common.reporter_plus_roles)]
+GUILDS = [common.MKW_LOUNGE_SERVER_ID]
+if common.is_beta:
+    GUILDS = [common.TABLE_BOT_DISCORD_SERVER_ID]
+elif common.is_dev:
+    GUILDS = common.SLASH_GUILDS
 EMPTY_CHAR = "\u200b"
 
 class TableTextModal(discord.ui.Modal):
@@ -74,7 +78,12 @@ class TableTextView(discord.ui.View):
         await self.message.edit(view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.chan_bot, 'interaction')
+        can_interact = interaction.channel.permissions_for(interaction.user).send_messages
+        if not can_interact:
+            await interaction.response.send_message("You cannot interact with this.", ephermeral=True)
+            return False
+
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.chan_bot, 'restricted_interaction')
         if not allowed: 
             await interaction.response.send_message("You cannot interact with this button.", ephemeral=True)
             return False
@@ -84,7 +93,7 @@ class TableTextView(discord.ui.View):
         return allowed
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        await InteractionUtils.on_component_error(error, interaction, self.prefix)
+        await InteractionUtils.on_component_error(error, interaction, self.prefix, self.chan_bot)
     
     async def send(self, messageable, content=None, embed=None, file=None):
         if hasattr(messageable, 'channel'):
@@ -114,7 +123,7 @@ class LoungeSlash(ext_commands.Cog):
         # await message.channel.send(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting table text by slash commands at the present. Use `@{self.bot.user.name} rtupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use table texts with this slash command.")
 
         if not table_text:
-            return await commands.LoungeCommands.rt_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
+            return await commands.LoungeCommands.rt_mogi_update(self.bot, message, this_bot, args, self.bot.lounge_submissions)
         
         view = TableTextView(self.bot, this_bot, server_prefix, is_lounge, ctx, message, args, 'rt')
         await view.send(message, content="Copy your table text from `/tt` before clicking this button.")
@@ -133,7 +142,7 @@ class LoungeSlash(ext_commands.Cog):
         # await message.channel.send(f"**IMPORTANT**: Unfortunately, Table Bot does not support submitting table text by slash commands at the present. Use `@{self.bot.user.name} ctupdate [tier] [races_played] [...table_text]` instead. This is an issue with Discord, so as soon as this is fixed, you will be able to use table texts with this slash command.")
 
         if not table_text:
-            return await commands.LoungeCommands.ct_mogi_update(self.bot, this_bot, message, args, self.bot.lounge_submissions)
+            return await commands.LoungeCommands.ct_mogi_update(self.bot, message, this_bot, args, self.bot.lounge_submissions)
 
         view = TableTextView(self.bot, this_bot, server_prefix, is_lounge, ctx, message, args, 'ct')
         await view.send(message, content="Copy your table text from `/tt` before clicking this button.")

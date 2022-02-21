@@ -3,23 +3,22 @@ import discord
 import SmartTypes as ST
 import common
 
-def check_lounge_server(message):
-    return message.guild.id == common.MKW_LOUNGE_SERVER_ID
+def simulating_lounge_server(message_or_interaction):
+    if common.is_beta and check_beta_server(message_or_interaction):
+        return True
+    return check_lounge_server(message_or_interaction)
 
-def check_beta_server(message):
-    return message.guild.id == common.MKW_LOUNGE_SERVER_ID
+def check_lounge_server(message_or_interaction):
+    return message_or_interaction.guild.id == common.MKW_LOUNGE_SERVER_ID
 
-def check_lounge_server_id(id):
-    return id == common.MKW_LOUNGE_SERVER_ID
-
-def check_beta_server_id(id):
-    return check_lounge_server_id(id)
+def check_beta_server(message_or_interaction):
+    return message_or_interaction.guild.id == common.TABLE_BOT_DISCORD_SERVER_ID
 
 def bot_admin_check(ctx: discord.ApplicationContext):
     can = common.is_bot_admin(ctx.author)
     return can 
 
-def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bot, command:str):
+def commandIsAllowed(isLoungeServer:bool, message_author: discord.Member, this_bot, command: str):
     return common.main.commandIsAllowed(isLoungeServer,message_author,this_bot,command)
 
 def convert_key_to_command(key):
@@ -27,7 +26,7 @@ def convert_key_to_command(key):
         'blank_player': 'dc',
         'missing_player': 'dc',
         'gp_missing': 'changeroomsize',
-        'gp_missing_1': 'dc',
+        'gp_missing_1': 'earlydc',
         'tie': 'changeposition',
         'large_time': 'changeposition'
     }
@@ -81,8 +80,9 @@ def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
     proxyMsg.mentions = build_mentions(interaction.data)
     return proxyMsg
 
-def build_msg_content(data, args = None):
-    if args: return '/' + ' '.join(args)
+def build_msg_content(data, args=None):
+    if args: 
+        return '/' + ' '.join(args)
 
     args = [data.get('name', '')]
     raw_args = data.get('options', [])
@@ -114,20 +114,24 @@ def build_mentions(data):
         result.append(user)
     return result
 
-async def on_component_error(error: Exception, interaction: discord.Interaction, prefix):
+async def on_component_error(error: Exception, interaction: discord.Interaction, prefix: str, channel_bot):
     message = None
+
     if interaction.message:
         message = interaction.message
-    elif await interaction.original_message():
-        message = await interaction.original_message()
+    if not message:
+        try:
+            message = await interaction.original_message()
+        except Exception:
+            pass
     
     if message:
-        await handle_component_exception(error, message, prefix)
+        await handle_component_exception(error, message, prefix, channel_bot)
     else:
-        common.log_error("Exception raised on Component interaction could not be caught because there was no message from the interaction. THIS IS A BUG AND NEEDS TO BE FIXED.")
+        common.log_error("Exception raised on Component interaction could not be caught because there was no message from the interaction. THIS IS A BUG.")
         common.log_traceback("NO MESSAGE FROM INTERACTION ERROR. InteractionUtils.py -> on_component_error()")
         await common.safe_send(message,
-                                f"Internal bot error. This exception occurred and could not be handled: {error}. Try `/reset`. Please report this error at the MKW Table Bot server: https://discord.gg/K937DqM")
+                                f"Internal bot error. This exception occurred and could not be handled: no message from interaction on_error(). Try `/reset`. Please report this error at the MKW Table Bot server: https://discord.gg/K937DqM")
 
-async def handle_component_exception(error, message, server_prefix):
-    await common.client.handle_exception(error,message,server_prefix)
+async def handle_component_exception(error, message, server_prefix, channel_bot):
+    await common.client.handle_exception(error,message,server_prefix, channel_bot)

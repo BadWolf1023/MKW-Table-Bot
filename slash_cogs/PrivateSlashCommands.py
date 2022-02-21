@@ -27,7 +27,7 @@ class PrivateSlash(ext_commands.Cog):
         args = [command, user]
 
         
-        await commands.BadWolfCommands.add_bot_admin_command(message, args)
+        await commands.BotOwnerCommands.add_bot_admin_command(message, args)
     
     @admin.command(name="remove",
     description="Remove a bot admin")
@@ -39,7 +39,7 @@ class PrivateSlash(ext_commands.Cog):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, user]
         
-        await commands.BadWolfCommands.remove_bot_admin_command(message, args)
+        await commands.BotOwnerCommands.remove_bot_admin_command(message, args)
     
     @slash_command(name="logs",
     description="Show Table Bot's logs",
@@ -51,7 +51,7 @@ class PrivateSlash(ext_commands.Cog):
     ):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         
-        await commands.BadWolfCommands.get_logs_command(message)
+        await commands.BotOwnerCommands.get_logs_command(message)
     
     @slash_command(name="garbagecollect",
     description="Table Bot garbage collection",
@@ -63,7 +63,7 @@ class PrivateSlash(ext_commands.Cog):
     ):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         
-        await commands.BadWolfCommands.garbage_collect_command(message)
+        await commands.BotOwnerCommands.garbage_collect_command(message)
     
     @slash_command(name="serverusage",
     description="See statistics about Table Bot's server usage",
@@ -75,7 +75,7 @@ class PrivateSlash(ext_commands.Cog):
     ):
         _, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         
-        await commands.BadWolfCommands.server_process_memory_command(message)
+        await commands.BotOwnerCommands.server_process_memory_command(message)
     
     @slash_command(name='closebot',
     description="Gracefully close Table Bot and save its data",

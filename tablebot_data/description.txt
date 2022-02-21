@@ -14,7 +14,6 @@ discord_id_FCS.txt
 discord_id_flags.txt
 discord_id_lounges.txt
 flag_codes.txt
-flag_exceptions.txt
 lounge_counter.pkl
 lounge_table_update_ids.pkl
 private.txt

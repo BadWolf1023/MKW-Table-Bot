@@ -11,7 +11,6 @@ import commands
 import Lounge
 import TableBotExceptions
 import common
-import MogiUpdate
 import URLShortener
 import AbuseTracking
 import TagAIShell
@@ -60,11 +59,11 @@ LIST_REDOS_TERMS = {"redos", "getredos", "toredo"}
 REMOVE_RACE_TERMS = {"removerace"}
 SUBSTITUTE_TERMS = {"sub", "substitute"}
 PLAYER_PENALTY_TERMS = {"pen", "penalty"}
-TEAM_PENALTY_TERMS = {"teampen", "teampenalty"}
+TEAM_PENALTY_TERMS = {"teampen", "teampenalty", "tagpen", "tagpenalty"}
 EDIT_PLAYER_SCORE_TERMS = {"edit"}
 PLAYER_DISCONNECT_TERMS = {"dc", "dcs"}
 MERGE_ROOM_TERMS = {"mr", "mergeroom"}
-SET_WAR_NAME_TERMS = {"setwarname"}
+SET_TABLE_NAME_TERMS = {"setwarname", "settablename"}
 CHANGE_PLAYER_NAME_TERMS = {'changename', 'cn'}
 CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag', 'setteam', 'settag', 'ct'}
 CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize", "crs"}
@@ -77,7 +76,7 @@ GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
 DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
 
 
-#Commands that require a war to be started, but don't modify the war/room/table in any way
+#Commands that require a table to be started, but don't modify the war/room/table in any way
 TABLE_TEXT_TERMS = {"tt", "tabletext"}
 WAR_PICTURE_TERMS = {"wp", "warpicture", "wo", "w;", "w["}
 RACE_RESULTS_TERMS = {"rr", "raceresults"}
@@ -89,9 +88,9 @@ TRANSFER_TABLE_TERMS = {"transferfrom", "copyfrom", "transfer", "copy", "copytab
 GET_SUBSTITUTIONS_TERMS = {"subs", "substitutes", "substitutions", "getsubs", "allsubs"}
 
 #Button interactions (only people in room can use buttons in Lounge; however, this isn't applied to the commands)
-INTERACTIONS = {'interaction'}
+INTERACTIONS = {'restricted_interaction'}
 
-#General commands that do not require a war to be started (stateless commands)
+#General commands that do not require a table to be started (stateless commands)
 PAGE_TERMS = {"page", "pages", "playerpage", "playerpages"}
 FC_TERMS = {"fc"}
 LOUNGE_NAME_TERMS = {"lounge", "loungename", "ln"}
@@ -104,7 +103,6 @@ BATTLES_TERMS = {"battle", "battles", "btww", "btwws", "battleww", "battlewws", 
 VERIFY_ROOM_TERMS = {"vr", "verifyroom"}
 STATS_TERMS = {"stats", "stat"}
 INVITE_TERMS = {"invite"}
-LOG_TERMS = {"log"}
 
 #Player/Meta commands (also stateless)
 POPULAR_TRACKS_TERMS = {"populartracks", "populartrack", "pt", "pts", "hottrack", "hottracks"}
@@ -163,13 +161,14 @@ GET_LOGS_TERMS = {"getlog", "getlogs", "logs"}
 ADD_SHA_TERMS = {"addsha", "sha"}
 REMOVE_SHA_TERMS = {"removesha", "delsha"}
 
-needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REDO_TERMS | LIST_REDOS_TERMS | LIST_UNDOS_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_WAR_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS | GET_SUBSTITUTIONS_TERMS | INTERACTIONS
+needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REDO_TERMS | LIST_REDOS_TERMS | LIST_UNDOS_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_TABLE_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS | GET_SUBSTITUTIONS_TERMS | INTERACTIONS
 ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS | POPULAR_TRACKS_TERMS | UNPOPULAR_TRACKS_TERMS | TOP_PLAYERS_TERMS | BEST_TRACK_TERMS | WORST_TRACK_TERMS | RECORD_TERMS
 
 common.needPermissionCommands.update(needPermissionCommands)
 
 finished_on_ready = False
 REGISTER_SLASH_COMMANDS = True #whether the bot should register its slash commands (since there is no reason to use slash commands until April 2022)
+
 
 
 SLASH_EXTENSIONS = [
@@ -183,31 +182,10 @@ SLASH_EXTENSIONS = [
 
 switch_status = True
 
-lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.MKW_LOUNGE_SERVER_ID, common.main_lounge_can_report_table)
+lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.MKW_LOUNGE_SERVER_ID, common.author_is_reporter_plus)
+if common.is_beta:
+    lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.TABLE_BOT_DISCORD_SERVER_ID, lambda _: True)
 
-if common.in_testing_server:
-    #common.MKW_LOUNGE_SERVER_ID = common.BAD_WOLF_SERVER_ID
-    MogiUpdate.rt_summary_channels.clear()
-    MogiUpdate.rt_summary_channels.update({"1":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID})
-    MogiUpdate.ct_summary_channels.clear()
-    MogiUpdate.ct_summary_channels.update({"1":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID})
-    common.mkw_lounge_staff_roles.clear()
-    common.mkw_lounge_staff_roles.update(common.BAD_WOLF_SERVER_STAFF_ROLES)
-    lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.BAD_WOLF_SERVER_ID, common.main_lounge_can_report_table)
-    lounge_submissions.channels_mapping = common.TESTING_SERVER_LOUNGE_UPDATES
-    common.BOT_ABUSE_REPORT_CHANNEL_ID = 776031312048947230
-    #TEMPORARY_VR_CATEGORIES.append(740574341187633232)
-
-elif common.running_beta and not common.beta_is_real:
-    common.MKW_LOUNGE_SERVER_ID = common.BAD_WOLF_SERVER_ID
-    MogiUpdate.rt_summary_channels.clear()
-    MogiUpdate.rt_summary_channels.update({"1":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID})
-    MogiUpdate.ct_summary_channels.clear()
-    MogiUpdate.ct_summary_channels.update({"1":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "2":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "3":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "4-5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "5":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "6":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "7":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID, "squadqueue":common.BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID})
-    common.mkw_lounge_staff_roles.clear()
-    common.mkw_lounge_staff_roles.update(common.BAD_WOLF_SERVER_STAFF_ROLES)
-    common.mkw_lounge_staff_roles.add(common.BAD_WOLF_SERVER_EVERYONE_ROLE_ID)
-    lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.BAD_WOLF_SERVER_ID, common.main_lounge_can_report_table)
 
 def createEmptyTableBot(server_id=None, channel_id=None):
     return TableBot.ChannelBot(server_id=server_id, channel_id=channel_id)
@@ -224,7 +202,7 @@ class BadWolfBot(discord.Bot):
         super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS) #debug_guilds=common.SLASH_GUILDS
         self.table_bots = dict()
         self.lounge_submissions = lounge_submissions
-        self.mention = None
+        self.mentions = None
         # self.sug_views = {}
         # self.pic_views = {}
 
@@ -236,8 +214,10 @@ class BadWolfBot(discord.Bot):
     #Note, the caller must ensure that the given string has a prefix by using has_prefix to ensure proper behaviour
     #lstrip won't work here (go read the documentation and find a scenario that it wouldn't work in)
     def strip_prefix(self, command, pref=common.default_prefix):
-        if self.mention in command:
-            new_command = command[len(self.mention):]
+        if self.mentions[0] in command:
+            new_command = command[len(self.mentions[0]):]
+        elif self.mentions[1] in command:
+            new_command = command[len(self.mentions[1]):]
         else:
             new_command = command[len(pref):]
         new_command = new_command.lstrip()
@@ -247,10 +227,10 @@ class BadWolfBot(discord.Bot):
     def has_prefix(self, command, pref=common.default_prefix):
         if type(command) != type(""):
             return False, False, None
-        if len(command) < len(pref) and len(command) < len(self.mention):
+        if len(command) < len(pref) and len(command) < len(self.mentions[1]):
             return False, False, None
 
-        if command.startswith(self.mention):
+        if command.startswith(self.mentions[0]) or command.startswith(self.mentions[1]):
             return True, True, f'@{self.user.name} '
         if command.startswith(pref):
             return True, False, pref
@@ -264,7 +244,8 @@ class BadWolfBot(discord.Bot):
         return str_msg.lower() in VERIFY_ROOM_TERMS
     
     def should_send_help(self, message):
-        return message.content.strip().lower() in ["?help"] or (self.user.mentioned_in(message) and 'help' in message.content.strip().lower())
+        content = message.content.strip().lower()
+        return content in ["?help"] or (any([mention in content for mention in self.mentions]) and 'help' in content)
     
     async def on_ready(self):
         global finished_on_ready
@@ -304,7 +285,7 @@ class BadWolfBot(discord.Bot):
         except RuntimeError:
             print("checkBotAbuse task already started")
 
-        self.mention = f'<@!{self.user.id}>'
+        self.mentions = [f'<@!{self.user.id}>', f'<@{self.user.id}>']
     
         finished_on_ready = True
         print(f"Logged in as {self.user}")
@@ -313,10 +294,11 @@ class BadWolfBot(discord.Bot):
     #"finished" in Lounge - the definition of what is finished can be found in the ChannelBot class
     @tasks.loop(minutes=1)
     async def freeFinishedTableBotsLounge(self):
-        if common.MKW_LOUNGE_SERVER_ID in self.table_bots:
-            for lounge_bot_channel_id in self.table_bots[common.MKW_LOUNGE_SERVER_ID]:
-                if self.table_bots[common.MKW_LOUNGE_SERVER_ID][lounge_bot_channel_id].isFinishedLounge(): 
-                    self.table_bots[common.MKW_LOUNGE_SERVER_ID][lounge_bot_channel_id].freeLock()
+        lock_server_id = common.TABLE_BOT_DISCORD_SERVER_ID if common.is_beta else common.MKW_LOUNGE_SERVER_ID
+        if lock_server_id in self.table_bots:
+            for lounge_bot_channel_id in self.table_bots[lock_server_id]:
+                if self.table_bots[lock_server_id][lounge_bot_channel_id].isFinishedLounge(): 
+                    self.table_bots[lock_server_id][lounge_bot_channel_id].freeLock()
 
     #This function will run every 15 min, removing any table bots that are
     #inactive, as defined by TableBot.isinactive() (currently 2.5 hours)
@@ -450,9 +432,7 @@ class BadWolfBot(discord.Bot):
 
         log_command_sent(message)
 
-        is_lounge_server = InteractionUtils.check_lounge_server_id(interaction.guild.id)
-        if common.running_beta and not is_lounge_server: #is_lounge_server is True if in Bad Wolf's server if beta is running
-            return
+        is_lounge_server = InteractionUtils.simulating_lounge_server(interaction)
         
         if interaction.channel.category_id in TEMPORARY_VR_CATEGORIES and command not in ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS:
             return
@@ -461,7 +441,23 @@ class BadWolfBot(discord.Bot):
         
         if not commandIsAllowed(is_lounge_server, interaction.user, this_bot, command):
             return await send_lounge_locked_message(message, this_bot)
+            
+        full_command_name = []
+        command_level = interaction.data
+        while command_level:
+            full_command_name.append(command_level['name'])
+            if "options" not in command_level: # check for nested options
+                break
 
+            new_level = None
+            for option in command_level['options']:
+                if 'options' in option: #there is a nested option
+                    new_level = option
+                    break
+            command_level = new_level
+        
+        full_command_name = " ".join(full_command_name)
+        Stats.log_command(full_command_name)
         await self.process_application_commands(interaction)
     
     async def on_connect(self):
@@ -474,7 +470,7 @@ class BadWolfBot(discord.Bot):
         
         message = InteractionUtils.create_proxy_msg(ctx.interaction, ctx=ctx, args=args)
 
-        is_lounge_server = InteractionUtils.check_lounge_server(message)
+        is_lounge_server = InteractionUtils.simulating_lounge_server(message)
         
         this_bot = self.check_create_channel_bot(message)
         if is_lounge_server and this_bot.isFinishedLounge():
@@ -491,19 +487,14 @@ class BadWolfBot(discord.Bot):
         message = ctx.message
         if not message: message = InteractionUtils.create_proxy_msg(ctx.interaction,ctx=ctx)
         server_prefix = '/'
+        try:
+            channel_bot = self.table_bots[ctx.guild_id][ctx.channel_id]
+        except KeyError:
+            channel_bot = None
 
         if isinstance(error,discord.ApplicationCommandInvokeError):
             error = error.original
-        await self.handle_exception(error,message,server_prefix)
-    
-    async def simulate_on_message(self, message, args, command, this_bot, server_prefix, is_lounge_server):
-        """
-        Method to convert raw slash command (`/raw`) into args to be parsed as a command.
-        """
-        args = [arg.lower() for arg in args]
-
-        await self.process_message_commands(message, args, command, this_bot, server_prefix, is_lounge_server)
-            
+        await self.handle_exception(error,message,server_prefix, channel_bot)
     
     async def on_message(self, message: discord.Message):
         """
@@ -515,13 +506,13 @@ class BadWolfBot(discord.Bot):
             return
         if not finished_on_ready:
             return
-        if common.running_beta and not InteractionUtils.check_lounge_server(message): #lounge server is Bad Wolf's server if beta is running
+        if common.is_beta and not InteractionUtils.check_beta_server(message):
             return
 
         server_prefix = '?'
         try:
             #server_id = message.guild.id   
-            is_lounge_server = message.guild.id == common.MKW_LOUNGE_SERVER_ID
+            is_lounge_server = InteractionUtils.simulating_lounge_server(message)
             server_prefix = ServerFunctions.get_server_prefix(message.guild.id)
             message_has_prefix, is_mention, _ = self.has_prefix(message.content, server_prefix)
             if is_mention:
@@ -531,7 +522,7 @@ class BadWolfBot(discord.Bot):
             if self.should_send_help(message):
                 await AbuseTracking.blacklisted_user_check(message)
                 await AbuseTracking.abuse_track_check(message)
-                await help_documentation.send_help(message, is_lounge_server, [], server_prefix)
+                await help_documentation.send_help(message, [], server_prefix, is_lounge_server)
                 return
                 
             if not message_has_prefix:
@@ -542,7 +533,7 @@ class BadWolfBot(discord.Bot):
             if command_is_spam(command):
                 return       
         
-            args = [arg.lower() for arg in command.split()]
+            args = command.split()
             main_command = args[0].lower()
             
             if message.channel.category_id in TEMPORARY_VR_CATEGORIES and main_command not in ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS:
@@ -560,11 +551,11 @@ class BadWolfBot(discord.Bot):
             if not commandIsAllowed(is_lounge_server, message.author, this_bot, main_command):
                 await send_lounge_locked_message(message, this_bot)
             else:
-                await self.process_message_commands(message, args, command, this_bot, server_prefix, is_lounge_server)
+                await self.process_message_commands(message, args, this_bot, server_prefix, is_lounge_server)
         except Exception as e:
-            await self.handle_exception(e,message,server_prefix)
+            await self.handle_exception(e,message,server_prefix, this_bot)
 
-    async def handle_exception(self, error, message: discord.Message, server_prefix):
+    async def handle_exception(self, error: Exception, message: discord.Message, server_prefix: str, this_bot: TableBot.ChannelBot):
         try:
             raise error
         except (discord.errors.Forbidden,ext_commands.BotMissingPermissions):
@@ -588,7 +579,7 @@ class BadWolfBot(discord.Bot):
         except TableBotExceptions.NotStaff as not_staff_exception:
             await common.safe_send(message,f"You are not staff in this server: {not_staff_exception}")
         except TableBotExceptions.WrongServer as wrong_server_exception:
-            if common.running_beta:
+            if common.is_beta:
                 await common.safe_send(message,
                                        f"{wrong_server_exception}: **I am not <@735782213118853180>. Use <@735782213118853180> in <#389521626645004302> to submit your table.**")
             else:
@@ -598,7 +589,7 @@ class BadWolfBot(discord.Bot):
                                    f"Use this command in the appropriate updater channel: {wrong_updater_channel_exception}")
         except TableBotExceptions.WarSetupStillRunning:
             await common.safe_send(message,
-                                   f"I'm still trying to set up your war. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your war again.")
+                                   f"I'm still trying to set up your table. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your table again.")
         except discord.errors.DiscordServerError:
             await common.safe_send(message,
                                    "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
@@ -621,7 +612,7 @@ class BadWolfBot(discord.Bot):
         except (ext_commands.CommandNotFound,TableBotExceptions.CommandNotFound):
             await common.safe_send(message,f"Not a valid command. For more help, do the command: `{server_prefix}help`")
         except Exception as e:
-            common.log_traceback(traceback)
+            common.log_traceback(traceback, this_bot, message)
             self.lounge_submissions.clear_user_cooldown(message.author)
             await common.safe_send(message,
                                    f"Internal bot error. An unknown problem occurred. Please wait 1 minute before sending another command. If this issue continues, try: `{server_prefix}reset`")
@@ -629,7 +620,7 @@ class BadWolfBot(discord.Bot):
         else:
             pass
     
-    async def process_message_commands(self, message, args, command, this_bot, server_prefix, is_lounge_server):
+    async def process_message_commands(self, message, args, this_bot, server_prefix, is_lounge_server):
         main_command = args[0].lower()
         Stats.log_command(main_command)
 
@@ -638,16 +629,16 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.reset_command(message, self.table_bots)          
 
         elif this_bot.manualWarSetUp:
-            await commands.TablingCommands.manual_war_setup(message, this_bot, server_prefix, is_lounge_server, command)
+            await commands.TablingCommands.manual_war_setup(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif this_bot.prev_command_sw:
             await commands.TablingCommands.after_start_war_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in GARBAGE_COLLECT_TERMS:
-            await commands.BadWolfCommands.garbage_collect_command(message)
+            await commands.BotOwnerCommands.garbage_collect_command(message)
                 
         elif main_command in START_WAR_TERMS:
-            await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, command, common.author_is_table_bot_support_plus)
+            await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, common.author_is_table_bot_support_plus)
         
         elif main_command in TABLE_TEXT_TERMS:
             await commands.TablingCommands.table_text_command(message, this_bot, args, server_prefix, is_lounge_server)
@@ -657,13 +648,13 @@ class BadWolfBot(discord.Bot):
                 
         #Lounge reporting updates
         elif main_command in TOTAL_CLEAR_TERMS:
-            await commands.BadWolfCommands.total_clear_command(message, self.lounge_submissions)
+            await commands.BotOwnerCommands.total_clear_command(message, self.lounge_submissions)
                 
         elif main_command in LOUNGE_RT_MOGI_UPDATE_TERMS:
-            await commands.LoungeCommands.rt_mogi_update(self, this_bot, message, args, self.lounge_submissions)
+            await commands.LoungeCommands.rt_mogi_update(self, message, this_bot, args, self.lounge_submissions)
         
         elif main_command in LOUNGE_CT_MOGI_UPDATE_TERMS:
-            await commands.LoungeCommands.ct_mogi_update(self, this_bot, message, args, self.lounge_submissions)
+            await commands.LoungeCommands.ct_mogi_update(self, message, this_bot, args, self.lounge_submissions)
             
         elif main_command in LOUNGE_TABLE_SUBMISSION_APPROVAL_TERMS:
             await commands.LoungeCommands.approve_submission_command(self, message, args, self.lounge_submissions)
@@ -687,7 +678,7 @@ class BadWolfBot(discord.Bot):
             await message.channel.send(file=discord.File(common.BADWOLF_PICTURE_FILE))    
         
         elif main_command in INVITE_TERMS:
-            await message.channel.send(f"**If you're on a mobile device, you'll need to use this link to invite the bot:** {common.INVITE_LINK}\n\nIf you're on a computer, refer to the picture below: {bot_invite_picture}")              
+            await message.channel.send(f"{bot_invite_picture}\n\n**Are you on mobile and you don't see this button? Update your Discord app and it should appear!**")              
         
             
         elif main_command in RACE_RESULTS_TERMS:
@@ -721,7 +712,7 @@ class BadWolfBot(discord.Bot):
             await message.channel.send("https://www.youtube.com/watch?v=fCQnfo06_RI")                      
         
         elif main_command in HELP_TERMS:
-            await help_documentation.send_help(message, is_lounge_server, args, server_prefix)
+            await help_documentation.send_help(message, args, server_prefix, is_lounge_server)
         
         #Utility commands
         elif main_command in EARLY_DC_TERMS:
@@ -736,13 +727,13 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in CHANGE_PLAYER_TAG_TERMS:
-            await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge_server, command)
+            await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in CHANGE_PLAYER_NAME_TERMS:
-            await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge_server, command)
+            await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in EDIT_PLAYER_SCORE_TERMS:
-            await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge_server, command)
+            await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in PLAYER_PENALTY_TERMS:
             # if False:
@@ -756,10 +747,10 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.fcs_command(message, this_bot, args, server_prefix, is_lounge_server)
             
         elif main_command in GET_FLAG_TERMS:
-            await commands.OtherCommands.get_flag_command(message, server_prefix)
+            await commands.OtherCommands.get_flag_command(message, args, server_prefix)
                 
         elif main_command in LOUNGE_NAME_TERMS:
-            await commands.OtherCommands.lounge_name_command(message)
+            await commands.OtherCommands.lounge_name_command(message, args)
             
         elif main_command in SET_FLAG_TERMS:
             await commands.OtherCommands.set_flag_command(message, args)
@@ -768,14 +759,14 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge_server)
                 
         elif main_command in SERVER_USAGE_TERMS:
-            await commands.BadWolfCommands.server_process_memory_command(message)
+            await commands.BotOwnerCommands.server_process_memory_command(message)
             
         elif main_command in LOUNGE_WHO_IS_TERMS:
-            await commands.LoungeCommands.who_is_command(self, message, args)
+            await commands.LoungeCommands.who_is_command(message, args)
         elif main_command in LOOKUP_TERMS:
-            await commands.LoungeCommands.lookup_command(self, message, args)
+            await commands.LoungeCommands.lookup_command(message, args)
         elif main_command in TABLE_BOT_MEMORY_USAGE_TERMS:
-            commands.BadWolfCommands.is_badwolf_check(message.author, "cannot display table bot internal memory usage")
+            commands.BotOwnerCommands.is_bot_owner_check(message.author, "cannot display table bot internal memory usage")
             load_mes = await message.channel.send("Calculating memory usage...")
             size_str = ""
 
@@ -810,31 +801,27 @@ class BadWolfBot(discord.Bot):
             await commands.TablingCommands.all_players_command(message, this_bot, server_prefix, is_lounge_server)
         
         elif main_command in FC_TERMS:
-            await commands.OtherCommands.fc_command(message, args, command)
+            await commands.OtherCommands.fc_command(message, args)
 
         elif main_command in PAGE_TERMS:
-            await commands.OtherCommands.player_page_command(message, args, command)
+            await commands.OtherCommands.player_page_command(message, args)
         
         elif main_command in MII_TERMS:
-            await commands.OtherCommands.mii_command(message, args, command)
+            await commands.OtherCommands.mii_command(message, args)
         
-        elif main_command in SET_WAR_NAME_TERMS:
-            await commands.TablingCommands.set_war_name_command(message, this_bot, args, server_prefix, is_lounge_server, command)
-            
-        elif main_command in LOG_TERMS:
-            await message.channel.send("This command has been removed. You can report a bug in Bad Wolf's server if necessary using the invite code: K937DqM")
-            #await commands.OtherCommands.log_feedback_command(message, args, command)
+        elif main_command in SET_TABLE_NAME_TERMS:
+            await commands.TablingCommands.set_table_name_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in GET_LOGS_TERMS:
-            await commands.BadWolfCommands.get_logs_command(message)
+            await commands.BotOwnerCommands.get_logs_command(message)
         
         elif main_command in ADD_SHA_TERMS:
-            await commands.BotAdminCommands.add_sha_track(message, args, command)
+            await commands.BotAdminCommands.add_sha_track(message, args)
             
         elif main_command in REMOVE_SHA_TERMS:
             await commands.BotAdminCommands.remove_sha_track(message, args)
         
-        elif main_command in {'close', 'stopbot', 'disconnect', 'kill'} and common.is_bad_wolf(message.author):
+        elif main_command in {'close', 'stopbot', 'disconnect', 'kill'} and common.is_bot_owner(message.author):
             try:
                 self.save_data()
                 self.destroy_all_tablebots()
@@ -854,10 +841,10 @@ class BadWolfBot(discord.Bot):
             
         #Admin commands     
         elif main_command in DUMP_DATA_TERMS:
-            await commands.BadWolfCommands.dump_data_command(message, self.pickle_tablebots)
+            await commands.BotOwnerCommands.dump_data_command(message, self.pickle_tablebots)
         
         elif main_command in BLACKLIST_USER_TERMS:
-            await commands.BotAdminCommands.blacklist_user_command(message, args, command)
+            await commands.BotAdminCommands.blacklist_user_command(message, args)
                 
         elif main_command in UNDO_TERMS:
             await commands.TablingCommands.undo_command(message, this_bot, args, server_prefix, is_lounge_server)
@@ -873,25 +860,25 @@ class BadWolfBot(discord.Bot):
         
         elif main_command in VERIFY_ROOM_TERMS:
             if commands.vr_is_on:
-                await commands.OtherCommands.vr_command(this_bot, message, args, command)
+                await commands.OtherCommands.vr_command(message, this_bot, args)
         
         elif main_command in WORLDWIDE_TERMS:
-            await commands.OtherCommands.wws_command(self, this_bot, message, ww_type=Race.RT_WW_REGION)
+            await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.RT_WW_REGION)
         
         elif main_command in CTWW_TERMS:
-            await commands.OtherCommands.wws_command(self, this_bot, message, ww_type=Race.CTGP_CTWW_REGION)  
+            await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.CTGP_CTWW_REGION)  
         
         elif main_command in BATTLES_TERMS:
-            await commands.OtherCommands.wws_command(self, this_bot, message, ww_type=Race.BATTLE_REGION)
+            await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.BATTLE_REGION)
         
         elif main_command in MERGE_ROOM_TERMS:
             await commands.TablingCommands.merge_room_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in ADD_BOT_ADMIN_TERMS:
-            await commands.BadWolfCommands.add_bot_admin_command(message, args)
+            await commands.BotOwnerCommands.add_bot_admin_command(message, args)
                 
         elif main_command in REMOVE_BOT_ADMIN_TERMS:
-            await commands.BadWolfCommands.remove_bot_admin_command(message, args)
+            await commands.BotOwnerCommands.remove_bot_admin_command(message, args)
 
         elif main_command in BLACKLIST_WORD_TERMS:
             await commands.BotAdminCommands.add_blacklisted_word_command(message, args)
@@ -918,28 +905,28 @@ class BadWolfBot(discord.Bot):
             await commands.ServerDefaultCommands.large_time_setting_command(message, this_bot, args, server_prefix)
         
         elif main_command in SERVER_SETTINGS_TERMS:
-            await commands.ServerDefaultCommands.show_settings_command(message, this_bot, server_prefix)
+            await commands.ServerDefaultCommands.show_settings_command(message)
 
         elif main_command in DISPLAY_GP_SIZE_TERMS:
             await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)
             
         elif main_command in POPULAR_TRACKS_TERMS:
-            await commands.StatisticCommands.popular_tracks_command(self, message, args, server_prefix, command, is_top_tracks=True)
+            await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, is_top_tracks=True)
         
         elif main_command in UNPOPULAR_TRACKS_TERMS:
-            await commands.StatisticCommands.popular_tracks_command(self, message, args, server_prefix, command, is_top_tracks=False)
+            await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, is_top_tracks=False)
 
         elif main_command in BEST_TRACK_TERMS:
-            await commands.StatisticCommands.player_tracks_command(self, message, args, server_prefix, command, sort_asc=False)
+            await commands.StatisticCommands.player_tracks_command(message, args, server_prefix, sort_asc=False)
 
         elif main_command in WORST_TRACK_TERMS:
-            await commands.StatisticCommands.player_tracks_command(self, message, args, server_prefix, command, sort_asc=True)
+            await commands.StatisticCommands.player_tracks_command(message, args, server_prefix, sort_asc=True)
 
         elif main_command in TOP_PLAYERS_TERMS:
-            await commands.StatisticCommands.top_players_command(self, message, args, server_prefix, command)
+            await commands.StatisticCommands.top_players_command(message, args, server_prefix)
         
         elif main_command in RECORD_TERMS:
-            await commands.StatisticCommands.record_command(self, message,args,server_prefix,command)
+            await commands.StatisticCommands.record_command(message, args, server_prefix)
 
         else:
             raise TableBotExceptions.CommandNotFound
