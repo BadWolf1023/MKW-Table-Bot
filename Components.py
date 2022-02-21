@@ -253,7 +253,7 @@ class PictureView(discord.ui.View):
                 await interaction.response.send_message("You cannot use this button.", ephemeral=True)
                 return False
 
-            if self.children[-1].channel_bot.has_been_lounge_submitted:
+            if self.bot.has_been_lounge_submitted:
                 await interaction.response.send_message("Table has already been submitted.", ephemeral=True)
                 return False
 
