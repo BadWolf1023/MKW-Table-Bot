@@ -64,7 +64,7 @@ class ManualTeamsView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         can_interact = interaction.channel.permissions_for(interaction.user).send_messages
         if not can_interact:
-            await interaction.response.send_message("You cannot interact with this.", ephermeral=True)
+            await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
             return False
 
         allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction')
@@ -132,7 +132,7 @@ class ConfirmView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         can_interact = interaction.channel.permissions_for(interaction.user).send_messages
         if not can_interact:
-            await interaction.response.send_message("You cannot interact with this.", ephermeral=True)
+            await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
             return False
 
         allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction')
@@ -244,7 +244,7 @@ class PictureView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         can_interact = interaction.channel.permissions_for(interaction.user).send_messages
         if not can_interact:
-            await interaction.response.send_message("You cannot interact with this.", ephermeral=True)
+            await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
             return False
 
         if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child
@@ -426,7 +426,7 @@ class SuggestionView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         can_interact = interaction.channel.permissions_for(interaction.user).send_messages
         if not can_interact:
-            await interaction.response.send_message("You cannot interact with this.", ephermeral=True)
+            await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
             return False
 
         allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction') # InteractionUtils.convert_key_to_command(self.current_error['type'])
