@@ -510,6 +510,8 @@ class BadWolfBot(discord.Bot):
             return
 
         server_prefix = '?'
+        this_bot = None
+
         try:
             #server_id = message.guild.id   
             is_lounge_server = InteractionUtils.simulating_lounge_server(message)
