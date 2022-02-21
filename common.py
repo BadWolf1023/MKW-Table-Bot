@@ -10,7 +10,6 @@ import os
 from datetime import datetime, timedelta, timezone
 import numpy as np
 import aiohttp
-import TableBotExceptions
 from collections import defaultdict
 import discord
 from pathlib import Path
@@ -295,7 +294,7 @@ botAdmins = set()
 
 #Abuse tracking
 BOT_ABUSE_REPORT_CHANNEL_ID = 766272946091851776
-ERROR_LOGS_CHANNEL_ID = 942264377984315442
+ERROR_LOGS_CHANNEL_ID = 942264377984315442 if is_prod or is_beta else properties['error_log_channel']
 ERROR_LOGS_CHANNEL = None
 SPAM_THRESHOLD = 13
 WARN_THRESHOLD = 13
@@ -445,6 +444,8 @@ def extra_error_log(channel_bot, message):
         rxx_string = '\n'.join(rxxs)
         info += "\n\n**rxx history:**\n" + rxx_string + '\n\u200b'
 
+    if not file:
+        info += '\n**No command history**'
     return info, file
     
     
