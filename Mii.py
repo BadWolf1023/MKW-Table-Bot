@@ -122,7 +122,7 @@ class Mii(KaitaiStruct):
         self.creator_name, _, _ = self.creator_name.partition('\x00')
         self._io.read_bytes(14)
         self.country_id = self._io.read_u1()
-        self.country_code = COUNTRY_CODES[self.country_id]
+        self.country_code = COUNTRY_CODES.get(self.country_id, None)
         
     def get_mii_embed(self):
         embed = Embed(
@@ -251,7 +251,6 @@ class Mii(KaitaiStruct):
     """
 
 COUNTRY_CODES = {
-    0: None,
     1:'JP',
     2:'AQ',
     3:'NL',
