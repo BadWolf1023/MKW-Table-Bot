@@ -134,7 +134,7 @@ class ChannelBot(object):
         return players.index(player)+1
 
     def get_room_started_message(self):
-        started_war_str = "FFA started" if self.getWar().isFFA() else "War started"
+        started_war_str = "FFA started" if self.getWar().isFFA() else "Table started"
         if self.getWar().ignoreLargeTimes:
             started_war_str += " (ignoring errors for large finish times)"
         started_war_str += f". {self.getRoom().getRXXText()}"
@@ -269,8 +269,8 @@ class ChannelBot(object):
         if not self.is_table_loaded():
             return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.NO_ROOM_LOADED)
         self.room.add_races(rxx, room_races)
-        # Make call to database to add data
-        await DataTracker.RoomTracker.add_data(self)
+        # Important: We do NOT want to add data to database when this is called. The previous races are MODIFIED, we should NOT add modified races to the database - the new races will be added to the database when they call room.update()
+        # await DataTracker.RoomTracker.add_data(self)
         self.room.apply_tabler_adjustments()
         asyncio.create_task(self.room.populate_miis()) # We must create this task after adjustments are applied since the adjustments applied to the new races may affect which miis we pull
         if self.getWar() is None:  # The caller should have ensured that a war is set - dangerous game to play!
@@ -308,7 +308,7 @@ class ChannelBot(object):
     def getWPCooldownSeconds(self) -> int:
         if self.should_send_mii_notification:
             self.should_send_mii_notification = False
-        # if common.in_testing_server:
+        # if common.is_dev:
         #     return -1
         if self.lastWPTime is None:
             return -1
@@ -321,7 +321,7 @@ class ChannelBot(object):
         self.roomLoadTime = datetime.now()
 
     def getRLCooldownSeconds(self) -> int:
-        if common.in_testing_server:
+        if common.is_dev:
             return -1
         if self.roomLoadTime is None:
             return -1
@@ -468,7 +468,7 @@ class ChannelBot(object):
         try:
             await last_wp_message[self.channel_id].edit(view=None)
             last_wp_message.pop(self.channel_id, None)
-        except:
+        except Exception:
             pass
     
     def add_sug_view(self, view):
@@ -508,8 +508,6 @@ class ChannelBot(object):
 
     def reset(self):
         self.destroy()
-        self.room = None
-        self.war = None
         self.prev_command_sw = False
         self.manualWarSetUp = False
         self.last_used = datetime.now()

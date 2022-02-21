@@ -118,7 +118,7 @@ async def get_mkwx_soup() -> Tuple[RoomLoadStatus, Union[BeautifulSoup, None]]:
             return RoomLoadStatus(RoomLoadStatus.SUCCESS), BeautifulSoup(fix_cloudflare_email(fp.read()), "html.parser")
     mkwx_soup = await _get_mkwx_soup()
     if mkwx_soup is None:
-        RoomLoadStatus(RoomLoadStatus.FAILED_REQUEST), None
+        return RoomLoadStatus(RoomLoadStatus.FAILED_REQUEST), None
     return RoomLoadStatus(RoomLoadStatus.SUCCESS), mkwx_soup
 
 

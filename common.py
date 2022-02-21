@@ -4,13 +4,13 @@ Created on Jun 12, 2021
 @author: willg
 '''
 import asyncio
+import io
 import json
 import os
 from datetime import datetime, timedelta, timezone
 import numpy as np
 import aiohttp
-import TableBotExceptions
-from collections import namedtuple,defaultdict
+from collections import defaultdict
 import discord
 from pathlib import Path
 import ssl
@@ -18,9 +18,13 @@ import certifi
 import dill
 import TimerDebuggers
 
-sslcontext = ssl.create_default_context(cafile=certifi.where())
-
-version = "12.0.0" #Final release from Bad Wolf, stabilizing various things and releasing beta commands
+# I don't know the exact details because I'm not extremely familiar with how SSL certification actually works, but
+# this was necessary at one point because a main SSL certificate list expired a while ago,
+# but the issuer messed up the deploy of new certificate lists to machines (Windows, linux, etc)
+# This caused the old (revoked) SSL certificate file to be used on the machine, and Lorenzi's (and many other websites) certificates were "expired", throwing all types of SSL errors
+# Rather than blindly connecting to websites and turning SSL off, we can use a manually downloaded SSL certificate list from the issuer
+# and use that file on disk for SSL verification instead.
+sslcontext = ssl.create_default_context(cafile=certifi.where()) 
 
 main = None
 client = None
@@ -30,7 +34,8 @@ if False: # for IDE autocompletion
     client: BadWolfBot.BadWolfBot = None
 
 PROPERTIES_FILE = f"properties.json"
-properties = json.load(open(PROPERTIES_FILE)) if os.path.exists(PROPERTIES_FILE) else {"mode": 'dev'}
+EXAMPLE_PROPERTIES_FILE = "example_properties.json"
+properties = json.load(open(PROPERTIES_FILE if os.path.exists(PROPERTIES_FILE) else EXAMPLE_PROPERTIES_FILE)) 
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
@@ -67,10 +72,6 @@ SCORE_MATRIX = [
 is_dev = properties['mode'] == 'dev'
 is_beta = properties['mode'] == 'beta'
 is_prod = properties['mode'] == 'prod'
-
-in_testing_server = is_dev
-running_beta = is_beta
-beta_is_real = False
 
 DISABLE_MKWX_COMMANDS = False
 LIMIT_MKWX_COMMANDS = False
@@ -116,10 +117,8 @@ MKW_TABLE_BOT_CENTRAL_SERVER_ID = 739733336871665696 #Same as "Bad Wolf's Server
 SLASH_GUILDS = None
 if is_beta:
     SLASH_GUILDS = [MKW_TABLE_BOT_CENTRAL_SERVER_ID]
-elif (not is_prod) and ('slash_command_server' in properties):
+elif is_dev and ('slash_command_server' in properties):
     SLASH_GUILDS = [properties['slash_command_server']]
-else:
-    SLASH_GUILDS = None
 
 needPermissionCommands = set()
 
@@ -172,7 +171,6 @@ FC_DISCORD_ID_FILE = f"{DATA_PATH}discord_id_FCS.txt"
 DISCORD_ID_LOUNGES_FILE = f"{DATA_PATH}discord_id_lounges.txt"
 DISCORD_ID_FLAGS_FILE = f"{DATA_PATH}discord_id_flags.txt"
 FLAG_CODES_FILE = f"{DATA_PATH}flag_codes.txt"
-FLAG_EXCEPTION_FILE = f"{DATA_PATH}flag_exceptions.txt"
 
 PRIVATE_INFO_FILE = f'{DATA_PATH}private.txt'
 STATS_FILE = f"{DATA_PATH}stats.txt"
@@ -187,11 +185,11 @@ BOT_ADMINS_FILE = f"{DATA_PATH}bot_admins.txt"
 
 ERROR_LOGS_FILE = f"{LOGGING_PATH}error_logs.txt"
 
-FEEDBACK_LOGS_FILE = f"{LOGGING_PATH}feedback_logs.txt"
-
 #To be clear (and you can check the main loop that this is true), table bot does not log all messages
 #It only logs commands that are sent to it
 MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}messages_logging.txt"
+
+JSON_META_FILE = f"{DATA_PATH}meta.txt"
 
 FULL_LOGGING_FILE_NAME = "full_logging"
 FULL_MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}/{FULL_LOGGING_FILE_NAME}.txt"
@@ -206,13 +204,11 @@ DEFAULT_MII_FILE = f"{SERVER_SETTINGS_PATH}server_mii_defaults.txt"
 
 ERROR_LOGGING_TYPE = "error"
 MESSAGE_LOGGING_TYPE = "messagelogging"
-FEEDBACK_LOGGING_TYPE = "feedback"
 FULL_MESSAGE_LOGGING_TYPE = "fullmessagelogging"
 
 ALL_PATHS = {LOGGING_PATH, SERVER_SETTINGS_PATH, DATA_PATH}
 
 FILES_TO_BACKUP = {ERROR_LOGS_FILE,
-                   FEEDBACK_LOGS_FILE,
                    MESSAGE_LOGGING_FILE,
                    FULL_MESSAGE_LOGGING_FILE,
                    DEFAULT_LARGE_TIME_FILE,
@@ -227,14 +223,14 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    FC_DISCORD_ID_FILE,
                    DISCORD_ID_FLAGS_FILE,
                    DISCORD_ID_LOUNGES_FILE,
-                   FLAG_EXCEPTION_FILE,
                    LOUNGE_ID_COUNTER_FILE,
                    LOUNGE_TABLE_UPDATES_FILE,
                    STATS_FILE,
                    TABLE_BOT_PKL_FILE,
                    VR_IS_ON_FILE,
                    SHA_TRACK_NAMES_FILE,
-                   ROOM_DATA_TRACKING_DATABASE_FILE
+                   ROOM_DATA_TRACKING_DATABASE_FILE,
+                   JSON_META_FILE
                    }
 
 LEFT_ARROW_EMOTE = '\u25c0'
@@ -252,26 +248,12 @@ TABLEBOT_SERVER_INVITE_CODE = "K937DqM"
 
 OWNERS = {BAD_WOLF_ID,CW_ID,ANDREW_ID} if is_dev else {BAD_WOLF_ID,ANDREW_ID}
 
-#Lounge stuff
-MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=1&event_data="
-MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=2&event_data="
-MKW_LOUNGE_RT_UPDATER_LINK = MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK
-MKW_LOUNGE_CT_UPDATER_LINK = MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK
-MKW_LOUNGE_RT_UPDATER_CHANNEL = 758161201682841610
-MKW_LOUNGE_CT_UPDATER_CHANNEL = 758161224202059847
 MKW_LOUNGE_SERVER_ID = 387347467332485122
-
-BAD_WOLF_SERVER_ID = 739733336871665696
-BAD_WOLF_SERVER_TESTER_ID = 740575809713995776
-BAD_WOLF_SERVER_ADMIN_ID = 740659173695553667
-BAD_WOLF_SERVER_EVERYONE_ROLE_ID = 739733336871665696
-BAD_WOLF_SERVER_BETA_TESTING_ONE_CHANNEL_ID = 860645585143857213
-BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID = 860645644804292608
-BAD_WOLF_SERVER_BETA_TESTING_THREE_CHANNEL_ID = 863242314461085716
-BAD_WOLF_SERVER_STAFF_ROLES = set([BAD_WOLF_SERVER_TESTER_ID, BAD_WOLF_SERVER_ADMIN_ID])
-BAD_WOLF_SERVER_NORMAL_TESTING_ONE_CHANNEL_ID = 861453709305315349
-BAD_WOLF_SERVER_NORMAL_TESTING_TWO_CHANNEL_ID = 863234379718721546
-BAD_WOLF_SERVER_NORMAL_TESTING_THREE_CHANNEL_ID = 863238405269749760
+TABLE_BOT_DISCORD_SERVER_ID = 739733336871665696
+TABLE_BOT_SERVER_BETA_TWO_CHANNEL_ID = 860645644804292608
+TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID = 863242314461085716
+if is_beta:
+    MKW_LOUNGE_SERVER_ID = TABLE_BOT_DISCORD_SERVER_ID
 
 
 #Rather than using the builtin set declaration {}, I did an iterable because BadWolfBot.py kept giving an error in Eclipse, even though everything ran fine - this seems to have suppressed the error which was giving me major OCD
@@ -285,16 +267,23 @@ mkw_lounge_staff_roles = set([387347888935534593, #Boss
                             ])
                             #   BAD_WOLF_SERVER_ADMIN_ID]) #Admin in test server
 
+if is_beta:
+    mkw_lounge_staff_roles.clear()
+    TABLE_BOT_SERVER_EVERYONE_ROLE_ID = 739733336871665696
+    mkw_lounge_staff_roles.add(TABLE_BOT_SERVER_EVERYONE_ROLE_ID)
+
 reporter_plus_roles = set([393600567781621761, #RT Updater
                               520808645252874240, #CT Updater
                               389252697284542465, #RT Reporter
                               520808674411937792 #CT Reporter
                               ]) | mkw_lounge_staff_roles
 
-table_bot_support_plus_roles = reporter_plus_roles | set([748367398905708634])
+        
+MKW_LOUNGE_TABLE_BOT_SUPPORT_ROLE_ID = 748367398905708634
+table_bot_support_plus_roles = reporter_plus_roles | {MKW_LOUNGE_TABLE_BOT_SUPPORT_ROLE_ID}
 
 SHA_ADDERS = [
-    683193773055934474, # Fear#1616
+    683193773055934474 # Fear#1616
 ]
 
 #Bot Admin information
@@ -305,9 +294,8 @@ botAdmins = set()
 
 #Abuse tracking
 BOT_ABUSE_REPORT_CHANNEL_ID = 766272946091851776
-ERROR_LOGS_CHANNEL_ID = 942264377984315442
+ERROR_LOGS_CHANNEL_ID = 942264377984315442 if is_prod or is_beta else properties['error_log_channel']
 ERROR_LOGS_CHANNEL = None
-CLOUD_FLARE_REPORT_CHANNEL_ID = 888551356238020618
 SPAM_THRESHOLD = 13
 WARN_THRESHOLD = 13
 AUTO_BAN_THRESHOLD = 18
@@ -322,55 +310,15 @@ def author_has_role_in(message_author, role_ids):
             return True
     return False
 
-def author_is_lounge_staff(message_author):
-    return author_has_role_in(message_author, mkw_lounge_staff_roles) or is_bad_wolf(message_author)
+def author_is_lounge_staff(message_author: discord.User) -> bool:
+    return author_has_role_in(message_author, mkw_lounge_staff_roles) or is_bot_owner(message_author)
 
-def author_is_reporter_plus(message_author):
-    return author_has_role_in(message_author, reporter_plus_roles)
+def author_is_reporter_plus(message_author: discord.User) -> bool:
+    return author_has_role_in(message_author, reporter_plus_roles) or is_bot_owner(message_author)
 
-def author_is_table_bot_support_plus(message_author):
-    return author_has_role_in(message_author, table_bot_support_plus_roles)
+def author_is_table_bot_support_plus(message_author: discord.User) -> bool:
+    return author_has_role_in(message_author, table_bot_support_plus_roles) or is_bot_owner(message_author)
 
-def main_lounge_can_report_table(message_author):
-    return author_is_reporter_plus(message_author) or message_author.id == BAD_WOLF_ID
-
-
-
-LoungeUpdateChannels = namedtuple('LoungeUpdateChannels', ['updater_channel_id_primary', 'updater_link_primary', 'preview_link_primary', 'type_text_primary',
-                                                         'updater_channel_id_secondary', 'updater_link_secondary', 'preview_link_secondary', 'type_text_secondary'])
-
-TESTING_SERVER_LOUNGE_UPDATES = LoungeUpdateChannels(
-    updater_channel_id_primary=BAD_WOLF_SERVER_NORMAL_TESTING_TWO_CHANNEL_ID,
-    updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
-    preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
-    type_text_primary="RT",
-    updater_channel_id_secondary=BAD_WOLF_SERVER_NORMAL_TESTING_TWO_CHANNEL_ID,
-    updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
-    preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
-    type_text_secondary="CT")
-
-lounge_channel_mappings = {
-    MKW_LOUNGE_SERVER_ID:LoungeUpdateChannels(
-            updater_channel_id_primary=MKW_LOUNGE_RT_UPDATER_CHANNEL,
-            updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
-            preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
-            type_text_primary="RT",
-            updater_channel_id_secondary=MKW_LOUNGE_CT_UPDATER_CHANNEL,
-            updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
-            preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
-            type_text_secondary="CT"
-        ),
-    BAD_WOLF_SERVER_ID:LoungeUpdateChannels(
-            updater_channel_id_primary=BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID,
-            updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
-            preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
-            type_text_primary="RT",
-            updater_channel_id_secondary=BAD_WOLF_SERVER_BETA_TESTING_TWO_CHANNEL_ID,
-            updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
-            preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
-            type_text_secondary="CT"
-        )
-    }
 
 # dict of channel IDs to tier numbers
 RXX_LOCKER_NAME = "rxx_locker"
@@ -435,19 +383,14 @@ def get_channel_type_and_tier(channel_id, races):
         return "ct", CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS[channel_id]
     return None, None
 
-def is_bad_wolf(author):
+def is_bot_owner(author):
     return author.id in OWNERS
 
 def is_bot_admin(author):
-    return str(author.id) in botAdmins or is_bad_wolf(author)
+    return str(author.id) in botAdmins or is_bot_owner(author)
 
 def is_sha_adder(author):
     return author.id in SHA_ADDERS
-
-def throw_if_not_lounge(guild):
-    if guild.id != MKW_LOUNGE_SERVER_ID:
-        raise TableBotExceptions.NotLoungeServer()
-    return True
 
 def check_create(file_name):
     if not os.path.isfile(file_name):
@@ -462,20 +405,54 @@ def full_command_log(message, extra_text=""):
 def log_error(text):
     return log_text(text, logging_type=ERROR_LOGGING_TYPE)
 
-def log_traceback(traceback):
+def create_temp_file(filename, content, dir='.'):
+    with open(dir+filename, 'w', encoding='utf-8') as file:
+        file.write(content)
+    return io.BytesIO(open(dir+filename, 'rb').read())
+
+def delete_file(filename):
+    try:
+        os.remove(filename)
+    except Exception:
+        pass
+
+def log_traceback(traceback, channel_bot=None, message=None):
     if is_prod or is_beta:
-        asyncio.create_task(ERROR_LOGS_CHANNEL.send(f"```\n{traceback.format_exc()}\n```"))
+        info = ''
+        file = None
+        if channel_bot and message and channel_bot.is_table_loaded():
+            info, file = extra_error_log(channel_bot, message)
+        asyncio.create_task(ERROR_LOGS_CHANNEL.send(f"```\n{traceback.format_exc()}\n```\n{info}", file=file))
 
     with open(ERROR_LOGS_FILE, "a+", encoding="utf-8") as f:
         f.write(f"\n{str(datetime.now())}: \n")
         traceback.print_exc(file=f)
+
+def extra_error_log(channel_bot, message):
+    file = None
+    info = f"**Trigger command:** `{message.content}`"
+
+    if len(channel_bot.save_states)>0:
+        commands = 'Command history:\n' + '\n'.join([state[0] for state in channel_bot.save_states])
+        filename = f'temp_commands_file_{channel_bot.channel_id}.txt'
+        commands_file = create_temp_file(filename, commands, './temp/')
+        delete_file(f'./temp/{filename}')
+        file = discord.File(fp=commands_file, filename=filename)
+
+    if len(channel_bot.room.rLIDs)>0:
+        rxxs = [f'https://wiimmfi.de/stats/mkwx/list/{rxx}' for rxx in channel_bot.room.rLIDs]
+        rxx_string = '\n'.join(rxxs)
+        info += "\n\n**rxx history:**\n" + rxx_string + '\n\u200b'
+
+    if not file:
+        info += '\n**No command history**'
+    return info, file
+    
     
 def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
     logging_file = MESSAGE_LOGGING_FILE
     if logging_type == ERROR_LOGGING_TYPE:
         logging_file = ERROR_LOGS_FILE
-    if logging_type == FEEDBACK_LOGGING_TYPE:
-        logging_file = FEEDBACK_LOGS_FILE
     if logging_type == MESSAGE_LOGGING_TYPE:
         logging_file = MESSAGE_LOGGING_FILE
     if logging_type == FULL_MESSAGE_LOGGING_TYPE:

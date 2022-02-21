@@ -3,6 +3,7 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
+import asyncio
 import Race
 import Placement
 import WiimmfiSiteFunctions
@@ -21,6 +22,8 @@ import TimerDebuggers
 
 DEBUG_RACES = False
 DEBUG_PLACEMENTS = False
+
+watched_suggestions = {}
 
 #Function takes a default dictionary, the key being a number, and makes any keys that are greater than the threshold one less, then removes that threshold, if it exists
 def generic_dictionary_shifter(old_dict, threshold):
@@ -42,8 +45,8 @@ class Room(object):
         self.name_changes = {}
         self.removed_races = []
         
-        #Key will be the race number, value will be a list of all the placements changed for the race
-        self.placement_history = defaultdict(list)
+        #Key will be the race number, value will be a list of all the placements changed for the race (including manual DC placements)
+        self.placement_history: defaultdict[int, List[Dict[str, Any]]] = defaultdict(list)
         
         #Dictionary - key is race number, value is the number of players for the race that the tabler specified
         self.forcedRoomSize = defaultdict(int) #This contains the races that have their size changed by the tabler - when a race is removed, we
@@ -53,13 +56,12 @@ class Room(object):
         
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
         self.dc_on_or_before = defaultdict(dict)
-        self.manual_dc_placements: defaultdict[int, List[Dict[str, Any]]] = defaultdict(list) #maps race to manually configured DC placements (on/before)
+        # self.manual_dc_placements: defaultdict[int, List[Dict[str, Any]]] = defaultdict(list) #maps race to manually configured DC placements (on/before)
 
         self.set_up_user = setup_discord_id
         self.set_up_user_display_name = setup_display_name
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         self.sub_ins = {}
-        # TODO: is_freed indicates if a Lounge table lock is freed or not
         self.is_freed = False
         
         self.miis: Dict[str, Mii.Mii] = {}
@@ -67,6 +69,9 @@ class Room(object):
         self.event_id = event_id
         self.rLIDs: List[str] = []
         self.races: List[Race.Race] = []
+
+        self.suggestion_errors = None
+        self.channel_id = None
         
         self.add_races(rxx, races)
 
@@ -87,13 +92,29 @@ class Room(object):
         return self.dc_on_or_before
     def get_subs(self):
         return self.sub_ins
-    def get_manual_dc_placements(self):
-        return self.manual_dc_placements
     def get_event_id(self):
         return self.event_id
     
-
-
+    def watch_suggestions(self, view, errors, channel_id):
+        """Watch suggestions view so that it updates automatically on race removals and state changes."""
+        watched_suggestions[channel_id] = view #store active channel suggestion view
+        self.suggestion_errors = errors
+        self.channel_id = channel_id
+    
+    def stop_watching_suggestions(self):
+        if self.channel_id:
+            watched_suggestions.pop(self.channel_id, None)
+            self.suggestion_errors = None
+        
+    def update_suggestions(self):
+        if self.suggestion_errors: #a suggestion view is active and must be updated after race removal
+            view = watched_suggestions.get(self.channel_id, None)
+            self.apply_tabler_adjustments(suggestion_call=True)
+            updated_suggestions = view.bot.war.get_war_errors_string_2(self, view.bot.get_all_resolved_errors(), suggestion_call=True)
+                
+            if view:
+                self.suggestion_errors = updated_suggestions
+                asyncio.create_task(view.refresh_suggestions())
 
     def set_races(self, races: List[Race.Race]):
         #In case any outsiders have a reference to our race list, we want to update their reference
@@ -118,14 +139,20 @@ class Room(object):
         return False
     
     def placements_changed_for_racenum(self, race_num):
-        return race_num in self.placement_history and len(self.placement_history[race_num]) > 0
+        if race_num in self.placement_history:
+            race_placement_changes = self.placement_history[race_num]
+            # manual DC placements do not count as placement changes and should not trigger the warning
+            race_placement_changes = [i for i in race_placement_changes if i['type']=='change'] 
+
+        return race_num in self.placement_history and len(race_placement_changes) > 0
     
     def changePlacement(self, race_num, player_FC, new_placement):
         #We need to get their original placement on the race
         original_placement = self.races[race_num-1].getPlacementNumber(player_FC)
-        position_change = (original_placement, new_placement)
+        position_change_payload = (original_placement, new_placement)
+        position_change = {'type': 'change', 'payload': position_change_payload}
         self.placement_history[race_num].append(position_change)        
-        self.races[race_num-1].applyPlacementChanges([position_change])
+        self.races[race_num-1].applyPlacementChanges([position_change_payload])
 
     
     def had_subs(self):
@@ -133,14 +160,15 @@ class Room(object):
     
     def get_room_subs(self):
         if not self.had_subs():
-            return "No subs this war."
+            return "No subs for this table."
         
-        ret = "*Subs this war:*"
+        ret = "*Subs for this table:*"
         
-        for ind, (sub_in_fc, substitution) in enumerate(self.sub_ins.items(), 1):
-            subInName = self.getMiiNameByFC(sub_in_fc) + UserDataProcessing.lounge_add(sub_in_fc)
-            subOutName = substitution[3]
-            race = substitution[0]
+        for ind, (sub_in_fc, sub_data) in enumerate(self.sub_ins.items(), 1):
+            subInName = UserDataProcessing.proccessed_lounge_add(self.getMiiNameByFC(sub_in_fc), sub_in_fc)
+            sub_out_fc = sub_data[2]
+            subOutName = UserDataProcessing.proccessed_lounge_add(self.getMiiNameByFC(sub_out_fc), sub_out_fc)
+            race = sub_data[0]
             ret+=f"\n\t{ind}. **{subInName}** subbed in for **{subOutName}** on race {race}."
         
         return ret
@@ -184,12 +212,11 @@ class Room(object):
             subInStartRace = sub_data[0]
             if race_num != subInStartRace:
                 continue
-            
-            subInName = self.getMiiNameByFC(sub_in_fc) + UserDataProcessing.lounge_add(sub_in_fc)
+            subInName = UserDataProcessing.proccessed_lounge_add(self.getMiiNameByFC(sub_in_fc), sub_in_fc)
             if sub_in_fc in self.getNameChanges():
-                subInName = self.getNameChanges()[sub_in_fc]
-            suboutName = sub_data[3]
-            sub_str_list.append(f"Tabler subbed in {UtilityFunctions.process_name(subInName)} for {UtilityFunctions.process_name(suboutName)} this race")
+                subInName = UtilityFunctions.clean_for_output(self.getNameChanges()[sub_in_fc])
+            suboutName = UtilityFunctions.clean_for_output(sub_data[3])
+            sub_str_list.append(f"Tabler subbed in {subInName} for {suboutName} this race")
         return sub_str_list
     
     def add_sub(self, subInFC, subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores):
@@ -207,7 +234,7 @@ class Room(object):
             remove_success = self.__remove_race__(raceIndex)
             if remove_success:
                 self.removed_races.append((raceIndex, raceName))
-                #Update dcs, quickedits, and room size changes, and subin scores
+                #Update dcs, manual placements, quickedits, and room size changes, and subin scores
                 self.forcedRoomSize = generic_dictionary_shifter(self.forcedRoomSize, race_num)
                 self.dc_on_or_before = generic_dictionary_shifter(self.dc_on_or_before, race_num)
                 self.placement_history = generic_dictionary_shifter(self.placement_history, race_num)
@@ -218,6 +245,8 @@ class Room(object):
                         sub_data[6].pop(subout_start_race - race_num)
                         sub_data[5] -= 1
                         sub_data[0] -= 1
+
+                self.update_suggestions()
                         
             return remove_success, (raceIndex, raceName)
         return False, None
@@ -247,41 +276,15 @@ class Room(object):
         return fcPlacementDict
 
     
-    def getFCPlayerList(self, startrace=1,endrace=12):
-        fcNameDict = {}
-        if endrace is None:
-            endrace = len(self.races)
-        for race in self.races[startrace-1:endrace]:
-            for placement in race.getPlacements():
-                FC, name = placement.get_fc_and_name()
-                fcNameDict[FC] = name
-        return fcNameDict
-    
-    def getFCPlayerListString(self, startrace=1,endrace=12, lounge_replace=True):
-        FCPL = self.getFCPlayerList(startrace, endrace)
-        to_build = ""
-        for fc, name in FCPL.items():
-            to_build += fc + ": " + UtilityFunctions.process_name(name + UserDataProcessing.lounge_add(fc, lounge_replace)) + "\n"
-        return to_build
-    
     def getPlayerPenalities(self):
         return self.playerPenalties
         
     def addPlayerPenalty(self, fc, amount):
         self.playerPenalties[fc] += amount
-        
     
-    def getFCPlayerListStartEnd(self, startRace, endRace):
-        fcNameDict = {}
-        for raceNumber, race in enumerate(self.races, 1):
-            if raceNumber >= startRace and raceNumber <= endRace: 
-                for placement in race.getPlacements():
-                    FC, name = placement.get_fc_and_name()
-                    fcNameDict[FC] = name
-        return fcNameDict
     
     def getMiiNameByFC(self, FC):
-        player_list = self.getFCPlayerList(endrace=None)
+        player_list = self.get_fc_to_name_dict()
         if FC in player_list:
             return player_list[FC]
         return "no name"
@@ -316,10 +319,10 @@ class Room(object):
         self.name_changes[FC] = name
     
     def getFCs(self):
-        return self.getFCPlayerList(endrace=None).keys()
+        return self.get_fc_to_name_dict().keys()
     
     def getPlayers(self):
-        return self.getFCPlayerList(endrace=None).values()
+        return self.get_fc_to_name_dict().values()
     
             
     def setRaces(self, races):
@@ -351,7 +354,7 @@ class Room(object):
         GPPlayers = []
         missingPlayers = []
         for GPNum in range(numGPS):
-            GPPlayers.append(self.getFCPlayerListStartEnd((GPNum*4)+1, (GPNum+1)*4))
+            GPPlayers.append(self.get_fc_to_name_dict((GPNum*4)+1, (GPNum+1)*4))
         
         for raceNum, race in enumerate(self.races):
             thisGPPlayers = GPPlayers[int(raceNum/4)]
@@ -363,12 +366,12 @@ class Room(object):
             missingPlayers.append(missingPlayersThisRace)
         return missingPlayers
     
-    def getMissingOnRace(self, numGPS, include_blank = False):
+    def getMissingOnRace(self, numGPS, include_blank=False):
         GPPlayers = []
         missingPlayers = [] #players who were missing or had a blank time 
 
         for GPNum in range(numGPS):
-            GPPlayers.append(self.getFCPlayerListStartEnd((GPNum*4)+1, (GPNum+1)*4))
+            GPPlayers.append(self.get_fc_to_name_dict((GPNum*4)+1, (GPNum+1)*4))
         
         wentMissingThisGP = []
         for raceNum, race in enumerate(self.races[0:numGPS*4]):
@@ -388,6 +391,7 @@ class Room(object):
             for placement in race.placements:
                 if placement.is_manual_DC() and placement.get_fc() not in wentMissingThisGP:
                     wentMissingThisGP.append(placement.get_fc())
+                    missingPlayersThisRace.append(placement.get_fc_and_name())
                 # if placement.is_disconnected() and placement.get_fc() not in wentMissingThisGP:
                 #     wentMissingThisGP.append(placement.get_fc())
                 #     if include_blank:
@@ -395,11 +399,11 @@ class Room(object):
 
             missingPlayers.append(missingPlayersThisRace)
 
-        for race, players in self.dc_on_or_before.items():
-            for fc, status in players.items():
-                if status == 'on':
-                    if race-1 < len(missingPlayers):
-                        missingPlayers[race-1].append((fc, self.getFCPlayerList()[fc]))
+        # for race, players in self.dc_on_or_before.items():
+        #     for fc, status in players.items():
+        #         if status == 'on':
+        #             if race-1 < len(missingPlayers):
+        #                 missingPlayers[race-1].append((fc, self.get_fc_to_name_dict()[fc]))
 
         for missingPlayersOnRace in missingPlayers:
             missingPlayersOnRace.sort()
@@ -441,7 +445,7 @@ class Room(object):
                         status_str = f"DCed **{self.dc_on_or_before[raceNum][fc]}**"
                         confirm_str = " - *Tabler confirmed*"
 
-                    build_string += UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, replace_lounge)) + f"** {status_str} race #" + str(raceNum) + " (" + str(self.races[raceNum-1].getTrackNameWithoutAuthor()) + f"){confirm_str}\n"
+                    build_string += f"{UserDataProcessing.proccessed_lounge_add(player, fc, replace_lounge)} ** {status_str} race #{raceNum} ({self.races[raceNum-1].getTrackNameWithoutAuthor()}){confirm_str}\n"
                     counter+=1
             return True, build_string
     
@@ -456,14 +460,14 @@ class Room(object):
                 player_obj = self.get_player_from_FC(player_fc)
                 DC_placement = Placement.Placement(player_obj, 'DC')
 
-                add_dict = {'type': 'add', 'payload': DC_placement}
-                self.manual_dc_placements[raceNum].append(add_dict)
+                add_dict = {'type': 'add', 'payload': player_fc}
+                self.placement_history[raceNum].append(add_dict)
                 race.addPlacement(DC_placement)
                 
         else: #STATUS=BEFORE
             if race.FCInPlacements(player_fc): #player was on results and should be removed from placements
                 remove_dict = {'type': 'remove', 'payload': player_fc}
-                self.manual_dc_placements[raceNum].append(remove_dict)
+                self.placement_history[raceNum].append(remove_dict)
                 race.remove_placement_by_FC(player_fc)
     
     def get_player_from_FC(self, FC):
@@ -479,31 +483,36 @@ class Room(object):
             return player_list[index]
         except IndexError:
             raise
+
+    def get_fc_to_name_dict(self, start_race=None, end_race=None):
+        if start_race is None:
+            start_race = 1
+        if end_race is None:
+            end_race = len(self.races)
+
+        fcNameDict = {}
+        for raceNumber, race in enumerate(self.races, 1):
+            if raceNumber >= start_race and raceNumber <= end_race: 
+                for placement in race.getPlacements():
+                    FC, name = placement.get_fc_and_name()
+                    fcNameDict[FC] = name
+        return fcNameDict
+
     
     #method that returns the players in a consistent, sorted order - first by getTagSmart, then by FC (for tie breaker)
     #What is returned is a list of tuples (fc, player_name)
-    def get_sorted_player_list(self, startrace=1, endrace=12):
-        players = list(self.getFCPlayerListStartEnd(startrace, endrace).items())
+    def get_sorted_player_list(self, startrace=None, endrace=None):
+        players = list(self.get_fc_to_name_dict(startrace, endrace).items())
         return sorted(players, key=lambda x: (TagAIShell.getTag(x[1]), x[0]))
        
-       
-    def get_sorted_player_list_string(self, startrace=1, endrace=12, lounge_replace=True):
+    def get_sorted_player_list_string(self, startrace=None, endrace=None, lounge_replace=True, include_fc=False):
         players = self.get_sorted_player_list(startrace, endrace)
         to_build = ""
-        for list_num, (fc, player) in enumerate(players, 1):
-            to_build += str(list_num) + ". " + UtilityFunctions.process_name(player + UserDataProcessing.lounge_add(fc, lounge_replace)) + "\n"
+        for counter, (fc, player) in enumerate(players, 1):
+            fc_str = f" - {fc}" if include_fc else ""
+            to_build += f"{counter}. {UserDataProcessing.proccessed_lounge_add(player, fc, lounge_replace)}{fc_str}\n"
         return to_build
-            
-            
-    def get_players_list_string(self, startrace=1, endrace=12, lounge_replace=True):
-        player_list = self.get_sorted_player_list(startrace, endrace)
-        build_str = ""
-        for counter, (fc, player) in enumerate(player_list, 1):
-            build_str += str(counter) + ". " + UtilityFunctions.process_name(player)
-            if lounge_replace:
-                build_str += UtilityFunctions.process_name(UserDataProcessing.lounge_add(fc, lounge_replace))
-            build_str += "\n"
-        return build_str     
+
     
     def getNumberOfGPS(self):
         return int((len(self.races)-1)/4)+1
@@ -540,10 +549,10 @@ class Room(object):
         self.populating = populating
 
     def get_room_FCs(self):
-        return self.getFCPlayerList(endrace=None).keys()
+        return self.get_fc_to_name_dict().keys()
     
     def getPlayers(self):
-        return self.getFCPlayerList(endrace=None).values()
+        return self.get_fc_to_name_dict().values()
 
 
     async def populate_miis(self):
@@ -592,7 +601,7 @@ class Room(object):
         return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS)
 
 
-    def apply_tabler_adjustments(self):
+    def apply_tabler_adjustments(self, suggestion_call=False):
         #First, we number all races
         self.fix_race_numbers()
             
@@ -604,29 +613,27 @@ class Room(object):
                         placement.getPlayer().set_name(f"{name_change} (Tabler Changed)")
         
         #Next, we remove races
-        for removed_race_ind, _ in self.removed_races:
-            self.races.pop(removed_race_ind)
+        if not suggestion_call:
+            for removed_race_ind, _ in self.removed_races:
+                self.races.pop(removed_race_ind)
         
         #Next, we need to renumber the races
         self.fix_race_numbers()
 
-        #Then, add/remove manual DC placements
-        for raceNum, race in enumerate(self.races, 1):
-            if raceNum in self.manual_dc_placements: #manual DC placements found for this race
-                items = self.manual_dc_placements[raceNum]
-                for p in items:
-                    if p['type'] == 'add':
-                        # player_obj = self.get_player_from_FC(p['payload'])
-                        # DC_placement = Placement.Placement(player_obj, 'DC')
-                        race.addPlacement(p['payload'])
-                    else:
-                        race.remove_placement_by_FC(p['payload'])
-
-
-        #Next, we apply position changes
+        #Next, we apply position changes/modifications (including manual DC placements)
         for race_number, race in enumerate(self.races, 1):
             if race_number in self.placement_history:
-                race.applyPlacementChanges(self.placement_history[race_number])
+                items = self.placement_history[race_number]
+                for p in items:
+                    payload = p['payload']
+                    if p['type'] == 'add':
+                        player_obj = self.get_player_from_FC(payload)
+                        DC_placement = Placement.Placement(player_obj, 'DC')
+                        race.addPlacement(DC_placement)
+                    elif p['type'] == 'remove':
+                        race.remove_placement_by_FC(payload)
+                    else:
+                        race.applyPlacementChanges([payload])
         
     def getRacesPlayed(self):
         return [r.track for r in self.races]
@@ -649,7 +656,7 @@ class Room(object):
             num += 1
         if len(string_build) < 1:
             string_build = "No races played yet."
-        return UtilityFunctions.process_name(string_build)
+        return UtilityFunctions.clean_for_output(string_build)
     
     def get_loungenames_in_room(self):
         all_fcs = self.getFCs()
@@ -704,6 +711,7 @@ class Room(object):
             mii.clean_up()
             
     def destroy(self):
+        self.stop_watching_suggestions()
         self.set_populating_miis(True)
         self.clean_up()
         self.set_populating_miis(False)
@@ -717,16 +725,21 @@ class Room(object):
         
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
         save_state['dc_on_or_before'] = deepcopy(self.dc_on_or_before)
-        save_state['manual_dc_placements'] = deepcopy(self.manual_dc_placements)
         save_state['forcedRoomSize'] = self.forcedRoomSize.copy()
         save_state['rLIDs'] = self.rLIDs.copy()
         save_state['races'] = deepcopy(self.races)
-        save_state['placement_history'] = copy(self.placement_history)
+        save_state['placement_history'] = deepcopy(self.placement_history)
         save_state['sub_ins'] = deepcopy(self.sub_ins)
+        save_state['suggestion_errors'] = deepcopy(self.suggestion_errors)
         
         return save_state
     
     def restore_save_state(self, save_state):
         for save_attr, save_value in save_state.items():
             self.__dict__[save_attr] = save_value
+        
+        if self.suggestion_errors:
+            view = watched_suggestions.get(self.channel_id, None)
+            if view:
+                asyncio.create_task(view.refresh_suggestions())
                 

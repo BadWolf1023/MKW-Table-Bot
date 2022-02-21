@@ -43,6 +43,7 @@ alternate_Matrices = {
     [15, 13 ,12, 10, 8, 7, 6, 5, 3, 2, 1, 0]
     ]}
 
+
 def print_scores(fc_score, fc_player):
     for fc, score in sorted(fc_score.items(), key=lambda x: x[1], reverse=True):
         print(fc_player[fc] + " (" + fc + "): " + str(score))
@@ -52,7 +53,7 @@ def print_scores(fc_score, fc_player):
 def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePts=3, server_id=None):
     #disconnections = curRoom.getMissingOnRace()
     fc_score = {}
-    fc_player = curRoom.getFCPlayerListStartEnd(startRace, endRace)
+    fc_player = curRoom.get_fc_to_name_dict(startRace, endRace)
     for fc in fc_player:
         fc_score[fc] = []
     #If the races completed is less than the start race, no one has score anything yet - That's in the future!
@@ -171,8 +172,8 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     for x in range(numGPs):
         GPs.append(calculateGPScoresDCS(x+1, room, missingRacePts, server_id))
         
-    fcs_players = room.getFCPlayerListStartEnd(1, numGPs*4)
-    
+    fcs_players = room.get_fc_to_name_dict(1, numGPs*4)
+    room_miis = room.get_miis()
     
     FC_table_str = {}
     
@@ -221,6 +222,14 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             discord_id_number = UserDataProcessing.fc_discordId[fc][0]
             if discord_id_number in UserDataProcessing.discordId_flags:
                 FC_table_str[fc][0] += "[" + UserDataProcessing.discordId_flags[discord_id_number] + "] "
+            elif fc in room_miis:
+                cid = room_miis[fc].country_code
+                if cid:
+                    FC_table_str[fc][0] += f'[{cid.lower()}] '  
+        elif fc in room_miis: # try to get player's mii location
+            cid = room_miis[fc].country_code
+            if cid:
+                FC_table_str[fc][0] += f'[{cid.lower()}] '
     
     
     for GPnum, GP_scores in enumerate(GPs, 1):
@@ -299,8 +308,6 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             total_score -= war.getTeamPenalities()[curTeam]
         return total_score
     
-
-            
             
     scores_by_team = sorted(scores_by_team.items(), key=lambda t: (team_score(t[1], t[0]), t[0]), reverse=True)
     for _, team_players in scores_by_team:

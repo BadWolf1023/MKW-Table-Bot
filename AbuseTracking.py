@@ -16,10 +16,7 @@ bot_abuse_tracking = defaultdict(lambda: [0, [], [], 0])
 blacklisted_command_count = defaultdict(int)
 
 BOT_ABUSE_REPORT_CHANNEL = None
-CLOUDFLARE_REPORT_CHANNEL = None
-CW_REPORT_CHANNEL = 924551533692084264
-CW_TESTING = False
-WHITELIST = { 366774710186278914 }
+ABUSE_WHITELIST = { 366774710186278914 }
 
 WARN_MESSAGES_PER_SECOND_RATE = .48
 BAN_RATE_MESSAGES_PER_SECOND = .5
@@ -51,7 +48,7 @@ def is_hitting_ban_rate(author_id):
 
 async def abuse_track_check(message:discord.Message):
     author_id = message.author.id
-    if author_id in WHITELIST: return
+    if author_id in ABUSE_WHITELIST: return
     bot_abuse_tracking[author_id][0] += 1
     bot_abuse_tracking[author_id][1].append(message.content)
     bot_abuse_tracking[author_id][2].append(datetime.now())
@@ -121,10 +118,7 @@ async def blacklisted_user_check(message:discord.Message, notify_threshold=15):
 
 def set_bot_abuse_report_channel(client):
     global BOT_ABUSE_REPORT_CHANNEL
-    global CLOUDFLARE_REPORT_CHANNEL
     BOT_ABUSE_REPORT_CHANNEL = client.get_channel(common.BOT_ABUSE_REPORT_CHANNEL_ID)
-    if CW_TESTING: BOT_ABUSE_REPORT_CHANNEL = client.get_channel(CW_REPORT_CHANNEL)
-    CLOUDFLARE_REPORT_CHANNEL = client.get_channel(common.CLOUD_FLARE_REPORT_CHANNEL_ID)
     
 #Every 120 seconds, checks to see if anyone was "spamming" the bot and notifies a private channel in my server
 #Of the person(s) who were warned

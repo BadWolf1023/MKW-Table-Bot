@@ -5,6 +5,8 @@ Created on Jun 25, 2021
 '''
 from typing import List
 import os
+
+import discord
 import common
 import UtilityFunctions
 
@@ -102,25 +104,31 @@ def get_help_files(args:List[str]):
     return default_help_key, HELP_KEY_FILES[default_help_key]
 
 
-async def send_help(message, is_lounge_server, args:List[str], prefix=common.default_prefix):
-    help_key, help_files = get_help_files(args)
-    
-    """if is_lounge_server and help_key == tabling_help_key:
-        await message.channel.send("See the table bot guide and flow charts in <#835555593833414696> or <#835561764322017320>.")
-        return
-    """
-    for help_text_file in help_files:
-        if os.path.isfile(help_text_file):
-            with open(help_text_file, "r", encoding="utf-8") as f:
-                help_text = f.read()
-                if len(help_text) > 1:
-                    help_text = help_text.replace("{SERVER_PREFIX}", prefix)
-                    help_text_chunks = list(UtilityFunctions.string_chunks(help_text, 2000))
+async def send_help(message: discord.Message, args:List[str], prefix=common.default_prefix, is_lounge_server=False):
+    embed = discord.Embed(description="- [Help Documentation](https://www.github.com/BadWolf1023/MKW-Table-Bot/wiki)\n"
+                                            f"- [Discord Server](https://discord.gg/{common.TABLEBOT_SERVER_INVITE_CODE})\n"
+                                            f"- [Invite the bot]({common.INVITE_LINK})")
+    embed.set_author(name="MKW Table Bot Help", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
 
-                    for chunk in help_text_chunks:
-                        await message.channel.send(chunk)
-                else:
-                    break
+    await message.channel.send(embed=embed)
+    # help_key, help_files = get_help_files(args)
+    
+    # """if is_lounge_server and help_key == tabling_help_key:
+    #     await message.channel.send("See the table bot guide and flow charts in <#835555593833414696> or <#835561764322017320>.")
+    #     return
+    # """
+    # for help_text_file in help_files:
+    #     if os.path.isfile(help_text_file):
+    #         with open(help_text_file, "r", encoding="utf-8") as f:
+    #             help_text = f.read()
+    #             if len(help_text) > 1:
+    #                 help_text = help_text.replace("{SERVER_PREFIX}", prefix)
+    #                 help_text_chunks = list(UtilityFunctions.string_chunks(help_text, 2000))
+
+    #                 for chunk in help_text_chunks:
+    #                     await message.channel.send(chunk)
+    #             else:
+    #                 break
                     
 async def send_quickstart(discord_message_obj):
     quick_start = "No quickstart."
