@@ -30,7 +30,6 @@ class Mii(KaitaiStruct):
                   }
 
 
-
     def __init__(self, _io, mii_data_hex_str, folder_path, file_name, FC, _parent=None, _root=None):
         self.mii_data_hex_str = mii_data_hex_str
         self.file_name = file_name 
@@ -121,13 +120,15 @@ class Mii(KaitaiStruct):
         self._io.align_to_byte()
         self.creator_name = (self._io.read_bytes(20)).decode(u"utf-16be").replace("\x00","")
         self.creator_name, _, _ = self.creator_name.partition('\x00')
+        self._io.read_bytes(14)
+        self.country_id = self._io.read_u1() # 0 == no country data
         
     def get_mii_embed(self):
         embed = Embed(
-                                            title = f"",
-                                            description="",
-                                            colour = Mii.mii_color_dict[self.favorite_color]
-                                        )
+                    title = f"",
+                    description="",
+                    colour = Mii.mii_color_dict[self.favorite_color]
+                )
         
         mii_name = UtilityFunctions.clean_for_output(self.mii_name)
         mii_name = mii_name if len(mii_name) > 0 else '\u200b'
