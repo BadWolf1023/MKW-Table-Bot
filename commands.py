@@ -2268,7 +2268,6 @@ class TablingCommands:
         up_to = get_max_specified_race(args)
         include_up_to_str = up_to and up_to<len(this_bot.getRoom().getRaces())
 
-        
         new_room_fcs = set(this_bot.getRoom().get_fc_to_name_dict(1, this_bot.getWar().numberOfGPs*4))
         added_fcs = new_room_fcs.difference(old_room_fcs)
         if added_fcs:
