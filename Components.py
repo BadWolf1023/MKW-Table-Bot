@@ -199,24 +199,22 @@ class SubmitButton(discord.ui.Button['PictureView']):
         self.channel_bot = channel_bot
         self.rt_ct = rt_ct
         self.num_races = num_races
-        self.responded = False
+        self.in_use = False
 
     @TimerDebuggers.timer_coroutine
     async def callback(self, interaction: discord.Interaction):
         if self.channel_bot.has_been_lounge_submitted:
             return await interaction.response.send_message("Table has already been submitted.", ephemeral=True)
         
-        if self.responded:
-            return await interaction.response.send_message("This button has already been used.", ephemeral=True)
-
-        self.channel_bot.has_been_lounge_submitted = True
+        if self.in_use:
+            return await interaction.response.send_message("This button was just used.", ephemeral=True)
 
         args = [f'{self.rt_ct}update', str(self.tier), str(self.num_races)]
         message = InteractionUtils.create_proxy_msg(interaction, args)
 
-        self.responded = True
-        self.view.children.remove(self)
-        await common.safe_edit(self.view.message, view=self)
+        self.in_use = True
+        # self.view.children.remove(self)
+        # await common.safe_edit(self.view.message, view=self)
 
         async def submit_table():
             try:
@@ -225,7 +223,9 @@ class SubmitButton(discord.ui.Button['PictureView']):
                 else:
                     await commands.LoungeCommands.rt_mogi_update(common.client, message, self.channel_bot, args, common.client.lounge_submissions)
                 
-                await self.view.on_timeout() #remove picture button as well, since table has been submitted
+                self.in_use = False
+                if self.channel_bot.has_been_lounge_submitted: #check if submission went through
+                    await self.view.on_timeout() #remove the view, since table has been successfully submitted
             except Exception as e:
                 await InteractionUtils.handle_component_exception(e, message, self.view.prefix, self.view.bot)
 

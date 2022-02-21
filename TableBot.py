@@ -503,7 +503,7 @@ class ChannelBot(object):
     def destroy(self):
         asyncio.create_task(self.clear_last_wp_button())
         self.clear_last_sug_view()
-        self.clear_all_components()
+        # self.clear_all_components()
         self.unload_table()
 
     def reset(self):
@@ -524,5 +524,4 @@ class ChannelBot(object):
         self.race_size = 4
         self.has_been_lounge_submitted = False
 
-        
         

@@ -1238,8 +1238,10 @@ class LoungeCommands:
                     embed.set_image(url="attachment://" + table_image_path)
                     embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                     embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
-
+                    
+                    this_bot.has_been_lounge_submitted = True
                     await message.channel.send(file=file, embed=embed)
+                    
             finally:
                 if os.path.exists(table_image_path):
                     os.remove(table_image_path)
