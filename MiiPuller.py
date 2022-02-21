@@ -246,7 +246,6 @@ async def download_mii_photo(fc, mii_hex_str, message_id, picture_width=512):
 def copy_cache_photo_and_get_mii(mii_bytes, mii_hex, fc, message_id):
     cache_download_path, full_download_path, folder_path, real_file_name = get_mii_file_names(fc, message_id)
     shutil.copy2(cache_download_path, full_download_path)
-    print("Bytes:", len(mii_bytes))
     return Mii.Mii(mii_bytes, mii_hex, folder_path, real_file_name, fc)
     
 async def get_miis(fcs:List[str], message_id:str, picture_width=512):
