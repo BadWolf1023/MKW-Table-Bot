@@ -827,11 +827,11 @@ class OtherCommands:
         author_id = message.author.id
         flag_code = args[1].lower() if len(args) > 1 else None
         if flag_code is None:
-            UserDataProcessing.add_flag(author_id, "auto")
+            UserDataProcessing.remove_flag(author_id)
             await message.channel.send(f"Your custom flag was successfully removed; your flag will now default to your mii location on tables. If you want to add a flag again in the future, pick a flag code from this website: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}. If you wanted to opt out of automatic location flags, do `?setflag optout`.")
             return
         elif flag_code in {'optout', 'none', 'remove', 'off'}:# opt out of any table flag (don't use mii location flag)
-            UserDataProcessing.remove_flag(author_id)
+            UserDataProcessing.add_flag(author_id, 'optout')
             await message.channel.send(f"You have opted out of all table flags, including your automatic location flag. If you want to add a flag again, or if you want to opt back into automatic location flags, use `?setflag`.")
             return
 
