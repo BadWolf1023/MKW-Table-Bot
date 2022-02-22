@@ -85,6 +85,7 @@ class ManualTeamsView(discord.ui.View):
             messageable = messageable.channel
 
         self.message = await messageable.send(content=content, embed=embed, file=file, view=self)
+        return self.message
 
 ################################################################################################
 
@@ -158,6 +159,7 @@ class ConfirmView(discord.ui.View):
             messageable = messageable.channel
 
         self.message: discord.Message = await messageable.send(content=content, file=file, embed=embed, view=self)
+        return self.message
 
 
 ###########################################################################################
@@ -283,11 +285,76 @@ class PictureView(discord.ui.View):
             messageable = messageable.channel
 
         self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
+        return self.message
 
 
 ###########################################################################################
 
+class SubmissionActionButton(discord.ui.Button['SubmissionView']):
+    def __init__(self, action):
+        self.action = action
+        style = discord.ButtonStyle.success if action == 'Approve' else discord.ButtonStyle.danger
+        super().__init__(style=style, label=self.action)
+    
+    async def callback(self, interaction: discord.Interaction):
+        if self.view.responded: 
+            return
+        
+        self.responded = True
+        msg =InteractionUtils.create_proxy_msg(interaction)
 
+        await self.view.on_timeout()
+        if self.action == 'Approve':
+            await commands.LoungeCommands.approve_submission_command(self.view.bot, msg, [self.action], self.view.bot.lounge_submissions)
+        else:
+            await commands.LoungeCommands.deny_submission_command(self.view.bot, msg, [self.action, self.view.submission_id], self.view.bot.lounge_submissions)
+        
+
+class SubmissionView(discord.ui.View):
+    def __init__(self, channel_bot, submissionID):
+        super().__init__(timeout=600)
+        self.channel_bot = channel_bot
+        self.bot = common.client
+        self.submission_id = submissionID
+        self.message = None
+        self.responded = False
+
+        self.add_item(SubmissionActionButton('Approve'))
+        self.add_item(SubmissionActionButton('Deny'))
+    
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        can_interact = interaction.channel.permissions_for(interaction.user).send_messages
+        has_authority = self.bot.lounge_submissions.report_table_authority_check(interaction.user)
+        if not can_interact or not has_authority:
+            await interaction.response.send_message("You don't have permission to use this.", ephemeral=True)
+            return False
+        
+        if self.responded:
+            return False
+
+        return True
+    
+    async def on_timeout(self) -> None:
+        self.clear_items()
+        self.stop()
+        if self.message:
+            await common.safe_edit(self.message, view=None)
+    
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
+
+    async def send(self, messageable, content=None, file=None, embed=None, target=None):
+        if hasattr(messageable, 'channel'):
+            messageable = messageable.channel
+        
+        if target:
+            messageable = target
+
+        self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
+        return self.message
+
+
+###############################################################################################
 class RejectButton(discord.ui.Button['SuggestionView']):
     def __init__(self):
         super().__init__(style=discord.ButtonStyle.danger, label="Discard")
@@ -363,9 +430,9 @@ class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
 
 LABEL_BUILDERS = {
     'missing_player': '{} DCed [{}] race',
-    'blank_player': "{} DCed [{}] race",
+    # 'blank_player': "{} DCed [{}] race",
     'tie': '{} placed [{}]',
-    'large_time': '{} {} [{}]', #placed / did not place
+    'large_time': '{} {} [{}]',
     'gp_missing': 'Change Room Size',
     'gp_missing_1': 'Player early DCed [{}] race'
 }
@@ -423,6 +490,7 @@ class SuggestionView(discord.ui.View):
         self.bot.add_sug_view(self)
 
         self.message: discord.Message = await messageable.send(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", file=file, embed=embed, view=self)
+        return self.message
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         can_interact = interaction.channel.permissions_for(interaction.user).send_messages

@@ -806,8 +806,11 @@ class OtherCommands:
             return
 
         flag = smart_type.get_country_flag()
+        if flag == 'auto':
+            await message.channel.send(f"{SmartTypes.possessive(descriptive)} flag: automatic mii location. To set {SmartTypes.possessive(pronoun)} flag for tables, {descriptive} should use `{server_prefix}setflag <flagcode>`. Flagcodes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}. To opt out of automatic location flags, do `?setflag optout`")
+            return
         if flag is None:
-            await message.channel.send(f"{SmartTypes.capitalize(descriptive)} does not have a flag set. To set {SmartTypes.possessive(pronoun)} flag for tables, {descriptive} should use `{server_prefix}setflag flagcode`. Flagcodes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+            await message.channel.send(f"{SmartTypes.capitalize(descriptive)} does not have a flag set. To set {SmartTypes.possessive(pronoun)} flag for tables, {descriptive} should use `{server_prefix}setflag <flagcode>`. Flagcodes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
             return
 
         image_name = f"{flag}.png"
@@ -823,9 +826,13 @@ class OtherCommands:
     async def set_flag_command(message: discord.Message, args: List[str]):
         author_id = message.author.id
         flag_code = args[1].lower() if len(args) > 1 else None
-        if flag_code is None or flag_code == "none":
-            UserDataProcessing.add_flag(author_id, "")
-            await message.channel.send(f"Your flag was successfully removed. If you want to add a flag again in the future, pick a flag code from this website: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+        if flag_code is None:
+            UserDataProcessing.add_flag(author_id, "auto")
+            await message.channel.send(f"Your custom flag was successfully removed; your flag will now default to your mii location on tables. If you want to add a flag again in the future, pick a flag code from this website: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}. If you wanted to opt out of automatic location flags, do `?setflag optout`.")
+            return
+        elif flag_code in {'optout', 'none', 'remove', 'off'}:# opt out of any table flag (don't use mii location flag)
+            UserDataProcessing.remove_flag(author_id)
+            await message.channel.send(f"You have opted out of all table flags, including your automatic location flag. If you want to add a flag again, or if you want to opt back into automatic location flags, use `?setflag`.")
             return
 
         if flag_code not in UserDataProcessing.valid_flag_codes:
@@ -1205,7 +1212,9 @@ class LoungeCommands:
                     embed.set_image(url="attachment://" + table_image_path)
                     embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
 
-                    sent_message = await updater_channel.send(file=file, embed=embed)
+                    view = Components.SubmissionView(this_bot, str(id_to_submit))
+                    sent_message = await view.send(file=file, embed=embed, target=updater_channel)
+                    # sent_message = await updater_channel.send(file=file, embed=embed)
                     lounge_server_updates.add_report(id_to_submit, sent_message, summary_channel_id, json_data)
 
                     other_matching_submission_id = lounge_server_updates.submission_id_of_last_matching_json(id_to_submit)
@@ -1303,7 +1312,6 @@ class LoungeCommands:
                         submission_status = "approved" if is_approved else "denied"
                         extra_message_text = f"**I went ahead and sent it to the summaries anyway**, but you should make sure you didn't just double approve {submissionID}." if is_approved else f"**I went ahead and sent it to the summaries anyway**, but you should make sure you didn't approve the submission {submissionID} that should have remained denied."
                         approval_message_warning = f"**Warning:** The submission ({submissionID}) was already **{submission_status}**. You might have made a typo for your submission ID. {extra_message_text}"
-
 
 
                     if summaryChannelObj is None:

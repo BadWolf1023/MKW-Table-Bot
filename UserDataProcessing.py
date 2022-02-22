@@ -131,20 +131,42 @@ def add_flag(discord_id, flag):
                     if line.strip("\n").split(seperator)[0] != discord_id:
                         temp_out.write(line)
             
-                if flag not in ["none", ""]:
-                    temp_out.write(discord_id + seperator + flag + "\n")
-                    discordId_flags[discord_id] = flag
+                # if flag not in ["none", ""]:
+                temp_out.write(discord_id + seperator + flag + "\n")
+                discordId_flags[discord_id] = flag
                         
             os.remove(common.DISCORD_ID_FLAGS_FILE)
             os.rename(temp_file_name, common.DISCORD_ID_FLAGS_FILE)
         else:
-            if flag not in ["none", ""]:
-                with open(common.DISCORD_ID_FLAGS_FILE, "a", encoding="utf-8", errors="replace") as f:
-                    f.write(str(discord_id) + seperator + flag + "\n")
-                    discordId_flags[discord_id] = flag
+            # if flag not in ["none", ""]:
+            with open(common.DISCORD_ID_FLAGS_FILE, "a", encoding="utf-8", errors="replace") as f:
+                f.write(str(discord_id) + seperator + flag + "\n")
+                discordId_flags[discord_id] = flag
         
         discordId_flags_file_is_open = False
         return True
+    
+def remove_flag(discord_id):
+    global discordId_flags_file_is_open
+    
+    discord_id = str(discord_id)
+
+    if discordId_flags_file_is_open:
+        return False
+    
+    discordId_flags_file_is_open = True
+    if discord_id not in discordId_flags:
+        return True
+    
+    discordId_flags.pop(discord_id)
+
+    temp_file_name = f"{common.DISCORD_ID_FLAGS_FILE}_temp"
+    with open(temp_file_name, "w", encoding="utf-8", errors="replace") as temp_out, open(common.DISCORD_ID_FLAGS_FILE, "r", encoding="utf-8", errors="replace") as original:
+        for line in original:
+            if line.strip("\n").split(seperator)[0] != discord_id:
+                temp_out.write(line)
+    
+
      
 def get_flag(discord_id):
     if discord_id is None:
