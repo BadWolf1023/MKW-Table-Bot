@@ -18,8 +18,8 @@ def bot_admin_check(ctx: discord.ApplicationContext):
     can = common.is_bot_admin(ctx.author)
     return can 
 
-def commandIsAllowed(isLoungeServer:bool, message_author: discord.Member, this_bot, command: str):
-    return common.main.commandIsAllowed(isLoungeServer,message_author,this_bot,command)
+def commandIsAllowed(*args, **kwargs):
+    return common.main.commandIsAllowed(*args, **kwargs)
 
 def convert_key_to_command(key):
     map = {

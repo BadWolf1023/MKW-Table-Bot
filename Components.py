@@ -67,7 +67,7 @@ class ManualTeamsView(discord.ui.View):
             await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
             return False
 
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction')
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction', is_interaction=True)
         if not allowed: 
             await interaction.response.send_message("You cannot interact with this button.", ephemeral=True)
             return False
@@ -135,17 +135,17 @@ class ConfirmView(discord.ui.View):
             await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
             return False
 
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction')
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction', is_interaction=True)
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
-            return False
-        
-        if self.responded: 
             return False
 
         if not self.bot.prev_command_sw:
             await self.delete(interaction)
             await interaction.followup.send("This has already been responded to.", ephemeral=True)
+            return False
+        
+        if self.responded: 
             return False
 
         return allowed
@@ -207,7 +207,8 @@ class SubmitButton(discord.ui.Button['PictureView']):
             return await interaction.response.send_message("Table has already been submitted.", ephemeral=True)
         
         if self.in_use:
-            return await interaction.response.send_message("This button was just used.", ephemeral=True)
+            # return await interaction.response.send_message("This button was just used.", ephemeral=True)
+            return
 
         args = [f'{self.rt_ct}update', str(self.tier), str(self.num_races)]
         message = InteractionUtils.create_proxy_msg(interaction, args)
@@ -246,9 +247,9 @@ class PictureView(discord.ui.View):
         if not can_interact:
             await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
             return False
-
+        
         if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child
-            allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'restricted_interaction')
+            allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'restricted_interaction', is_interaction=True)
             if not allowed:
                 await interaction.response.send_message("You cannot use this button.", ephemeral=True)
                 return False
@@ -429,7 +430,7 @@ class SuggestionView(discord.ui.View):
             await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
             return False
 
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction') # InteractionUtils.convert_key_to_command(self.current_error['type'])
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction', is_interaction=True) # InteractionUtils.convert_key_to_command(self.current_error['type'])
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True, delete_after=3.0)
             return False

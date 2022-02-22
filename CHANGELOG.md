@@ -191,7 +191,7 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - New player stat-tracking commands: `?besttracks`, `?worsttracks`, and `?topplayers`.
 
 ## Version 11.7.0
-**Released on 11-30-2022**
+**Released on 1-30-2022**
 - `?record` command added.
 
 ### 02/13/2022
