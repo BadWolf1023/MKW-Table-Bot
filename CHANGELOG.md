@@ -6,6 +6,7 @@ This document servers as an overview of MKW Table Bot's releases over time, alon
 
 ## Version 1.0.0
 **Released on 08-01-2020**
+
 MKW Table Bot is officially released to the public as a Discord bot to automate making Tables for Mario Kart Wii!
 
 ## Version 2.0.0
@@ -193,20 +194,38 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 **Released on 11-30-2022**
 - `?record` command added.
 
+### 02/13/2022
+- MKW Table Bot surpasses 1000 servers!
+
 ## Version 12.0.0
-**Released on 02-04-2022**
+**Released on 02-14-2022**
 - Major dependency change: discord.py -> pycord
 - Table Bot supports Discord Components and Interactions.
 - Buttons are displayed to confirm and update rooms.
 - Table Bot displays error-correcting buttons.
 - Table Bot supports Slash commands.
-- Using `?dc` now directly edits the placements of races.
+- Using `?dc` directly edits the placements of races.
 - `IgnoreLargeTimes` server setting updated to allow for specific format settings, making it much more customizable.
 - Command `?copyfrom` allows users to copy a table from another channel to their current channel.
 
+## Version 12.0.1
+**Released on 02-15-2022**
+- Help command redirects to GitHub Wiki page.
+- `?flags` command, which displays a list of available table flags.
+- `?page` command, which shows players' recent Wiimmfi rooms.
+- Bug fix for when races were removed after suggestions had been sent. Suggestion buttons now refresh themselves after race removals and table state changes.
+- Various small bugs resolved.
+
 ## Version 12.1.0
-**Released on TBD**
-- If users do not have a flag set, flags are automatically added to the tables based on the user's mii location data.
+**Released on 02-20-2022**
+- If users do not have a flag set with Table Bot, flags are automatically added to the tables based on the user's mii location data.
+- Command tracker is added.
+- Table updates automatically on room load.
+- Patch issued for bug when a button receives more than one interaction at the same time.
+
+## Version 12.1.1
+**Released on 02-21-2022**
+- Manual DC placements and placement changes were being applied separately, causing an error where Table Bot would try to edit a placement that no longer existed; patch is issued.
 
 ## Version 13.0.0
 **Released on TBD**
