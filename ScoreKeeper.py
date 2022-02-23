@@ -221,13 +221,12 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
         if fc in UserDataProcessing.fc_discordId:
             discord_id_number = UserDataProcessing.fc_discordId[fc][0]
             if discord_id_number in UserDataProcessing.discordId_flags:
-
                 FC_table_str[fc][0] += "[" + UserDataProcessing.discordId_flags[discord_id_number].replace('optout', ' ') + "] "
             elif fc in room_miis:
                 cid = room_miis[fc].country_code
                 if cid:
                     FC_table_str[fc][0] += f'[{cid.lower()}] '  
-        elif fc in room_miis: # try to get player's mii location
+        elif fc in room_miis: # try to get player's mii location if no custom flag preference
             cid = room_miis[fc].country_code
             if cid:
                 FC_table_str[fc][0] += f'[{cid.lower()}] '

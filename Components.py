@@ -250,12 +250,12 @@ class PictureView(discord.ui.View):
             await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
             return False
         
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'restricted_interaction', is_interaction=True)
+        if not allowed:
+            await interaction.response.send_message("You cannot use this button.", ephemeral=True)
+            return False
+        
         if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child
-            allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'restricted_interaction', is_interaction=True)
-            if not allowed:
-                await interaction.response.send_message("You cannot use this button.", ephemeral=True)
-                return False
-
             if self.bot.has_been_lounge_submitted:
                 await interaction.response.send_message("Table has already been submitted.", ephemeral=True)
                 return False
