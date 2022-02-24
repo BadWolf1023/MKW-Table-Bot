@@ -126,10 +126,15 @@ class MiscSlash(ext_commands.Cog):
     description="Remove your table flag")
     async def _remove_flag(
         self,
-        ctx: discord.ApplicationContext
+        ctx: discord.ApplicationContext,
+        optout: Option(bool, "Opt out of all table flags (including automatic location flag)", required=False, default=False)
     ):
         command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command]
+
+        if optout:
+            args.append('optout')
+            
         await commands.OtherCommands.set_flag_command(message, args)
     
     @flags.command(name="show",

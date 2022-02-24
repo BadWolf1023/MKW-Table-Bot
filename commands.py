@@ -806,10 +806,10 @@ class OtherCommands:
             return
 
         flag = smart_type.get_country_flag()
-        if flag == 'auto':
-            await message.channel.send(f"{SmartTypes.possessive(descriptive)} flag: automatic mii location. To set {SmartTypes.possessive(pronoun)} flag for tables, {descriptive} should use `{server_prefix}setflag <flagcode>`. Flagcodes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}. To opt out of automatic location flags, do `?setflag optout`")
-            return
         if flag is None:
+            await message.channel.send(f"{SmartTypes.capitalize(SmartTypes.possessive(descriptive))} flag: automatic location flag. To set {SmartTypes.possessive(pronoun)} flag for tables, {descriptive} should use `{server_prefix}setflag <flagcode>`. Flagcodes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}. To opt out of automatic location flags, do `?setflag optout`.")
+            return
+        if flag == 'optout':
             await message.channel.send(f"{SmartTypes.capitalize(descriptive)} does not have a flag set. To set {SmartTypes.possessive(pronoun)} flag for tables, {descriptive} should use `{server_prefix}setflag <flagcode>`. Flagcodes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
             return
 
@@ -1721,7 +1721,7 @@ class TablingCommands:
         #Command information for user if command is run with no args
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"\n**Example:** If the 2nd player on the list subbed in on race 9 for the 1st player on the list, you would do: `{server_prefix}{command_name} 2 1 9`"
+            to_send += f"\n**Usage**: `{server_prefix}{command_name} <sub in> <sub out> <race>`\n**Example:** If the 2nd player on the list subbed in for the 1st player on the list on race 9, you would do: `{server_prefix}{command_name} 2 1 9`"
             await message.channel.send(to_send)
             return
 
