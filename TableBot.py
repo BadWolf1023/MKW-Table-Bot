@@ -227,7 +227,7 @@ class ChannelBot(object):
         return "Bot will become unlocked " + humanize.naturaltime(cooldown_time)
             
     def updateLoungeFinishTime(self):
-        if self.loungeFinishTime is None and self.is_table_loaded() and len(self.room.races) >= 12:
+        if self.loungeFinishTime is None and self.is_table_loaded() and len(self.room.races) >= self.war.numberOfGPs*4:
             self.loungeFinishTime = datetime.now()
     
     @TimerDebuggers.timer_coroutine

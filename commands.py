@@ -1239,6 +1239,7 @@ class LoungeCommands:
                     embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                     embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
 
+                    this_bot.has_been_lounge_submitted = True
                     await message.channel.send(file=file, embed=embed)
             finally:
                 if os.path.exists(table_image_path):
@@ -1711,7 +1712,7 @@ class TablingCommands:
         #Command information for user if command is run with no args
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"\n**Example:** If the 2nd player on the list subbed in on race 9 for the 1st player on the list, you would do: `{server_prefix}{command_name} 2 1 9`"
+            to_send += f"\n**Example:** If the 1st player on the list subbed in for the 2nd player on the list on race 9, you would do: `{server_prefix}{command_name} 1 2 9`"
             await message.channel.send(to_send)
             return
 
