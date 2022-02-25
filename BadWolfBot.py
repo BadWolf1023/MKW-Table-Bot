@@ -79,6 +79,7 @@ DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
 
 #Commands that require a table to be started, but don't modify the war/room/table in any way
 TABLE_TEXT_TERMS = {"tt", "tabletext"}
+PREDICT_TERMS = {"predict", "preview"}
 WAR_PICTURE_TERMS = {"wp", "warpicture", "wo", "w;", "w["}
 RACE_RESULTS_TERMS = {"rr", "raceresults"}
 RACES_TERMS = {"races", "tracks", "tracklist"}
@@ -645,6 +646,10 @@ class BadWolfBot(discord.Bot):
         
         elif main_command in TABLE_TEXT_TERMS:
             await commands.TablingCommands.table_text_command(message, this_bot, args, server_prefix, is_lounge_server)
+
+        elif main_command in PREDICT_TERMS:
+            await commands.TablingCommands.predict_command(message, this_bot, args, server_prefix, self.lounge_submissions)
+
         elif main_command in WAR_PICTURE_TERMS:
             await commands.TablingCommands.war_picture_command(message, this_bot, args, server_prefix, is_lounge_server)
             

@@ -1555,6 +1555,36 @@ class TablingCommands:
         await message.channel.send(this_bot.getRoom().getRXXText())
 
     @staticmethod
+    async def predict_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix: str, lounge_server_updates: Lounge.Lounge):
+        ensure_table_loaded_check(this_bot, server_prefix)
+
+        table_text,table_sorted_data = SK.get_war_table_DCS(this_bot,use_lounge_otherwise_mii=True,use_miis=False,
+                                                            lounge_replace=True,missingRacePts=this_bot.dc_points,
+                                                            server_id=message.guild.id,discord_escape=True)
+
+        rt_ct, tier = common.get_channel_type_and_tier(this_bot.channel_id, this_bot.room.races)
+        rt_ct, tier = rt_ct or 'rt', tier or 1
+        is_primary = rt_ct == 'rt'
+
+        updater_channel_id, updater_link, preview_link, type_text = lounge_server_updates.get_information(is_primary)
+        error_code, newTableText, json_data = await MogiUpdate.textInputUpdate(table_text, str(tier), 12, is_rt=is_primary)
+
+        if error_code != MogiUpdate.SUCCESS_EC:
+            await message.channel.send(
+                "Couldn't submit table. Reason: *" + MogiUpdate.table_text_errors.get(error_code, "Unknown Error") + "*")
+            return
+
+        preview_link += urllib.parse.quote(json_data)
+        preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
+
+        embedVar = discord.Embed(title="Prediction Link",url=preview_link_tiny_url,colour=discord.Color.blue())
+        embedVar.set_author(
+            name='MMR/LR Prediction',
+            icon_url='https://www.mkwlounge.gg/images/logo.png'
+        )
+        await message.channel.send(embed=embedVar)
+
+    @staticmethod
     async def team_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
         command_name = args[0]
