@@ -6,6 +6,7 @@ import UtilityFunctions
 import asyncio
 import TimerDebuggers
 import common
+import Stats
 
 class ManualTeamsModal(discord.ui.Modal):
     def __init__(self, bot, prefix, is_lounge, view):
@@ -188,6 +189,7 @@ class PictureButton(discord.ui.Button['PictureView']):
 
         self.responded = True
         msg = InteractionUtils.create_proxy_msg(interaction, ['wp'])
+        Stats.log_command('wp')
 
         await common.safe_edit(interaction.message, view=None)
         await commands.TablingCommands.war_picture_command(msg,self.view.bot,['wp'],self.view.prefix,self.view.is_lounge,
@@ -216,6 +218,7 @@ class SubmitButton(discord.ui.Button['PictureView']):
 
         args = [f'{self.rt_ct}update', str(self.tier), str(self.num_races)]
         message = InteractionUtils.create_proxy_msg(interaction, args)
+        Stats.log_command(args[0])
 
         self.responded = True
         self.view.children.remove(self)
