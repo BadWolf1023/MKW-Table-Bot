@@ -67,7 +67,7 @@ class ManualTeamsView(discord.ui.View):
             await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
             return False
 
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction')
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction', is_interaction=True)
         if not allowed: 
             await interaction.response.send_message("You cannot interact with this button.", ephemeral=True)
             return False
@@ -85,6 +85,7 @@ class ManualTeamsView(discord.ui.View):
             messageable = messageable.channel
 
         self.message = await messageable.send(content=content, embed=embed, file=file, view=self)
+        return self.message
 
 ################################################################################################
 
@@ -135,17 +136,17 @@ class ConfirmView(discord.ui.View):
             await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
             return False
 
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction')
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction', is_interaction=True)
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True)
-            return False
-        
-        if self.responded: 
             return False
 
         if not self.bot.prev_command_sw:
             await self.delete(interaction)
             await interaction.followup.send("This has already been responded to.", ephemeral=True)
+            return False
+
+        if self.responded:
             return False
 
         return allowed
@@ -158,6 +159,7 @@ class ConfirmView(discord.ui.View):
             messageable = messageable.channel
 
         self.message: discord.Message = await messageable.send(content=content, file=file, embed=embed, view=self)
+        return self.message
 
 
 ###########################################################################################
@@ -204,6 +206,7 @@ class SubmitButton(discord.ui.Button['PictureView']):
     @TimerDebuggers.timer_coroutine
     async def callback(self, interaction: discord.Interaction):
         if self.channel_bot.has_been_lounge_submitted:
+            await self.view.on_timeout()
             return await interaction.response.send_message("Table has already been submitted.", ephemeral=True)
         
         if self.responded:
@@ -247,12 +250,12 @@ class PictureView(discord.ui.View):
             await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
             return False
 
-        if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child
-            allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'restricted_interaction')
-            if not allowed:
-                await interaction.response.send_message("You cannot use this button.", ephemeral=True)
-                return False
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge,interaction.user,self.bot,'restricted_interaction', is_interaction=True)
+        if not allowed:
+            await interaction.response.send_message("You cannot use this button.", ephemeral=True)
+            return False
 
+        if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child
             if self.bot.has_been_lounge_submitted:
                 await interaction.response.send_message("Table has already been submitted.", ephemeral=True)
                 return False
@@ -282,6 +285,7 @@ class PictureView(discord.ui.View):
             messageable = messageable.channel
 
         self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
+        return self.message
 
 
 ###########################################################################################
@@ -422,6 +426,7 @@ class SuggestionView(discord.ui.View):
         self.bot.add_sug_view(self)
 
         self.message: discord.Message = await messageable.send(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", file=file, embed=embed, view=self)
+        return self.message
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         can_interact = interaction.channel.permissions_for(interaction.user).send_messages
@@ -429,7 +434,7 @@ class SuggestionView(discord.ui.View):
             await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
             return False
 
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction') # InteractionUtils.convert_key_to_command(self.current_error['type'])
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction', is_interaction=True) # InteractionUtils.convert_key_to_command(self.current_error['type'])
         if not allowed: 
             await interaction.response.send_message("You cannot use these buttons.", ephemeral=True, delete_after=3.0)
             return False

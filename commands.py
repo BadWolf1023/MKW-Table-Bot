@@ -1239,6 +1239,7 @@ class LoungeCommands:
                     embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                     embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
 
+                    this_bot.has_been_lounge_submitted = True
                     await message.channel.send(file=file, embed=embed)
             finally:
                 if os.path.exists(table_image_path):
@@ -1554,6 +1555,36 @@ class TablingCommands:
         await message.channel.send(this_bot.getRoom().getRXXText())
 
     @staticmethod
+    async def predict_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix: str, lounge_server_updates: Lounge.Lounge):
+        ensure_table_loaded_check(this_bot, server_prefix)
+
+        table_text,table_sorted_data = SK.get_war_table_DCS(this_bot,use_lounge_otherwise_mii=True,use_miis=False,
+                                                            lounge_replace=True,missingRacePts=this_bot.dc_points,
+                                                            server_id=message.guild.id,discord_escape=True)
+
+        rt_ct, tier = common.get_channel_type_and_tier(this_bot.channel_id, this_bot.room.races)
+        rt_ct, tier = rt_ct or 'rt', tier or 1
+        is_primary = rt_ct == 'rt'
+
+        updater_channel_id, updater_link, preview_link, type_text = lounge_server_updates.get_information(is_primary)
+        error_code, newTableText, json_data = await MogiUpdate.textInputUpdate(table_text, str(tier), 12, is_rt=is_primary)
+
+        if error_code != MogiUpdate.SUCCESS_EC:
+            await message.channel.send(
+                "Couldn't submit table. Reason: *" + MogiUpdate.table_text_errors.get(error_code, "Unknown Error") + "*")
+            return
+
+        preview_link += urllib.parse.quote(json_data)
+        preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
+
+        embedVar = discord.Embed(title="Prediction Link",url=preview_link_tiny_url,colour=discord.Color.blue())
+        embedVar.set_author(
+            name='MMR/LR Prediction',
+            icon_url='https://www.mkwlounge.gg/images/logo.png'
+        )
+        await message.channel.send(embed=embedVar)
+
+    @staticmethod
     async def team_penalty_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
         command_name = args[0]
@@ -1711,7 +1742,7 @@ class TablingCommands:
         #Command information for user if command is run with no args
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"\n**Example:** If the 2nd player on the list subbed in on race 9 for the 1st player on the list, you would do: `{server_prefix}{command_name} 2 1 9`"
+            to_send += f"\n**Example:** If the 1st player on the list subbed in for the 2nd player on the list on race 9, you would do: `{server_prefix}{command_name} 1 2 9`"
             await message.channel.send(to_send)
             return
 

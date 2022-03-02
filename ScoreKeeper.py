@@ -222,15 +222,6 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             discord_id_number = UserDataProcessing.fc_discordId[fc][0]
             if discord_id_number in UserDataProcessing.discordId_flags:
                 FC_table_str[fc][0] += "[" + UserDataProcessing.discordId_flags[discord_id_number] + "] "
-            elif fc in room_miis:
-                cid = room_miis[fc].country_code
-                if cid:
-                    FC_table_str[fc][0] += f'[{cid.lower()}] '  
-        elif fc in room_miis: # try to get player's mii location
-            cid = room_miis[fc].country_code
-            if cid:
-                FC_table_str[fc][0] += f'[{cid.lower()}] '
-    
     
     for GPnum, GP_scores in enumerate(GPs, 1):
         for fc in FC_table_str:

@@ -33,6 +33,7 @@ from pathlib import Path
 import aiohttp
 import os
 import asyncio
+from typing import Dict
 
 CT_WAR_LOUNGE_ECHELONS_CAT_ID = 851666104228249652
 WAR_LOUNGE_ECHELONS_CAT_ID = 751956338912788559
@@ -78,6 +79,7 @@ DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
 
 #Commands that require a table to be started, but don't modify the war/room/table in any way
 TABLE_TEXT_TERMS = {"tt", "tabletext"}
+PREDICT_TERMS = {"predict", "preview"}
 WAR_PICTURE_TERMS = {"wp", "warpicture", "wo", "w;", "w["}
 RACE_RESULTS_TERMS = {"rr", "raceresults"}
 RACES_TERMS = {"races", "tracks", "tracklist"}
@@ -200,7 +202,7 @@ def get_prefix(bot,msg: discord.Message) -> str:
 class BadWolfBot(discord.Bot):
     def __init__(self):
         super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS) #debug_guilds=common.SLASH_GUILDS
-        self.table_bots = dict()
+        self.table_bots: Dict[int, Dict[int, TableBot.ChannelBot]] = dict()
         self.lounge_submissions = lounge_submissions
         self.mentions = None
         # self.sug_views = {}
@@ -410,7 +412,7 @@ class BadWolfBot(discord.Bot):
     #If there is a channel bot for a server and a channel already, return it
     #Otherwise, create a new one, store it, and return that one
     #May use defaultdicts in the future for better readability
-    def check_create_channel_bot(self, message:discord.Message):
+    def check_create_channel_bot(self, message:discord.Message) -> TableBot.ChannelBot:
         server_id = message.guild.id
         channel_id = message.channel.id
         if server_id not in self.table_bots:
@@ -644,6 +646,10 @@ class BadWolfBot(discord.Bot):
         
         elif main_command in TABLE_TEXT_TERMS:
             await commands.TablingCommands.table_text_command(message, this_bot, args, server_prefix, is_lounge_server)
+
+        elif main_command in PREDICT_TERMS:
+            await commands.TablingCommands.predict_command(message, this_bot, args, server_prefix, self.lounge_submissions)
+
         elif main_command in WAR_PICTURE_TERMS:
             await commands.TablingCommands.war_picture_command(message, this_bot, args, server_prefix, is_lounge_server)
             
@@ -947,12 +953,15 @@ class BadWolfBot(discord.Bot):
         self.destroy_all_tablebots()
         print(f"{str(datetime.now())}: All table bots cleaned up.")
 
-def commandIsAllowed(isLoungeServer:bool, message_author:discord.Member, this_bot:TableBot.ChannelBot, command:str):
+def commandIsAllowed(isLoungeServer: bool, message_author: discord.Member, this_bot: TableBot.ChannelBot, command: str, is_interaction: bool = False):
     if not isLoungeServer:
         return True
 
     if common.author_is_table_bot_support_plus(message_author):
         return True
+
+    if is_interaction and this_bot and this_bot.is_table_loaded() and command in needPermissionCommands:
+        return this_bot.getRoom().canModifyTable(message_author.id)
 
     if this_bot is not None and this_bot.getWar() is not None and (this_bot.prev_command_sw or this_bot.manualWarSetUp):
         return this_bot.getRoom().canModifyTable(message_author.id) #Fixed! Check ALL people who can modify table, not just the person who started it!
