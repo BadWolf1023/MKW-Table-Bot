@@ -54,8 +54,8 @@ def save_metadata():
         json.dump(meta, f)
 
 def log_command(command):
-    if command in SLASH_TERMS_CONVERSIONS:
-        command = SLASH_TERMS_CONVERSIONS[command]
+    command = SLASH_TERMS_CONVERSIONS.get(command, command)
+    
     for name in dir(common.main):
         if re.fullmatch("([A-Z]+_)*TERMS",name):
             command_terms = common.main.__getattribute__(name)

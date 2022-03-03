@@ -98,10 +98,12 @@ def get_room_errors_players(war, room, error_types, startrace=None, endrace=None
                     # if int(race.raceNumber) == lastRace:
                     race_times = race.get_sorted_valid_times()
                     reconstructed_placement_time = placement.get_reconstructed_bogus_time()
-                    if reconstructed_placement_time<race_times[-1]: 
+                    if len(race_times)>0 and reconstructed_placement_time<race_times[-1]: 
                         race_times.append(reconstructed_placement_time)
                         fixed_placement = sorted(race_times).index(reconstructed_placement_time)+1
-                        error_types[int(race.raceNumber)].append(({'type': 'large_time', 'player_name': UserDataProcessing.lounge_name_or_mii_name(fc, name, lounge_replace), 'player_fc': fc, 'placement': fixed_placement}))
+                        fixed_time_counts = race_times.count(reconstructed_placement_time) #check for ties regarding reconstructed time
+                        fixed_placements = list(range(fixed_placement, fixed_placement+fixed_time_counts))
+                        error_types[int(race.raceNumber)].append(({'type': 'large_time', 'player_name': UserDataProcessing.lounge_name_or_mii_name(fc, name, lounge_replace), 'player_fc': fc, 'placements': fixed_placements}))
 
         race_ties = race.getTies()
         if len(race_ties) > 0:
