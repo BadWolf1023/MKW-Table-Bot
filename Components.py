@@ -474,15 +474,16 @@ class SuggestionView(discord.ui.View):
                 self.add_item(SuggestionButton(error, label, confirm=True))
         
 
-        elif err_type in { 'missing_player', 'blank_player' }:
+        elif err_type in {'missing_player', 'blank_player'}:
             for insert in ['during', 'before']:
                 label = label_builder.format(error['player_name'], insert)
                 self.add_item(SuggestionButton(error, label, value=insert))
         
         elif err_type == 'large_time':
-            for insert in ["placed"]:
-                label = label_builder.format(error['player_name'], insert, UtilityFunctions.place_to_str(error['placement']))
-                self.add_item(SuggestionButton(error, label, value=error['placement']))
+            for place in error['placements']:
+                for insert in ["placed"]:
+                    label = label_builder.format(error['player_name'], insert, UtilityFunctions.place_to_str(place))
+                    self.add_item(SuggestionButton(error, label, value=place))
         
         elif err_type == 'tie':
             for insert in error['placements']:
@@ -509,7 +510,7 @@ def get_command_args(error, info, bot):
         room_size = str(info)
         args = ['changeroomsize', str(race), room_size]
     
-    elif err_type in { 'missing_player', 'blank_player' }:
+    elif err_type in {'missing_player', 'blank_player'}:
         playerNum = bot.player_to_dc_num(error['race'], error['player_fc'])
 
         time = "on" if info == 'during' else "before"
