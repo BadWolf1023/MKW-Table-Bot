@@ -154,12 +154,13 @@ def is_int(value):
 
 def place_to_str(place):
     append = "th"
-    if place%10 == 1 and place!=11:
-        append = "st"
-    elif place%10 == 2 and place!=12:
-        append = "nd"
-    elif place%10 == 3 and place!=13:
-        append = "rd"
+    if not 10<place%100<20:
+        if place%10 == 1:
+            append = "st"
+        elif place%10 == 2:
+            append = "nd"
+        elif place%10 == 3:
+            append = "rd"
     
     return f"{place}{append}"
 
