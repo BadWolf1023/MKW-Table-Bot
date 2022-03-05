@@ -2035,8 +2035,8 @@ class TablingCommands:
         # await view.send(message, this_bot.get_room_started_message())
         # TableBot.last_wp_message[this_bot.channel_id] = view.message
         await message.channel.send(this_bot.get_room_started_message())
+        message.content = '/wp (auto)'
         await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
-
 
     @staticmethod
     @TimerDebuggers.timer_coroutine
