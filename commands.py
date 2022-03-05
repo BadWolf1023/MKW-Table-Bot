@@ -2587,7 +2587,7 @@ class TablingCommands:
 
             channel = message.guild.get_channel(channel_id)
             if not channel:
-                return await message.channel.send("The channel you provided could not be found in this server. If you are trying to copy from a channel outside of this server, you must include the `server_id` as well.")
+                return await message.channel.send("The channel you provided could not be found in this server. If you are trying to copy from a channel outside of this server, you must include the `guildID` as well.")
 
             try:
                 copied_instance = copy.deepcopy(table_bots[message.guild.id][channel_id])
