@@ -84,6 +84,11 @@ class Room(object):
         self.races.extend(races)
         self.fix_race_numbers()
     
+    def add_rxx(self, rxx: str):
+        if not isinstance(rxx, str):
+            raise ValueError("Caller must gaurantee that the given rxx is a string")
+        self.rLIDs.append(rxx)
+    
     def get_set_up_user_discord_id(self):
         return self.set_up_user
     def get_set_up_display_name(self):

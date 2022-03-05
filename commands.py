@@ -2058,7 +2058,7 @@ class TablingCommands:
             await message.channel.send(f"The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `{server_prefix}undo`.")
         
         smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.ROOM_LOOKUP_TYPES)
-        status, rxx, room_races = await WiimmfiSiteFunctions.get_races_smart(smart_type, hit_lounge_api=True)
+        status, rxx, _ = await WiimmfiSiteFunctions.get_races_smart(smart_type, hit_lounge_api=True)
         if not status:
             failure_message = TablingCommands.get_room_load_failure_message(message, smart_type, status)
             await message.channel.send(failure_message)
@@ -2070,12 +2070,13 @@ class TablingCommands:
             return
 
         this_bot.add_save_state(message.content)
-        success_status = await this_bot.add_room_races(rxx, room_races)
+        load_mes = await message.channel.send("Merging room...")
+        success_status = await this_bot.add_room_races(rxx)
         if success_status:
-            await message.channel.send(f"Successfully merged with this room: {this_bot.getRoom().getLastRXXString()} | Total number of races played: " + str(len(this_bot.getRoom().races)))
+            await load_mes.edit(content=f"Successfully merged with this room: {this_bot.getRoom().getLastRXXString()} | Total number of races played: " + str(len(this_bot.getRoom().races)))
         else:
             this_bot.remove_last_save_state()
-            await message.channel.send("An unknown error occurred when trying to merge rooms. No changes made.")
+            await load_mes.edit(content="An unknown error occurred when trying to merge rooms. No changes made.")
 
     @staticmethod
     def get_room_load_failure_message(message: discord.Message, smart_type: SmartTypes.SmartLookupTypes, status: WiimmfiSiteFunctions.RoomLoadStatus) -> str: 
@@ -2586,7 +2587,7 @@ class TablingCommands:
 
             channel = message.guild.get_channel(channel_id)
             if not channel:
-                return await message.channel.send("The channel you provided could not be found.")
+                return await message.channel.send("The channel you provided could not be found in this server. If you are trying to copy from a channel outside of this server, you must include the `server_id` as well.")
 
             try:
                 copied_instance = copy.deepcopy(table_bots[message.guild.id][channel_id])
@@ -2619,7 +2620,7 @@ class TablingCommands:
 
         channel = guild.get_channel(channel_id)
         if not channel:
-            return await message.channel.send("The channel you provided could not be found.")
+            return await message.channel.send("The channel could not be found in the provided server. Ensure that I have access to the channel you are trying to copy from.")
         
         if channel_id == message.channel.id:
             return await message.channel.send("You can't copy from the same channel.")
