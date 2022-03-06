@@ -356,8 +356,8 @@ class StatisticCommands:
     valid_rt_options = {"rt","rts","regular","regulars","regulartrack","regulartracks"}
     valid_ct_options = {"ct","cts","custom","customs","customtrack","customtracks"}
 
-    valid_rt_tiers = ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
-    valid_ct_tiers = ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
+    valid_rt_tiers = ["t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
+    valid_ct_tiers = ["t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
 
     rt_number_tracks = 15
     ct_number_tracks = 15

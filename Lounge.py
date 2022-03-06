@@ -10,8 +10,8 @@ from typing import Set
 import common
 from collections import namedtuple
 
-MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=1&event_data="
-MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_id=2&event_data="
+MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_type=rt&event_data="
+MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_type=ct&event_data="
 MKW_LOUNGE_RT_UPDATER_LINK = MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK
 MKW_LOUNGE_CT_UPDATER_LINK = MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK
 MKW_LOUNGE_RT_UPDATER_CHANNEL = 758161201682841610

@@ -42,7 +42,7 @@ class StatisticsSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         type: Option(str, "RT/CT", choices=['RT', 'CT']),
         days: Option(int,"Timeframe of data to show in days",required=False,default=None),
-        tier: Option(str, "Specify a tier", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None)
+        tier: Option(str, "Specify a tier", choices=['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None)
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, type.lower()]
@@ -65,7 +65,7 @@ class StatisticsSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         type: Option(str, "RT/CT", choices=['RT', 'CT']),
         days: Option(int,"Timeframe of data to show in days",required=False,default=None),
-        tier: Option(str, "Specify a tier", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None)
+        tier: Option(str, "Specify a tier", choices=['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None)
     ):
         command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, type.lower()]
@@ -86,7 +86,7 @@ class StatisticsSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         track: Option(str, "Track name or abbreviation"),
-        tier: Option(str, "Tier", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None),
+        tier: Option(str, "Tier", choices=['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None),
         days: Option(int,"Timeframe of data in days",required=False,default=None),
         min_plays: Option(int, "Minimum number of plays for a player to be included", required=False, default=None)
     ):
@@ -113,7 +113,7 @@ class StatisticsSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         type: Option(str, "RT/CT", choices=['RT','CT']),
         player: Option(str,"See another player's best tracks",required=False,default=None),
-        tier: Option(str, "Tier", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None),
+        tier: Option(str, "Tier", choices=['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None),
         days: Option(int,"Timeframe of data in days",required=False,default=None),
         min_plays: Option(int, "Minimum number of plays for a player to be included", required=False, default=None)
     ):
@@ -142,7 +142,7 @@ class StatisticsSlash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         type: Option(str, "RT/CT", choices=['RT','CT']),
         player: Option(str,"See another player's worst tracks",required=False,default=None),
-        tier: Option(str, "Tier", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None),
+        tier: Option(str, "Tier", choices=['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'], required=False, default=None),
         days: Option(int,"Timeframe of data in days",required=False,default=None),
         min_plays: Option(int, "Minimum number of plays for a player to be included", required=False, default=None)
     ):

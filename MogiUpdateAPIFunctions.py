@@ -105,9 +105,9 @@ async def getPlayerIDs(mogi_players: List[Tuple[str, int]], is_rt=True, mogiPlay
     
     full_url = lounge_mmr_api_url
     if is_rt:
-        full_url = addFilter(full_url, "ladder_id", ["1"]) #RT is 1 for this API
+        full_url = addFilter(full_url, "ladder_type", ["rt"])
     else:
-        full_url = addFilter(full_url, "ladder_id", ["2"]) #CT is 2 for this API
+        full_url = addFilter(full_url, "ladder_type", ["ct"])
     full_url = addFilter(full_url, "player_names", lounge_names)
     data = await getJSONData(full_url)
     
