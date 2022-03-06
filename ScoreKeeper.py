@@ -173,7 +173,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
         GPs.append(calculateGPScoresDCS(x+1, room, missingRacePts, server_id))
         
     fcs_players = room.get_fc_to_name_dict(1, numGPs*4)
-    room_miis = room.get_miis()
+    # room_miis = room.get_miis()
     
     FC_table_str = {}
     
@@ -293,7 +293,8 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     def team_score(all_players, team_tag):
         total_score = 0
         for fc, player_data in all_players:
-            total_score += player_score(player_data)
+            if not channel_bot.room.fc_subbed_out(fc):
+                total_score += player_score(player_data)
             
         if team_tag in war.getTeamPenalities():
             total_score -= war.getTeamPenalities()[curTeam]
@@ -352,15 +353,16 @@ def get_race_scores_for_fc(friend_code:str, channel_bot:TableBot.ChannelBot, use
     return None
 
 team_tag_mapping = {"λρ":"Apocalypse"}
-def format_sorted_data_for_gsc(scores_by_team, team_penalties):
+def format_sorted_data_for_gsc(scores_by_team, team_penalties, room: Room.Room):
     gsc_tag_scores = defaultdict(lambda:[0, 0, 0, 0])
     for tag, players in scores_by_team:
-        for _, (_, player_overall, score_by_race) in players:
-            cur_team = gsc_tag_scores[tag]
-            cur_team[3] += player_overall
-            chunked_scores = [score_by_race[i:i+4] for i in range(len(score_by_race))[:12:4]]
-            for gpNum, gpScores in enumerate(chunked_scores):
-                cur_team[gpNum] += sum(gpScores)
+        for fc, (_, player_overall, score_by_race) in players:
+            if not room.fc_subbed_out(fc):
+                cur_team = gsc_tag_scores[tag]
+                cur_team[3] += player_overall
+                chunked_scores = [score_by_race[i:i+4] for i in range(len(score_by_race))[:12:4]]
+                for gpNum, gpScores in enumerate(chunked_scores):
+                    cur_team[gpNum] += sum(gpScores)
     
     for tag in team_penalties:
         if tag in gsc_tag_scores:

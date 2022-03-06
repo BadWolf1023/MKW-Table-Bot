@@ -246,8 +246,8 @@ class Room(object):
                 for sub_data in self.sub_ins.values():
                     subout_start_race = sub_data[4]
                     subout_end_race = sub_data[5]
-                    if race_num >= subout_start_race and subout_start_race <= subout_end_race: #2, 3, 4
-                        sub_data[6].pop(subout_start_race - race_num)
+                    if subout_start_race <= race_num <= subout_end_race and subout_start_race <= subout_end_race: #2, 3, 4
+                        sub_data[6].pop(race_num - subout_start_race)
                         sub_data[5] -= 1
                         sub_data[0] -= 1
 
