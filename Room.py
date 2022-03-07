@@ -373,6 +373,11 @@ class Room(object):
             last_rxx = self.rLIDs[-1]
             return f"**Room URL:** https://wiimmfi.de/stats/mkwx/list/{last_rxx}  |  **rxx number:** {last_rxx}"
         return ""
+
+    def get_table_id_text(self):
+        #return f"**Table ID:** {self.get_event_id()} | Table Bot API Link: {common.TABLE_BOT_API_LINK}?table_id={self.get_event_id()}"
+        return f"**Table ID:** {self.get_event_id()}"
+
     
     def getMissingPlayersPerRace(self):
         numGPS = int(len(self.races)/4 + 1)
