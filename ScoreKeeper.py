@@ -215,7 +215,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
         if discord_escape:
             name = escape_mentions(escape_markdown(name))
 
-        FC_table_str[fc] = [name + " ", 0, []]
+        FC_table_str[fc] = [name + " ", 0, [], name]
         
         #add flag, if the FC has a flag set
         if fc in UserDataProcessing.fc_discordId:
@@ -296,7 +296,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             total_score += player_score(player_data)
             
         if team_tag in war.getTeamPenalities():
-            total_score -= war.getTeamPenalities()[curTeam]
+            total_score -= war.getTeamPenalities()[team_tag]
         return total_score
     
             
