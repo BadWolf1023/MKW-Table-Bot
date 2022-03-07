@@ -51,9 +51,6 @@ import traceback
 
 vr_is_on = False
 
-def updateData(id_lounge, fc_id):
-    UserDataProcessing.smartUpdate(id_lounge, fc_id)
-
 async def send_missing_permissions(channel:discord.TextChannel, content=None, delete_after=7):
     try:
         return await channel.send("I'm missing permissions. Contact your admins. The bot needs these additional permissions:\n- Send Messages\n- Add Reactions (for pages)\n- Manage Messages (to remove reactions)", delete_after=delete_after)
