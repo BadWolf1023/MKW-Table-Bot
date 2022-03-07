@@ -3,7 +3,7 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
-from Mii import Mii
+import Mii
 import UtilityFunctions
 
 vehicle_ratings = {"Mach Bike":10,
@@ -68,7 +68,7 @@ class Player(object):
         self.mii_hex = mii_hex
     
     def get_mii_hex(self):
-        if isinstance(self.mii_hex, Mii):
+        if isinstance(self.mii_hex, Mii.Mii):
             return self.mii_hex.mii_data_hex_str
         return self.mii_hex
     def get_lounge_name(self):

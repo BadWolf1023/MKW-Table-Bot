@@ -63,8 +63,8 @@ class ChannelBot(object):
         self.roomLoadTime = None
         self.save_states = []
         self.state_pointer = -1
-        self.resolved_errors = set() #this one isn't part of the save state
-        self.semi_resolved_errors = set() #this one is
+        self.resolved_errors = set() # this one isn't part of the save state
+        self.semi_resolved_errors = set() # this one is
         
         self.should_send_mii_notification = True
         self.set_style_and_graph(server_id)
@@ -134,7 +134,7 @@ class ChannelBot(object):
         return players.index(player)+1
 
     def get_room_started_message(self):
-        started_war_str = "FFA started" if self.getWar().isFFA() else "War started"
+        started_war_str = "FFA started" if self.getWar().isFFA() else "Table started"
         if self.getWar().ignoreLargeTimes:
             started_war_str += " (ignoring errors for large finish times)"
         started_war_str += f". {self.getRoom().getRXXText()}"
@@ -228,7 +228,7 @@ class ChannelBot(object):
         return "Bot will become unlocked " + humanize.naturaltime(cooldown_time)
             
     def updateLoungeFinishTime(self):
-        if self.loungeFinishTime is None and self.is_table_loaded() and len(self.room.races) >= 12:
+        if self.loungeFinishTime is None and self.is_table_loaded() and len(self.room.races) >= self.war.numberOfGPs*4:
             self.loungeFinishTime = datetime.now()
     
     @TimerDebuggers.timer_coroutine
@@ -266,17 +266,18 @@ class ChannelBot(object):
             return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS_BUT_NO_WAR)
         return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS)
 
-    async def add_room_races(self, rxx: str, room_races):
+    async def add_room_races(self, rxx: str):
         if not self.is_table_loaded():
             return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.NO_ROOM_LOADED)
-        self.room.add_races(rxx, room_races)
+        self.room.add_rxx(rxx)
         # Important: We do NOT want to add data to database when this is called. The previous races are MODIFIED, we should NOT add modified races to the database - the new races will be added to the database when they call room.update()
         # await DataTracker.RoomTracker.add_data(self)
-        self.room.apply_tabler_adjustments()
-        asyncio.create_task(self.room.populate_miis()) # We must create this task after adjustments are applied since the adjustments applied to the new races may affect which miis we pull
-        if self.getWar() is None:  # The caller should have ensured that a war is set - dangerous game to play!
-            return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS_BUT_NO_WAR)
-        return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS)
+        return await self.update_table()
+        # self.room.apply_tabler_adjustments()
+        # asyncio.create_task(self.room.populate_miis()) # We must create this task after adjustments are applied since the adjustments applied to the new races may affect which miis we pull
+        # if self.getWar() is None:  # The caller should have ensured that a war is set - dangerous game to play!
+        #     return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS_BUT_NO_WAR)
+        # return WiimmfiSiteFunctions.RoomLoadStatus(WiimmfiSiteFunctions.RoomLoadStatus.SUCCESS)
             
     
     def setRoom(self, room):
@@ -309,7 +310,7 @@ class ChannelBot(object):
     def getWPCooldownSeconds(self) -> int:
         if self.should_send_mii_notification:
             self.should_send_mii_notification = False
-        # if common.in_testing_server:
+        # if common.is_dev:
         #     return -1
         if self.lastWPTime is None:
             return -1
@@ -322,7 +323,7 @@ class ChannelBot(object):
         self.roomLoadTime = datetime.now()
 
     def getRLCooldownSeconds(self) -> int:
-        if common.in_testing_server:
+        if common.is_dev:
             return -1
         if self.roomLoadTime is None:
             return -1

@@ -23,7 +23,6 @@ import BaseTagAI
 #the tie breaker goes to actual tag, and so lambda would be a distinctly different "ranking" than A if there were actually 2 teams (lambda and A)
 
 
-
 def _get_tag_value(tag):
     while len(tag) > 0:
         if tag[0] in REMOVE_IF_START_WITH:

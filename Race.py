@@ -387,7 +387,7 @@ class Race:
         return not self.entireRoomBlankTimes() and sum(1 for placement in self.getPlacements() if placement.is_disconnected()) > 1
         
     def __str__(self):
-        curStr = "Race #" + str(self.raceNumber) + " - " + UtilityFunctions.process_name(self.getTrackNameWithoutAuthor()) + " - " + str(self.cc) + "cc" + \
+        curStr = "Race #" + str(self.raceNumber) + " - " + UtilityFunctions.clean_for_output(self.getTrackNameWithoutAuthor()) + " - " + str(self.cc) + "cc" + \
          "\nMatch end time: " + str(self.matchTime)
         placementsSTR = ""
         for placement in self.placements:

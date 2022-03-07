@@ -20,6 +20,26 @@ meta = {
     "command_count": {}
 }
 
+SLASH_TERMS_CONVERSIONS = {
+    "flag show": 'getflag',
+    "flag set": 'setflag',
+    "flag remove": 'setflag',
+    "update rt": 'rtupdate',
+    "update ct": 'ctupdate',
+    "setting prefix": 'setprefix',
+    "setting theme": 'defaulttheme',
+    "setting graph": 'defaultgraph',
+    "setting ignore_large_times": 'defaultlargetimes',
+    "blacklist user add": 'blacklistuser',
+    "blacklist user remove": 'blacklistuser',
+    "blacklist word add": 'blacklistword',
+    "blacklist word remove": 'removeblacklistword',
+    "sha add": 'addsha',
+    "sha remove": 'removesha',
+    "admin add": 'addadmin',
+    "admin remove": 'removeadmin'
+}
+
 def initialize():
     global meta
     if os.path.isfile(common.JSON_META_FILE):
@@ -28,15 +48,18 @@ def initialize():
 
 def save_metadata():
     counts = meta["command_count"]
-    meta["command_count"] = { k:counts[k] for k in sorted(counts.keys(),reverse=True)}
+    meta["command_count"] = {k:counts[k] for k in sorted(counts.keys(),reverse=True)}
 
     with open(common.JSON_META_FILE,'w') as f:
         json.dump(meta, f)
 
 def log_command(command):
+    command = SLASH_TERMS_CONVERSIONS.get(command, command)
+    
     for name in dir(common.main):
         if re.fullmatch("([A-Z]+_)*TERMS",name):
-            if command in common.main.__getattribute__(name):
+            command_terms = common.main.__getattribute__(name)
+            if command in command_terms:
                 meta["command_count"][name] = meta["command_count"].get(name, 0) + 1
 
 def backup_files(to_back_up=common.FILES_TO_BACKUP):
@@ -249,7 +272,7 @@ def stats(num_bots:int, client=None, stats_file=common.STATS_FILE, commands_logg
     str_build += "Number of people who have used MKW Table Bot: **" + str(len(users)) + "**\n"
     str_build += "First user ever: **Chippy#8126" + "**\n"                
     str_build += "\n"
-    str_build += "Number of war pictures generated: **" + str(war_picture_count) + "**\n"
+    str_build += "Number of table pictures generated: **" + str(war_picture_count) + "**\n"
     str_build += "Total commands MKW Table Bot has recieved: **" + str(total_commands) + "**\n"
     str_build += "\n"
     #4133

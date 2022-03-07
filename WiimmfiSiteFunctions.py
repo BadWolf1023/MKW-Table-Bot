@@ -111,14 +111,14 @@ async def get_mkwx_soup() -> Tuple[RoomLoadStatus, Union[BeautifulSoup, None]]:
     Returns Beautifulsoup version of main Wiimmfi.de mkwx page with all the cloudflare emails fixed.
     The returned page may or may not be a cached version.
     If common.STUB_MKWX is enabled, the mkwx page in the testing_rooms directory will be used rather than making a request for the Wiimmfi.de mkwx page
-    If the request to the page faile, None is returned
+    If the request to the page failed, None is returned
     '''
     if common.STUB_MKWX:
         with codecs.open(common.STUB_MKWX_FILE_NAME, "r", "utf-8") as fp:
             return RoomLoadStatus(RoomLoadStatus.SUCCESS), BeautifulSoup(fix_cloudflare_email(fp.read()), "html.parser")
     mkwx_soup = await _get_mkwx_soup()
     if mkwx_soup is None:
-        RoomLoadStatus(RoomLoadStatus.FAILED_REQUEST), None
+        return RoomLoadStatus(RoomLoadStatus.FAILED_REQUEST), None
     return RoomLoadStatus(RoomLoadStatus.SUCCESS), mkwx_soup
 
 

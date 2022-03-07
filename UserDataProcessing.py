@@ -12,6 +12,7 @@ import common
 from datetime import datetime, timedelta
 
 from data_tracking import DataTracker
+import UtilityFunctions as UF
 
 seperator = "="
 
@@ -20,19 +21,25 @@ fc_discord_id_file_is_open = False
 discordId_lounges_file_is_open = False
 discordId_flags_file_is_open = False
 
-fc_discordId = {}
-discordId_fc = {}
+fc_discordId = {} # Contains friend codes mapped to a Tuple[associated discord id, datetime that the friend code was last used]
+discordId_fc = {} # Contains discord ids codes mapped to a Tuple[associated friend code, datetime that the friend code was last used]
 
-discordId_lounges = {}
-lounges_discordId = {}
+discordId_lounges = {}  # Contains discord IDs mapped to the correct capitalization and spacing of their Lounge name
+lounges_discordId = {}  # Contains a lookup version of someone's Lounge name mapped to their discord ID
 
-discordId_flags = {}
+discordId_flags = {}  # Contains discord IDs mapped to the the flag code for that user
 blacklisted_users = {}
 
 valid_flag_codes = set()
 
 #datetime(year, month, day[, hour[, minute[, second[, microsecond[,tzinfo]]]]])
 DEFAULT_LAST_USED_DATE = datetime(year=2020,month=8,day=1, hour=1, minute=0, second=0, microsecond=1)
+
+def proccessed_lounge_add(mii_name, fc, lounge_replace=True):
+    '''Stars out blacklisted words in given mii name, escapes Discord markdown, and adds the lounge name for the given FC if one is found.
+    (Also escapes markdown for the lounge addition to prevent clever syntax abused)'''
+    lounge_addition = UF.escape_mentions(UF.escape_markdown(lounge_add(fc, lounge_replace)))
+    return f"{UF.clean_for_output(mii_name)}{lounge_addition}"
 
 def lounge_add(fc, lounge_replace=True):
     if lounge_replace:
@@ -42,13 +49,6 @@ def lounge_add(fc, lounge_replace=True):
             return " - (" + did_lounge[fc_did[fc][0]] + ")"
     return ""
 
-def lounge_add_no_dash(fc, lounge_replace=True):
-    if not lounge_replace: return
-    fc_did = fc_discordId
-    did_lounge = discordId_lounges
-    if fc in fc_did and fc_did[fc][0] in did_lounge:
-        return " (" + did_lounge[fc_did[fc][0]] + ")"
-
 def lounge_get(fc, lounge_replace=True):
     if lounge_replace:
         fc_did = fc_discordId
@@ -57,7 +57,7 @@ def lounge_get(fc, lounge_replace=True):
             return did_lounge[fc_did[fc][0]]
     return ""
 
-def lounge_get_fill(fc, name, lounge_replace=True):
+def lounge_name_or_mii_name(fc, name, lounge_replace=True):
     """Return lounge name if player has one"""
     loungeName = lounge_get(fc, lounge_replace)
     if loungeName=="":

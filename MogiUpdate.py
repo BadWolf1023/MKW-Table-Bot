@@ -16,6 +16,7 @@ import json
 two_deep_flatten = lambda t: [item for sublist in t for item in sublist]
 three_deep_flatten = lambda t: [item for L1 in t for L2 in L1 for item in L2]
 from typing import Tuple
+import common
 
 
 """
@@ -116,6 +117,11 @@ ct_summary_channels = {"1":520810732280086558,
                        "6":841730154929848410,
                        "7":875532331081957478,
                        "squadqueue":793265898436821072}
+if common.is_dev:
+    rt_summary_channels.clear()
+    rt_summary_channels.update({"1":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "2":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "3":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "4":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "4-5":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "5":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "6":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "7":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "squadqueue":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID})
+    ct_summary_channels.clear()
+    ct_summary_channels.update({"1":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "2":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "3":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "4":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "4-5":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "5":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "6":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "7":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "squadqueue":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID})
 
 def get_tier_and_summary_channel_id(tier:str, is_rt=True):
     tier = tier.lower().replace(" ", "").replace("-", "")
