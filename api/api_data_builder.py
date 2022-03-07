@@ -28,8 +28,8 @@ def build_team_html(team_data: List[Tuple[str, List]]):
     with codecs.open(TEAM_HTML_BUILDER_FILE, "r", "utf-8") as fp:
         soup = BeautifulSoup(fp.read(), "html.parser")
     try:
-        for team_tag, players in team_data:
-            pass
+        for id_index, (team_tag, players) in enumerate(team_data, 1):
+            soup.body.table.thead.tr.new_tag('th', id=f"team_name_{id_index}")
         return str(soup)
     finally:
         if soup is not None:
@@ -45,22 +45,25 @@ def __get_testing_channel_bot__():
     currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
     parentdir = os.path.dirname(currentdir)
     sys.path.insert(0, parentdir) 
-
+    import BadWolfBot
+    BadWolfBot.initialize()
     import common
     import TableBot
     import SmartTypes
     
-    import BadWolfBot
+
     import TagAIShell
-    BadWolfBot.private_data_init()
+    
     TagAIShell.initialize()
     war = TableBot.War.War("2v2", 6, 0, 3, ignoreLargeTimes=False, displayMiis=True)
     this_bot = TableBot.ChannelBot(war=war, server_id=1, channel_id=1)
     smart_type = SmartTypes.SmartLookupTypes("r0000001", allowed_types=SmartTypes.SmartLookupTypes.ROOM_LOOKUP_TYPES)
     status = common.run_async_function_no_loop(this_bot.load_table_smart(smart_type, war, message_id=0, setup_discord_id=0, setup_display_name="Bad Wolf"))
-    players = list(this_bot.getRoom().getFCPlayerListStartEnd(1, 3*4).items())
+
+    players = list(this_bot.getRoom().get_fc_to_name_dict(1, 3*4).items())
     tags_player_fcs = TagAIShell.determineTags(players, this_bot.getWar().playersPerTeam)
     this_bot.getWar().set_temp_team_tags(tags_player_fcs)
+
     this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
     return this_bot
 
