@@ -7,13 +7,10 @@ get_table_bots = None
 
 def get_table_bot(table_id: Union[int, str]) -> Union[TableBot.ChannelBot, bool]:
     table_bots:Dict[int, Dict[int, TableBot.ChannelBot]] = get_table_bots()
-    print(table_bots)
     if table_bots is None:
         return None
     for channel_bots in table_bots.values():
         for table_bot in channel_bots.values():
-            if table_bot.is_table_loaded():
-                print(table_bot.get_room().get_event_id())
             if table_bot.is_table_loaded() and table_bot.get_room().get_event_id() == table_id:
                 return table_bot
     return None
