@@ -1,0 +1,29 @@
+table,
+td,
+th {
+    font: bold small-caps Verdana;
+    color: white;
+    border: none;
+}
+table {
+    background-color: #bd3500;
+    border-collapse: collapse;
+    border-style: hidden;
+    border-radius: 10px;
+}
+
+.team_name,
+.team_score {
+    text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
+}
+
+.team_name {
+    border: 5px solid white;
+    padding-bottom: 25px;
+    /*border-bottom: 10px solid rgb(0, 0, 0);*/
+}
+
+.team_score {
+    border: 5px solid white;
+    padding-top: 10px;
+}
