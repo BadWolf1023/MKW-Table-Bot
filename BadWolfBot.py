@@ -363,7 +363,7 @@ class BadWolfBot(discord.Bot):
         pickle_CTGP_region()
         self.pickle_lounge_updates()
         Stats.save_metadata()
-        if common.is_prod or True:
+        if common.is_prod:
             Stats.backup_files()
             await Stats.prune_backups()
             Stats.dump_to_stats_file()
@@ -1124,7 +1124,6 @@ async def initialize():
     common.main = sys.modules[__name__]
 
 async def after_init():
-    print("test")
     await DataTracker.initialize()
     api_channelbot_interface.initialize(bot.table_bots)
     
