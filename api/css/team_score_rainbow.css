@@ -2,6 +2,7 @@ table,
 td,
 th {
     border: none;
+    font-family: fantasy;
 }
 
 .team_name,
