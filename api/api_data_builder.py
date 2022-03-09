@@ -15,7 +15,8 @@ TABLE_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}full_table_builder.html"
 
 TEAM_STYLES = {"rainbow": f"{CSS_DATA_PATH}team_score_rainbow.css",
                "pastel": f"{CSS_DATA_PATH}team_score_pastel.css",
-               "orange": f"{CSS_DATA_PATH}team_score_orange.css"
+               "orange": f"{CSS_DATA_PATH}team_score_orange.css",
+               "neon": f"{CSS_DATA_PATH}team_score_neon.css"
 }
 
 
