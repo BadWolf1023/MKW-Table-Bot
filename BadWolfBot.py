@@ -36,6 +36,7 @@ import os
 import asyncio
 from typing import Dict
 from fastapi import FastAPI
+import uvicorn
 
 CT_WAR_LOUNGE_ECHELONS_CAT_ID = 851666104228249652
 WAR_LOUNGE_ECHELONS_CAT_ID = 751956338912788559
@@ -1147,6 +1148,9 @@ async def close_wrapper():
     return await bot.close()
 
 
-app = FastAPI(on_startup=[initialize], on_shutdown=[close_wrapper])
+if __name__ == "__main__":
+    app = FastAPI(on_startup=[initialize], on_shutdown=[close_wrapper])
+    uvicorn.run(app, log_config=f"log.ini", port=8009)
+
 
     
