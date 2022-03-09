@@ -7,11 +7,13 @@ from typing import List, Union, Tuple
 
 
 API_DATA_PATH = "api/"
-TEAM_HTML_BUILDER_FILE = f"{API_DATA_PATH}team_score_builder.html"
-TEAM_STYLE_FILE = f"{API_DATA_PATH}team_score_style_base.css"
-TABLE_HTML_BUILDER_FILE = f"{API_DATA_PATH}full_table_builder.html"
+HTML_DATA_PATH = f"{API_DATA_PATH}html/"
+CSS_DATA_PATH = f"{API_DATA_PATH}css/"
+TEAM_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}team_score_builder.html"
+TEAM_STYLE_FILE = f"{CSS_DATA_PATH}team_score_style_base.css"
+TABLE_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}full_table_builder.html"
 
-TEAM_STYLES = {"rainbow": f"{API_DATA_PATH}team_score_style_rainbow.css"
+TEAM_STYLES = {"rainbow": f"{CSS_DATA_PATH}team_score_style_rainbow.css"
 }
 
 
