@@ -3,6 +3,7 @@ import codecs
 import re
 from datetime import timedelta
 from typing import List, Union, Tuple
+from api import api_common
 
 
 
@@ -12,6 +13,7 @@ CSS_DATA_PATH = f"{API_DATA_PATH}css/"
 TEAM_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}team_score_builder.html"
 TEAM_STYLE_FILE = f"{CSS_DATA_PATH}team_score_base.css"
 TABLE_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}full_table_builder.html"
+QUICK_INFO_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}quick_info.html"
 
 TEAM_STYLES = {"rainbow": f"{CSS_DATA_PATH}team_score_rainbow.css",
                "pastel": f"{CSS_DATA_PATH}team_score_pastel.css",
@@ -75,6 +77,55 @@ def build_team_html(team_data: List[Tuple[str, List]], style=None):
         if soup is not None:
             soup.decompose()
 
+
+def build_info_page_html(table_id: int):
+    table_id = str(table_id)
+    with codecs.open(QUICK_INFO_HTML_BUILDER_FILE, "r", "utf-8") as fp:
+        soup = BeautifulSoup(fp.read(), "html.parser")
+    try:
+        team_score_html_base_url = f"{api_common.API_URL}{api_common.TEAM_SCORES_HTML_ENDPOINT}?table_id={table_id}"
+        
+        team_header_tag = soup.new_tag('h1')
+        team_header_tag.string = f"Want a stream table overlay that automatically updates? Developing an app to interact with Table Bot? Read how below!"
+        soup.body.append(team_header_tag)
+        soup.body.append(soup.new_tag('br'))
+        soup.body.append(soup.new_tag('br'))
+
+        team_header_tag = soup.new_tag('h3')
+        team_header_tag.string = f"Get team score HTML for an ongoing table with TableBot:"
+        soup.body.append(team_header_tag)
+
+        list_tag = soup.new_tag('ul')
+        soup.body.append(list_tag)
+
+        for style in TEAM_STYLES:
+            url_tag = soup.new_tag('a', href=f"{team_score_html_base_url}&style={style}")
+            url_tag.string = f"Scores with tags in {style} style"
+            li_tag = soup.new_tag('li')
+            li_tag.append(url_tag)
+            soup.body.ul.append(li_tag)
+            #soup.body.append(soup.new_tag('br'))
+        
+        soup.body.append(soup.new_tag('br'))
+        li_tag = soup.new_tag('li')
+
+        em_tag = soup.new_tag('b')
+        em_tag.string = "Don't like any of these? You can apply your own styling in OBS by adding the URL "
+        li_tag.append(em_tag)
+
+        url_tag = soup.new_tag('a', href=f"{team_score_html_base_url}")
+        url_tag.string = f"{team_score_html_base_url}"
+        li_tag.append(url_tag)
+
+        em_tag = soup.new_tag('b')
+        em_tag.string = """ as a browser source, then applying your own CSS in the "Custom CSS" field."""
+        li_tag.append(em_tag)
+        
+        soup.body.ul.append(li_tag)
+        return str(soup)
+    finally:
+        if soup is not None:
+            soup.decompose()
 
 def __get_testing_channel_bot__():
     import os
