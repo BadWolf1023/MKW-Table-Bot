@@ -1,0 +1,51 @@
+table,
+td,
+th {
+    border: none;
+    font-family: Fantasy;
+}
+
+.team_name,
+.team_score {
+    text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
+}
+
+.team_name {
+    padding-bottom: 25px;
+    /*border-bottom: 10px solid rgb(0, 0, 0);*/
+}
+
+.team_score {
+    padding-top: 10px;
+}
+
+.team_name:nth-child(7n+1),
+.team_score:nth-child(7n+1) {
+    color: #fe68a8;
+}
+
+.team_name:nth-child(7n+2),
+.team_score:nth-child(7n+2) {
+    color: #3869c8;
+}
+
+.team_name:nth-child(7n+3),
+.team_score:nth-child(7n+3) {
+    color: #4fdddf;
+}
+
+.team_name:nth-child(7n+4),
+.team_score:nth-child(7n+4) {
+    color: #ffda58;
+}
+
+
+.team_name:nth-child(7n+5),
+.team_score:nth-child(7n+5) {
+    color: #cf95fb;
+}
+
+.team_name:nth-child(7n+6),
+.team_score:nth-child(7n+6) {
+    color: #4ff141;
+}
