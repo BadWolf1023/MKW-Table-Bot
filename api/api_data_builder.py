@@ -73,7 +73,6 @@ def build_team_html(team_data: List[Tuple[str, List]], style=None):
         return str(soup)
     finally:
         if soup is not None:
-            print("Decomposing:")
             soup.decompose()
 
 
