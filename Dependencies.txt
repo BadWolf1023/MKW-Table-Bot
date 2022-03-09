@@ -12,3 +12,5 @@ lxml
 certifi
 dill
 requests
+fastapi
+uvicorn[standard]
