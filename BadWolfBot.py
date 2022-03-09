@@ -16,7 +16,7 @@ import AbuseTracking
 import TagAIShell
 from data_tracking import DataTracker
 import InteractionUtils
-import api.api_channelbot_interface
+from api import api_channelbot_interface, endpoints
 
 #External library imports for this file
 import discord
@@ -35,6 +35,7 @@ import aiohttp
 import os
 import asyncio
 from typing import Dict
+from fastapi import FastAPI
 
 CT_WAR_LOUNGE_ECHELONS_CAT_ID = 851666104228249652
 WAR_LOUNGE_ECHELONS_CAT_ID = 751956338912788559
@@ -362,7 +363,7 @@ class BadWolfBot(discord.Bot):
         pickle_CTGP_region()
         self.pickle_lounge_updates()
         Stats.save_metadata()
-        if common.is_prod:
+        if common.is_prod or True:
             Stats.backup_files()
             await Stats.prune_backups()
             Stats.dump_to_stats_file()
@@ -832,7 +833,7 @@ class BadWolfBot(discord.Bot):
         
         elif main_command in {'close', 'stopbot', 'disconnect', 'kill'} and common.is_bot_owner(message.author):
             try:
-                self.save_data()
+                await self.save_data()
                 self.destroy_all_tablebots()
                 await message.channel.send("Data has been saved and all table bots have been cleaned up; bot gracefully closed.")
             except Exception as e:
@@ -1089,19 +1090,23 @@ def get_size(objct, seen=None):
 
 
 # nodemon BadWolfBot.py --signal SIGQUIT
+bot: BadWolfBot = None
 is_quitting = False
 def handler(signum, frame):
     global is_quitting
     if not is_quitting:
         print(f"Received {'SIGINT' if common.ON_WINDOWS else 'SIGQUIT'}\n")
         is_quitting = True
+        
         asyncio.create_task(bot.close())
 end_signal = signal.SIGINT
 if not common.ON_WINDOWS:
     end_signal = signal.SIGQUIT
 signal.signal(end_signal, handler)
 
-def initialize():
+async def initialize():
+    global bot
+    endpoints.initialize(app)
     create_folders()
     private_data_init()
     Race.initialize()
@@ -1111,23 +1116,35 @@ def initialize():
     TagAIShell.initialize()
     Stats.initialize()
 
-def after_init():
-    asyncio.run(DataTracker.initialize())
-    api.api_channelbot_interface.initialize(bot.table_bots)
-    
-
-if __name__ == "__main__":
-    initialize()
     bot = BadWolfBot()
-    after_init()
+    await start_bot()
+    await after_init()
 
     common.client = bot
     common.main = sys.modules[__name__]
 
-    if common.is_dev:
-        bot.run(testing_bot_key)
-    elif common.is_beta:
-        bot.run(beta_bot_key)
-    else:
-        bot.run(real_bot_key)
+async def after_init():
+    print("test")
+    await DataTracker.initialize()
+    api_channelbot_interface.initialize(bot.table_bots)
+    
+async def start_bot():
+    try:
+        if common.is_dev:
+            key = testing_bot_key
+        elif common.is_beta:
+            key = beta_bot_key
+        else:
+            key = real_bot_key
+        asyncio.create_task(bot.start(key))
+    except KeyboardInterrupt:
+        await bot.close()
+        raise
+
+async def close_wrapper():
+    return await bot.close()
+
+
+app = FastAPI(on_startup=[initialize], on_shutdown=[close_wrapper])
+
     
