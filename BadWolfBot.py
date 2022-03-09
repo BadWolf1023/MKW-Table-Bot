@@ -240,6 +240,9 @@ class BadWolfBot(discord.Bot):
             return True, False, pref
         return False, False, None
 
+    def get_table_bots(self):
+        return self.table_bots
+
     def is_vr_command(message:discord.Message):
         str_msg = message.content.strip()
         if str_msg[0] not in {"!"}:
@@ -1125,7 +1128,7 @@ async def initialize():
 
 async def after_init():
     await DataTracker.initialize()
-    api_channelbot_interface.initialize(bot.table_bots)
+    api_channelbot_interface.initialize(bot.get_table_bots)
     
 async def start_bot():
     try:

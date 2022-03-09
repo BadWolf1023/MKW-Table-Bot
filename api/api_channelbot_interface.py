@@ -1,15 +1,21 @@
 import TableBot
 import ScoreKeeper
+from typing import Union, Dict
 
 
-table_bots = None
+get_table_bots = None
 
-def get_table_bot(table_id :int) -> bool:
+def get_table_bot(table_id: Union[int, str]) -> Union[TableBot.ChannelBot, bool]:
+    table_bots:Dict[int, Dict[int, TableBot.ChannelBot]] = get_table_bots()
+    print(table_bots)
     if table_bots is None:
         return None
-    for server_id, channel_id in table_bots.items():
-        if table_bots[server_id][channel_id].is_table_loaded() and table_bots[server_id][channel_id].get_room().get_event_id() == table_id:
-            return table_bots[server_id][channel_id]
+    for channel_bots in table_bots.values():
+        for table_bot in channel_bots.values():
+            if table_bot.is_table_loaded():
+                print(table_bot.get_room().get_event_id())
+            if table_bot.is_table_loaded() and table_bot.get_room().get_event_id() == table_id:
+                return table_bot
     return None
 
 def get_team_score_data(table_bot: TableBot.ChannelBot):
@@ -17,6 +23,6 @@ def get_team_score_data(table_bot: TableBot.ChannelBot):
     return table_sorted_data
 
 
-def initialize(table_bots_):
-    global table_bots
-    table_bots = table_bots_
+def initialize(get_table_bots_):
+    global get_table_bots
+    get_table_bots = get_table_bots_
