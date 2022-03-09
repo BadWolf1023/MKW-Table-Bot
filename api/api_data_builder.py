@@ -14,7 +14,7 @@ TEAM_STYLE_FILE = f"{CSS_DATA_PATH}team_score_base.css"
 TABLE_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}full_table_builder.html"
 
 TEAM_STYLES = {"rainbow": f"{CSS_DATA_PATH}team_score_rainbow.css",
-               "neon": f"{CSS_DATA_PATH}team_score_neon.css",
+               "pastel": f"{CSS_DATA_PATH}team_score_pastel.css",
                "orange": f"{CSS_DATA_PATH}team_score_orange.css"
 }
 
@@ -29,7 +29,7 @@ def restructure_if_needed(team_data):
         return new_team_data
     else:
         return team_data
-def build_team_html(team_data: List[Tuple[str, List]], style="orange"):
+def build_team_html(team_data: List[Tuple[str, List]], style="neon"):
     '''team_data contains the scores for teams in the following format:
     [
         (team_1_name, [ (fc_1, player_data_1), (fc_2, player_data_2) ]),
