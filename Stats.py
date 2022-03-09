@@ -95,6 +95,7 @@ def backup_files(to_back_up=common.FILES_TO_BACKUP):
 
 
 async def prune_backups():
+    print(f"{str(datetime.now())}: Pruning backups...")
     for folder in os.listdir(backup_folder):
         try:
             # Fix previously zipped files
@@ -124,8 +125,10 @@ async def prune_backups():
                     print("Zipping", db_path)
                     await common.run_command_async(f'zip -r {db_path_zip} {db_path}')
                     await common.run_command_async(f'rm -rf {db_path}')
-        except:
+        except Exception as e:
+            print(f"{str(datetime.now())}: Pruning backups has exception: {e}")
             pass
+    print(f"{str(datetime.now())}: Pruning backups complete data")
     
 def get_commands_from_txt(to_find, needle_function, log_file, limit=None):
     results = []
