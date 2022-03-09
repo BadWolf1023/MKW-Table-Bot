@@ -16,6 +16,7 @@ import AbuseTracking
 import TagAIShell
 from data_tracking import DataTracker
 import InteractionUtils
+import api.api_channelbot_interface
 
 #External library imports for this file
 import discord
@@ -1112,6 +1113,8 @@ def initialize():
 
 def after_init():
     asyncio.run(DataTracker.initialize())
+    api.api_channelbot_interface.initialize(bot.table_bots)
+    
 
 if __name__ == "__main__":
     initialize()
