@@ -30,7 +30,7 @@ def restructure_if_needed(team_data):
         return new_team_data
     else:
         return team_data
-def build_team_html(team_data: List[Tuple[str, List]], style="neon"):
+def build_team_html(team_data: List[Tuple[str, List]], style=None):
     '''team_data contains the scores for teams in the following format:
     [
         (team_1_name, [ (fc_1, player_data_1), (fc_2, player_data_2) ]),
