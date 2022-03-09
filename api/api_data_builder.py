@@ -41,11 +41,7 @@ def build_team_html(team_data: List[Tuple[str, List]], style=None):
     team_data is what is returned by ScoreKeeper.get_war_table_DCS
     player_data is a list that contains various information, such as the player's name, player score each GP, and player score each race    
     '''
-    
-    print(team_data)
-    print()
     team_data = restructure_if_needed(team_data)
-    print(team_data)
     
     # Read in base css styling and read in custom styling if it was specified
     styling = ""
