@@ -1,0 +1,99 @@
+<html>
+<head>
+<script type="text/JavaScript">
+         <!--
+            function AutoRefresh( t ) {
+               setTimeout("location.reload(true);", t);
+            }
+         //-->
+      </script>
+<style>/* This file contains the base CSS that will apply first to all team score HTML */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+table,
+td,
+th {
+    border: 1px solid black;
+    font-size: 100px;
+}
+.team_name{
+    color: black;
+}
+
+
+
+table,
+td,
+th {
+    border: none;
+}
+
+.team_name,
+.team_score {
+    text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
+}
+
+.team_name {
+    padding-bottom: 25px;
+    /*border-bottom: 10px solid rgb(0, 0, 0);*/
+}
+
+.team_score {
+    padding-top: 10px;
+}
+
+.team_name:nth-child(7n+1),
+.team_score:nth-child(7n+1) {
+    color: red;
+}
+
+.team_name:nth-child(7n+2),
+.team_score:nth-child(7n+2) {
+    color: orangered;
+}
+
+.team_name:nth-child(7n+3),
+.team_score:nth-child(7n+3) {
+    color: yellow;
+}
+
+.team_name:nth-child(7n+4),
+.team_score:nth-child(7n+4) {
+    color: green;
+}
+
+
+.team_name:nth-child(7n+5),
+.team_score:nth-child(7n+5) {
+    color: #0041C2;
+}
+
+.team_name:nth-child(7n+6),
+.team_score:nth-child(7n+6) {
+    color: rgb(88, 0, 252);
+}
+
+.team_name:nth-child(7n+7),
+.team_score:nth-child(7n+7) {
+    color: rgb(158, 0, 179);
+}
+
+</style>
+</head>
+<body onload="JavaScript:AutoRefresh(5000);">
+<table class="tablebot_table">
+<thead>
+<tr>
+<th class="team_name" id="team_name_1">Player</th><th class="team_name" id="team_name_2">A</th><th class="team_name" id="team_name_3">K</th><th class="team_name" id="team_name_4">M</th><th class="team_name" id="team_name_5">No Tag</th><th class="team_name" id="team_name_6">B</th></tr>
+</thead>
+<tbody>
+<tr>
+<td class="team_score" id="team_score_1">106</td><td class="team_score" id="team_score_2">93</td><td class="team_score" id="team_score_3">85</td><td class="team_score" id="team_score_4">80</td><td class="team_score" id="team_score_5">71</td><td class="team_score" id="team_score_6">62</td></tr>
+</tbody>
+</table>
+</body>
+</html>

@@ -8,9 +8,10 @@ from typing import List, Union, Tuple
 
 API_DATA_PATH = "api/"
 TEAM_HTML_BUILDER_FILE = f"{API_DATA_PATH}team_score_builder.html"
+TEAM_STYLE_FILE = f"{API_DATA_PATH}team_score_style_base.css"
 TABLE_HTML_BUILDER_FILE = f"{API_DATA_PATH}full_table_builder.html"
 
-TEAM_HTML_BUILDER_STYLES = {"rainbow": f"{API_DATA_PATH}team_score_builder_rainbow.html"
+TEAM_STYLES = {"rainbow": f"{API_DATA_PATH}team_score_style_rainbow.css"
 }
 
 
@@ -35,18 +36,28 @@ def build_team_html(team_data: List[Tuple[str, List]], style="rainbow"):
     team_data is what is returned by ScoreKeeper.get_war_table_DCS
     player_data is a list that contains various information, such as the player's name, player score each GP, and player score each race    
     '''
-    #new_tag = self.new_soup.new_tag('div', id='file_history')
-    #self.new_soup.body.insert(3, new_tag)
+    
     print(team_data)
     print()
     team_data = restructure_if_needed(team_data)
     print(team_data)
+    
+    # Read in base css styling and read in custom styling if it was specified
+    styling = ""
+    with codecs.open(TEAM_STYLE_FILE, "r", "utf-8") as fp:
+        styling = fp.read() + "\n\n"
+    if style in TEAM_STYLES:
+        with codecs.open(TEAM_STYLES[style], "r", "utf-8") as fp:
+            styling += fp.read() + "\n\n"
+
+    # Build the team HTML
     soup = None
-    builder_file = TEAM_HTML_BUILDER_FILE if style not in TEAM_HTML_BUILDER_STYLES else TEAM_HTML_BUILDER_STYLES[style]
-    with codecs.open(builder_file, "r", "utf-8") as fp:
+    with codecs.open(TEAM_HTML_BUILDER_FILE, "r", "utf-8") as fp:
         soup = BeautifulSoup(fp.read(), "html.parser")
     try:
         for id_index, (team_tag, players) in enumerate(team_data, 1):
+            # Add the css styling:
+            soup.head.style.string = styling
             # Add the team tag at the top of the HTML table:
             html_tag_attrs = {"class": "team_name", "id": f"team_name_{id_index}"}
             team_name_html_tag = soup.new_tag('th', attrs=html_tag_attrs)
@@ -83,7 +94,7 @@ def __get_testing_channel_bot__():
     import TagAIShell
     
     TagAIShell.initialize()
-    war = TableBot.War.War("1v1", 12, 0, 3, ignoreLargeTimes=False, displayMiis=True)
+    war = TableBot.War.War("2v2", 6, 0, 3, ignoreLargeTimes=False, displayMiis=True)
     this_bot = TableBot.ChannelBot(war=war, server_id=1, channel_id=1)
     smart_type = SmartTypes.SmartLookupTypes("r0000001", allowed_types=SmartTypes.SmartLookupTypes.ROOM_LOOKUP_TYPES)
     status = common.run_async_function_no_loop(this_bot.load_table_smart(smart_type, war, message_id=0, setup_discord_id=0, setup_display_name="Bad Wolf"))
