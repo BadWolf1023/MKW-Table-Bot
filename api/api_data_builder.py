@@ -18,7 +18,8 @@ QUICK_INFO_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}quick_info.html"
 TEAM_STYLES = {"rainbow": f"{CSS_DATA_PATH}team_score_rainbow.css",
                "pastel": f"{CSS_DATA_PATH}team_score_pastel.css",
                "orange": f"{CSS_DATA_PATH}team_score_orange.css",
-               "neon": f"{CSS_DATA_PATH}team_score_neon.css"
+               "neon": f"{CSS_DATA_PATH}team_score_neon.css",
+               "verticalblue": f"{CSS_DATA_PATH}team_score_vertical_blue.css"
 }
 
 
@@ -120,7 +121,7 @@ def build_info_page_html(table_id: int):
         em_tag = soup.new_tag('b')
         em_tag.string = """ as a browser source, then applying your own CSS in the "Custom CSS" field."""
         li_tag.append(em_tag)
-        
+
         soup.body.ul.append(li_tag)
         return str(soup)
     finally:

@@ -1,0 +1,47 @@
+body{
+    background-color: black;
+}
+table,
+td,
+th {
+    font: bold small-caps Verdana;
+    color: white;
+    border: none;
+}
+table {
+    background-color: #1932c4;
+    border-collapse: collapse;
+    border-style: hidden;
+    border-radius: 10px;
+}
+
+.team_name,
+.team_score {
+    text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
+}
+
+.team_name {
+    border: 5px solid white;
+    /*border-bottom: 10px solid rgb(0, 0, 0);*/
+}
+
+.team_score {
+    border: 5px solid white;
+}
+
+thead
+{
+    float:left;
+}
+tbody
+{
+    float:left;
+}
+
+thead th {
+    display: block;   
+}
+tbody td
+{
+    display: block;
+}
