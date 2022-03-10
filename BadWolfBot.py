@@ -166,6 +166,8 @@ GET_LOGS_TERMS = {"getlog", "getlogs", "logs"}
 ADD_SHA_TERMS = {"addsha", "sha"}
 REMOVE_SHA_TERMS = {"removesha", "delsha"}
 RELOAD_PROPERTIES_TERMS = {"reloadproperties", "reload_properties", "propertyreload"}
+SET_API_URL_TERMS = {"apiurl", "setapiurl", "api_url", "set_api_url"}
+
 
 
 needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REDO_TERMS | LIST_REDOS_TERMS | LIST_UNDOS_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_TABLE_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS | GET_SUBSTITUTIONS_TERMS | INTERACTIONS
@@ -839,6 +841,9 @@ class BadWolfBot(discord.Bot):
         
         elif main_command in RELOAD_PROPERTIES_TERMS:
             await commands.BotOwnerCommands.reload_properties(message)
+            
+        elif main_command in SET_API_URL_TERMS:
+            await commands.BotOwnerCommands.set_api_url(message, args)
         
         elif main_command in {'close', 'stopbot', 'disconnect', 'kill'} and common.is_bot_owner(message.author):
             try:
@@ -1152,21 +1157,11 @@ async def start_bot():
 async def close_wrapper():
     return await bot.close()
 
-
-
-def load_local_tunnel():
-    common.reload_properties()
-    with open("replayScript.json", "r") as jsonFile:
-    data = json.load(jsonFile)
-
-data["location"] = "NewPath"
-
-    with open("replayScript.json", "w") as jsonFile:
-        json.dump(data, jsonFile)
 if __name__ == "__main__":
-    load_local_tunnel()
+    PORT = common.properties["api_port"]
     app = FastAPI(on_startup=[initialize], on_shutdown=[close_wrapper])
-    uvicorn.run(app, log_config=f"log.ini", port=8009)
+    uvicorn.run(app, log_config=f"log.ini", port=PORT)
+
 
 
     
