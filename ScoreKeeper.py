@@ -9,6 +9,7 @@ from discord.utils import escape_markdown, escape_mentions
 from collections import defaultdict
 from typing import List
 import TableBot
+import UtilityFunctions
 DEBUGGING = False
 
 
@@ -156,8 +157,35 @@ def resizeGPsInto(GPs, new_size_GP):
             else:
                 new_gp[fc] = []
     return new_gps
-    
-    
+
+def create_table_dict():
+    return {
+        "title_str": "",
+        "teams": {}
+    }
+
+def create_team():
+    return {"table_str": "",
+            "total_score": 0,
+            "penalties": 0,
+            "players": {},
+            "hex_color": ""
+    }
+
+def create_player():
+    return {"table_str": "",
+            "mii_name": "",
+            "lounge_name": "",
+            "table_name": "",
+            "tag": "",
+            "total_score": 0,
+            "had_penalties": False,
+            "penalties": 0,
+            "subbed_out": False,
+            "race_scores": [],
+            "gp_scores": [],
+            "flag": ""
+            }
 
 def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False, step=None, up_to_race=None):
     war = channel_bot.getWar()
@@ -167,64 +195,76 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     numGPs = war.getNumberOfGPS()
     GPs = []
     use_lounge_names = lounge_replace
-    fc_did = UserDataProcessing.fc_discordId
-    did_lounge = UserDataProcessing.discordId_lounges
     for x in range(numGPs):
         GPs.append(calculateGPScoresDCS(x+1, room, missingRacePts, server_id))
         
     fcs_players = room.get_fc_to_name_dict(1, numGPs*4)
-    room_miis = room.get_miis()
     
-    FC_table_str = {}
+    FC_table_dict = {}
+    table_dict = create_table_dict()
     
     
-    for fc, player in fcs_players.items():
-        name = ""
+    for fc, mii_name in fcs_players.items():
+        FC_table_dict[fc] = create_player()
+        player_tag = war.getTeamForFC(fc)
         
-        if player.strip() == "":
-            name = "no name"
-            
+        player_table_name = mii_name
+        lounge_name = UserDataProcessing.lounge_get(fc)
+
         if use_lounge_otherwise_mii:
-            name = player
-            if fc in fc_did and fc_did[fc][0] in did_lounge:
-                name = did_lounge[fc_did[fc][0]]
+            if lounge_name != "":
+                player_table_name = lounge_name
         else:
-            if not use_miis and not use_lounge_names:
-                name = fc
-            elif not use_miis and use_lounge_names:
-                if not fc in fc_did or not fc_did[fc][0] in did_lounge:
-                    name = player + " / No Discord"
+            if not use_miis and not use_lounge_names: # Player name for table should be their FC
+                player_table_name = fc
+            elif not use_miis and use_lounge_names: # Player name for table should be their mii name with a / and then their Lounge name
+                if lounge_name == "":
+                    player_table_name = mii_name + " / No Discord"
                 else:
-                    name = did_lounge[fc_did[fc][0]]
-                    
-            elif use_miis and not use_lounge_names:
-                name = player
-            elif use_miis and use_lounge_names: 
-                name = player
+                    player_table_name = lounge_name
+            elif use_miis and not use_lounge_names: # Player name for table should be mii name
+                player_table_name = mii_name
+            elif use_miis and use_lounge_names:  # Player name for table should be their lounge name with a / and then their lounge name...?
+                player_table_name = mii_name
                 discord = "No Discord"
-                if fc in fc_did and fc_did[fc][0] in did_lounge:
-                    discord = did_lounge[fc_did[fc][0]]
-                name = name + " / " + discord
+                if lounge_name != "":
+                    discord = lounge_name
+                player_table_name = player_table_name + " / " + discord
                 
         if fc in room.getNameChanges():
-            name = room.getNameChanges()[fc]
+            player_table_name = room.getNameChanges()[fc]
         
         if room.fc_subbed_in(fc):
-            name = room.get_sub_string(name, fc)
-        
+            player_table_name = room.get_sub_string(player_table_name, fc)
+            
         if discord_escape:
-            name = escape_mentions(escape_markdown(name))
+            player_table_name = escape_mentions(escape_markdown(player_table_name))
 
-        FC_table_str[fc] = [name + " ", 0, [], name]
+        FC_table_dict[fc]["mii_name"] = mii_name
+        FC_table_dict[fc]["lounge_name"] = lounge_name
+        FC_table_dict[fc]["table_name"] = player_table_name
+        FC_table_dict[fc]["tag"] = player_tag
+        if player_tag not in table_dict["teams"]:
+            table_dict["teams"][player_tag] = create_team()
+        if fc not in table_dict["teams"][player_tag]["players"]:
+            table_dict["teams"][player_tag]["players"][fc] = FC_table_dict[fc]
         
-        #add flag, if the FC has a flag set
-        if fc in UserDataProcessing.fc_discordId:
-            discord_id_number = UserDataProcessing.fc_discordId[fc][0]
-            if discord_id_number in UserDataProcessing.discordId_flags:
-                FC_table_str[fc][0] += "[" + UserDataProcessing.discordId_flags[discord_id_number] + "] "
-    
+        player_flag = UserDataProcessing.get_flag_for_fc(fc)
+        if player_flag is not None: # add flag, if the FC has a flag set
+            FC_table_dict[fc]["flag"] = player_flag
+
+        player_penalty = room.get_fc_penalty(fc)
+        if player_penalty is not None:
+            FC_table_dict[fc]["penalties"] = player_penalty
+            FC_table_dict[fc]["had_penalties"] = True
+        if room.fc_subbed_out(fc):
+            FC_table_dict[fc]["subbed_out"] = True
+        
+        
+
+    # Compute individual race scores for each FC
     for GPnum, GP_scores in enumerate(GPs, 1):
-        for fc in FC_table_str:
+        for fc in FC_table_dict:
             gp_amount = [0, 0, 0, 0]
             editAmount = war.getEditAmount(fc, GPnum)
             if editAmount is not None:
@@ -253,95 +293,113 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             
     resizedGPs = GPs if step == 4 else resizeGPsInto(GPs, step)
     for GPnum, GP_scores in enumerate(resizedGPs, 1):
-        for fc, player in FC_table_str.items():
-            section_amount = sum(GP_scores[fc])
-            FC_table_str[fc][0] += f"{section_amount}|"
-            FC_table_str[fc][1] += section_amount
-            FC_table_str[fc][2].extend(GP_scores[fc])
+        for fc, mii_name in FC_table_dict.items():
+            FC_table_dict[fc]["race_scores"].extend(GP_scores[fc])
+            FC_table_dict[fc]["gp_scores"].append(GP_scores[fc])
                 
-    for fc in FC_table_str.keys():
-        FC_table_str[fc][0] = FC_table_str[fc][0].strip("|")
-        
-    
-    for fc, amount in room.getPlayerPenalities().items():
-        if fc in FC_table_str:
-            to_add = amount * -1
-            FC_table_str[fc][1] += to_add
-            if to_add >= 0:
-                FC_table_str[fc][0] += "|" + str(to_add)
-            else:
-                FC_table_str[fc][0] += str(to_add)
-            
 
     #build table string
     numRaces = up_to_race if up_to_race else min( (len(room.races), war.getNumberOfGPS()*4) )
-    table_str = "#title " + war.getTableWarName(numRaces) + "\n"
-    curTeam = None
-    teamCounter = 0
-    is_ffa = war.playersPerTeam == 1
-    if is_ffa:
-        table_str += "FFA\n"
+    table_dict["title_str"] = f"#title {war.getTableWarName(numRaces)}\n"
+    if war.is_ffa():
+        table_dict["title_str"] += "FFA\n"
+
     
-    FC_table_str_items = sorted(FC_table_str.items(), key=lambda t: war.getTeamForFC(t[0]))
-    scores_by_team = defaultdict(list)
-    for fc, player_data in FC_table_str_items:
-        scores_by_team[war.getTeamForFC(fc)].append((fc, player_data))
+    # Add team penalty information
+    for team_tag, team_penalty in war.getTeamPenalities().items():
+        if team_penalty > 0 and team_tag in table_dict["teams"]:
+            table_dict["teams"][team_tag]["penalties"] += team_penalty
+
+    # Add team hex color information
+    if war.teamColors is not None:
+        for (team_color, team_dict) in zip(war.teamColors, table_dict["teams"].values()):
+            team_dict["hex_color"] = team_color
+
+    for team_dict in table_dict["teams"].values():
+        for player_dict in team_dict["players"].values():
+            compute_total_player_score(player_dict)
+        team_dict["players"] = UtilityFunctions.sort_dict(team_dict["players"], key=lambda fc: team_dict["players"][fc]["total_score"], reverse=True)
+        compute_team_score(team_dict)
+    table_dict["teams"] = UtilityFunctions.sort_dict(table_dict["teams"], key=lambda tag: table_dict["teams"][tag]["total_score"], reverse=True)
     
-    def player_score(player_data):
-        return player_data[1]
-    
-    def team_score(all_players, team_tag):
-        total_score = 0
-        for fc, player_data in all_players:
-            total_score += player_score(player_data)
-            
-        if team_tag in war.getTeamPenalities():
-            total_score -= war.getTeamPenalities()[team_tag]
-        return total_score
-    
-            
-    scores_by_team = sorted(scores_by_team.items(), key=lambda t: (team_score(t[1], t[0]), t[0]), reverse=True)
-    for _, team_players in scores_by_team:
-        team_players.sort(key=lambda pd:player_score(pd[1]), reverse=True)
+    input_table_text(table_dict)
+
+    return build_table_text(table_dict), table_dict
+
+def compute_team_score(team_dict):
+    for player_data in team_dict["players"].values():
+        if player_data["subbed_out"]:
+            continue
+        team_dict["total_score"] += player_data["total_score"]
+    team_dict["total_score"] -= team_dict["penalties"]
+
+def compute_total_player_score(player_dict):
+    player_dict["total_score"] = sum(player_dict["race_scores"]) - player_dict["penalties"]
+
+
+def create_table_dict():
+    return {
+        "title_str": "",
+        "teams": {}
+    }
+
+def create_team():
+    return {"table_tag_str": "",
+            "table_penalty_str": "",
+            "total_score": 0,
+            "penalties": 0,
+            "players": {},
+            "hex_color": ""
+    }
+
+def create_player():
+    return {"table_str": "",
+            "mii_name": "",
+            "lounge_name": "",
+            "table_name": "",
+            "tag": "",
+            "total_score": 0,
+            "had_penalties": False,
+            "penalties": 0,
+            "subbed_out": False,
+            "race_scores": [],
+            "gp_scores": [],
+            "flag": ""
+            }
+
+def build_table_text(table_dict):
+    table_str = table_dict["title_str"] + "\n"
+    team_texts = []
+    for team_data in table_dict["teams"].values():
+        cur_team_lines = [team_data["table_tag_str"]]
+        cur_team_lines.extend([player_data["table_str"] for player_data in team_data["players"].values()])
+        if team_data["table_penalty_str"] != "":
+            cur_team_lines.append(team_data["table_penalty_str"])
+        team_texts.append("\n".join(cur_team_lines))
+    return table_str + "\n\n".join(team_texts)
         
-    
-    for team_tag, team_players in scores_by_team:
-        for fc, player_data in team_players:
-            player_scores_str = player_data[0]
-            if not is_ffa:
-                if team_tag != curTeam:
-                    if curTeam in war.getTeamPenalities() and war.getTeamPenalities()[curTeam] > 0:
-                        table_str += "\nPenalty -" + str(war.getTeamPenalities()[curTeam]) + "\n"
-                    curTeam = war.getTeamForFC(fc)
-                    teamHex = ""
-                    if war.teamColors is not None:
-                        if teamCounter < len(war.teamColors):
-                            teamHex = " " + war.teamColors[teamCounter]
-                    table_str += "\n" + curTeam + teamHex + "\n"
-                    teamCounter += 1
-            table_str += player_scores_str + "\n"
-    if not is_ffa:
-        if team_tag in war.getTeamPenalities():
-            table_str += "Penalty -" + str(war.getTeamPenalities()[war.getTeamForFC(fc)]) + "\n"
-    
-    """for fc, player_data in FC_table_str_items:
-        player_scores_str = player_data[0]
-        if not is_ffa:
-            if war.getTeamForFC(fc) != curTeam:
-                if curTeam in war.getTeamPenalities():
-                    table_str += "\nPenalty -" + str(war.getTeamPenalities()[curTeam]) + "\n"
-                curTeam = war.getTeamForFC(fc)
-                teamHex = ""
-                if war.teamColors is not None:
-                    if teamCounter < len(war.teamColors):
-                        teamHex = " " + war.teamColors[teamCounter]
-                table_str += "\n" + curTeam + teamHex + "\n"
-                teamCounter += 1
-        table_str += player_scores_str + "\n"
-    if not is_ffa:
-        if war.getTeamForFC(fc) in war.getTeamPenalities():
-            table_str += "Penalty -" + str(war.getTeamPenalities()[war.getTeamForFC(fc)]) + "\n"""
-    return table_str, scores_by_team
+
+
+def input_table_text(table_dict):
+    for team_tag, team_data in table_dict["teams"].items():
+        team_data["table_tag_str"] = f"{team_tag} {team_data['hex_color']}".strip()
+        if team_data["penalties"] > 0:
+            team_data["table_penalty_str"] = f"Penalty -{team_data['penalties']}"
+        for player_data in team_data["players"].values():
+            player_data["table_str"] = player_data["table_name"] + " "
+            if player_data["flag"] != "":
+                player_data["table_str"] += f"[{player_data['flag']}] "
+            player_data["table_str"] += "|".join([str(sum(gp)) for gp in player_data["gp_scores"]])
+            if player_data["had_penalties"]:
+                if player_data["penalties"] <= 0:
+                    player_data["table_str"] += "|"
+                else:
+                    player_data["table_str"] += "-"
+                player_data["table_str"] += str(abs(player_data["penalties"]))
+
+
+
+
 
 def get_race_scores_for_fc(friend_code:str, channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False):
     _, race_score_data = get_war_table_DCS(channel_bot, use_lounge_otherwise_mii, use_miis, lounge_replace, server_id, missingRacePts, discord_escape, step=1)
