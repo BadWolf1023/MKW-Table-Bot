@@ -26,7 +26,7 @@ TEAM_STYLES = {"rainbow": f"{CSS_DATA_PATH}team_score_rainbow.css",
 def restructure_if_needed(team_data):
     '''If it's an FFA, the data is restructured so that the team names are the player names'''
     
-    if len(team_data) == 1 and team_data[0][0] == "No Tag":
+    if len(team_data["teams"]) == 1 and team_data[0][0] == "No Tag":
         new_team_data = []
         for fc, player_data in team_data[0][1]:
             new_team_data.append((player_data[3], [(fc, player_data)]))
@@ -34,18 +34,26 @@ def restructure_if_needed(team_data):
     else:
         return team_data
 
+def team_name_score_generator(team_data) -> Tuple[str, str]:
+    if len(team_data["teams"]) == 1 and "No Tag" in team_data["teams"]:
+        players = team_data["teams"]["No Tag"]["players"]
+        for player_data in players.values():
+            yield player_data["table_name"], str(player_data["total_score"])
+    else:
+        for team_tag, team_data in team_data["teams"].items():
+            yield team_tag, str(team_data["total_score"])
+
 def build_full_table_html(team_data: List[Tuple[str, List]], style=None):
-    '''team_data contains the scores for teams in the following format:
-    [
-        (team_1_name, [ (fc_1, player_data_1), (fc_2, player_data_2) ]),
-        (team_2_name, [ (fc_1, player_data_1), (fc_2, player_data_2) ]),
-        (team_3_name, [ (fc_1, player_data_1), (fc_2, player_data_2) ])
-    ]
+    pass
 
-    team_data is what is returned by ScoreKeeper.get_war_table_DCS
-    player_data is a list that contains various information, such as the player's name, player score each GP, and player score each race    
+def style_equal_width(html_tag_attrs, num_boxes):
+    html_tag_attrs.update({"style": f"width:{(1/num_boxes):.2%};"})
+
+def build_team_html(table_data: dict, style=None):
     '''
-    team_data = restructure_if_needed(team_data)
+    table_data is what is returned by ScoreKeeper.get_war_table_DCS 
+    '''
+    table_data = restructure_if_needed(table_data)
     
     # Read in base css styling and read in custom styling if it was specified
     styling = ""
@@ -60,64 +68,20 @@ def build_full_table_html(team_data: List[Tuple[str, List]], style=None):
     with codecs.open(TEAM_HTML_BUILDER_FILE, "r", "utf-8") as fp:
         soup = BeautifulSoup(fp.read(), "html.parser")
     try:
-        for id_index, (team_tag, players) in enumerate(team_data, 1):
+        num_teams = sum(1 for _ in team_name_score_generator(table_data))
+        for id_index, (team_tag, score) in enumerate(team_name_score_generator(table_data), 1):
             # Add the css styling:
             soup.head.style.string = styling
             # Add the team tag at the top of the HTML table:
             html_tag_attrs = {"class": "team_name", "id": f"team_name_{id_index}"}
+            style_equal_width(html_tag_attrs, num_teams)
             team_name_html_tag = soup.new_tag('th', attrs=html_tag_attrs)
             team_name_html_tag.string = team_tag
             soup.body.table.thead.tr.append(team_name_html_tag)
             # Add the team score at the bottom of the HTML table:
             html_tag_attrs = {"class": "team_score", "id": f"team_score_{id_index}"}
             team_score_html_tag = soup.new_tag('td', attrs=html_tag_attrs)
-            team_score = sum(p[1][1] for p in players if not p[0].strip().startswith('#'))
-            team_score_html_tag.string = str(team_score)
-            soup.body.table.tbody.tr.append(team_score_html_tag)
-        return str(soup)
-    finally:
-        if soup is not None:
-            soup.decompose()
-
-def build_team_html(team_data: List[Tuple[str, List]], style=None):
-    '''team_data contains the scores for teams in the following format:
-    [
-        (team_1_name, [ (fc_1, player_data_1), (fc_2, player_data_2) ]),
-        (team_2_name, [ (fc_1, player_data_1), (fc_2, player_data_2) ]),
-        (team_3_name, [ (fc_1, player_data_1), (fc_2, player_data_2) ])
-    ]
-
-    team_data is what is returned by ScoreKeeper.get_war_table_DCS
-    player_data is a list that contains various information, such as the player's name, player score each GP, and player score each race    
-    '''
-    team_data = restructure_if_needed(team_data)
-    
-    # Read in base css styling and read in custom styling if it was specified
-    styling = ""
-    with codecs.open(TEAM_STYLE_FILE, "r", "utf-8") as fp:
-        styling = fp.read() + "\n\n"
-    if style in TEAM_STYLES:
-        with codecs.open(TEAM_STYLES[style], "r", "utf-8") as fp:
-            styling += fp.read() + "\n\n"
-
-    # Build the team HTML
-    soup = None
-    with codecs.open(TEAM_HTML_BUILDER_FILE, "r", "utf-8") as fp:
-        soup = BeautifulSoup(fp.read(), "html.parser")
-    try:
-        for id_index, (team_tag, players) in enumerate(team_data, 1):
-            # Add the css styling:
-            soup.head.style.string = styling
-            # Add the team tag at the top of the HTML table:
-            html_tag_attrs = {"class": "team_name", "id": f"team_name_{id_index}"}
-            team_name_html_tag = soup.new_tag('th', attrs=html_tag_attrs)
-            team_name_html_tag.string = team_tag
-            soup.body.table.thead.tr.append(team_name_html_tag)
-            # Add the team score at the bottom of the HTML table:
-            html_tag_attrs = {"class": "team_score", "id": f"team_score_{id_index}"}
-            team_score_html_tag = soup.new_tag('td', attrs=html_tag_attrs)
-            team_score = sum(p[1][1] for p in players if not p[0].strip().startswith('#'))
-            team_score_html_tag.string = str(team_score)
+            team_score_html_tag.string = score
             soup.body.table.tbody.tr.append(team_score_html_tag)
         return str(soup)
     finally:
