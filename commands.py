@@ -1572,7 +1572,7 @@ class TablingCommands:
     async def predict_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix: str, lounge_server_updates: Lounge.Lounge):
         ensure_table_loaded_check(this_bot, server_prefix)
 
-        table_text,table_sorted_data = SK.get_war_table_DCS(this_bot,use_lounge_otherwise_mii=True,use_miis=False,
+        table_text, _ = SK.get_war_table_DCS(this_bot,use_lounge_otherwise_mii=True,use_miis=False,
                                                             lounge_replace=True,missingRacePts=this_bot.dc_points,
                                                             server_id=message.guild.id,discord_escape=True)
 
