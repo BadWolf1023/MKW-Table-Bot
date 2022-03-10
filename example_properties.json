@@ -1,5 +1,6 @@
 {
     "mode": "dev",
     "error_log_channel": 0,
-    "public_api_url": "https://big-zebra-71.loca.lt"
+    "public_api_url": "https://big-zebra-71.loca.lt",
+    "api_port": 8009
 }
