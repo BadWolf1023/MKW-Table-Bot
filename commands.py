@@ -149,6 +149,16 @@ class BotOwnerCommands:
         return True
 
     @staticmethod
+    async def set_api_url(message: discord.Message, args: List[str]):
+        BotOwnerCommands.is_bot_owner_check(message.author, "cannot set public API URL")
+        if len(args) != 2:
+            await message.channel.send(f"Here's how to use this command: `?{args[0]} public_api_url`")
+            return
+        public_api_url = args[1]
+        common.modify_property({"public_api_url": public_api_url})
+        await common.safe_send(message, f"Public API URL set to <{public_api_url}>")
+
+    @staticmethod
     async def reload_properties(message: discord.Message):
         BotOwnerCommands.is_bot_owner_check(message.author, "cannot reload properties")
         common.reload_properties()
