@@ -149,6 +149,13 @@ class BotOwnerCommands:
         return True
 
     @staticmethod
+    async def reload_properties(message: discord.Message):
+        BotOwnerCommands.is_bot_owner_check(message.author, "cannot reload properties")
+        common.reload_properties()
+        await common.safe_send(message, "properties.json reloaded")
+    
+
+    @staticmethod
     async def get_logs_command(message: discord.Message):
         BotOwnerCommands.is_bot_owner_check(message.author, "cannot give logs")
         if os.path.exists(common.ERROR_LOGS_FILE):

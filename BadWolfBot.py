@@ -153,7 +153,7 @@ BLACKLIST_USER_TERMS = {"blacklistuser"}
 BLACKLIST_WORD_TERMS = {"blacklistword", "addblacklistedword", "addblacklistword", "addword"}
 REMOVE_BLACKLISTED_WORD_TERMS = {"removeblacklistword", "removeblacklistedword", "removeword"}
 
-#Bad Wolf Commands only
+#Bot Owner Commands only
 SERVER_USAGE_TERMS = {"serverusage", "usage", "serverstats"}
 TABLE_BOT_MEMORY_USAGE_TERMS = {"memory", "memoryusage"}
 GARBAGE_COLLECT_TERMS = {"gc", "garbagecollect"}
@@ -165,6 +165,8 @@ REMOVE_BOT_ADMIN_TERMS = {"removebotadmin", "removeadmin"}
 GET_LOGS_TERMS = {"getlog", "getlogs", "logs"}
 ADD_SHA_TERMS = {"addsha", "sha"}
 REMOVE_SHA_TERMS = {"removesha", "delsha"}
+RELOAD_PROPERTIES_TERMS = {"reloadproperties", "reload_properties", "propertyreload"}
+
 
 needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REDO_TERMS | LIST_REDOS_TERMS | LIST_UNDOS_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_TABLE_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS | GET_SUBSTITUTIONS_TERMS | INTERACTIONS
 ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS | POPULAR_TRACKS_TERMS | UNPOPULAR_TRACKS_TERMS | TOP_PLAYERS_TERMS | BEST_TRACK_TERMS | WORST_TRACK_TERMS | RECORD_TERMS
@@ -835,6 +837,9 @@ class BadWolfBot(discord.Bot):
         elif main_command in REMOVE_SHA_TERMS:
             await commands.BotAdminCommands.remove_sha_track(message, args)
         
+        elif main_command in RELOAD_PROPERTIES_TERMS:
+            await commands.BotOwnerCommands.reload_properties(message)
+        
         elif main_command in {'close', 'stopbot', 'disconnect', 'kill'} and common.is_bot_owner(message.author):
             try:
                 await self.save_data()
@@ -1148,7 +1153,18 @@ async def close_wrapper():
     return await bot.close()
 
 
+
+def load_local_tunnel():
+    common.reload_properties()
+    with open("replayScript.json", "r") as jsonFile:
+    data = json.load(jsonFile)
+
+data["location"] = "NewPath"
+
+    with open("replayScript.json", "w") as jsonFile:
+        json.dump(data, jsonFile)
 if __name__ == "__main__":
+    load_local_tunnel()
     app = FastAPI(on_startup=[initialize], on_shutdown=[close_wrapper])
     uvicorn.run(app, log_config=f"log.ini", port=8009)
 
