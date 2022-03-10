@@ -14,4 +14,3 @@ dill
 requests
 fastapi
 uvicorn[standard]
-pyngrok
