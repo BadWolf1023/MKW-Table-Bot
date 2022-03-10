@@ -165,7 +165,8 @@ def create_table_dict():
     }
 
 def create_team():
-    return {"table_str": "",
+    return {"table_tag_str": "",
+            "table_penalty_str": "",
             "total_score": 0,
             "penalties": 0,
             "players": {},
@@ -336,37 +337,6 @@ def compute_team_score(team_dict):
 def compute_total_player_score(player_dict):
     player_dict["total_score"] = sum(player_dict["race_scores"]) - player_dict["penalties"]
 
-
-def create_table_dict():
-    return {
-        "title_str": "",
-        "teams": {}
-    }
-
-def create_team():
-    return {"table_tag_str": "",
-            "table_penalty_str": "",
-            "total_score": 0,
-            "penalties": 0,
-            "players": {},
-            "hex_color": ""
-    }
-
-def create_player():
-    return {"table_str": "",
-            "mii_name": "",
-            "lounge_name": "",
-            "table_name": "",
-            "tag": "",
-            "total_score": 0,
-            "had_penalties": False,
-            "penalties": 0,
-            "subbed_out": False,
-            "race_scores": [],
-            "gp_scores": [],
-            "flag": ""
-            }
-
 def build_table_text(table_dict):
     table_str = table_dict["title_str"] + "\n"
     team_texts = []
@@ -398,9 +368,6 @@ def input_table_text(table_dict):
                 player_data["table_str"] += str(abs(player_data["penalties"]))
 
 
-
-
-
 def get_race_scores_for_fc(friend_code:str, channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False):
     _, table_dict = get_war_table_DCS(channel_bot, use_lounge_otherwise_mii, use_miis, lounge_replace, server_id, missingRacePts, discord_escape, step=1)
     for teams in table_dict["teams"].values():
@@ -410,19 +377,15 @@ def get_race_scores_for_fc(friend_code:str, channel_bot:TableBot.ChannelBot, use
     return None
 
 team_tag_mapping = {"λρ":"Apocalypse"}
-def format_sorted_data_for_gsc(scores_by_team, team_penalties):
+def format_sorted_data_for_gsc(table_data):
     gsc_tag_scores = defaultdict(lambda:[0, 0, 0, 0])
-    for tag, players in scores_by_team:
-        for _, (_, player_overall, score_by_race) in players:
-            cur_team = gsc_tag_scores[tag]
-            cur_team[3] += player_overall
-            chunked_scores = [score_by_race[i:i+4] for i in range(len(score_by_race))[:12:4]]
+    for tag, team_data in table_data["teams"].items():
+        cur_team = gsc_tag_scores[tag]
+        cur_team[3] = team_data["total_score"]
+        for player_data in team_data["players"].values():
+            chunked_scores = [player_data["race_scores"][i:i+4] for i in range(len(player_data["race_scores"]))[:12:4]]
             for gpNum, gpScores in enumerate(chunked_scores):
                 cur_team[gpNum] += sum(gpScores)
-    
-    for tag in team_penalties:
-        if tag in gsc_tag_scores:
-            gsc_tag_scores[tag][3] -= team_penalties[tag]
             
     all_tags = [tag for tag in gsc_tag_scores]
     first_team_tag = all_tags[0]
@@ -446,7 +409,7 @@ def format_sorted_data_for_gsc(scores_by_team, team_penalties):
         gsc_team_scores[second_team_tag][gp_index] *= multiplier
             
         
-    first_team_gps_text = "|".join(str(s) for s in gsc_team_scores[first_team_tag]) 
+    first_team_gps_text = "|".join(str(s) for s in gsc_team_scores[first_team_tag])
     second_team_gps_text = "|".join(str(s) for s in gsc_team_scores[second_team_tag]) 
     
     
