@@ -278,6 +278,14 @@ class Room(object):
     
     def getPlayerPenalities(self):
         return self.playerPenalties
+    
+    def get_fc_penalty(self, fc):
+        if self.fc_has_penalty(fc):
+            return self.playerPenalties[fc]
+        return None
+
+    def fc_has_penalty(self, fc):
+        return fc in self.playerPenalties
         
     def addPlayerPenalty(self, fc, amount):
         self.playerPenalties[fc] += amount
