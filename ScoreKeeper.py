@@ -402,11 +402,11 @@ def input_table_text(table_dict):
 
 
 def get_race_scores_for_fc(friend_code:str, channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False):
-    _, race_score_data = get_war_table_DCS(channel_bot, use_lounge_otherwise_mii, use_miis, lounge_replace, server_id, missingRacePts, discord_escape, step=1)
-    for _, team_players in race_score_data:
-        for fc, player_data in team_players:
+    _, table_dict = get_war_table_DCS(channel_bot, use_lounge_otherwise_mii, use_miis, lounge_replace, server_id, missingRacePts, discord_escape, step=1)
+    for teams in table_dict["teams"].values():
+        for fc, player_data in teams["players"].items():
             if fc == friend_code:
-                return player_data[2]
+                return player_data["race_scores"]
     return None
 
 team_tag_mapping = {"λρ":"Apocalypse"}
