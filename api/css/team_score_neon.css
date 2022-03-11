@@ -4,8 +4,8 @@ body{
 
 #tablebot_table {
     background-color: black;
-    overflow-y: visible;
-
+    overflow-y: hidden;
+    overflow-x: hidden;
     border-radius: 10px;
     
 }
@@ -13,13 +13,15 @@ body{
 .team_name,
 .team_score {
     padding: 0.1em;  
-    overflow: visible;
+    overflow-y: visible;
+    overflow-x: visible;
 
 }
 
 .team_name_box, .score_box, .team_name_box:first-child, .score_box:first-child{
-
+    overflow-y: visible;
     border-style: double;
+    overflow-x: hidden;
     border-width: 8px;
     border-color: rgba(230, 0, 115, 0.65);
 }
