@@ -1,15 +1,23 @@
+from asyncio import create_task
 from bs4 import BeautifulSoup
 import codecs
 import re
 from datetime import timedelta
 from typing import List, Union, Tuple
+
+if __name__ == "__main__":
+    import sys
+    import os
+    # insert at 1, 0 is the script path (or '' in REPL)
+    sys.path.insert(1, '.')
+    
 from api import api_common
 
 
 
 API_DATA_PATH = "api/"
-HTML_DATA_PATH = f"{API_DATA_PATH}html/"
-CSS_DATA_PATH = f"{API_DATA_PATH}css/"
+HTML_DATA_PATH = f"html/"
+CSS_DATA_PATH = f"css/"
 TEAM_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}team_score_builder.html"
 TEAM_STYLE_FILE = f"{CSS_DATA_PATH}team_score_base.css"
 FULL_TABLE_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}full_table_builder.html"
@@ -39,21 +47,15 @@ def build_full_table_html(table_data: dict, style=None):
     '''
     table_data is what is returned by ScoreKeeper.get_war_table_DCS 
     '''
-    # Read in base css styling and read in custom styling if it was specified
-    styling = ""
-    with codecs.open(FULL_TABLE_STYLE_FILE, "r", "utf-8") as fp:
-        styling = fp.read() + "\n\n"
-    if style in FULL_TABLE_STYLES:
-        with codecs.open(FULL_TABLE_STYLES[style], "r", "utf-8") as fp:
-            styling += fp.read() + "\n\n"
-
-    # Build the table HTML
     soup = None
-    with codecs.open(FULL_TABLE_HTML_BUILDER_FILE, "r", "utf-8") as fp:
+    with codecs.open(f"{API_DATA_PATH}{FULL_TABLE_HTML_BUILDER_FILE}", "r", "utf-8") as fp:
         soup = BeautifulSoup(fp.read(), "html.parser")
     try:
-        # Add the css styling:
-        soup.head.style.string = styling
+        # Add style sheets for base css styling and custom styling if it was specified
+        soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"{FULL_TABLE_STYLE_FILE}"}))
+        if style in FULL_TABLE_STYLES:
+            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"{FULL_TABLE_STYLES[style]}"}))
+
         for id_index, (team_tag, team_data) in enumerate(table_data["teams"].items(), 1):
             tbody_element = soup.new_tag('tbody')
             team_players = [p for p in team_data["players"].values() if not p["subbed_out"]]
@@ -89,21 +91,16 @@ def build_team_html(table_data: dict, style=None):
     '''
     table_data is what is returned by ScoreKeeper.get_war_table_DCS 
     '''    
-    # Read in base css styling and read in custom styling if it was specified
-    styling = ""
-    with codecs.open(TEAM_STYLE_FILE, "r", "utf-8") as fp:
-        styling = fp.read() + "\n\n"
-    if style in TEAM_STYLES:
-        with codecs.open(TEAM_STYLES[style], "r", "utf-8") as fp:
-            styling += fp.read() + "\n\n"
-
     # Build the team HTML
     soup = None
-    with codecs.open(TEAM_HTML_BUILDER_FILE, "r", "utf-8") as fp:
+    with codecs.open(f"{API_DATA_PATH}{TEAM_HTML_BUILDER_FILE}", "r", "utf-8") as fp:
         soup = BeautifulSoup(fp.read(), "html.parser")
     try:
-        # Add the css styling:
-        soup.head.style.string = styling
+        # Add style sheets for base css styling and custom styling if it was specified
+        soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"{TEAM_STYLE_FILE}"}))
+        if style in TEAM_STYLES:
+            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"{TEAM_STYLES[style]}"}))
+
         num_teams = sum(1 for _ in team_name_score_generator(table_data))
         for id_index, (team_tag, score) in enumerate(team_name_score_generator(table_data), 1):
             # Add the team tag at the top of the HTML table:
@@ -125,7 +122,7 @@ def build_team_html(table_data: dict, style=None):
 
 def build_info_page_html(table_id: int):
     table_id = str(table_id)
-    with codecs.open(QUICK_INFO_HTML_BUILDER_FILE, "r", "utf-8") as fp:
+    with codecs.open(f"{API_DATA_PATH}{QUICK_INFO_HTML_BUILDER_FILE}", "r", "utf-8") as fp:
         soup = BeautifulSoup(fp.read(), "html.parser")
     try:
         team_score_html_base_url = f"{api_common.API_URL}{api_common.TEAM_SCORES_HTML_ENDPOINT}{table_id}"
@@ -181,7 +178,7 @@ def __get_testing_channel_bot__():
     parentdir = os.path.dirname(currentdir)
     sys.path.insert(0, parentdir) 
     import BadWolfBot
-    BadWolfBot.initialize()
+    BadWolfBot.data_init()
     import common
     import TableBot
     import SmartTypes
@@ -207,6 +204,6 @@ if __name__ == "__main__":
     import ScoreKeeper
     table_text, table_sorted_data = ScoreKeeper.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, missingRacePts=this_bot.dc_points, server_id=123, discord_escape=False)
     #print(table_sorted_data)
-    html = build_team_html(table_sorted_data)
+    html = build_team_html(table_sorted_data, style="verticalblue").replace("""setTimeout("location.reload(true);", t);""", "")
     with open(f"{API_DATA_PATH}result.html", "w") as file:
         file.write(html)
