@@ -34,6 +34,35 @@ TEAM_STYLES = {"rainbow": f"{CSS_DATA_PATH}team_score_rainbow.css",
 FULL_TABLE_STYLES = {
 }
 
+def build_table_styling(table_background_picture_url: Union[None, str], table_background_color: Union[None, str], table_text_color: Union[None, str], table_font: Union[None, str]) -> str:
+    styling = ""
+    if table_background_picture_url is not None:
+        styling_segment = """table {
+    background-image: url(%s);
+}""" % table_background_picture_url
+        styling += styling_segment + "\n\n"
+    
+    if table_background_color is not None:
+        styling_segment = """table {
+    background-color: %s;
+}""" % table_background_color
+        styling += styling_segment + "\n\n"
+
+    if table_text_color is not None:
+        styling_segment = """table, td, th {
+    color: %s;
+}""" % table_text_color
+        styling += styling_segment + "\n\n"
+    
+    if table_font is not None:
+        styling_segment = """table, td, th {
+    font-family: %s;
+}""" % table_font
+        styling += styling_segment + "\n\n"
+
+    return styling
+
+
 def team_name_score_generator(team_data) -> Tuple[str, str]:
     if len(team_data["teams"]) == 1 and "No Tag" in team_data["teams"]:
         players = team_data["teams"]["No Tag"]["players"]
@@ -43,7 +72,7 @@ def team_name_score_generator(team_data) -> Tuple[str, str]:
         for team_tag, team_data in team_data["teams"].items():
             yield team_tag, str(team_data["total_score"])
 
-def build_full_table_html(table_data: dict, style=None):
+def build_full_table_html(table_data: dict, style=None, table_background_picture_url=None, table_background_color=None, table_text_color=None, table_font=None):
     '''
     table_data is what is returned by ScoreKeeper.get_war_table_DCS 
     '''
@@ -51,6 +80,7 @@ def build_full_table_html(table_data: dict, style=None):
     with codecs.open(f"{API_DATA_PATH}{FULL_TABLE_HTML_BUILDER_FILE}", "r", "utf-8") as fp:
         soup = BeautifulSoup(fp.read(), "html.parser")
     try:
+        soup.style.string = build_table_styling(table_background_picture_url, table_background_color, table_text_color, table_font)
         # Add style sheets for base css styling and custom styling if it was specified
         soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"{FULL_TABLE_STYLE_FILE}"}))
         if style in FULL_TABLE_STYLES:
@@ -87,7 +117,7 @@ def build_full_table_html(table_data: dict, style=None):
 def style_equal_width(html_tag_attrs, num_boxes):
     html_tag_attrs.update({"style": f"width:{(1/num_boxes):.2%};"})
 
-def build_team_html(table_data: dict, style=None):
+def build_team_html(table_data: dict, style=None, table_background_picture_url=None, table_background_color=None, table_text_color=None, table_font=None):
     '''
     table_data is what is returned by ScoreKeeper.get_war_table_DCS 
     '''    
@@ -96,10 +126,11 @@ def build_team_html(table_data: dict, style=None):
     with codecs.open(f"{API_DATA_PATH}{TEAM_HTML_BUILDER_FILE}", "r", "utf-8") as fp:
         soup = BeautifulSoup(fp.read(), "html.parser")
     try:
+        soup.style.string = build_table_styling(table_background_picture_url, table_background_color, table_text_color, table_font)
         # Add style sheets for base css styling and custom styling if it was specified
-        soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"{TEAM_STYLE_FILE}"}))
+        soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{TEAM_STYLE_FILE}"}))
         if style in TEAM_STYLES:
-            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"{TEAM_STYLES[style]}"}))
+            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{TEAM_STYLES[style]}"}))
 
         num_teams = sum(1 for _ in team_name_score_generator(table_data))
         for id_index, (team_tag, score) in enumerate(team_name_score_generator(table_data), 1):
