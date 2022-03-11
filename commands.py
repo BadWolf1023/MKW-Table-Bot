@@ -1571,7 +1571,7 @@ class TablingCommands:
 
         if error_code != MogiUpdate.SUCCESS_EC:
             await message.channel.send(
-                "Couldn't submit table. Reason: *" + MogiUpdate.table_text_errors.get(error_code, "Unknown Error") + "*")
+                "Couldn't get prediction preview. Reason: *" + MogiUpdate.table_text_errors.get(error_code, "Unknown Error") + "*")
             return
 
         preview_link += urllib.parse.quote(json_data)

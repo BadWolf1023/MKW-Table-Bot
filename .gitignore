@@ -4,7 +4,7 @@
 .idea
 *.pyc
 .settings/org.eclipse.core.resources.prefs
-.vscode/*
+.vscode
 tablebotvenv/*
 
 #private Table Bot data
@@ -13,7 +13,7 @@ room_data.txt
 room_race_data.txt
 AI_data.pkl
 team_formats.pkl
-/*.db
+*.db
 miis/*
 logging/full_logging.txt
 logging/error_logs.txt
@@ -24,8 +24,8 @@ discord_server_settings/*
 !ILT_migration.py 
 
 #keep description files
-!*/description.txt
-!*/BadWolf.jpg
+!description.txt
+!BadWolf.jpg
 
 #dev files
 chrome-cli/*
