@@ -1,47 +1,53 @@
-body{
-    background-color: black;
-}
 table,
 td,
 th {
+    border: 0;
+}
+
+table {
+    width: 85%;
     font: bold small-caps Verdana;
     color: white;
     border: none;
-}
-table {
     background-color: #1932c4;
     border-collapse: collapse;
-    border-style: hidden;
+    border: none;
     border-radius: 10px;
+    display: block;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    align-content: center;
+    box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644)
 }
+
+thead,
+tbody {
+    width: 50%;
+}
+
+tbody {
+    border-left: 4px solid white;
+}
+
+tr {
+    display: flex;
+    flex-direction: column;
+    overflow:hidden;
+}
+
+
 
 .team_name,
 .team_score {
+    width: 100% !important; /* override inline style in HTML */
     text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
-}
+    padding-top: 3%;
+    padding-bottom: 3%;
+    border-top: 4px solid white;
 
-.team_name {
-    border: 5px solid white;
-    /*border-bottom: 10px solid rgb(0, 0, 0);*/
 }
+.team_name:first-child, .team_score:first-child{
+    border-top: none;
 
-.team_score {
-    border: 5px solid white;
-}
-
-thead
-{
-    float:left;
-}
-tbody
-{
-    float:left;
-}
-
-thead th {
-    display: block;   
-}
-tbody td
-{
-    display: block;
 }
