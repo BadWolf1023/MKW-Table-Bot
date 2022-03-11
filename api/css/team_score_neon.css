@@ -12,16 +12,6 @@ body{
 
 .team_name,
 .team_score {
-    text-shadow:
-    0 0 2px #fff,
-    0 0 5px #fff,
-    0 0 12px #fff,
-    0 0 20px #0fa,
-    0 0 40px #0fa,
-    0 0 60px #0fa,
-    0 0 80px #0fa,
-    0 0 100px #0fa;
-    animation: pulsate 1.5s infinite alternate;
     padding: 0.1em;  
     overflow: visible;
 
@@ -68,50 +58,19 @@ body{
     margin-right: 20px;
 }
 
-
-.team_name_box:nth-child(7n+1),
-.score_box:nth-child(7n+1) {
-    color: #fe68a8;
-}
-
-.team_name_box:nth-child(7n+2),
-.score_box:nth-child(7n+2) {
-    color: #3869c8;
-}
-
-.team_name_box:nth-child(7n+3),
-.score_box:nth-child(7n+3)  {
-    color: #4fdddf;
-}
-
-.team_name_box:nth-child(7n+4),
-.score_box:nth-child(7n+4) {
-    color: #ffda58;
-}
-
-
-.team_name_box:nth-child(7n+5),
-.score_box:nth-child(7n+5)  {
-    color: #cf95fb;
-}
-
-.team_name_box:nth-child(7n+6),
-.score_box:nth-child(7n+6) {
-    color: #4ff141;
-}
  /* text glow */
 .team_name, .team_score{
     color: #fff;
-    -webkit-animation: glow 1s cubic-bezier(.67, -0.37, .77, -0.39) infinite alternate;
-    -moz-animation: glow 1s ease-out infinite alternate;
+    -webkit-animation: glow 1.5s cubic-bezier(.67, -0.37, .77, -0.39) infinite alternate;
+    -moz-animation: glow 1.5s ease-out infinite alternate;
     animation: glow 1.5s ease-out infinite alternate;
   }
   
-@-webkit-keyframes glow {
+@keyframes glow {
     from {
       text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #e60073, 0 0 20px #e60073, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073;
     }
     to {
-      text-shadow: 0 0 2px #fff, 0 0 5px #ff4da6, 0 0 10px #ff4da6, 0 0 15px #ff4da6, 0 0 20px #ff4da6, 0 0 30px #ff4da6, 0 0 40px #ff4da6;
+      text-shadow: 0 0 2px #fff, 0 0 5px #ff4da6, 0 0 10px 0xff4d4d, 0 0 15px #ff4da6, 0 0 20px #ff4da6, 0 0 30px #ff4da6, 0 0 40px #ff4da6;
     }
   }
