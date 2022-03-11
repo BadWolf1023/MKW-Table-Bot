@@ -11,6 +11,7 @@ body {
     grid-template-rows: repeat(2, 1fr);
 
 }
+
 #team_names_box, #scores_box{
     display: inline-grid;
     grid-auto-columns: minmax(0, 1fr);

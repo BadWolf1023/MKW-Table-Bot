@@ -37,24 +37,24 @@ FULL_TABLE_STYLES = {
 def build_table_styling(table_background_picture_url: Union[None, str], table_background_color: Union[None, str], table_text_color: Union[None, str], table_font: Union[None, str]) -> str:
     styling = ""
     if table_background_picture_url is not None:
-        styling_segment = """table {
+        styling_segment = """#tablebot_table {
     background-image: url(%s) !important;""" % table_background_picture_url
         styling_segment += "\nbackground-size: 100% 100% !important;\n}"
         styling += styling_segment + "\n\n"
     
     if table_background_color is not None:
-        styling_segment = """table {
+        styling_segment = """#tablebot_table {
     background-color: %s !important;
 }""" % table_background_color
         styling += styling_segment + "\n\n"
 
     if table_text_color is not None:
-        styling_segment = """table, td, th {
+        styling_segment = """#tablebot_table {
     color: %s !important;
 }""" % table_text_color
         styling += styling_segment + "\n\n"
     if table_font is not None:
-        styling_segment = """table, td, th {
+        styling_segment = """#tablebot_table {
     font-family: %s !important;
 }""" % table_font
         styling += styling_segment + "\n\n"
@@ -115,6 +115,8 @@ def build_full_table_html(table_data: dict, style=None, table_background_picture
 
 def style_equal_width(html_tag_attrs, num_boxes):
     html_tag_attrs.update({"style": f"width:{(1/num_boxes):.2%};"})
+def style_equal_height(html_tag_attrs, num_boxes):
+    html_tag_attrs.update({"style": f"height:{(1/num_boxes):.2%};"})
 
 def build_team_html(table_data: dict, style=None, table_background_picture_url=None, table_background_color=None, table_text_color=None, table_font=None):
     '''
@@ -130,20 +132,22 @@ def build_team_html(table_data: dict, style=None, table_background_picture_url=N
         soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{TEAM_STYLE_FILE}"}))
         if style in TEAM_STYLES:
             soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{TEAM_STYLES[style]}"}))
-
-        num_teams = sum(1 for _ in team_name_score_generator(table_data))
+        
         for id_index, (team_tag, score) in enumerate(team_name_score_generator(table_data), 1):
-            # Add the team tag at the top of the HTML table:
-            html_tag_attrs = {"class": "team_name", "id": f"team_name_{id_index}"}
-            style_equal_width(html_tag_attrs, num_teams)
-            team_name_html_tag = soup.new_tag('th', attrs=html_tag_attrs)
-            team_name_html_tag.string = team_tag
-            soup.body.table.thead.tr.append(team_name_html_tag)
-            # Add the team score at the bottom of the HTML table:
-            html_tag_attrs = {"class": "team_score", "id": f"team_score_{id_index}"}
-            team_score_html_tag = soup.new_tag('td', attrs=html_tag_attrs)
-            team_score_html_tag.string = score
-            soup.body.table.tbody.tr.append(team_score_html_tag)
+            # Add the team name divs:
+            team_name_box = soup.new_tag('div', attrs={"class": "team_name_box"})
+            team_name_div = soup.new_tag('div', attrs={"class": "team_name", "id": f"team_name_{id_index}"})
+            team_name_div.string = team_tag
+            team_name_box.append(team_name_div)
+
+            team_score_box = soup.new_tag('div', attrs={"class": "score_box"})
+            team_score_div = soup.new_tag('div', attrs={"class": "team_score", "id": f"team_score_{id_index}"})
+            team_score_div.string = score
+            team_score_box.append(team_score_div)
+
+            soup.find(id="team_names_box").append(team_name_box)
+            soup.find(id="scores_box").append(team_score_box)
+            
         return str(soup)
     finally:
         if soup is not None:

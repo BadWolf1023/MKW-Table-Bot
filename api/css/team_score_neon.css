@@ -26,6 +26,7 @@ body{
     overflow: visible;
 
 }
+
 .team_name_box, .score_box, .team_name_box:first-child, .score_box:first-child{
 
     border-style: double;
