@@ -382,6 +382,8 @@ def format_sorted_data_for_gsc(table_data):
         cur_team = gsc_tag_scores[tag]
         cur_team[3] = team_data["total_score"]
         for player_data in team_data["players"].values():
+            if player_data['subbed_out']:
+                continue
             chunked_scores = [player_data["race_scores"][i:i+4] for i in range(len(player_data["race_scores"]))[:12:4]]
             for gpNum, gpScores in enumerate(chunked_scores):
                 cur_team[gpNum] += sum(gpScores)
