@@ -283,6 +283,14 @@ class Room(object):
     
     def getPlayerPenalities(self):
         return self.playerPenalties
+    
+    def get_fc_penalty(self, fc):
+        if self.fc_has_penalty(fc):
+            return self.playerPenalties[fc]
+        return None
+
+    def fc_has_penalty(self, fc):
+        return fc in self.playerPenalties
         
     def addPlayerPenalty(self, fc, amount):
         self.playerPenalties[fc] += amount
@@ -353,6 +361,10 @@ class Room(object):
             last_rxx = self.rLIDs[-1]
             return f"**Room URL:** https://wiimmfi.de/stats/mkwx/list/{last_rxx}  |  **rxx number:** {last_rxx}"
         return ""
+
+    def get_table_id_text(self):
+        #return f"**Table ID:** {self.get_event_id()} | Table Bot API Link: {common.TABLE_BOT_API_LINK}?table_id={self.get_event_id()}"
+        return f"**Table ID:** {self.get_event_id()}"
     
     def getMissingPlayersPerRace(self):
         numGPS = int(len(self.races)/4 + 1)

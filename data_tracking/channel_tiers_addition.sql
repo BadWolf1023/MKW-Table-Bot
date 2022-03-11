@@ -54,6 +54,7 @@ INSERT INTO Tier (channel_id, tier, is_ct) VALUES(801630085823725568, 2, 0);
 INSERT INTO Tier (channel_id, tier, is_ct) VALUES(747289647003992078, 1, 0);
 INSERT INTO Tier (channel_id, tier, is_ct) VALUES(747544598968270868, 1, 0);
 INSERT INTO Tier (channel_id, tier, is_ct) VALUES(781249043623182406, 1, 0);
+INSERT INTO Tier (channel_id, tier, is_ct) VALUES(950081937165414460, 0, 0);
 
 /* CT Table Bot Channels */
 INSERT INTO Tier (channel_id, tier, is_ct) VALUES(875532532383363072, 7, 1);

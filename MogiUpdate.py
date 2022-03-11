@@ -24,44 +24,48 @@ import common
 {'format':'2','tier':'Tier 1','teams':[{'players':[{'player_id':1961,'races':12,'score':45},{'player_id':1913,'races':12,'score':25}]},{'players':[{'player_id':2409,'races':12,'score':40},{'player_id':824,'races':12,'score':24}]},{'players':[{'player_id':40,'races':12,'score':57},{'player_id':1739,'races':12,'score':45}]},{'players':[{'player_id':402,'races':12,'score':56},{'player_id':2195,'races':12,'score':46}]},{'players':[{'player_id':1567,'races':12,'score':50},{'player_id':2270,'races':12,'score':36}]},{'players':[{'player_id':375,'races':12,'score':30},{'player_id':1154,'races':12,'score':0}]}]}"""
 
 from typing import List
-rt_tier_mappings = {"1":"Tier 1", "2":"Tier 2", "3":"Tier 3", "4":"Tier 4","4-5":"Tier 4", "5":"Tier 5", "6":"Tier 6", "7":"Tier 7", "8":"Top 50"}
+rt_tier_mappings = {"0": "Tier 0","1":"Tier 1", "2":"Tier 2", "3":"Tier 3", "4":"Tier 4","4-5":"Tier 4", "5":"Tier 5", "6":"Tier 6", "7":"Tier 7", "8":"Top 50"}
 ct_tier_mappings = {"1":"Tier 1", "2":"Tier 2", "3":"Tier 3", "4":"Tier 4", "5":"Tier 5", "6":"Tier 6", "7":"Tier 7"}
 
 
 
-"""Iron: 0 - 999 MMR (Placement: 500) 
-Bronze: 1000 - 2499 MMR (Placement: 1750) 
-Silver: 2500 - 3999 MMR (Placement: 3250) 
-Gold: 4000 - 5499 MMR (Placement: 4750) 
-Platinum: 5500 - 6999 MMR (Placement: 6250) 
-Emerald: 7000 - 8499 MMR 
-Diamond: 8500 - 9999 MMR 
-Master: 10000 - 10999 MMR 
-Grandmaster: 11000+ MMR """
-RT_MMR_CUTOFFS = [(999, "1"),
-                  (2499, "2"),
-                  (3999, "3"),
-                  (5499, "4"),
-                  (6999, "5"),
-                  (8499, "6"),
-                  (10000, "7"),
-                  (999999, "8")]
+"""
+Class X: 12000+ MMR - T5, T6, T7, T8
+Class S: 10500-11999 MMR - T5, T6, T7
+Class A: 9000-10499 MMR - T5, T6
+Class B: 8000-8999 MMR - T5, T4
+Class C: 7000-7999 MMR - T3, T4
+Class D: 5500-6999 MMR - T2, T3
+Class E: 4000-5499 MMR - T1, T2
+Class F: 2000-3999 MMR - T1
+Class G: <1999 MMR - T0
+"""
+RT_MMR_CUTOFFS = [(1999,"0"),
+                  (3999,"1"),
+                  (5499,"2"),
+                  (6999,"3"),
+                  (7999,"4"),
+                  (8999,"5"),
+                  (10499,"6"),
+                  (11999,"7"),
+                  (999999,"8")]
 
-"""Iron: 0 - 999 MMR (Placement 500) 
-Bronze: 1000 - 2249 MMR (Placement 1625) 
-Silver: 2250 - 3499 MMR (Placement 2875) 
-Gold: 3500 - 4499 MMR (Placement 4000) 
-Platinum: 4500 - 5499 MMR (Placement 5000) 
-Emerald: 5500 - 6999 MMR (Placement (6250) 
-Diamond: 7000 - 8499 MMR
-Master: 8500 - 9999 MMR
-Grandmaster: 10000+ MMR"""
-CT_MMR_CUTOFFS = [(999, "1"),
-                  (2249, "2"),
-                  (3499, "3"),
-                  (4499, "4"),
-                  (5499, "5"),
-                  (999999, "6")]
+"""
+Class X: 11750+ MMR - T4
+Class S: 10250-11759 MMR - T4
+Class A: 8750-10249 MMR - T3, T4
+Class B: 6250-8749 MMR - T2, T3, T4
+Class C: 4500-6249 MMR - T2, T3
+Class D: 2250-4499 MMR - T1, T2
+Class E: <2249 MMR - T1
+"""
+CT_MMR_CUTOFFS = [(2249, "1"),
+                  (4499, "2"),
+                  (6249, "3"),
+                  (999999, "4")
+                  # (5499, "5"),
+                  # (999999, "6")
+                  ]
 
 
 SUCCESS_EC = 0
@@ -99,7 +103,8 @@ hex_code_chars = set("abcdef0123456789")
 default_multiplier = 1
 default_races = 12
 
-rt_summary_channels = {"1":389457592952422402,
+rt_summary_channels = {"0":950004067558649876,
+                       "1":389457592952422402,
                        "2":389457132912902154,
                        "3":389251430680231947,
                        "4":723263854124990525,
@@ -126,6 +131,8 @@ if common.is_dev:
 def get_tier_and_summary_channel_id(tier:str, is_rt=True):
     tier = tier.lower().replace(" ", "").replace("-", "")
     if is_rt:
+        if tier in ["t0", "0", "tier0"]:
+            return "0", rt_summary_channels["0"]
         if tier in ["t1", "1", "tier1"]:
             return "1", rt_summary_channels["1"]
         if tier in ["t2", "2", "tier2"]:

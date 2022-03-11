@@ -58,7 +58,7 @@ class Player(object):
         self.vehicle = None
         self.input_character_vehicle(character_vehicle)
         self.name = str(playerName)
-        if self.name == "no name":
+        if self.name == "no name" or self.name == "":
             self.name = "Player"
         self.discord_name = discord_name
         self.lounge_name = lounge_name

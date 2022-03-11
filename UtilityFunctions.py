@@ -7,7 +7,13 @@ from pathlib import Path
 import re
 from datetime import datetime, timezone
 from discord.ext import commands as ext_commands
-    
+
+def sort_dict(my_dict:dict, key=None, reverse=False):
+    sorted_keys = sorted(my_dict.keys(), key=key, reverse=reverse)
+    result = {}
+    for k in sorted_keys:
+        result[k] = my_dict[k]
+    return result
         
 def get_blw():
     return common.blackListedWords

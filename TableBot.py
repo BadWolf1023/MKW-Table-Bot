@@ -138,6 +138,7 @@ class ChannelBot(object):
         if self.getWar().ignoreLargeTimes:
             started_war_str += " (ignoring errors for large finish times)"
         started_war_str += f". {self.getRoom().getRXXText()}"
+        started_war_str += F"\n\n{self.getRoom().get_table_id_text()}"
         return started_war_str
         
     def set_race_size(self, new_race_size:int):

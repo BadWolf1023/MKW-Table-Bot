@@ -51,9 +51,6 @@ import traceback
 
 vr_is_on = False
 
-def updateData(id_lounge, fc_id):
-    UserDataProcessing.smartUpdate(id_lounge, fc_id)
-
 async def send_missing_permissions(channel:discord.TextChannel, content=None, delete_after=7):
     try:
         return await channel.send("I'm missing permissions. Contact your admins. The bot needs these additional permissions:\n- Send Messages\n- Add Reactions (for pages)\n- Manage Messages (to remove reactions)", delete_after=delete_after)
@@ -150,6 +147,23 @@ class BotOwnerCommands:
         if not common.is_bot_owner(author):
             raise TableBotExceptions.NotBadWolf(failure_message)
         return True
+
+    @staticmethod
+    async def set_api_url(message: discord.Message, args: List[str]):
+        BotOwnerCommands.is_bot_owner_check(message.author, "cannot set public API URL")
+        if len(args) != 2:
+            await message.channel.send(f"Here's how to use this command: `?{args[0]} public_api_url`")
+            return
+        public_api_url = args[1]
+        common.modify_property({"public_api_url": public_api_url})
+        await common.safe_send(message, f"Public API URL set to <{public_api_url}>")
+
+    @staticmethod
+    async def reload_properties(message: discord.Message):
+        BotOwnerCommands.is_bot_owner_check(message.author, "cannot reload properties")
+        common.reload_properties()
+        await common.safe_send(message, "properties.json reloaded")
+    
 
     @staticmethod
     async def get_logs_command(message: discord.Message):
@@ -356,8 +370,8 @@ class StatisticCommands:
     valid_rt_options = {"rt","rts","regular","regulars","regulartrack","regulartracks"}
     valid_ct_options = {"ct","cts","custom","customs","customtrack","customtracks"}
 
-    valid_rt_tiers = ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
-    valid_ct_tiers = ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
+    valid_rt_tiers = ["t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
+    valid_ct_tiers = ["t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"]
 
     rt_number_tracks = 15
     ct_number_tracks = 15
@@ -1558,7 +1572,7 @@ class TablingCommands:
     async def predict_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix: str, lounge_server_updates: Lounge.Lounge):
         ensure_table_loaded_check(this_bot, server_prefix)
 
-        table_text,table_sorted_data = SK.get_war_table_DCS(this_bot,use_lounge_otherwise_mii=True,use_miis=False,
+        table_text, _ = SK.get_war_table_DCS(this_bot,use_lounge_otherwise_mii=True,use_miis=False,
                                                             lounge_replace=True,missingRacePts=this_bot.dc_points,
                                                             server_id=message.guild.id,discord_escape=True)
 
@@ -2340,7 +2354,7 @@ class TablingCommands:
                             
         table_text, table_sorted_data = SK.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=use_lounge_otherwise_mii, use_miis=usemiis, lounge_replace=lounge_replace, server_id=server_id, missingRacePts=this_bot.dc_points, step=step, up_to_race=up_to)
         if output_gsc_table:
-            table_text = SK.format_sorted_data_for_gsc(table_sorted_data, this_bot.getWar().teamPenalties, this_bot.room)
+            table_text = SK.format_sorted_data_for_gsc(table_sorted_data)
         table_text_with_style_and_graph = table_text + this_bot.get_lorenzi_style_and_graph(prepend_newline=True)
         display_url_table_text = urllib.parse.quote(table_text)
         true_url_table_text = urllib.parse.quote(table_text_with_style_and_graph)

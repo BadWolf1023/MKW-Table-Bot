@@ -17,6 +17,7 @@ import ssl
 import certifi
 import dill
 import TimerDebuggers
+from typing import Dict, List
 
 # I don't know the exact details because I'm not extremely familiar with how SSL certification actually works, but
 # this was necessary at one point because a main SSL certificate list expired a while ago,
@@ -35,7 +36,17 @@ if False: # for IDE autocompletion
 
 PROPERTIES_FILE = f"properties.json"
 EXAMPLE_PROPERTIES_FILE = "example_properties.json"
-properties = json.load(open(PROPERTIES_FILE if os.path.exists(PROPERTIES_FILE) else EXAMPLE_PROPERTIES_FILE)) 
+properties = {}
+def reload_properties():
+    properties.clear()
+    properties.update(json.load(open(PROPERTIES_FILE if os.path.exists(PROPERTIES_FILE) else EXAMPLE_PROPERTIES_FILE)))
+def modify_property(modified_properties: Dict):
+    properties.update(modified_properties)
+    with open(PROPERTIES_FILE, "w") as jsonFile:
+        json.dump(properties, jsonFile, indent=4)
+    reload_properties()
+
+reload_properties()
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
@@ -339,6 +350,7 @@ RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS = {
     747289647003992078: 1,
     747544598968270868: 1,
     781249043623182406: 1,
+    950081937165414460: 0
 }
 
 if is_dev or is_beta:
