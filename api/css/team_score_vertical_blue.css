@@ -1,53 +1,42 @@
-table,
-td,
-th {
-    border: 0;
-}
-
-table {
-    width: 85%;
+body{
     font: bold small-caps Verdana;
     color: white;
-    border: none;
+    text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
+}
+#tablebot_table {
+    box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
     background-color: #1932c4;
-    border-collapse: collapse;
-    border: none;
     border-radius: 10px;
-    display: block;
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    align-content: center;
-    box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644)
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto; /* override base template */
+    
 }
 
-thead,
-tbody {
-    width: 50%;
+#team_names_box, #scores_box{
+    grid-auto-flow: row;
+    grid-auto-rows: minmax(0, 1fr);
+
 }
 
-tbody {
+.team_score, .team_name{
+    margin: auto;
+    text-align: center;
+}
+
+.team_name_box, .score_box{
+    border: none;
+    border-top: 4px solid white;
+}
+.score_box{
     border-left: 4px solid white;
 }
 
-tr {
-    display: flex;
-    flex-direction: column;
-    overflow:hidden;
-}
-
-
-
-.team_name,
-.team_score {
-    width: 100% !important; /* override inline style in HTML */
-    text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
-    padding-top: 3%;
-    padding-bottom: 3%;
-    border-top: 4px solid white;
-
-}
-.team_name:first-child, .team_score:first-child{
+.score_box:first-child{ 
+    border-left: 4px solid white; /* override base style because we need a border on the child it removed border from */
     border-top: none;
-
 }
+.team_name_box:first-child{ 
+    border-top: none;
+}
+
+
