@@ -38,25 +38,24 @@ def build_table_styling(table_background_picture_url: Union[None, str], table_ba
     styling = ""
     if table_background_picture_url is not None:
         styling_segment = """table {
-    background-image: url(%s);
-}""" % table_background_picture_url
+    background-image: url(%s) !important;""" % table_background_picture_url
+        styling_segment += "\nbackground-size: 100% 100% !important;\n}"
         styling += styling_segment + "\n\n"
     
     if table_background_color is not None:
         styling_segment = """table {
-    background-color: %s;
+    background-color: %s !important;
 }""" % table_background_color
         styling += styling_segment + "\n\n"
 
     if table_text_color is not None:
         styling_segment = """table, td, th {
-    color: %s;
+    color: %s !important;
 }""" % table_text_color
         styling += styling_segment + "\n\n"
-    
     if table_font is not None:
         styling_segment = """table, td, th {
-    font-family: %s;
+    font-family: %s !important;
 }""" % table_font
         styling += styling_segment + "\n\n"
 
