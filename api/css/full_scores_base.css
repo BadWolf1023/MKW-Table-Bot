@@ -21,7 +21,7 @@ body{
 }
 
 
-.team_name_wrapper, .team_players_wrapper, .team_score_wrapper, .player_wrapper, .scores_wrapper, .player_total_wrapper,  .score_wrapper, .player_name_wrapper{
+.team_name_wrapper, .team_players_wrapper, .team_score_wrapper, .player_wrapper, .gp_scores_wrapper, .player_total_wrapper,  .score_wrapper, .player_name_wrapper{
     display: inline-grid;
 }
 .team_name_wrapper{
@@ -40,7 +40,7 @@ body{
 
 
 
-.scores_wrapper{
+.gp_scores_wrapper{
     display: inline-grid;
     grid-auto-flow: column;
 }
