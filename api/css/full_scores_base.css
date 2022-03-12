@@ -1,7 +1,7 @@
 /* This file contains the base CSS that will apply first to all team score HTML */
 body{
     margin: 0px auto;
-    font-size: 70px;
+    font-size: 50px;
 }
 #tablebot_table{
     display: grid;
