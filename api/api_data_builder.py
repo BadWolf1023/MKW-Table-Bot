@@ -26,7 +26,11 @@ TEAM_STYLES = {"rainbow": f"{CSS_DATA_PATH}team_score_rainbow.css",
                "verticalblue": f"{CSS_DATA_PATH}team_score_vertical_blue.css"
 }
 
-FULL_TABLE_STYLES = {
+FULL_TABLE_STYLES = {"rainbow": f"{CSS_DATA_PATH}full_score_rainbow.css",
+               "pastel": f"{CSS_DATA_PATH}full_score_pastel.css",
+               "orange": f"{CSS_DATA_PATH}full_score_orange.css",
+               "neon": f"{CSS_DATA_PATH}full_score_neon.css",
+               "verticalblue": f"{CSS_DATA_PATH}full_score_vertical_blue.css"
 }
 
 def build_table_styling(table_background_picture_url: Union[None, str], table_background_color: Union[None, str], table_text_color: Union[None, str], table_font: Union[None, str], border_color: Union[None, str], style=None) -> str:
@@ -62,9 +66,8 @@ def build_table_styling(table_background_picture_url: Union[None, str], table_ba
 
     return styling
 
+
 def build_neon_text_js_injection(table_text_color):
-
-
     if table_text_color.startswith("0x"):
         table_text_color = table_text_color[2:]
     if UtilityFunctions.is_hex(table_text_color):
@@ -141,16 +144,6 @@ function GlowColorInjection()
 
     }""" % (table_text_color, table_text_color)
 
-
-"""        document.getElementById("tunnel").animate([
-  // keyframes
-  { 0%:  },
-  { transform: 'translateY(-300px)' }
-], {
-  // timing options
-  duration: 1000,
-  iterations: Infinity
-});"""
 
 def team_name_score_generator(team_data) -> Tuple[str, str]:
     if len(team_data["teams"]) == 1 and "No Tag" in team_data["teams"]:
