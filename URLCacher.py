@@ -22,7 +22,7 @@ class URLCacher():
         self.hang_seconds = hang_seconds
         self.request_timeout = timedelta(seconds=request_timeout)
         self.maximum_cache_storage_length = self.default_cache_length + self.default_cache_length  # Maximum time that responses are stored are two times the cache length
-        self._session = aiohttp.ClientSession()
+        self._session = None
         
     @staticmethod
     def _default_cache_entry():
@@ -45,6 +45,8 @@ class URLCacher():
         If the request fails, returns None'''
         response_text = None
         self._prepare_fetch(url)
+        if self._session is None:
+            self._session = aiohttp.ClientSession()
         try:
             timeout = aiohttp.ClientTimeout(total=float(self.request_timeout.total_seconds()))
             async with self._session.get(url, ssl=common.sslcontext, timeout=timeout) as response:
