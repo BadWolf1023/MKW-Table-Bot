@@ -5,14 +5,7 @@ import re
 from datetime import timedelta
 from typing import List, Union, Tuple
 
-import UtilityFunctions
-
-if __name__ == "__main__":
-    import sys
-    import os
-    # insert at 1, 0 is the script path (or '' in REPL)
-    sys.path.insert(1, '.')
-    
+import UtilityFunctions    
 from api import api_common
 
 
@@ -301,42 +294,3 @@ def build_info_page_html(table_id: int):
     finally:
         if soup is not None:
             soup.decompose()
-
-def __get_testing_channel_bot__():
-    import os
-    import sys
-    import inspect
-    
-    currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-    parentdir = os.path.dirname(currentdir)
-    sys.path.insert(0, parentdir) 
-    import BadWolfBot
-    BadWolfBot.data_init()
-    import common
-    import TableBot
-    import SmartTypes
-    
-
-    import TagAIShell
-    
-    TagAIShell.initialize()
-    war = TableBot.War.War("2v2", 6, 0, 3, ignoreLargeTimes=False, displayMiis=True)
-    this_bot = TableBot.ChannelBot(war=war, server_id=1, channel_id=1)
-    smart_type = SmartTypes.SmartLookupTypes("r0000001", allowed_types=SmartTypes.SmartLookupTypes.ROOM_LOOKUP_TYPES)
-    status = common.run_async_function_no_loop(this_bot.load_table_smart(smart_type, war, message_id=0, setup_discord_id=0, setup_display_name="Bad Wolf"))
-
-    players = list(this_bot.getRoom().get_fc_to_name_dict(1, 3*4).items())
-    tags_player_fcs = TagAIShell.determineTags(players, this_bot.getWar().playersPerTeam)
-    this_bot.getWar().set_temp_team_tags(tags_player_fcs)
-
-    this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
-    return this_bot
-
-if __name__ == "__main__":
-    this_bot = __get_testing_channel_bot__()
-    import ScoreKeeper
-    table_text, table_sorted_data = ScoreKeeper.get_war_table_DCS(this_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, missingRacePts=this_bot.dc_points, server_id=123, discord_escape=False)
-    #print(table_sorted_data)
-    html = build_team_html(table_sorted_data, style="verticalblue").replace("""setTimeout("location.reload(true);", t);""", "")
-    with open(f"{API_DATA_PATH}result.html", "w") as file:
-        file.write(html)
