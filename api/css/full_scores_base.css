@@ -1,7 +1,7 @@
 /* This file contains the base CSS that will apply first to all team score HTML */
 body{
     margin: 0px auto;
-    font-size: 50px;
+    font-size: 20px;
 }
 #tablebot_table{
     display: grid;
@@ -41,8 +41,10 @@ body{
 
 
 .gp_scores_wrapper{
+
     display: inline-grid;
-    grid-auto-flow: column;
+   grid-auto-columns: 1fr;
+   grid-auto-flow: column;
 }
 
 
