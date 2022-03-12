@@ -1,18 +1,75 @@
 /* This file contains the base CSS that will apply first to all team score HTML */
 body{
     margin: 0px auto;
+    font-size: 70px;
 }
-table {
+#tablebot_table{
+    display: grid;
+    grid-auto-flow: row;
     width: 100%;
-    border-collapse: collapse;
+    height: 100%;
+    align-items: stretch;
+}
+
+.team_wrapper{
+    grid-template-columns: 1.5fr 3fr 1fr;
+    display: inline-grid;
+    border-top: 6px solid black;
+}
+.team_wrapper:first-child{
+    border: none;
+}
+
+
+.team_name_wrapper, .team_players_wrapper, .team_score_wrapper, .player_wrapper, .scores_wrapper, .player_total_wrapper,  .score_wrapper, .player_name_wrapper{
+    display: inline-grid;
+}
+.team_name_wrapper{
+    border-right: 6px solid black;
+}
+.team_score_wrapper{
+    border-left: 6px solid black;
+}
+
+
+.player_wrapper{
+    grid-template-columns: 3fr 3fr 2fr;
+    display: inline-grid;
+    grid-auto-flow: column;
+}
+
+
+
+.scores_wrapper{
+    display: inline-grid;
+    grid-auto-flow: column;
+}
+
+
+.player_wrapper{
+    border-bottom: 4px solid black;
+}
+.player_wrapper:last-child{
+    border-bottom: none;
+}
+
+.player_total_wrapper{
+    border-left: 2px solid black;
+}
+.player_name_wrapper{
+    border-right: 2px solid black;
+}
+.score_wrapper{
+    border-left: 2px solid black;
+}
+.score_wrapper:first-child{
+    border-left: none;
+}
+
+.score, .player_total, .player_name, .team_name, .team_score{
+    margin: auto;
     text-align: center;
-    color: black;
+    word-wrap: break-word;
+    word-break: break-all;
+    
 }
-
-table,
-td,
-th {
-    border: 1px solid black;
-    font-size: 100px;
-}
-
