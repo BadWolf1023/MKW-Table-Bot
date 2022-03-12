@@ -26,11 +26,11 @@ TEAM_STYLES = {"rainbow": f"{CSS_DATA_PATH}team_score_rainbow.css",
                "verticalblue": f"{CSS_DATA_PATH}team_score_vertical_blue.css"
 }
 
-FULL_TABLE_STYLES = {"rainbow": f"{CSS_DATA_PATH}full_score_rainbow.css",
-               "pastel": f"{CSS_DATA_PATH}full_score_pastel.css",
-               "orange": f"{CSS_DATA_PATH}full_score_orange.css",
-               "neon": f"{CSS_DATA_PATH}full_score_neon.css",
-               "verticalblue": f"{CSS_DATA_PATH}full_score_vertical_blue.css"
+FULL_TABLE_STYLES = {"rainbow": f"{CSS_DATA_PATH}full_scores_rainbow.css",
+               "pastel": f"{CSS_DATA_PATH}full_scores_pastel.css",
+               "orange": f"{CSS_DATA_PATH}full_scores_orange.css",
+               "neon": f"{CSS_DATA_PATH}full_scores_neon.css",
+               "verticalblue": f"{CSS_DATA_PATH}full_scores_vertical_blue.css"
 }
 
 def build_table_styling(table_background_picture_url: Union[None, str], table_background_color: Union[None, str], table_text_color: Union[None, str], table_font: Union[None, str], border_color: Union[None, str], style=None) -> str:
@@ -186,7 +186,7 @@ def build_full_table_html(table_data: dict, style=None, table_background_picture
                 player_wrapper = soup.new_tag('div', attrs={"class": "player_wrapper"})
                 # Build the elements related to the player's name
                 player_name_wrapper = soup.new_tag('div', attrs={"class": "player_name_wrapper"})
-                player_name_div = soup.new_tag('div', attrs={"class": "player_name", "id": f"player_{id_index}_name"})
+                player_name_div = soup.new_tag('div', attrs={"class": "player_name", "id": f"player_{player_number}_name"})
                 player_name_div.string = player_data["table_name"]
                 player_name_wrapper.append(player_name_div)
                 player_wrapper.append(player_name_wrapper)
@@ -203,7 +203,7 @@ def build_full_table_html(table_data: dict, style=None, table_background_picture
 
                 #Build the elements related to the player's total score
                 player_total_wrapper = soup.new_tag('div', attrs={"class": "player_total_wrapper"})
-                player_total_div = soup.new_tag('div', attrs={"class": "player_total", "id": f"player_{id_index}_total"})
+                player_total_div = soup.new_tag('div', attrs={"class": "player_total", "id": f"player_{player_number}_total"})
                 player_total_div.string = str(player_data["total_score"])
                 player_total_wrapper.append(player_total_div)
                 player_wrapper.append(player_total_wrapper)
