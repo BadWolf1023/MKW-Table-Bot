@@ -16,7 +16,7 @@ CSS_DATA_PATH = f"css/"
 TEAM_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}team_score_builder.html"
 TEAM_STYLE_FILE = f"{CSS_DATA_PATH}team_score_base.css"
 FULL_TABLE_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}full_table_builder.html"
-FULL_TABLE_STYLE_FILE = f"{CSS_DATA_PATH}team_score_base.css"
+FULL_TABLE_STYLE_FILE = f"{CSS_DATA_PATH}full_scores_base.css"
 QUICK_INFO_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}quick_info.html"
 
 TEAM_STYLES = {"rainbow": f"{CSS_DATA_PATH}team_score_rainbow.css",
@@ -164,33 +164,61 @@ def build_full_table_html(table_data: dict, style=None, table_background_picture
     try:
         soup.style.string = build_table_styling(table_background_picture_url, table_background_color, table_text_color, table_font, border_color, style)
         # Add style sheets for base css styling and custom styling if it was specified
-        soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"{FULL_TABLE_STYLE_FILE}"}))
+        soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{FULL_TABLE_STYLE_FILE}"}))
         if style in FULL_TABLE_STYLES:
-            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"{FULL_TABLE_STYLES[style]}"}))
+            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{FULL_TABLE_STYLES[style]}"}))
 
+        player_number = 0
         for id_index, (team_tag, team_data) in enumerate(table_data["teams"].items(), 1):
-            tbody_element = soup.new_tag('tbody')
+            # Build the elements related to the team name/tag
+            team_wrapper = soup.new_tag('div', attrs={"class": "team_wrapper", "id": f"team_{id_index}_wrapper"})
+            team_name_wrapper = soup.new_tag('div', attrs={"class": "team_name_wrapper"})
+            team_name_div = soup.new_tag('div', attrs={"class": "team_name", "id": f"team_{id_index}_name"})
+            team_name_div.string = team_tag
+            team_name_wrapper.append(team_name_div)
+            team_wrapper.append(team_name_wrapper)
+
+            # Build the elements related to the team players and their scores
             team_players = [p for p in team_data["players"].values() if not p["subbed_out"]]
-            num_team_players = len(team_players)
-            team_name_header_element = soup.new_tag('th', attrs={"class": "team_name", "id": f"team_name_{id_index}", "rowspan": f"{num_team_players}", "scope": "rowgroup"})
-            team_name_header_element.string = team_tag
-            team_score_header_element = soup.new_tag('th', attrs={"class": "team_score", "id": f"team_score_{id_index}", "rowspan": f"{num_team_players}", "scope": "rowgroup"})
-            team_score_header_element.string = str(team_data["total_score"])
+            team_players_wrapper = soup.new_tag('div', attrs={"class": "team_players_wrapper"})
             for player_data in team_players:
-                tr_element = soup.new_tag('tr')
-                player_name_header_element = soup.new_tag('th', attrs={"class": "player_name", "scope": "row"})
-                player_name_header_element.string = player_data["table_name"]
-                tr_element.append(player_name_header_element)
+                player_number += 1
+                player_wrapper = soup.new_tag('div', attrs={"class": "player_wrapper"})
+                # Build the elements related to the player's name
+                player_name_wrapper = soup.new_tag('div', attrs={"class": "player_name_wrapper"})
+                player_name_div = soup.new_tag('div', attrs={"class": "player_name", "id": f"player_{id_index}_name"})
+                player_name_div.string = player_data["table_name"]
+                player_name_wrapper.append(player_name_div)
+                player_wrapper.append(player_name_wrapper)
+
+                #Build the elements related to the player's GP scores
+                gp_scores_wrapper = soup.new_tag('div', attrs={"class": "gp_scores_wrapper"})
                 for gp_num, gp_score_chunk in enumerate(player_data["gp_scores"], 1):
-                    player_score_element = soup.new_tag('td', attrs={"class": f"player_score GP_{gp_num}"})
-                    player_score_element.string = str(sum(gp_score_chunk))
-                    tr_element.append(player_score_element)
-                tbody_element.append(tr_element)
-                
-            first_tr = tbody_element.find_all("tr")[0]
-            first_tr.insert(0, team_name_header_element)
-            first_tr.append(team_score_header_element)
-            soup.table.append(tbody_element)
+                    score_wrapper = soup.new_tag('div', attrs={"class": "score_wrapper"})
+                    score_div = soup.new_tag('div', attrs={"class":"score", "id": f"player_{player_number}_score_{gp_num}"})
+                    score_div.string = str(sum(gp_score_chunk))
+                    score_wrapper.append(score_div)
+                    gp_scores_wrapper.append(score_wrapper)
+                player_wrapper.append(gp_scores_wrapper)
+
+                #Build the elements related to the player's total score
+                player_total_wrapper = soup.new_tag('div', attrs={"class": "player_total_wrapper"})
+                player_total_div = soup.new_tag('div', attrs={"class": "player_total", "id": f"player_{id_index}_total"})
+                player_total_div.string = str(player_data["total_score"])
+                player_total_wrapper.append(player_total_div)
+                player_wrapper.append(player_total_wrapper)
+
+                team_players_wrapper.append(player_wrapper)
+            team_wrapper.append(team_players_wrapper)
+
+            # Build the elements related to the team total
+            team_score_wrapper = soup.new_tag('div', attrs={"class": "team_score_wrapper"})
+            team_score_div = soup.new_tag('div', attrs={"class": "team_score", "id": f"team_{id_index}_total"})
+            team_score_div.string = str(team_data["total_score"])
+            team_score_wrapper.append(team_score_div)
+            team_wrapper.append(team_score_wrapper)
+
+            soup.find(id="tablebot_table").append(team_wrapper)
         return str(soup)
     finally:
         if soup is not None:
