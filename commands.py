@@ -24,6 +24,7 @@ import MogiUpdate
 import Lounge
 import TableBotExceptions
 import common
+import api.api_common
 import Components
 from data_tracking import DataTracker
 import SmartTypes
@@ -162,6 +163,7 @@ class BotOwnerCommands:
     async def reload_properties(message: discord.Message):
         BotOwnerCommands.is_bot_owner_check(message.author, "cannot reload properties")
         common.reload_properties()
+        api.api_common.reload_properties()
         await common.safe_send(message, "properties.json reloaded")
     
 
