@@ -78,8 +78,10 @@ def backup_files(to_back_up=common.FILES_TO_BACKUP):
             temp_file_n = file_name
             if os.path.exists(todays_backup_path + temp_file_n):
                 # don't backup the database more than once, otherwise server will run out of disk
-                if file_name == common.ROOM_DATA_TRACKING_DATABASE_FILE:
-                    continue
+
+                #To the above comment, we'll lose the current day's data on Ctrl+C if we don't ^
+                #if file_name == common.ROOM_DATA_TRACKING_DATABASE_FILE:
+                #    continue
 
                 for i in range(50):
                     temp_file_n = file_name + "_" + str(i) 
