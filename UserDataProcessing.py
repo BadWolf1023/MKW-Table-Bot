@@ -145,9 +145,12 @@ def add_flag(discord_id, flag):
         
         discordId_flags_file_is_open = False
         return True
-     
+
+def get_flag_for_fc(fc):
+    return get_flag(get_discord_id_from_fc(fc))
+    
 def get_flag(discord_id):
-    if discord_id is None:
+    if discord_id is None or discord_id == "":
         return None
     discord_id = str(discord_id)
     if discord_id in discordId_flags:

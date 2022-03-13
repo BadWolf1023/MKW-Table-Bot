@@ -16,6 +16,7 @@ import AbuseTracking
 import TagAIShell
 from data_tracking import DataTracker
 import InteractionUtils
+from api import api_channelbot_interface, endpoints
 
 #External library imports for this file
 import discord
@@ -34,6 +35,8 @@ import aiohttp
 import os
 import asyncio
 from typing import Dict
+from fastapi import FastAPI
+import uvicorn
 
 CT_WAR_LOUNGE_ECHELONS_CAT_ID = 851666104228249652
 WAR_LOUNGE_ECHELONS_CAT_ID = 751956338912788559
@@ -150,7 +153,7 @@ BLACKLIST_USER_TERMS = {"blacklistuser"}
 BLACKLIST_WORD_TERMS = {"blacklistword", "addblacklistedword", "addblacklistword", "addword"}
 REMOVE_BLACKLISTED_WORD_TERMS = {"removeblacklistword", "removeblacklistedword", "removeword"}
 
-#Bad Wolf Commands only
+#Bot Owner Commands only
 SERVER_USAGE_TERMS = {"serverusage", "usage", "serverstats"}
 TABLE_BOT_MEMORY_USAGE_TERMS = {"memory", "memoryusage"}
 GARBAGE_COLLECT_TERMS = {"gc", "garbagecollect"}
@@ -162,6 +165,10 @@ REMOVE_BOT_ADMIN_TERMS = {"removebotadmin", "removeadmin"}
 GET_LOGS_TERMS = {"getlog", "getlogs", "logs"}
 ADD_SHA_TERMS = {"addsha", "sha"}
 REMOVE_SHA_TERMS = {"removesha", "delsha"}
+RELOAD_PROPERTIES_TERMS = {"reloadproperties", "reload_properties", "propertyreload"}
+SET_API_URL_TERMS = {"apiurl", "setapiurl", "api_url", "set_api_url"}
+
+
 
 needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REDO_TERMS | LIST_REDOS_TERMS | LIST_UNDOS_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_TABLE_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS | GET_SUBSTITUTIONS_TERMS | INTERACTIONS
 ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS | POPULAR_TRACKS_TERMS | UNPOPULAR_TRACKS_TERMS | TOP_PLAYERS_TERMS | BEST_TRACK_TERMS | WORST_TRACK_TERMS | RECORD_TERMS
@@ -237,6 +244,9 @@ class BadWolfBot(discord.Bot):
         if command.startswith(pref):
             return True, False, pref
         return False, False, None
+
+    def get_table_bots(self):
+        return self.table_bots
 
     def is_vr_command(message:discord.Message):
         str_msg = message.content.strip()
@@ -829,9 +839,15 @@ class BadWolfBot(discord.Bot):
         elif main_command in REMOVE_SHA_TERMS:
             await commands.BotAdminCommands.remove_sha_track(message, args)
         
+        elif main_command in RELOAD_PROPERTIES_TERMS:
+            await commands.BotOwnerCommands.reload_properties(message)
+            
+        elif main_command in SET_API_URL_TERMS:
+            await commands.BotOwnerCommands.set_api_url(message, args)
+        
         elif main_command in {'close', 'stopbot', 'disconnect', 'kill'} and common.is_bot_owner(message.author):
             try:
-                self.save_data()
+                await self.save_data()
                 self.destroy_all_tablebots()
                 await message.channel.send("Data has been saved and all table bots have been cleaned up; bot gracefully closed.")
             except Exception as e:
@@ -1088,19 +1104,23 @@ def get_size(objct, seen=None):
 
 
 # nodemon BadWolfBot.py --signal SIGQUIT
+bot: BadWolfBot = None
 is_quitting = False
 def handler(signum, frame):
     global is_quitting
     if not is_quitting:
         print(f"Received {'SIGINT' if common.ON_WINDOWS else 'SIGQUIT'}\n")
         is_quitting = True
+        
         asyncio.create_task(bot.close())
 end_signal = signal.SIGINT
 if not common.ON_WINDOWS:
     end_signal = signal.SIGQUIT
 signal.signal(end_signal, handler)
 
-def initialize():
+async def initialize():
+    global bot
+    endpoints.initialize(app)
     create_folders()
     private_data_init()
     Race.initialize()
@@ -1110,21 +1130,38 @@ def initialize():
     TagAIShell.initialize()
     Stats.initialize()
 
-def after_init():
-    asyncio.run(DataTracker.initialize())
-
-if __name__ == "__main__":
-    initialize()
     bot = BadWolfBot()
-    after_init()
+    await start_bot()
+    await after_init()
 
     common.client = bot
     common.main = sys.modules[__name__]
 
-    if common.is_dev:
-        bot.run(testing_bot_key)
-    elif common.is_beta:
-        bot.run(beta_bot_key)
-    else:
-        bot.run(real_bot_key)
+async def after_init():
+    await DataTracker.initialize()
+    api_channelbot_interface.initialize(bot.get_table_bots)
+    
+async def start_bot():
+    try:
+        if common.is_dev:
+            key = testing_bot_key
+        elif common.is_beta:
+            key = beta_bot_key
+        else:
+            key = real_bot_key
+        asyncio.create_task(bot.start(key))
+    except KeyboardInterrupt:
+        await bot.close()
+        raise
+
+async def close_wrapper():
+    return await bot.close()
+
+if __name__ == "__main__":
+    PORT = common.properties["api_port"]
+    app = FastAPI(on_startup=[initialize], on_shutdown=[close_wrapper])
+    uvicorn.run(app, log_config=f"log.ini", port=PORT)
+
+
+
     

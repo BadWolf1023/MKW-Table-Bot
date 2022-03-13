@@ -1,4 +1,4 @@
 testing_rooms/* linguist-vendored
 testing_rooms/linux/* linguist-vendored
 testing_rooms/windows/* linguist-vendored
-*.sql linguist-detectable=true
+*.sql linguist-detectable=true linguist-language=SQL

@@ -1,0 +1,18 @@
+/* This file contains the base CSS that will apply first to all team score HTML */
+body{
+    margin: 0px auto;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+    color: black;
+}
+
+table,
+td,
+th {
+    border: 1px solid black;
+    font-size: 100px;
+}
+

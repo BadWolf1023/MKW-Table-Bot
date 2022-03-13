@@ -10,6 +10,7 @@ This module will allow easy selection of a specific AI, comparison of AIs, testi
 
 import TagAI_Andrew
 import TagAI_BadWolf
+import UtilityFunctions
 import time
 import os
 import dill
@@ -74,13 +75,6 @@ def log_AI_results(fc_players, tag_AI_results, time_taken, war_format, is_alpha_
     
     dump_to_pkl(AI_Results, AI_Results_file_name)
 
-def sort_dict(my_dict:dict, key=None):
-    sorted_keys = sorted(my_dict.keys(), key=key)
-    result = {}
-    for k in sorted_keys:
-        result[k] = my_dict[k]
-    return result
-
 def get_alpha_AI_results(players, playersPerTeam=None):
     return alpha_AI(players, playersPerTeam)
 
@@ -97,7 +91,7 @@ def get_beta_AI_results(players, playersPerTeam=None):
                 table_bot_formatted_results[team_tag] = []
             table_bot_formatted_results[team_tag].append((friend_code, player_name))
     
-    table_bot_formatted_results = sort_dict(table_bot_formatted_results, key=lambda s:s.lower())
+    table_bot_formatted_results = UtilityFunctions.sort_dict(table_bot_formatted_results, key=lambda s:s.lower())
     return players_per_team_guess, table_bot_formatted_results
     
     

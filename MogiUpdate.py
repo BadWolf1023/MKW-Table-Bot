@@ -626,7 +626,6 @@ async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=No
     players_and_scores = sort_teams_by_scores(players_and_scores)
     
     
-
     if not eachTeamHasCorrectNumPlayers(players_and_scores, warFormat):
         return DIFFERING_NUM_PLAYERS_EC, None, None
     
@@ -639,7 +638,6 @@ async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=No
     json_data["races"] = races_played
     
     
-
     id_mapping, missing = await MogiUpdateAPIFunctions.getPlayerIDs(three_deep_flatten(players_and_scores), is_rt)
     
     if id_mapping is None:

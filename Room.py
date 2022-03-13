@@ -84,6 +84,11 @@ class Room(object):
         self.races.extend(races)
         self.fix_race_numbers()
     
+    def add_rxx(self, rxx: str):
+        if not isinstance(rxx, str):
+            raise ValueError("Caller must gaurantee that the given rxx is a string")
+        self.rLIDs.append(rxx)
+    
     def get_set_up_user_discord_id(self):
         return self.set_up_user
     def get_set_up_display_name(self):
@@ -241,8 +246,8 @@ class Room(object):
                 for sub_data in self.sub_ins.values():
                     subout_start_race = sub_data[4]
                     subout_end_race = sub_data[5]
-                    if race_num >= subout_start_race and subout_start_race <= subout_end_race: #2, 3, 4
-                        sub_data[6].pop(subout_start_race - race_num)
+                    if subout_start_race <= race_num <= subout_end_race and subout_start_race <= subout_end_race: #2, 3, 4
+                        sub_data[6].pop(race_num - subout_start_race)
                         sub_data[5] -= 1
                         sub_data[0] -= 1
 
@@ -278,6 +283,14 @@ class Room(object):
     
     def getPlayerPenalities(self):
         return self.playerPenalties
+    
+    def get_fc_penalty(self, fc):
+        if self.fc_has_penalty(fc):
+            return self.playerPenalties[fc]
+        return None
+
+    def fc_has_penalty(self, fc):
+        return fc in self.playerPenalties
         
     def addPlayerPenalty(self, fc, amount):
         self.playerPenalties[fc] += amount
@@ -348,6 +361,10 @@ class Room(object):
             last_rxx = self.rLIDs[-1]
             return f"**Room URL:** https://wiimmfi.de/stats/mkwx/list/{last_rxx}  |  **rxx number:** {last_rxx}"
         return ""
+
+    def get_table_id_text(self):
+        #return f"**Table ID:** {self.get_event_id()} | Table Bot API Link: {common.TABLE_BOT_API_LINK}?table_id={self.get_event_id()}"
+        return f"**Table ID:** {self.get_event_id()}"
     
     def getMissingPlayersPerRace(self):
         numGPS = int(len(self.races)/4 + 1)

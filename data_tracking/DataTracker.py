@@ -756,6 +756,8 @@ async def fix_shas(shas:Dict):
         await db_connection.executescript(script)
 
 async def initialize():
+    from datetime import datetime
+    print(f"{datetime.now()}: Database initialization started")
     load_room_data()
     await start_database()
     await ensure_foreign_keys_on()
@@ -767,6 +769,7 @@ async def initialize():
     await fix_shas(Race.sha_track_name_mappings)
     if common.is_prod or common.is_beta:
         await vacuum()
+    print(f"{datetime.now()}: Database initialization finished")
 
 def save_data():
     pass

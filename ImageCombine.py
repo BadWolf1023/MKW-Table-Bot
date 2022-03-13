@@ -134,28 +134,28 @@ def add_autotable_footer(footer, table_image_path=TESTING_IMAGE, out_image_path=
 #The exact structure of team_scores can be found in ScoreKeeper.get_war_table_DCS, but as of 6/7/2021, the structure as the following:
 #A list of tuples. Tuples have 2 pieces of data. The first is a str which is the team tag. The 2nd is a list of tuples (a tuple contains information about that player on the team).
 #The first index of that tuple is the players FC, the 2nd index of that tuple is a tuple if 2 length. The first index of that tuple is the table str for Lorenzi's website, the 2nd index is their total score, including penalties.
-def add_miis_to_table(channel_bot:ChannelBot, team_scores:List[Tuple[str, List[Tuple[str, Tuple[str, int]]]]], table_image_path=TESTING_IMAGE, out_image_path="combined_test.png"):
+def add_miis_to_table(channel_bot:ChannelBot, table_data:List[Tuple[str, List[Tuple[str, Tuple[str, int]]]]], table_image_path=TESTING_IMAGE, out_image_path="combined_test.png"):
     if common.MIIS_ON_TABLE_DISABLED:
         return True
-    extension_reflect, mii_footer = get_footer_with_miis(channel_bot, team_scores)
+    extension_reflect, mii_footer = get_footer_with_miis(channel_bot, table_data)
     return add_autotable_footer(mii_footer, table_image_path=table_image_path, out_image_path=out_image_path, extension_should_reflect=extension_reflect)
     
 
-def get_footer_with_miis(channel_bot:ChannelBot, team_scores:List[Tuple[str, List[Tuple[str, Tuple[str, int]]]]]):
+def get_footer_with_miis(channel_bot:ChannelBot, table_data:List[Tuple[str, List[Tuple[str, Tuple[str, int]]]]]):
     
     team_footers = []
     extension_should_reflect = not channel_bot.getWar().is_ffa()
     if channel_bot.getWar().is_ffa():
         all_miis = {}
-        for team_tag, team_players in team_scores:
-            available_miis = channel_bot.room.get_available_miis_dict([player_data[0] for player_data in team_players])
+        for team_tag, team_data in table_data["teams"].items():
+            available_miis = channel_bot.room.get_available_miis_dict([fc for fc in team_data["players"]])
             for mii_key, mii_value in available_miis.items():
                 all_miis[mii_key] = mii_value
         if len(all_miis) > 0:
             team_footers.append(("FFA", generate_footer_section_for_team(all_miis, "FFA")))
     else:
-        for team_tag, team_players in team_scores:
-            available_miis = channel_bot.room.get_available_miis_dict([player_data[0] for player_data in team_players])
+        for team_tag, team_data in table_data["teams"].items():
+            available_miis = channel_bot.room.get_available_miis_dict([fc for fc in team_data["players"]])
             should_add_left_border = len(team_footers) > 0 #There's already one team footer, so add left border
             if len(available_miis) > 0:
                 team_footers.append((team_tag, generate_footer_section_for_team(available_miis, team_tag, add_left_border=should_add_left_border)))
