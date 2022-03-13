@@ -337,10 +337,12 @@ def compute_total_player_score(player_dict):
     player_dict["total_score"] = sum(player_dict["race_scores"]) - player_dict["penalties"]
 
 def build_table_text(table_dict):
-    table_str = table_dict["title_str"] + "\n"
+    table_str = table_dict["title_str"]
     team_texts = []
     for team_data in table_dict["teams"].values():
-        cur_team_lines = [team_data["table_tag_str"]]
+        cur_team_lines = []
+        if team_data["table_tag_str"] != "":
+            cur_team_lines.append(team_data["table_tag_str"])
         cur_team_lines.extend([player_data["table_str"] for player_data in team_data["players"].values()])
         if team_data["table_penalty_str"] != "":
             cur_team_lines.append(team_data["table_penalty_str"])
@@ -351,7 +353,8 @@ def build_table_text(table_dict):
 
 def input_table_text(table_dict):
     for team_tag, team_data in table_dict["teams"].items():
-        team_data["table_tag_str"] = f"{team_tag} {team_data['hex_color']}".strip()
+        if len(table_dict["teams"]) > 1: # It's not an FFA, so put the team tag
+            team_data["table_tag_str"] = f"{team_tag} {team_data['hex_color']}".strip()
         if team_data["penalties"] > 0:
             team_data["table_penalty_str"] = f"Penalty -{team_data['penalties']}"
         for player_data in team_data["players"].values():
