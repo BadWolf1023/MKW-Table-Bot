@@ -1,47 +1,42 @@
 body{
-    background-color: black;
-}
-table,
-td,
-th {
     font: bold small-caps Verdana;
     color: white;
-    border: none;
-}
-table {
-    background-color: #1932c4;
-    border-collapse: collapse;
-    border-style: hidden;
-    border-radius: 10px;
-}
-
-.team_name,
-.team_score {
     text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
 }
-
-.team_name {
-    border: 5px solid white;
-    /*border-bottom: 10px solid rgb(0, 0, 0);*/
+#tablebot_table {
+    box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
+    background-color: #1932c4;
+    border-radius: 10px;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto; /* override base template */
+    
 }
 
-.team_score {
-    border: 5px solid white;
+#team_names_box, #scores_box{
+    grid-auto-flow: row;
+    grid-auto-rows: minmax(0, 1fr);
+
 }
 
-thead
-{
-    float:left;
-}
-tbody
-{
-    float:left;
+.team_score, .team_name{
+    margin: auto;
+    text-align: center;
 }
 
-thead th {
-    display: block;   
+.team_name_box, .score_box{
+    border: none;
+    border-top: 4px solid white;
 }
-tbody td
-{
-    display: block;
+.score_box{
+    border-left: 4px solid white;
 }
+
+.score_box:first-child{ 
+    border-left: 4px solid white; /* override base style because we need a border on the child it removed border from */
+    border-top: none;
+}
+.team_name_box:first-child{ 
+    border-top: none;
+}
+
+

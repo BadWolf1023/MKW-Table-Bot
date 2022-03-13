@@ -1118,9 +1118,7 @@ if not common.ON_WINDOWS:
     end_signal = signal.SIGQUIT
 signal.signal(end_signal, handler)
 
-async def initialize():
-    global bot
-    endpoints.initialize(app)
+def data_init():
     create_folders()
     private_data_init()
     Race.initialize()
@@ -1129,6 +1127,11 @@ async def initialize():
     UtilityFunctions.initialize()
     TagAIShell.initialize()
     Stats.initialize()
+
+async def initialize():
+    global bot
+    endpoints.initialize(app)
+    data_init()
 
     bot = BadWolfBot()
     await start_bot()

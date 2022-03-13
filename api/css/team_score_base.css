@@ -1,18 +1,46 @@
 /* This file contains the base CSS that will apply first to all team score HTML */
-body{
+body {
     margin: 0px auto;
+    font-size: 20px;
 }
-table {
+
+#tablebot_table {
+    display: grid;
     width: 100%;
-    border-collapse: collapse;
+    height: 100%;
+    grid-template-rows: repeat(2, 1fr);
+
+}
+
+#team_names_box, #scores_box{
+    display: inline-grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    overflow-y: hidden;
+}
+
+.team_name_box, .score_box{
+    display: inline-grid;
+    padding-left: 10%;
+    padding-right: 10%;
+    overflow-y: hidden;
+    
+}
+
+.team_name_box{
+    border-left: 3px solid black;
+    border-bottom: 3px solid black;
+}
+.score_box{
+    border-left: 3px solid black;
+}
+
+.team_score, .team_name{
+    margin: auto;
     text-align: center;
-    color: black;
+    overflow-wrap: anywhere;
 }
 
-table,
-td,
-th {
-    border: 1px solid black;
-    font-size: 100px;
+.team_name_box:first-child, .score_box:first-child{
+    border-left: none;
 }
-
