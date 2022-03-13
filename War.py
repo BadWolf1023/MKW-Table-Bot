@@ -93,10 +93,11 @@ class War(object):
     def getTeamForFC(self, FC):
         if self.teams is None:
             raise TableBotExceptions.WarSetupStillRunning()
+        if self.is_ffa() or FC not in self.teams:
+            return "No Tag"
         if FC in self.teams:
             return self.teams[FC]
-        return "NO TEAM"
-    
+
     def setTeamForFC(self, FC, team):
         if self.teams is None:
             raise TableBotExceptions.WarSetupStillRunning()
