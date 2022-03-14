@@ -1,0 +1,27 @@
+body {
+    font: bold small-caps Verdana;
+    color: white;
+}
+
+#tablebot_table {
+    background-color: #bd3500;
+    border-radius: 10px;
+}
+
+.score,
+.player_total,
+.player_name,
+.team_name,
+.team_score {
+    text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
+}
+
+.team_wrapper,
+.team_score_wrapper,
+.team_name_wrapper,
+.score_wrapper,
+.player_name_wrapper,
+.player_total_wrapper,
+.player_wrapper {
+    border-color: white;
+}

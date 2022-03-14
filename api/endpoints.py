@@ -24,7 +24,8 @@ def initialize(app_: FastAPI):
         background_color: Optional[str] = Query(None),
         text_color: Optional[str] = Query(None),
         font: Optional[str] = Query(None),
-        border_color: Optional[str] = Query(None)
+        border_color: Optional[str] = Query(None),
+        text_size: Optional[int] = Query(None)
     ):
         table_bot = cb_interface.get_table_bot(table_id)
         if table_bot is None:
@@ -33,7 +34,7 @@ def initialize(app_: FastAPI):
                 detail="Table ID not found. Either the table has been reset, or the table ID given does not exist. Table Bot gave you a table ID when you started the table. Use that.",
             )
         return api_data_builder.build_team_html(
-            cb_interface.get_team_score_data(table_bot), style, background_picture, background_color, text_color, font, border_color
+            cb_interface.get_team_score_data(table_bot), style, background_picture, background_color, text_color, font, border_color, text_size
         )
 
     @app.get(FULL_TABLE_HTML_ENDPOINT + "{table_id}", response_class=HTMLResponse)
@@ -44,7 +45,8 @@ def initialize(app_: FastAPI):
         background_color: Optional[str] = Query(None),
         text_color: Optional[str] = Query(None),
         font: Optional[str] = Query(None),
-        border_color: Optional[str] = Query(None)
+        border_color: Optional[str] = Query(None),
+        text_size: Optional[int] = Query(None)
     ):
         table_bot = cb_interface.get_table_bot(table_id)
         if table_bot is None:
@@ -53,7 +55,7 @@ def initialize(app_: FastAPI):
                 detail="Table ID not found. Either the table has been reset, or the table ID given does not exist. Table Bot gave you a table ID when you started the table. Use that.",
             )
         return api_data_builder.build_full_table_html(
-            cb_interface.get_team_score_data(table_bot), style, background_picture, background_color, text_color, font, border_color
+            cb_interface.get_team_score_data(table_bot), style, background_picture, background_color, text_color, font, border_color, text_size
         )
 
     @app.get(TEAM_SCORES_JSON_ENDPOINT + "{table_id}")
