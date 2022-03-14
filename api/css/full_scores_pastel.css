@@ -1,0 +1,130 @@
+body {
+    font-family: cursive;
+}
+
+
+.score,
+.player_total,
+.player_name,
+.team_name,
+.team_score {
+    text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
+
+}
+
+.team_wrapper,
+.team_name_wrapper,
+.team_players_wrapper,
+.player_wrapper,
+.player_name_wrapper,
+.gp_scores_wrapper,
+.score_wrapper,
+.player_total_wrapper,
+.team_score_wrapper {
+    border: none;
+}
+
+[id^="player_1_"] {
+    color: #fe68a8;
+}
+
+[id^="player_2_"] {
+    color: #3869c8;
+}
+
+[id^="player_3_"] {
+    color: #4fdddf;
+}
+
+[id^="player_4_"] {
+    color: #ffda58;
+}
+
+[id^="player_5_"] {
+    color: #cf95fb;
+}
+
+[id^="player_6_"] {
+    color: #4ff141;
+}
+
+[id^="player_7_"] {
+    color: #fe68a8;
+}
+
+[id^="player_8_"] {
+    color: #3869c8;
+}
+
+[id^="player_9_"] {
+    color: #4fdddf;
+}
+
+[id^="player_10_"] {
+    color: #ffda58;
+}
+
+[id^="player_11_"] {
+    color: #cf95fb;
+}
+
+[id^="player_12_"] {
+    color: #4ff141;
+}
+
+[id^="player_13_"] {
+    color: #fe68a8;
+}
+
+[id^="player_14_"] {
+    color: #3869c8;
+}
+
+[id^="player_15_"] {
+    color: #4fdddf;
+}
+
+[id^="player_16_"] {
+    color: #ffda58;
+}
+
+[id^="player_17_"] {
+    color: #cf95fb;
+}
+
+[id^="player_18_"] {
+    color: #4ff141;
+}
+
+.team_wrapper:nth-child(7n+1) > .team_name_wrapper,
+.team_wrapper:nth-child(7n+1) > .team_score_wrapper {
+    color: #4ff141;
+}
+
+.team_wrapper:nth-child(7n+2) > .team_name_wrapper,
+.team_wrapper:nth-child(7n+2) > .team_score_wrapper {
+    color: #cf95fb;
+
+}
+
+.team_wrapper:nth-child(7n+3) > .team_name_wrapper,
+.team_wrapper:nth-child(7n+3) > .team_score_wrapper {
+    color: #ffda58;
+}
+
+.team_wrapper:nth-child(7n+4) > .team_name_wrapper,
+.team_wrapper:nth-child(7n+4) > .team_score_wrapper {
+    color: #4fdddf;
+}
+
+.team_wrapper:nth-child(7n+5) > .team_name_wrapper,
+.team_wrapper:nth-child(7n+5) > .team_score_wrapper {
+    color: #3869c8;
+}
+
+.team_wrapper:nth-child(7n+6) > .team_name_wrapper,
+.team_wrapper:nth-child(7n+6) > .team_score_wrapper {
+    color: #fe68a8;
+}
+
+/* :nth-child(7n+1 of .score), :nth-child(7n+1 of .player_total), :nth-child(7n+1 of .team_name), :nth-child(7n+1 of .team_score)*/
