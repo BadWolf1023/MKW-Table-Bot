@@ -1,0 +1,54 @@
+body{
+    font: bold small-caps Verdana;
+    color: white;
+    text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
+
+}
+
+#tablebot_table {
+    box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
+    background-color: #1932c4;
+    border-radius: 10px;
+
+}
+.team_wrapper{
+
+    grid-template-areas: "tag score"
+                        "players players";
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1.5fr;
+    border-width: 2px;
+
+
+}
+.team_name_wrapper{
+    grid-area: tag;
+    border-right: none;
+    border-bottom: 2px solid white;
+}
+
+.team_score_wrapper{
+    border-left: none;
+    grid-area: score;
+    border-bottom: solid white;
+    border-width: 2px;
+}
+.team_players_wrapper{
+    grid-area: players;
+}
+
+.player_wrapper{
+    border-width: 2px;
+}
+
+.team_wrapper,
+.team_score_wrapper,
+.team_name_wrapper,
+.score_wrapper,
+.player_name_wrapper,
+.player_total_wrapper,
+.player_wrapper 
+{
+        border-color: white;
+}
+
