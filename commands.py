@@ -2416,7 +2416,6 @@ class TablingCommands:
                     await pic_view.send(message, file=file, embed=embed)
                     TableBot.last_wp_message[this_bot.channel_id] = pic_view.message
                     if len(pic_view.message.embeds) == 1: #The embeds were sent successfully
-                        print(pic_view.message.embeds[0].image.url)
                         this_bot.get_war().set_discord_picture_url(pic_view.message.embeds[0].image.url)     
                     
                 await pic_view_func(this_bot, server_prefix, is_lounge_server)

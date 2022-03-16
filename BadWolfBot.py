@@ -1132,6 +1132,7 @@ async def initialize():
     global bot
     endpoints.initialize(app)
     data_init()
+    await DataTracker.initialize()
 
     bot = BadWolfBot()
     await start_bot()
@@ -1141,7 +1142,6 @@ async def initialize():
     common.main = sys.modules[__name__]
 
 async def after_init():
-    await DataTracker.initialize()
     api_channelbot_interface.initialize(bot.get_table_bots)
     
 async def start_bot():
