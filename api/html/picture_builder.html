@@ -1,0 +1,48 @@
+<html>
+
+<head>
+
+    <script type="text/JavaScript">
+        <!--
+            var json_picture_endpoint = "/api/json/picture/";
+            var table_id = window.location.pathname.split('/')[window.location.pathname.split('/').length-1];
+            var full_json_picture_endpoint = window.location.protocol + "//" + window.location.host + json_picture_endpoint + table_id;
+        
+            async function fetchAsync (url) {
+              let response = await fetch(url);
+              return await response.json();
+            }
+            function pictureRefresh() {
+                var loop = async function() {
+                   let json_resp = await fetchAsync(full_json_picture_endpoint);
+                    if (json_resp.table_url != null){
+                        document.getElementById("table_picture").src = json_resp.table_url
+                    }
+                    
+                   // after short delay, call itself again
+                   setTimeout(loop, 5000);
+                }
+                loop();
+            }
+            document.addEventListener("DOMContentLoaded", pictureRefresh);
+         <!--
+            
+         //-->
+    </script>
+    <style>
+        body{
+            margin: 0px auto;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div id="tablebot_table">
+        <div id="picture_container">
+            <img id="table_picture" src="" alt="No picture. Do ?wp to load a picture here."/>
+        </div>
+    </div>
+</body></html>
+
+
