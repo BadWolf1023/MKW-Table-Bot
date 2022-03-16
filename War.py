@@ -48,7 +48,13 @@ class War(object):
         self.forcedRoomSize = {}
         self.teams = None
         self.temporary_tag_data = None
-        self.war_id = message_id
+        self.current_discord_picture_path = None
+    
+    def set_discord_picture_url(self, url: str):
+        self.current_discord_picture_path = url
+
+    def get_discord_picture_url(self):
+        return self.current_discord_picture_path
 
     def get_teams(self):  
         return self.teams

@@ -2404,7 +2404,7 @@ class TablingCommands:
                 embed.set_footer(text=temp+(request_message if request_message else ''))
                 
                 @TimerDebuggers.timer_coroutine
-                async def pic_view_func(this_bot, server_prefix, is_lounge_server):
+                async def pic_view_func(this_bot:ChannelBot, server_prefix, is_lounge_server):
                     pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
 
                     # Lounge submission button
@@ -2415,7 +2415,10 @@ class TablingCommands:
 
                     await pic_view.send(message, file=file, embed=embed)
                     TableBot.last_wp_message[this_bot.channel_id] = pic_view.message
-
+                    if len(pic_view.message.embeds) == 1: #The embeds were sent successfully
+                        print(pic_view.message.embeds[0].image.url)
+                        this_bot.get_war().set_discord_picture_url(pic_view.message.embeds[0].image.url)     
+                    
                 await pic_view_func(this_bot, server_prefix, is_lounge_server)
 
                 if error_types and len(error_types)>0:
