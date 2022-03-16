@@ -21,8 +21,6 @@ def initialize(app_: FastAPI):
     global app
     app = app_
     app.mount("/css", StaticFiles(directory="./api/css"))
-    app.mount("/js", StaticFiles(directory="./api/javascript"))
-
 
     @app.get(TEAM_SCORES_HTML_ENDPOINT + "{table_id}", response_class=HTMLResponse)
     def get_team_scores_html(
