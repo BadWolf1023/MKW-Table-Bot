@@ -18,6 +18,7 @@ TEAM_STYLE_FILE = f"{CSS_DATA_PATH}team_score_base.css"
 FULL_TABLE_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}full_table_builder.html"
 FULL_TABLE_STYLE_FILE = f"{CSS_DATA_PATH}full_scores_base.css"
 QUICK_INFO_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}quick_info.html"
+TABLE_PICTURE_HTML_FILE = f"{HTML_DATA_PATH}picture_builder.html"
 
 TEAM_STYLES = {"rainbow": f"{CSS_DATA_PATH}team_score_rainbow.css",
                "pastel": f"{CSS_DATA_PATH}team_score_pastel.css",
@@ -321,3 +322,7 @@ def build_info_page_html(table_id: int):
     finally:
         if soup is not None:
             soup.decompose()
+
+def get_picture_page_html():
+    with codecs.open(f"{API_DATA_PATH}{TABLE_PICTURE_HTML_FILE}", "r", "utf-8") as fp:
+        return str(BeautifulSoup(fp.read(), "html.parser"))
