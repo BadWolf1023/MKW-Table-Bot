@@ -17,6 +17,7 @@ two_deep_flatten = lambda t: [item for sublist in t for item in sublist]
 three_deep_flatten = lambda t: [item for L1 in t for L2 in L1 for item in L2]
 from typing import Tuple
 import common
+import discord
 
 
 """
@@ -103,30 +104,39 @@ hex_code_chars = set("abcdef0123456789")
 default_multiplier = 1
 default_races = 12
 
-rt_summary_channels = {"0":950004067558649876,
-                       "1":389457592952422402,
-                       "2":389457132912902154,
-                       "3":389251430680231947,
-                       "4":723263854124990525,
-                       "4-5":761789069813350430,
-                       "5":389457359887532032,
-                       "6":389251259384987648,
-                       "7":836668063369658398,
-                       "8":843941404510257152,
-                       "squadqueue":793265898436821072}
-ct_summary_channels = {"1":520810732280086558,
-                       "2":520810716089942017,
-                       "3":520810696943075328,
-                       "4":521133102425309196,
-                       "5":721942047023431682,
-                       "6":841730154929848410,
-                       "7":875532331081957478,
-                       "squadqueue":793265898436821072}
+rt_summary_channels = {}
+ct_summary_channels = {}
+sq_summaries = {"squadqueue": 793265898436821072}
+
 if common.is_dev:
     rt_summary_channels.clear()
     rt_summary_channels.update({"1":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "2":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "3":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "4":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "4-5":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "5":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "6":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "7":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "squadqueue":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID})
     ct_summary_channels.clear()
     ct_summary_channels.update({"1":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "2":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "3":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "4":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "4-5":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "5":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "6":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "7":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID, "squadqueue":common.TABLE_BOT_SERVER_BETA_THREE_CHANNEL_ID})
+
+
+def update_summary_channels(all_channels: list):
+    rt_summary_channels.clear()
+    ct_summary_channels.clear()
+    rt_summary_channels.update(sq_summaries)
+    ct_summary_channels.update(sq_summaries)
+    for channel in all_channels:
+        if isinstance(channel, discord.channel.TextChannel):
+            channel_name = channel.name.lower()
+            summary_channel_regex = "([rc]t)-(tier-)?(.+)-summary"
+            if m := re.search(summary_channel_regex, channel_name):
+                is_rt = m.groups()[0] == "rt"
+                channel_summary_key = str(m.groups()[-1])
+                if is_rt:
+                    rt_summary_channels[channel_summary_key] = channel.id
+                else:
+                    ct_summary_channels[channel_summary_key] = channel.id
+
+def update_mmr_ranges():
+    #Need to hit Lounge API to update ranges
+    pass
+
+
 
 def get_tier_and_summary_channel_id(tier:str, is_rt=True):
     tier = tier.lower().replace(" ", "").replace("-", "")
@@ -531,7 +541,7 @@ def process_table_text(tableText:str):
         return BAD_TABLE, BAD_TABLE
     if odd_ffa:
         good_lines.insert(0, "FFA")
-    tableText = "FFA\n" + tableText
+        tableText = "FFA\n" + tableText
     return tableText, good_lines
 
 def map_to_teams(players_and_scores, id_mapping):
@@ -646,7 +656,7 @@ async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=No
         return PLAYER_NOT_FOUND_EC, None, missing
     
     if tier == "squadqueue":
-        tier = determine_tier(id_mapping)
+        tier = determine_tier(id_mapping, is_rt)
         
     if is_rt:
         if tier not in rt_tier_mappings:
@@ -740,8 +750,32 @@ Axis 49|20|29
 Wheel4life [at] 25|38|19
 Spock [ca] 17|13|8
 Eimii [jp] 22|15|13"""
-    # loop = asyncio.get_event_loop()
-    # loop.run_until_complete(textInputUpdate(test_table_text_3, "1"))
-    # loop.close()
+    test_table_text_5 = """?ctupdate sq 12
+
+Timmi
+Tim [de] 37|28|23
+Revenant [us_sc] 25|29|34
+
+sos
+dhavz [in] 29|23|25
+Wob [us] 24|17|35
+
+JsFJ
+Empex [cl_lr] 28|29|47
+Helpy [de] 16|9|22
+
+S
+oatmeal [lc] 22|35|15
+margio [lb] 18|17|25
+
+E
+Spock [in] 19|44|21
+BadWolf [us_tx] 31|9|5
+
+G
+quiescent [us] 13|24|12
+noshow [us] 18|18|18"""
+    print(common.run_async_function_no_loop(textInputUpdate(test_table_text_5, "squadqueue")))
+
     
         

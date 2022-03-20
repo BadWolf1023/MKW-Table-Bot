@@ -1117,7 +1117,7 @@ class LoungeCommands:
             await message.channel.send(command_incorrect_format_message)
             return
 
-
+        MogiUpdate.update_summary_channels(message.guild.channels)
         tier_number, summary_channel_id = MogiUpdate.get_tier_and_summary_channel_id(args[1], is_primary)
         if tier_number is None:
             await message.channel.send(command_incorrect_format_message)
@@ -1141,10 +1141,10 @@ class LoungeCommands:
             using_table_bot_table = True
 
         else:
-            temp = message.content
-            command_removed = temp[temp.lower().index(args[0])+len(args[0]):].strip("\n\t ")
-            tier_number_removed = command_removed[command_removed.lower().index(args[1].lower())+len(args[1]):].strip("\n\t ")
-            table_text = command_removed[tier_number_removed.lower().index(args[2].lower())+len(args[2]):].strip("\n\t ")
+            temp = message.content.strip("\n\t ")
+            command_removed = temp[temp.index(args[0])+len(args[0]):].strip("\n\t ")
+            tier_number_removed = command_removed[command_removed.index(args[1])+len(args[1]):].strip("\n\t ")
+            table_text = tier_number_removed[tier_number_removed.index(args[2])+len(args[2]):].strip("\n\t ")
 
 
         lounge_server_updates.update_user_cooldown(message.author)
