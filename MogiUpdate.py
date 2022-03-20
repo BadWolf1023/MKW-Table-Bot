@@ -140,47 +140,16 @@ def update_mmr_ranges():
 
 def get_tier_and_summary_channel_id(tier:str, is_rt=True):
     tier = tier.lower().replace(" ", "").replace("-", "")
-    if is_rt:
-        if tier in ["t0", "0", "tier0"]:
-            return "0", rt_summary_channels["0"]
-        if tier in ["t1", "1", "tier1"]:
-            return "1", rt_summary_channels["1"]
-        if tier in ["t2", "2", "tier2"]:
-            return "2", rt_summary_channels["2"]
-        if tier in ["t3", "3", "tier3"]:
-            return "3", rt_summary_channels["3"]
-        if tier in ["t4", "4", "tier4"]:
-            return "4", rt_summary_channels["4"]
-        if tier in ["t45", "45", "tier45"]:
-            return "4-5", rt_summary_channels["4-5"]
-        if tier in ["t5", "5", "tier5"]:
-            return "5", rt_summary_channels["5"]
-        if tier in ["t6", "6", "tier6"]:
-            return "6", rt_summary_channels["6"]
-        if tier in ["t7", "7", "tier7"]:
-            return "7", rt_summary_channels["7"]
-        if tier in ["t8", "8", "tier8"]:
-            return "8", rt_summary_channels["8"]
-        
-        if tier in ["queuebot", "queue", "duoqueue", "triqueue", "trioqueue", "squad", "squadqueue", "sq"]:
-            return "squadqueue", rt_summary_channels["squadqueue"]
-    else:
-        if tier in ["t1", "1", "tier1"]:
-            return "1", ct_summary_channels["1"]
-        if tier in ["t2", "2", "tier2"]:
-            return "2", ct_summary_channels["2"]
-        if tier in ["t3", "3", "tier3"]:
-            return "3", ct_summary_channels["3"]
-        if tier in ["t4", "4", "tier4"]:
-            return "4", ct_summary_channels["4"]
-        if tier in ["t5", "5", "tier5"]:
-            return "5", ct_summary_channels["5"]
-        if tier in ["t6", "6", "tier6"]:
-            return "6", ct_summary_channels["6"]
-        if tier in ["t7", "7", "tier7"]:
-            return "7", ct_summary_channels["7"]
-        if tier in ["queuebot", "queue", "duoqueue", "triqueue", "trioqueue", "squad", "squadqueue", "sq"]:
-            return "squadqueue", ct_summary_channels["squadqueue"]
+    if tier.startswith("tier"):
+        tier = tier[len(tier):]
+    elif tier.startswith("t"):
+        tier = tier[1:]
+    if tier in {"queuebot", "queue", "duoqueue", "triqueue", "trioqueue", "squad", "squadqueue", "sq"}:
+        tier = "squadqueue"
+    
+    summary_channels = rt_summary_channels if is_rt else ct_summary_channels
+    if tier in summary_channels:
+        return tier, summary_channels[tier]
     return None, None
 
 def getTierFromChannelID(summaryChannelID:int) -> str:
