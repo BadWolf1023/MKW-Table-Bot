@@ -192,7 +192,7 @@ SLASH_EXTENSIONS = [
 switch_status = True
 
 lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.MKW_LOUNGE_SERVER_ID, common.author_is_reporter_plus)
-if common.is_beta:
+if common.is_beta or common.is_dev:
     lounge_submissions = Lounge.Lounge(common.LOUNGE_ID_COUNTER_FILE, common.LOUNGE_TABLE_UPDATES_FILE, common.TABLE_BOT_DISCORD_SERVER_ID, lambda _: True)
 
 
