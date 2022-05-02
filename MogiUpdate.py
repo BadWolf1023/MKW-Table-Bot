@@ -25,10 +25,6 @@ import discord
 {'format':'2','tier':'Tier 1','teams':[{'players':[{'player_id':1961,'races':12,'score':45},{'player_id':1913,'races':12,'score':25}]},{'players':[{'player_id':2409,'races':12,'score':40},{'player_id':824,'races':12,'score':24}]},{'players':[{'player_id':40,'races':12,'score':57},{'player_id':1739,'races':12,'score':45}]},{'players':[{'player_id':402,'races':12,'score':56},{'player_id':2195,'races':12,'score':46}]},{'players':[{'player_id':1567,'races':12,'score':50},{'player_id':2270,'races':12,'score':36}]},{'players':[{'player_id':375,'races':12,'score':30},{'player_id':1154,'races':12,'score':0}]}]}"""
 
 from typing import List
-rt_tier_mappings = {"0": "Tier 0","1":"Tier 1", "2":"Tier 2", "3":"Tier 3", "4":"Tier 4","4-5":"Tier 4", "5":"Tier 5", "6":"Tier 6", "7":"Tier 7", "8":"Top 50"}
-ct_tier_mappings = {"1":"Tier 1", "2":"Tier 2", "3":"Tier 3", "4":"Tier 4", "5":"Tier 5", "6":"Tier 6", "7":"Tier 7"}
-
-
 
 """
 Class X: 12000+ MMR - T5, T6, T7, T8
@@ -41,15 +37,15 @@ Class E: 4000-5499 MMR - T1, T2
 Class F: 2000-3999 MMR - T1
 Class G: <1999 MMR - T0
 """
-RT_MMR_CUTOFFS = [(1999,"0"),
-                  (3999,"1"),
-                  (5499,"2"),
-                  (6999,"3"),
-                  (7999,"4"),
-                  (8999,"5"),
-                  (10499,"6"),
-                  (11999,"7"),
-                  (999999,"8")]
+RT_MMR_CUTOFFS = [(1999,"Tier 0"),
+                  (3999,"Tier 1"),
+                  (5499,"Tier 2"),
+                  (6999,"Tier 3"),
+                  (7999,"Tier 4"),
+                  (8999,"Tier 5"),
+                  (10499,"Tier 6"),
+                  (11999,"Tier 7"),
+                  (999999,"Tier 8")]
 
 """
 Class X: 11750+ MMR - T4
@@ -60,12 +56,12 @@ Class C: 4500-6249 MMR - T2, T3
 Class D: 2250-4499 MMR - T1, T2
 Class E: <2249 MMR - T1
 """
-CT_MMR_CUTOFFS = [(2249, "1"),
-                  (4499, "2"),
-                  (6249, "3"),
-                  (999999, "4")
-                  # (5499, "5"),
-                  # (999999, "6")
+CT_MMR_CUTOFFS = [(2249, "Tier 1"),
+                  (4499, "Tier 2"),
+                  (6249, "Tier 3"),
+                  (999999, "Tier 4")
+                  # (5499, "Tier 5"),
+                  # (999999, "Tier 6")
                   ]
 
 
@@ -140,14 +136,12 @@ def update_mmr_ranges():
 
 def get_tier_and_summary_channel_id(tier:str, is_rt=True):
     tier = tier.lower().replace(" ", "").replace("-", "")
-    if tier.startswith("tier"):
-        tier = tier[len(tier):]
-    elif tier.startswith("t"):
-        tier = tier[1:]
     if tier in {"queuebot", "queue", "duoqueue", "triqueue", "trioqueue", "squad", "squadqueue", "sq"}:
         tier = "squadqueue"
     
     summary_channels = rt_summary_channels if is_rt else ct_summary_channels
+    if f"Tier {tier}" in summary_channels:
+        tier = f"Tier {tier}"
     if tier in summary_channels:
         return tier, summary_channels[tier]
     return None, None
@@ -157,12 +151,12 @@ def getTierFromChannelID(summaryChannelID:int) -> str:
         if channelID == summaryChannelID:
             if tier == "squadqueue":
                 return "RT Squad Queue"
-            return "RT Tier " + tier
+            return "RT " + tier.capitalize()
     for tier, channelID in ct_summary_channels.items():
         if tier == "squadqueue":
             return "CT Squad Queue"
         if channelID == summaryChannelID:
-            return "CT Tier " + tier
+            return "CT " + tier.capitalize()
     return "Unknown Tier"
     
 
@@ -626,15 +620,8 @@ async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=No
     
     if tier == "squadqueue":
         tier = determine_tier(id_mapping, is_rt)
-        
-    if is_rt:
-        if tier not in rt_tier_mappings:
-            return None, None, None
-        json_data["tier"] = rt_tier_mappings[tier]
-    else:
-        if tier not in ct_tier_mappings:
-            return None, None, None
-        json_data["tier"] = ct_tier_mappings[tier]
+    
+    json_data["tier"] = tier
     
     team_map, success = map_to_teams(players_and_scores, id_mapping)
     
