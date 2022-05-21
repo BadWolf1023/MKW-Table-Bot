@@ -3,7 +3,6 @@ import commands
 from discord.ext import commands as ext_commands
 from discord.commands import SlashCommandGroup, slash_command, Option
 from discord import Permissions
-from discord import permissions
 import common
 
 # REQUIRED_PERMISSIONS = [CommandPermission(id,2,True) for id in common.OWNERS]
@@ -16,11 +15,10 @@ class PrivateSlash(ext_commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    admin = SlashCommandGroup("admin", "Configure Table Bot admins", guild_ids=GUILDS)
+    admin = SlashCommandGroup("admin", "Configure Table Bot admins", guild_ids=GUILDS, default_member_permissions=Permissions(administrator=True))
 
     @admin.command(name="add",
     description="Add a bot admin")
-    # @discord.default_permissions(administrator=True)
     async def _add_admin(
         self,
         ctx: discord.ApplicationContext,
@@ -47,6 +45,7 @@ class PrivateSlash(ext_commands.Cog):
     description="Show Table Bot's logs",
     guild_ids=GUILDS,
     )
+    @discord.default_permissions(administrator=True)
     async def _get_logs(
         self, 
         ctx: discord.ApplicationContext
@@ -59,6 +58,7 @@ class PrivateSlash(ext_commands.Cog):
     description="Table Bot garbage collection",
     guild_ids=GUILDS,
     )
+    @discord.default_permissions(administrator=True)
     async def _garbage_collect(
         self,
         ctx: discord.ApplicationContext
@@ -71,6 +71,7 @@ class PrivateSlash(ext_commands.Cog):
     description="See statistics about Table Bot's server usage",
     guild_ids=GUILDS,
     )
+    @discord.default_permissions(administrator=True)
     async def _server_usage(
         self,
         ctx: discord.ApplicationContext
@@ -83,6 +84,7 @@ class PrivateSlash(ext_commands.Cog):
     description="Gracefully close Table Bot and save its data",
     guild_ids=GUILDS,
     )
+    @discord.default_permissions(administrator=True)
     async def _close_bot(
         self,
         ctx: discord.ApplicationContext

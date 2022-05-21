@@ -37,6 +37,7 @@ import asyncio
 from typing import Dict
 from fastapi import FastAPI
 import uvicorn
+from collections import defaultdict
 
 CT_WAR_LOUNGE_ECHELONS_CAT_ID = 851666104228249652
 WAR_LOUNGE_ECHELONS_CAT_ID = 751956338912788559
@@ -178,7 +179,8 @@ common.needPermissionCommands.update(needPermissionCommands)
 finished_on_ready = False
 REGISTER_SLASH_COMMANDS = True #whether the bot should register its slash commands (since there is no reason to use slash commands until April 2022)
 
-
+intents = discord.Intents.default()
+intents.message_content = True
 
 SLASH_EXTENSIONS = [
     'slash_cogs.TablingSlashCommands', 
@@ -206,10 +208,10 @@ def get_prefix(bot,msg: discord.Message) -> str:
     
     return ext_commands.when_mentioned_or(prefix)(bot, msg)
 
-class BadWolfBot(discord.Bot):
+class BadWolfBot(ext_commands.Bot):
     def __init__(self):
-        super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS) #debug_guilds=common.SLASH_GUILDS
-        self.table_bots: Dict[int, Dict[int, TableBot.ChannelBot]] = dict()
+        super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS, intents=intents) #debug_guilds=common.SLASH_GUILDS
+        self.table_bots: Dict[int, Dict[int, TableBot.ChannelBot]] = defaultdict(dict)
         self.lounge_submissions = lounge_submissions
         self.mentions = None
         # self.sug_views = {}
@@ -291,7 +293,7 @@ class BadWolfBot(discord.Bot):
         try:
             self.dumpDataAndBackup.start()
         except RuntimeError:
-            print("dumpData/Backup task already started")
+            print("dumpData+Backup task already started")
         try:
             checkBotAbuse.start()
         except RuntimeError:
@@ -336,7 +338,7 @@ class BadWolfBot(discord.Bot):
         if os.path.exists(common.TABLE_BOT_PKL_FILE):
             with open(common.TABLE_BOT_PKL_FILE, "rb") as pickle_in:
                 try:
-                    self.table_bots = p.load(pickle_in)
+                    self.table_bots = defaultdict(dict, p.load(pickle_in))
                 except:
                     print("Could not read in the pickle for table bots.")
     
@@ -425,8 +427,9 @@ class BadWolfBot(discord.Bot):
     def check_create_channel_bot(self, message:discord.Message) -> TableBot.ChannelBot:
         server_id = message.guild.id
         channel_id = message.channel.id
-        if server_id not in self.table_bots:
-            self.table_bots[server_id] = {}
+        # if server_id not in self.table_bots:
+        #     self.table_bots[server_id] = {}
+        # print(channel_id in self.table_bots[server_id])
         if channel_id not in self.table_bots[server_id]:
             self.table_bots[server_id][channel_id] = createEmptyTableBot(server_id, channel_id)
         self.table_bots[server_id][channel_id].updatedLastUsed()
@@ -510,7 +513,7 @@ class BadWolfBot(discord.Bot):
     
     async def on_message(self, message: discord.Message):
         """
-        On_message bot event overridden - could refactor into bot.commands, but a lot of work
+        On_message bot event overridden
         """
         if message.author == self.user:
             return
@@ -520,7 +523,6 @@ class BadWolfBot(discord.Bot):
             return
         if common.is_beta and not InteractionUtils.check_beta_server(message):
             return
-
         server_prefix = '?'
         this_bot = None
 

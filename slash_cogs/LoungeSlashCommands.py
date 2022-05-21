@@ -112,8 +112,6 @@ class LoungeSlash(ext_commands.Cog):
 
     @update.command(name='rt',
     description="Submit an RT table to updaters")
-    # @ext_commands.has_any_role(**common.reporter_plus_roles)
-    @discord.default_permissions(administrator=True)
     async def _rt_update(
         self, 
         ctx: discord.ApplicationContext,
@@ -189,7 +187,6 @@ class LoungeSlash(ext_commands.Cog):
         
         await commands.LoungeCommands.pending_submissions_command(message, self.bot.lounge_submissions)
     
-
 
 def setup(bot):
     bot.add_cog(LoungeSlash(bot))

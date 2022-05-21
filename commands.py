@@ -1925,7 +1925,6 @@ class TablingCommands:
             await message.channel.send(f"Wait {rlCooldown} more seconds before using this command.", delete_after=5.0)
             return
 
-
         server_id = message.guild.id
         author_id = message.author.id
         message_id = message.id
@@ -2591,77 +2590,47 @@ class TablingCommands:
     @staticmethod
     async def transfer_table_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool, table_bots, client):
         if len(args) == 1: #send usage
-            return await message.channel.send(f"Usage: `{server_prefix}copyfrom [channelID] (guildID)`\nYou don't need to include the `guildID` if the channel you are transferring from is in this server, otherwise you must include it.")
+            return await message.channel.send(f"Usage: `{server_prefix}copyfrom [channelID]`")
 
-        if len(args)==2: #copy within server
-            channel = args[1]
-            try:
-                channel_id = int(channel.lstrip('<#').rstrip('>'))
-            except:
-                return await message.channel.send("Invalid channel.")
-            
-            if channel_id == message.channel.id:
-                return await message.channel.send("You can't copy from the same channel.")
-
-            channel = message.guild.get_channel(channel_id)
-            if not channel:
-                return await message.channel.send("The channel you provided could not be found in this server. If you are trying to copy from a channel outside of this server, you must include the `guildID` as well.")
-
-            try:
-                copied_instance = copy.deepcopy(table_bots[message.guild.id][channel_id])
-            except KeyError:
-                return await message.channel.send("The table you are trying to copy has not been loaded.")
-
-            ensure_table_loaded_check(copied_instance, server_prefix, is_lounge_server, custom_message="The table you are trying to copy has not been loaded.")
-
-            copied_instance.lastWPTime = None
-            copied_instance.channel_id = channel_id
-            table_bots[message.guild.id][message.channel.id] = copied_instance #change this instance
-
-            pic_view = Components.PictureView(copied_instance, server_prefix, is_lounge_server)
-          
-            return await pic_view.send(message, content=f"Table has been copied from <#{channel_id}>.")
-        
-        # copy from another server
+        # if len(args)==2: #copy within server
+        channel = args[1]
         try:
-            channel_id = int(args[1].lstrip('<#').rstrip('>'))
+            channel_id = int(channel.lstrip('<#').rstrip('>'))
         except:
-            return await message.channel.send("Invalid channel.")
-        try:
-            server_id = int(args[2])
-        except:
-            return await message.channel.send("Invalid server ID. Use the `Copy ID` function to get a server's ID.")
-
-        guild = client.get_guild(server_id)
-        if not guild:
-            return await message.channel.send("The server you provided could not be found. *Am I added to the server you are trying to copy from, and do I have access to the channel you are trying to copy from?*")
-
-        channel = guild.get_channel(channel_id)
-        if not channel:
-            return await message.channel.send("The channel could not be found in the provided server. Ensure that I have access to the channel you are trying to copy from.")
+            return await message.channel.send("Invalid channel. You must provide either the channel ID or the channel mention.")
         
         if channel_id == message.channel.id:
             return await message.channel.send("You can't copy from the same channel.")
+
+        guild_id = None
+
+        if channel_id in table_bots[message.guild.id]:
+            guild_id = message.guild.id
         
+        if not guild_id:
+            for server_id, channels in table_bots.items():
+                if channel_id in channels:
+                    guild_id = server_id
         try:
-            copied_instance = copy.deepcopy(table_bots[server_id][channel_id])
+            copied_instance = copy.deepcopy(table_bots[guild_id][channel_id])
         except KeyError:
-            return await message.channel.send("The table you are trying to copy has not been loaded.")
+            return await message.channel.send("The table you are trying to copy has not been loaded, or the channel couldn't be found. Make sure you enter the correct channel ID and that a table is active in that channel.")
 
         ensure_table_loaded_check(copied_instance, server_prefix, is_lounge_server, custom_message="The table you are trying to copy has not been loaded.")
 
         copied_instance.lastWPTime = None
-        copied_instance.channel_id = channel_id
-        copied_instance.server_id = server_id
-        copied_instance.set_style_and_graph(server_id)
+        copied_instance.channel_id = message.channel.id
+        if guild_id != copied_instance.server_id:
+            copied_instance.server_id = message.guild.id
+            copied_instance.set_style_and_graph(message.guild.id)
+            copied_instance.set_dc_points(message.guild.id)
 
-        if message.guild.id not in table_bots:
-            table_bots[message.guild.id] = {}
         
-        table_bots[message.guild.id][message.channel.id] = copied_instance
+        table_bots[message.guild.id][message.channel.id] = copied_instance #change current channel's instance
 
         pic_view = Components.PictureView(copied_instance, server_prefix, is_lounge_server)
-        await pic_view.send(message, content=f"Table has been copied from <#{channel_id}> in {guild.name}.")
+        
+        await pic_view.send(message, content=f"Table has been copied from <#{channel_id}>.")
 
 
 #============== Helper functions ================

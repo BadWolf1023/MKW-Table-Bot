@@ -209,8 +209,8 @@ def convert_to_warFormat(warFormat: str):
         return warFormat
     
     try:
-        warFormat = int(warFormat[0])
-        return format_map[warFormat]
+        mappable = int(warFormat)
+        return format_map[mappable]
     except:
         return warFormat
 

@@ -97,8 +97,11 @@ def build_mentions(data):
         smart_type_value = ST.SmartLookupTypes(option.get('value', ''))
         if smart_type_value.is_discord_mention():
             found_discord_ids.append(smart_type_value.modified_original)
-    
+
     resolved_data = data.get('resolved', {})
+    if not resolved_data:
+        return result
+        
     users = resolved_data.get('users', {})
     members = resolved_data.get('members', {})
     for discord_id in found_discord_ids:

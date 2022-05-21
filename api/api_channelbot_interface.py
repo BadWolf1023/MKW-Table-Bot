@@ -21,6 +21,6 @@ def get_team_score_data(table_bot: TableBot.ChannelBot):
     return table_sorted_data
 
 
-def initialize(get_table_bots_):
+def initialize(get_table_bots_func):
     global get_table_bots
-    get_table_bots = get_table_bots_
+    get_table_bots = get_table_bots_func
