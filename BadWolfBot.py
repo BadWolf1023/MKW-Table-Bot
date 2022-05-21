@@ -20,6 +20,7 @@ from api import api_channelbot_interface, endpoints
 
 #External library imports for this file
 import discord
+import time
 from discord.ext import tasks
 from discord.ext import commands as ext_commands
 import traceback
@@ -214,6 +215,7 @@ class BadWolfBot(ext_commands.Bot):
         self.table_bots: Dict[int, Dict[int, TableBot.ChannelBot]] = defaultdict(dict)
         self.lounge_submissions = lounge_submissions
         self.mentions = None
+        self.mii_cooldowns = {}
         # self.sug_views = {}
         # self.pic_views = {}
 
@@ -289,6 +291,10 @@ class BadWolfBot(ext_commands.Bot):
             self.stay_alive_503.start()
         except RuntimeError:
             print("stay_alive task already started")
+        try:
+            self.prune_mii_cooldowns()
+        except RuntimeError:
+            print("prune_mii_cooldowns task already started")
                 
         try:
             self.dumpDataAndBackup.start()
@@ -298,6 +304,7 @@ class BadWolfBot(ext_commands.Bot):
             checkBotAbuse.start()
         except RuntimeError:
             print("checkBotAbuse task already started")
+        
 
         self.mentions = [f'<@!{self.user.id}>', f'<@{self.user.id}>']
     
@@ -313,6 +320,13 @@ class BadWolfBot(ext_commands.Bot):
             for lounge_bot_channel_id in self.table_bots[lock_server_id]:
                 if self.table_bots[lock_server_id][lounge_bot_channel_id].isFinishedLounge(): 
                     self.table_bots[lock_server_id][lounge_bot_channel_id].freeLock()
+    
+    # For memory purposes; don't want dictionary to keep ballooning
+    @tasks.loop(minutes=15)
+    async def prune_mii_cooldowns(self):
+        for user, last_used in self.mii_cooldowns.items()[::-1]:
+            if time.monotonic()-last_used > 5:
+                self.mii_cooldowns.pop(user)
 
     #This function will run every 15 min, removing any table bots that are
     #inactive, as defined by TableBot.isinactive() (currently 2.5 hours)

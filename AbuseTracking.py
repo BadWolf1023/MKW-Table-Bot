@@ -16,7 +16,7 @@ bot_abuse_tracking = defaultdict(lambda: [0, [], [], 0])
 blacklisted_command_count = defaultdict(int)
 
 BOT_ABUSE_REPORT_CHANNEL = None
-ABUSE_WHITELIST = { 366774710186278914 }
+ABUSE_WHITELIST = {366774710186278914}
 
 WARN_MESSAGES_PER_SECOND_RATE = .48
 BAN_RATE_MESSAGES_PER_SECOND = .5
@@ -48,19 +48,11 @@ def is_hitting_ban_rate(author_id):
 
 async def abuse_track_check(message:discord.Message):
     author_id = message.author.id
-    if author_id in ABUSE_WHITELIST: return
+    if author_id in ABUSE_WHITELIST or (common.is_dev and author_id==common.properties['dev_id']): return
     bot_abuse_tracking[author_id][0] += 1
     bot_abuse_tracking[author_id][1].append(message.content)
     bot_abuse_tracking[author_id][2].append(datetime.now())
     messages_sent = bot_abuse_tracking[author_id][1]
-
-    if is_hitting_ban_rate(author_id) and bot_abuse_tracking[author_id][3] >= 2: #certain spam and we already warned them
-        UserDataProcessing.add_Blacklisted_user(str(author_id), f"Automated ban - you spammed the bot. This hurts users everywhere because it slows down the bot for everyone. You can appeal in 1 week to a bot admin or in Bad Wolf's server - to join the server, use the invite code: {common.TABLEBOT_SERVER_INVITE_CODE}")
-        if BOT_ABUSE_REPORT_CHANNEL is not None:
-            embed = create_notification_embed(message, messages_sent, ban=True)
-            await BOT_ABUSE_REPORT_CHANNEL.send(embed=embed)
-
-        raise TableBotExceptions.BlacklistedUser("blacklisted user")
 
     if is_hitting_warn_rate(author_id): #potential spam, warn them if we haven't already
         bot_abuse_tracking[author_id][3] += 1
@@ -71,6 +63,14 @@ async def abuse_track_check(message:discord.Message):
             await BOT_ABUSE_REPORT_CHANNEL.send(embed=embed)
 
         raise TableBotExceptions.WarnedUser("warned user")
+        
+    if is_hitting_ban_rate(author_id) and bot_abuse_tracking[author_id][3] >= 2: #certain spam and we already warned them
+        UserDataProcessing.add_Blacklisted_user(str(author_id), f"Automated ban - you spammed the bot. This hurts users everywhere because it slows down the bot for everyone. You can appeal in 1 week to a bot admin or in Bad Wolf's server - to join the server, use the invite code: {common.TABLEBOT_SERVER_INVITE_CODE}")
+        if BOT_ABUSE_REPORT_CHANNEL is not None:
+            embed = create_notification_embed(message, messages_sent, ban=True)
+            await BOT_ABUSE_REPORT_CHANNEL.send(embed=embed)
+
+        raise TableBotExceptions.BlacklistedUser("blacklisted user")
 
     return True
 

@@ -32,6 +32,7 @@ import TimerDebuggers
 
 #Other library imports, other people codes
 import math
+import time
 from tabulate import tabulate
 from typing import List, Set, Union, Tuple
 from collections.abc import Callable
@@ -910,12 +911,17 @@ class OtherCommands:
             return
         await mkwx_check(message, "Mii command disabled.")
 
+        if cooldown:=mii_cooldown_check(message.author.id):
+            return await message.channel.send(f"Wait {common.MII_COOLDOWN-cooldown:.1f} seconds before using this command again.")
+
         to_load = SmartTypes.create_you_discord_id(message.author.id)
         if len(args) > 1:
             to_load = " ".join(args[1:])
         smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
         await smart_type.lounge_api_update()
         fcs = smart_type.get_fcs()
+        # common.client.mii_cooldowns[message.author.id] = time.monotonic()
+
         descriptive, pronoun = smart_type.get_clean_smart_print(message)
         if fcs is None:
             await message.channel.send(f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?")
@@ -923,6 +929,8 @@ class OtherCommands:
 
         FC = fcs[0]
         mii_dict = await MiiPuller.get_miis([FC], str(message.id))
+        common.client.mii_cooldowns[message.author.id] = time.monotonic()
+
         if isinstance(mii_dict, str):
             await message.channel.send(mii_dict)
             return
@@ -2634,6 +2642,17 @@ class TablingCommands:
 
 
 #============== Helper functions ================
+
+def mii_cooldown_check(user):
+    last_used = common.client.mii_cooldowns.get(user, None)
+    if not last_used:
+        return last_used
+    interval = time.monotonic()-last_used
+
+    if interval >= common.MII_COOLDOWN:
+        return None
+    
+    return interval
 
 def get_suggestion(errors, last_race, bot):
     chosen_suggestion = None

@@ -101,7 +101,7 @@ def build_mentions(data):
     resolved_data = data.get('resolved', {})
     if not resolved_data:
         return result
-        
+
     users = resolved_data.get('users', {})
     members = resolved_data.get('members', {})
     for discord_id in found_discord_ids:
