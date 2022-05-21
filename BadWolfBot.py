@@ -322,7 +322,7 @@ class BadWolfBot(ext_commands.Bot):
                     self.table_bots[lock_server_id][lounge_bot_channel_id].freeLock()
     
     # For memory purposes; don't want dictionary to keep ballooning
-    @tasks.loop(minutes=15)
+    @tasks.loop(minutes=25)
     async def prune_mii_cooldowns(self):
         for user, last_used in self.mii_cooldowns.items()[::-1]:
             if time.monotonic()-last_used > 5:
