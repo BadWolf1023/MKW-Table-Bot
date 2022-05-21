@@ -1569,6 +1569,11 @@ class TablingCommands:
     async def rxx_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
         await message.channel.send(this_bot.getRoom().getRXXText())
+    
+    @staticmethod
+    async def table_id_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
+        ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
+        await message.channel.send(this_bot.getRoom().get_table_id_text())
 
     @staticmethod
     async def predict_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix: str, lounge_server_updates: Lounge.Lounge):
@@ -2505,6 +2510,10 @@ class TablingCommands:
         raceNum = int(args[1])
         if raceNum < 1 or raceNum > len(this_bot.getRoom().races):
             await message.channel.send("You haven't played that many races yet!")
+            return
+
+        if len(this_bot.getRoom().races) == 1:
+            await message.channel.send("You cannot remove every race.")
             return
 
         command, save_state = this_bot.get_save_state(message.content)
