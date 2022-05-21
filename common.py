@@ -251,9 +251,9 @@ embed_page_time = timedelta(minutes=2)
 base_url_lorenzi = "https://gb.hlorenzi.com/table.png?data="
 base_url_edit_table_lorenzi = "https://gb.hlorenzi.com/table?data="
 
-BAD_WOLF_ID = 683193773055934474
-CW_ID = 683193773055934474
-ANDREW_ID = 683193773055934474
+BAD_WOLF_ID = 706120725882470460 
+CW_ID = 366774710186278914
+ANDREW_ID = 267395889423712258
 
 TABLEBOT_SERVER_INVITE_CODE = "K937DqM"
 
