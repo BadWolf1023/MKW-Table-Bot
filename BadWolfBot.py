@@ -1141,26 +1141,26 @@ async def initialize():
 
     bot = BadWolfBot()
     await start_bot()
-    await after_init()
+    await api_init()
 
     common.client = bot
     common.main = sys.modules[__name__]
 
-async def after_init():
+async def api_init():
     api_channelbot_interface.initialize(bot.get_table_bots)
     
 async def start_bot():
-    try:
-        if common.is_dev:
-            key = testing_bot_key
-        elif common.is_beta:
-            key = beta_bot_key
-        else:
-            key = real_bot_key
-        asyncio.create_task(bot.start(key))
-    except KeyboardInterrupt:
-        await bot.close()
-        raise
+    # try:
+    if common.is_dev:
+        key = testing_bot_key
+    elif common.is_beta:
+        key = beta_bot_key
+    else:
+        key = real_bot_key
+    asyncio.create_task(bot.start(key))
+    # except KeyboardInterrupt:
+    #     await bot.close()
+    #     raise
 
 async def close_wrapper():
     return await bot.close()

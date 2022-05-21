@@ -1,10 +1,9 @@
 import discord
-from discord import permissions
 from discord.ext import commands as ext_commands
-from discord.commands import slash_command, SlashCommandGroup, CommandPermission, Option
+from discord.commands import slash_command, SlashCommandGroup, Option
 import commands
 import common
-import Race
+# import Race
 # from data_tracking import DataTracker
 
 EMPTY_CHAR = "\u200b"
