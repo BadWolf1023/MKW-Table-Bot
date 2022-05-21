@@ -829,7 +829,7 @@ class BadWolfBot(discord.Bot):
             await commands.OtherCommands.player_page_command(message, args)
         
         elif main_command in MII_TERMS:
-            await commands.OtherCommands.mii_command(message, args, this_bot)
+            await commands.OtherCommands.mii_command(message, args)
         
         elif main_command in SET_TABLE_NAME_TERMS:
             await commands.TablingCommands.set_table_name_command(message, this_bot, args, server_prefix, is_lounge_server)
