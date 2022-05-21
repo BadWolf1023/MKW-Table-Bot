@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands as ext_commands
-from discord.commands import slash_command, SlashCommandGroup, CommandPermission, Option, permissions
+from discord.commands import slash_command, SlashCommandGroup, Option, permissions
 
 import TableBot
 import commands
@@ -8,7 +8,7 @@ import common
 
 EMPTY_CHAR = "\u200b"
 GUILDS = common.SLASH_GUILDS
-SETTING_PERMISSIONS = [CommandPermission("owner", 2, True)]
+# SETTING_PERMISSIONS = [CommandPermission("owner", 2, True)]
 
 PLAYER_ARG_DESCRIPTION = "Lounge name, FC, Discord user (mention), or Discord ID"
 class MiscSlash(ext_commands.Cog):

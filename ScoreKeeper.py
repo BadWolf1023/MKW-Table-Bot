@@ -348,7 +348,6 @@ def build_table_text(table_dict):
             cur_team_lines.append(team_data["table_penalty_str"])
         team_texts.append("\n".join(cur_team_lines))
     return table_str + "\n\n".join(team_texts)
-        
 
 
 def input_table_text(table_dict):

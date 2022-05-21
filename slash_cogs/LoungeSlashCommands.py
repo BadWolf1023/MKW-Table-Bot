@@ -1,11 +1,12 @@
 import discord
-from discord.commands import slash_command, Option, CommandPermission, SlashCommandGroup
+from discord.commands import slash_command, Option, SlashCommandGroup
 from discord.ext import commands as ext_commands
+from discord import permissions
 import commands
 import common
 import InteractionUtils
 
-REQUIRED_PERMISSIONS = [CommandPermission(role, 1, True, (common.TABLE_BOT_DISCORD_SERVER_ID if common.is_beta else common.MKW_LOUNGE_SERVER_ID)) for role in list(common.reporter_plus_roles)]
+# REQUIRED_PERMISSIONS = [CommandPermission(role, 1, True, (common.TABLE_BOT_DISCORD_SERVER_ID if common.is_beta else common.MKW_LOUNGE_SERVER_ID)) for role in list(common.reporter_plus_roles)]
 GUILDS = [common.MKW_LOUNGE_SERVER_ID]
 if common.is_beta:
     GUILDS = [common.TABLE_BOT_DISCORD_SERVER_ID]
@@ -111,10 +112,12 @@ class LoungeSlash(ext_commands.Cog):
 
     @update.command(name='rt',
     description="Submit an RT table to updaters")
+    # @ext_commands.has_any_role(**common.reporter_plus_roles)
+    @discord.default_permissions(administrator=True)
     async def _rt_update(
         self, 
         ctx: discord.ApplicationContext,
-        tier: Option(str, "Tier of event", choices=['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'squadqueue']),
+        tier: Option(str, "Tier of event", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'squadqueue']),
         races_played: Option(int, "Number of races played in event"),
         table_text: Option(bool, "Whether you're including table text for a manual submission", required=False, default=None)
     ):
@@ -133,7 +136,7 @@ class LoungeSlash(ext_commands.Cog):
     async def _ct_update(
         self,
         ctx: discord.ApplicationContext,
-        tier: Option(str, "Tier of event", choices=['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'squadqueue']),
+        tier: Option(str, "Tier of event", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'squadqueue']),
         races_played: Option(int, "Number of races played in event"),
         table_text: Option(bool, "Whether you're including table text for a manual submission", required=False, default=None)
     ):
@@ -149,7 +152,7 @@ class LoungeSlash(ext_commands.Cog):
     
     @slash_command(name="approve",
     description="Approve a lounge submission",
-    guild_ids=GUILDS, permissions=REQUIRED_PERMISSIONS)
+    guild_ids=GUILDS)
     async def _approve_submission(
         self,
         ctx: discord.ApplicationContext,
@@ -162,7 +165,7 @@ class LoungeSlash(ext_commands.Cog):
     
     @slash_command(name="deny",
     description="Deny a lounge submission",
-    guild_ids=GUILDS, permissions=REQUIRED_PERMISSIONS)
+    guild_ids=GUILDS)
     async def _deny_submission(
         self,
         ctx: discord.ApplicationContext,
@@ -177,7 +180,7 @@ class LoungeSlash(ext_commands.Cog):
     
     @slash_command(name="pending",
     description="Show lounge submissions awaiting updater approval",
-    guild_ids=GUILDS, permissions=REQUIRED_PERMISSIONS)
+    guild_ids=GUILDS)
     async def _pending_submissions(
         self,
         ctx: discord.ApplicationContext
