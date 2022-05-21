@@ -904,7 +904,7 @@ class OtherCommands:
     
 
     @staticmethod
-    async def mii_command(message: discord.Message, args: List[str]):
+    async def mii_command(message: discord.Message, args: List[str], this_bot:TableBot.ChannelBot):
         if common.MII_COMMAND_DISABLED and not common.is_bot_owner(message.author):
             await message.channel.send("To ensure Table Bot remains stable and can access the website, miis have been disabled at this time.")
             return
@@ -1568,12 +1568,12 @@ class TablingCommands:
     @staticmethod
     async def rxx_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-        await message.channel.send(this_bot.getRoom().getRXXText())
+        await message.channel.send(f"f{this_bot.getRoom().getRXXText()}\n**Table ID:** {this_bot.getRoom().getTableIDText()}")
     
     @staticmethod
     async def table_id_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-        await message.channel.send(this_bot.getRoom().get_table_id_text())
+        await message.channel.send(this_bot.getRoom().getTableIDText())
 
     @staticmethod
     async def predict_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix: str, lounge_server_updates: Lounge.Lounge):

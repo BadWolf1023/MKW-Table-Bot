@@ -25,7 +25,6 @@ from discord.ext import tasks
 from discord.ext import commands as ext_commands
 import traceback
 import sys
-import atexit
 import signal
 import dill as p
 import psutil
@@ -830,7 +829,7 @@ class BadWolfBot(discord.Bot):
             await commands.OtherCommands.player_page_command(message, args)
         
         elif main_command in MII_TERMS:
-            await commands.OtherCommands.mii_command(message, args)
+            await commands.OtherCommands.mii_command(message, args, this_bot)
         
         elif main_command in SET_TABLE_NAME_TERMS:
             await commands.TablingCommands.set_table_name_command(message, this_bot, args, server_prefix, is_lounge_server)
