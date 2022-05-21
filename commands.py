@@ -904,7 +904,7 @@ class OtherCommands:
     
 
     @staticmethod
-    async def mii_command(message: discord.Message, args: List[str], this_bot:TableBot.ChannelBot):
+    async def mii_command(message: discord.Message, args: List[str]):
         if common.MII_COMMAND_DISABLED and not common.is_bot_owner(message.author):
             await message.channel.send("To ensure Table Bot remains stable and can access the website, miis have been disabled at this time.")
             return
