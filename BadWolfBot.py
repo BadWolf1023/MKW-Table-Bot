@@ -443,7 +443,6 @@ class BadWolfBot(ext_commands.Bot):
         channel_id = message.channel.id
         # if server_id not in self.table_bots:
         #     self.table_bots[server_id] = {}
-        # print(channel_id in self.table_bots[server_id])
         if channel_id not in self.table_bots[server_id]:
             self.table_bots[server_id][channel_id] = createEmptyTableBot(server_id, channel_id)
         self.table_bots[server_id][channel_id].updatedLastUsed()
@@ -717,8 +716,7 @@ class BadWolfBot(ext_commands.Bot):
         
         elif main_command in INVITE_TERMS:
             await message.channel.send(f"{bot_invite_picture}\n\n**Are you on mobile and you don't see this button? Update your Discord app and it should appear!**")              
-        
-            
+         
         elif main_command in RACE_RESULTS_TERMS:
             await commands.TablingCommands.race_results_command(message, this_bot, args, server_prefix, is_lounge_server)
                         
@@ -1166,7 +1164,6 @@ async def api_init():
     api_channelbot_interface.initialize(bot.get_table_bots)
     
 async def start_bot():
-    # try:
     if common.is_dev:
         key = testing_bot_key
     elif common.is_beta:
@@ -1174,9 +1171,6 @@ async def start_bot():
     else:
         key = real_bot_key
     asyncio.create_task(bot.start(key))
-    # except KeyboardInterrupt:
-    #     await bot.close()
-    #     raise
 
 async def close_wrapper():
     return await bot.close()
