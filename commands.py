@@ -1117,7 +1117,7 @@ class LoungeCommands:
             await message.channel.send(command_incorrect_format_message)
             return
 
-        MogiUpdate.update_summary_channels(message.guild.channels)
+        MogiUpdate.update_summary_channels(await message.guild.fetch_channels())
         tier_number, summary_channel_id = MogiUpdate.get_tier_and_summary_channel_id(args[1], is_primary)
         if tier_number is None:
             await message.channel.send(command_incorrect_format_message)
