@@ -259,7 +259,7 @@ class PictureView(discord.ui.View):
             return False
         
         if len(self.children) == 0:
-            self.on_timeout()
+            await self.on_timeout()
             return False
 
         if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child
