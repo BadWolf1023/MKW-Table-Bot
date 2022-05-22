@@ -292,7 +292,7 @@ class BadWolfBot(ext_commands.Bot):
         except RuntimeError:
             print("stay_alive task already started")
         try:
-            self.prune_mii_cooldowns()
+            self.prune_mii_cooldowns.start()
         except RuntimeError:
             print("prune_mii_cooldowns task already started")
                 
@@ -300,10 +300,10 @@ class BadWolfBot(ext_commands.Bot):
             self.dumpDataAndBackup.start()
         except RuntimeError:
             print("dumpData+Backup task already started")
-        try:
-            checkBotAbuse.start()
-        except RuntimeError:
-            print("checkBotAbuse task already started")
+        # try:
+        #     checkBotAbuse.start()
+        # except RuntimeError:
+        #     print("checkBotAbuse task already started")
         
 
         self.mentions = [f'<@!{self.user.id}>', f'<@{self.user.id}>']
@@ -322,9 +322,9 @@ class BadWolfBot(ext_commands.Bot):
                     self.table_bots[lock_server_id][lounge_bot_channel_id].freeLock()
     
     # For memory purposes; don't want dictionary to keep ballooning
-    @tasks.loop(minutes=25)
+    @tasks.loop(hours=8)
     async def prune_mii_cooldowns(self):
-        for user, last_used in self.mii_cooldowns.items()[::-1]:
+        for user, last_used in list(self.mii_cooldowns.items())[::-1]:
             if time.monotonic()-last_used > 5:
                 self.mii_cooldowns.pop(user)
 
@@ -456,10 +456,11 @@ class BadWolfBot(ext_commands.Bot):
         message = InteractionUtils.create_proxy_msg(interaction)
         command = interaction.data['name']
 
-        await AbuseTracking.blacklisted_user_check(message)
-        await AbuseTracking.abuse_track_check(message)
-
         log_command_sent(message)
+
+        # await AbuseTracking.blacklisted_user_check(message)
+        # if await AbuseTracking.abuse_track_check(message): 
+        #     return
 
         is_lounge_server = InteractionUtils.simulating_lounge_server(interaction)
         
@@ -550,8 +551,10 @@ class BadWolfBot(ext_commands.Bot):
 
             #Message doesn't start with the server's prefix and isn't ?help
             if self.should_send_help(message):
-                await AbuseTracking.blacklisted_user_check(message)
-                await AbuseTracking.abuse_track_check(message)
+                log_command_sent(message)
+                # await AbuseTracking.blacklisted_user_check(message)
+                # if await AbuseTracking.abuse_track_check(message): 
+                #     return
                 await help_documentation.send_help(message, [], server_prefix, is_lounge_server)
                 return
                 
@@ -569,11 +572,12 @@ class BadWolfBot(ext_commands.Bot):
             if message.channel.category_id in TEMPORARY_VR_CATEGORIES and main_command not in ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS:
                 return
                 
-            await AbuseTracking.blacklisted_user_check(message)
-            await AbuseTracking.abuse_track_check(message)
-                    
             log_command_sent(message)
-            
+
+            # await AbuseTracking.blacklisted_user_check(message)
+            # if await AbuseTracking.abuse_track_check(message): 
+            #     return
+                                
             this_bot:TableBot.ChannelBot = self.check_create_channel_bot(message)
             if is_lounge_server and this_bot.isFinishedLounge():
                 this_bot.freeLock()
@@ -1028,6 +1032,7 @@ async def send_lounge_locked_message(message, this_bot):
             await message.channel.send(f"{to_send} {this_bot.getBotunlockedInStr()}")
 
 def log_command_sent(message:discord.Message, extra_text=""):
+    print("LOGGED MESSAGE:", message.content)
     common.log_text(f"Server: {message.guild} - Channel: {message.channel} - User: {message.author} - Command: {message.content} {extra_text}")
     return common.full_command_log(message, extra_text)
 
@@ -1065,9 +1070,9 @@ def private_data_init():
 #Every 60 seconds, checks to see if anyone was "spamming" the bot and notifies a private channel in my server
 #Of the person(s) who were warned
 #Also clears the abuse tracking every 60 seconds
-@tasks.loop(minutes=1)
-async def checkBotAbuse():
-    await AbuseTracking.check_bot_abuse()
+# @tasks.loop(minutes=1)
+# async def checkBotAbuse():
+#     await AbuseTracking.check_bot_abuse()
         
  
 def load_CTGP_region_pickle():

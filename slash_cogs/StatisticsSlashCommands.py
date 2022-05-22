@@ -46,11 +46,10 @@ class StatisticsSlash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, type.lower()]
 
-        if days is not None:
-            args.append(str(days))
         if tier is not None:
             args.append(tier)
-        
+        if days is not None:
+            args.append(str(days))
         
         await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, is_top_tracks=True)
     
@@ -69,10 +68,10 @@ class StatisticsSlash(ext_commands.Cog):
         command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, type.lower()]
 
-        if days is not None:
-            args.append(str(days))
         if tier is not None:
             args.append(tier)
+        if days is not None:
+            args.append(str(days))
 
         await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, is_top_tracks=False)
     
