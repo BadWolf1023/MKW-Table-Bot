@@ -257,6 +257,10 @@ class PictureView(discord.ui.View):
         if not allowed:
             await interaction.response.send_message("You cannot use this button.", ephemeral=True)
             return False
+        
+        if len(self.children) == 0:
+            self.on_timeout()
+            return False
 
         if interaction.data['custom_id'] != self.children[0].custom_id: # Submit button is the second child
             if self.bot.has_been_lounge_submitted:

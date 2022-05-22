@@ -1,8 +1,9 @@
 #External
+from re import M
 import discord
 from discord.ext import commands as ext_commands
-from discord.commands import slash_command
-from discord.commands import Option
+from discord.commands import slash_command, Option
+from discord import option
 
 #Internal Imports
 import UtilityFunctions
@@ -25,14 +26,18 @@ class Table_Slash(ext_commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # @ext_commands.Cog.listener()
-    # async def on_application_command_error(ctx, error):
-    #     pas
-    #TODO: implement
-
     @slash_command(name='sw',
     description= 'Start a table',
     guild_ids=common.SLASH_GUILDS)
+    @option(
+        "gps", 
+        int,
+        description="Number of GPs", 
+        min_value=1,
+        max_value=15,
+        default=None,
+        required=False
+    )
     @TimerDebuggers.timer_coroutine
     async def _start_war(
         self,
@@ -40,9 +45,9 @@ class Table_Slash(ext_commands.Cog):
         format: Option(str, "Format", choices=['FFA', '2v2', '3v3', '4v4', '5v5', '6v6']),
         num_teams: Option(int, 'Number of teams'),
         room_arg: Option(str, 'Lounge Name/Mention/rxx/FC', required=False, default=None),
-        gps: Option(int, 'Number of GPs', required=False, default=None),
+        gps: int,
         psb: Option(str, 'Suppress large finish time warnings', required=False, default=None, choices=['yes', 'no']),
-        miis: Option(str, 'Show miis on table', required=False, default=None, choices = ['on', 'off'])
+        miis: Option(str, 'Show miis on table', required=False, default=None, choices=['on', 'off'])
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
 
@@ -176,11 +181,18 @@ class Table_Slash(ext_commands.Cog):
     @slash_command(name='changeroomsize',
     description="Change the number of players in a race",
     guild_ids=common.SLASH_GUILDS)
+    @option(
+        'room_size',
+        int,
+        description="Corrected room size",
+        min_value=1,
+        max_value=12
+    )
     async def _change_room_size(
         self, 
         ctx: discord.ApplicationContext,
         race: Option(int, "Race to change room size"),
-        room_size: Option(int, "Corrected room size")
+        room_size: int
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, str(race), str(room_size)]
@@ -193,7 +205,7 @@ class Table_Slash(ext_commands.Cog):
     async def _merge_room(
         self,
         ctx: discord.ApplicationContext,
-        room_arg: Option(str, "Lounge name or rxx number",name="with")
+        room_arg: Option(str, "Lounge name or rxx number", name="with")
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, room_arg]
@@ -220,7 +232,7 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         player: Option(str, "Player number (run /ap) or Lounge name"),
-        name: Option(str, "New name (put a # at the beginning to remove the player from table)")
+        name: Option(str, "New name (put a \"#\" at the beginning to remove the player from table)")
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, player, name]
@@ -420,12 +432,12 @@ class Table_Slash(ext_commands.Cog):
     async def _copy_from(
         self,
         ctx: discord.ApplicationContext,
-        channel: Option(str, "Channel that the other table is in"),
-        guild: Option(str, "Guild that the other table is in (only need this if other table is in different guild)", required=False, default=None)
+        channel: Option(str, "Channel that the other table is in (the channel mention or the ID)"),
+        # guild: Option(str, "Guild that the other table is in (only need this if other table is in different guild)", required=False, default=None)
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, channel]
-        if guild: args.append(guild)
+        # if guild: args.append(guild)
         
         await commands.TablingCommands.transfer_table_command(message, this_bot, args, server_prefix, is_lounge, self.bot.table_bots, self.bot)
 

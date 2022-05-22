@@ -17,9 +17,10 @@ def get_table_bot(table_id: Union[int, str]) -> Union[TableBot.ChannelBot, bool]
 
 def get_team_score_data(table_bot: TableBot.ChannelBot):
     _, table_sorted_data = ScoreKeeper.get_war_table_DCS(table_bot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=True, missingRacePts=table_bot.dc_points, server_id=table_bot.server_id, discord_escape=False)
+    table_sorted_data['format'] = table_bot.war.formatting
     return table_sorted_data
 
 
-def initialize(get_table_bots_):
+def initialize(get_table_bots_func):
     global get_table_bots
-    get_table_bots = get_table_bots_
+    get_table_bots = get_table_bots_func

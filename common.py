@@ -141,6 +141,7 @@ lounge_inactivity_time_period = timedelta(minutes=8)
 inactivity_unlock = timedelta(minutes=30)
 wp_cooldown_seconds = 13
 mkwx_page_cooldown_seconds = 5
+MII_COOLDOWN = 5
 
 #Mii folder location information
 MII_TABLE_PICTURE_PREFIX = "table_"

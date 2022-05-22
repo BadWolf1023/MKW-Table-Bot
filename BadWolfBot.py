@@ -20,6 +20,7 @@ from api import api_channelbot_interface, endpoints
 
 #External library imports for this file
 import discord
+import time
 from discord.ext import tasks
 from discord.ext import commands as ext_commands
 import traceback
@@ -37,6 +38,7 @@ import asyncio
 from typing import Dict
 from fastapi import FastAPI
 import uvicorn
+from collections import defaultdict
 
 CT_WAR_LOUNGE_ECHELONS_CAT_ID = 851666104228249652
 WAR_LOUNGE_ECHELONS_CAT_ID = 751956338912788559
@@ -178,7 +180,8 @@ common.needPermissionCommands.update(needPermissionCommands)
 finished_on_ready = False
 REGISTER_SLASH_COMMANDS = True #whether the bot should register its slash commands (since there is no reason to use slash commands until April 2022)
 
-
+intents = discord.Intents.default()
+intents.message_content = True
 
 SLASH_EXTENSIONS = [
     'slash_cogs.TablingSlashCommands', 
@@ -206,12 +209,13 @@ def get_prefix(bot,msg: discord.Message) -> str:
     
     return ext_commands.when_mentioned_or(prefix)(bot, msg)
 
-class BadWolfBot(discord.Bot):
+class BadWolfBot(ext_commands.Bot):
     def __init__(self):
-        super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS) #debug_guilds=common.SLASH_GUILDS
-        self.table_bots: Dict[int, Dict[int, TableBot.ChannelBot]] = dict()
+        super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS, intents=intents) #debug_guilds=common.SLASH_GUILDS
+        self.table_bots: Dict[int, Dict[int, TableBot.ChannelBot]] = defaultdict(dict)
         self.lounge_submissions = lounge_submissions
         self.mentions = None
+        self.mii_cooldowns = {}
         # self.sug_views = {}
         # self.pic_views = {}
 
@@ -287,15 +291,20 @@ class BadWolfBot(discord.Bot):
             self.stay_alive_503.start()
         except RuntimeError:
             print("stay_alive task already started")
+        try:
+            self.prune_mii_cooldowns.start()
+        except RuntimeError:
+            print("prune_mii_cooldowns task already started")
                 
         try:
             self.dumpDataAndBackup.start()
         except RuntimeError:
-            print("dumpData/Backup task already started")
-        try:
-            checkBotAbuse.start()
-        except RuntimeError:
-            print("checkBotAbuse task already started")
+            print("dumpData+Backup task already started")
+        # try:
+        #     checkBotAbuse.start()
+        # except RuntimeError:
+        #     print("checkBotAbuse task already started")
+        
 
         self.mentions = [f'<@!{self.user.id}>', f'<@{self.user.id}>']
     
@@ -311,6 +320,13 @@ class BadWolfBot(discord.Bot):
             for lounge_bot_channel_id in self.table_bots[lock_server_id]:
                 if self.table_bots[lock_server_id][lounge_bot_channel_id].isFinishedLounge(): 
                     self.table_bots[lock_server_id][lounge_bot_channel_id].freeLock()
+    
+    # For memory purposes; don't want dictionary to keep ballooning
+    @tasks.loop(hours=8)
+    async def prune_mii_cooldowns(self):
+        for user, last_used in list(self.mii_cooldowns.items())[::-1]:
+            if time.monotonic()-last_used > 5:
+                self.mii_cooldowns.pop(user)
 
     #This function will run every 15 min, removing any table bots that are
     #inactive, as defined by TableBot.isinactive() (currently 2.5 hours)
@@ -336,7 +352,7 @@ class BadWolfBot(discord.Bot):
         if os.path.exists(common.TABLE_BOT_PKL_FILE):
             with open(common.TABLE_BOT_PKL_FILE, "rb") as pickle_in:
                 try:
-                    self.table_bots = p.load(pickle_in)
+                    self.table_bots = defaultdict(dict, p.load(pickle_in))
                 except:
                     print("Could not read in the pickle for table bots.")
     
@@ -425,8 +441,8 @@ class BadWolfBot(discord.Bot):
     def check_create_channel_bot(self, message:discord.Message) -> TableBot.ChannelBot:
         server_id = message.guild.id
         channel_id = message.channel.id
-        if server_id not in self.table_bots:
-            self.table_bots[server_id] = {}
+        # if server_id not in self.table_bots:
+        #     self.table_bots[server_id] = {}
         if channel_id not in self.table_bots[server_id]:
             self.table_bots[server_id][channel_id] = createEmptyTableBot(server_id, channel_id)
         self.table_bots[server_id][channel_id].updatedLastUsed()
@@ -439,10 +455,11 @@ class BadWolfBot(discord.Bot):
         message = InteractionUtils.create_proxy_msg(interaction)
         command = interaction.data['name']
 
-        await AbuseTracking.blacklisted_user_check(message)
-        await AbuseTracking.abuse_track_check(message)
-
         log_command_sent(message)
+
+        # await AbuseTracking.blacklisted_user_check(message)
+        # if await AbuseTracking.abuse_track_check(message): 
+        #     return
 
         is_lounge_server = InteractionUtils.simulating_lounge_server(interaction)
         
@@ -510,7 +527,7 @@ class BadWolfBot(discord.Bot):
     
     async def on_message(self, message: discord.Message):
         """
-        On_message bot event overridden - could refactor into bot.commands, but a lot of work
+        On_message bot event overridden
         """
         if message.author == self.user:
             return
@@ -520,7 +537,6 @@ class BadWolfBot(discord.Bot):
             return
         if common.is_beta and not InteractionUtils.check_beta_server(message):
             return
-
         server_prefix = '?'
         this_bot = None
 
@@ -534,8 +550,10 @@ class BadWolfBot(discord.Bot):
 
             #Message doesn't start with the server's prefix and isn't ?help
             if self.should_send_help(message):
-                await AbuseTracking.blacklisted_user_check(message)
-                await AbuseTracking.abuse_track_check(message)
+                log_command_sent(message)
+                # await AbuseTracking.blacklisted_user_check(message)
+                # if await AbuseTracking.abuse_track_check(message): 
+                #     return
                 await help_documentation.send_help(message, [], server_prefix, is_lounge_server)
                 return
                 
@@ -553,11 +571,12 @@ class BadWolfBot(discord.Bot):
             if message.channel.category_id in TEMPORARY_VR_CATEGORIES and main_command not in ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS:
                 return
                 
-            await AbuseTracking.blacklisted_user_check(message)
-            await AbuseTracking.abuse_track_check(message)
-                    
             log_command_sent(message)
-            
+
+            # await AbuseTracking.blacklisted_user_check(message)
+            # if await AbuseTracking.abuse_track_check(message): 
+            #     return
+                                
             this_bot:TableBot.ChannelBot = self.check_create_channel_bot(message)
             if is_lounge_server and this_bot.isFinishedLounge():
                 this_bot.freeLock()
@@ -697,8 +716,7 @@ class BadWolfBot(discord.Bot):
         
         elif main_command in INVITE_TERMS:
             await message.channel.send(f"{bot_invite_picture}\n\n**Are you on mobile and you don't see this button? Update your Discord app and it should appear!**")              
-        
-            
+         
         elif main_command in RACE_RESULTS_TERMS:
             await commands.TablingCommands.race_results_command(message, this_bot, args, server_prefix, is_lounge_server)
                         
@@ -1012,6 +1030,7 @@ async def send_lounge_locked_message(message, this_bot):
             await message.channel.send(f"{to_send} {this_bot.getBotunlockedInStr()}")
 
 def log_command_sent(message:discord.Message, extra_text=""):
+    print("LOGGED MESSAGE:", message.content)
     common.log_text(f"Server: {message.guild} - Channel: {message.channel} - User: {message.author} - Command: {message.content} {extra_text}")
     return common.full_command_log(message, extra_text)
 
@@ -1049,9 +1068,9 @@ def private_data_init():
 #Every 60 seconds, checks to see if anyone was "spamming" the bot and notifies a private channel in my server
 #Of the person(s) who were warned
 #Also clears the abuse tracking every 60 seconds
-@tasks.loop(minutes=1)
-async def checkBotAbuse():
-    await AbuseTracking.check_bot_abuse()
+# @tasks.loop(minutes=1)
+# async def checkBotAbuse():
+#     await AbuseTracking.check_bot_abuse()
         
  
 def load_CTGP_region_pickle():
@@ -1136,26 +1155,22 @@ async def initialize():
 
     bot = BadWolfBot()
     await start_bot()
-    await after_init()
+    await api_init()
 
     common.client = bot
     common.main = sys.modules[__name__]
 
-async def after_init():
+async def api_init():
     api_channelbot_interface.initialize(bot.get_table_bots)
     
 async def start_bot():
-    try:
-        if common.is_dev:
-            key = testing_bot_key
-        elif common.is_beta:
-            key = beta_bot_key
-        else:
-            key = real_bot_key
-        asyncio.create_task(bot.start(key))
-    except KeyboardInterrupt:
-        await bot.close()
-        raise
+    if common.is_dev:
+        key = testing_bot_key
+    elif common.is_beta:
+        key = beta_bot_key
+    else:
+        key = real_bot_key
+    asyncio.create_task(bot.start(key))
 
 async def close_wrapper():
     return await bot.close()

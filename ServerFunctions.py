@@ -44,7 +44,7 @@ def get_server_large_time_setting(server_id, default_large_time_setting=default_
 
     return insert_formats(server_large_times[server_id])
 
-def is_sui_from_format(server_id, warFormat):
+def is_sui_from_format(server_id: int, warFormat: str):
     server_id = str(server_id).strip()
     server_setting = get_server_large_time_setting(server_id)
     try:

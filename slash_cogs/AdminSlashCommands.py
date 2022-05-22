@@ -1,5 +1,6 @@
-from discord.commands import slash_command, SlashCommandGroup, Option, CommandPermission
+from discord.commands import slash_command, SlashCommandGroup, Option
 from discord.ext import commands as ext_commands
+from discord import Permissions
 import discord
 import commands
 import common
@@ -8,14 +9,14 @@ EMPTY_CHAR = '\u200b'
 
 allowed = common.botAdmins | common.OWNERS
 
-REQUIRED_PERMISSIONS = [CommandPermission(int(id),2,True) for id in allowed]
-GUILDS = [common.MKW_TABLE_BOT_CENTRAL_SERVER_ID] if common.is_prod else common.SLASH_GUILDS
+# REQUIRED_PERMISSIONS = [CommandPermission(int(id),2,True) for id in allowed]
+GUILDS = [] if common.is_prod else common.SLASH_GUILDS
 
 class AdminSlash(ext_commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    sha = SlashCommandGroup("sha", "Configure Table Bot's SHA-track mappings", guild_ids=GUILDS, permissions=REQUIRED_PERMISSIONS)
+    sha = SlashCommandGroup("sha", "Configure Table Bot's SHA-track mappings", guild_ids=GUILDS)
 
     @sha.command(name="add",
     description="Add a SHA-track mapping",
@@ -44,7 +45,7 @@ class AdminSlash(ext_commands.Cog):
         
         await commands.BotAdminCommands.remove_sha_track(message, args)
     
-    blacklist = SlashCommandGroup("blacklist", "Configure Table Bot's blacklists", guild_ids=GUILDS, permissions=REQUIRED_PERMISSIONS)
+    blacklist = SlashCommandGroup("blacklist", "Configure Table Bot's blacklists", guild_ids=GUILDS)
     blacklist_user = blacklist.create_subgroup("user", "Configure Table Bot's blacklisted users", guild_ids=GUILDS)
     blacklist_word = blacklist.create_subgroup("word", "Configure Table Bot's blacklisted words", guild_ids=GUILDS)
 
@@ -104,7 +105,7 @@ class AdminSlash(ext_commands.Cog):
     @slash_command(name='global_vr',
     description="Turn the /vr command on or off",
     guild_ids=GUILDS,
-    permissions=REQUIRED_PERMISSIONS)
+    )
     async def _global_vr(
         self,
         ctx: discord.ApplicationContext,
