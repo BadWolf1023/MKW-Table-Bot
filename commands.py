@@ -912,7 +912,7 @@ class OtherCommands:
         await mkwx_check(message, "Mii command disabled.")
 
         if cooldown:=mii_cooldown_check(message.author.id):
-            return await message.channel.send(f"Wait {common.MII_COOLDOWN-cooldown:.1f} seconds before using this command again.")
+            return await message.channel.send(f"{message.author.mention}, wait {common.MII_COOLDOWN-cooldown:.1f} seconds before using this command again.")
 
         to_load = SmartTypes.create_you_discord_id(message.author.id)
         if len(args) > 1:

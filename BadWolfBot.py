@@ -1033,7 +1033,6 @@ async def send_lounge_locked_message(message, this_bot):
             await message.channel.send(f"{to_send} {this_bot.getBotunlockedInStr()}")
 
 def log_command_sent(message:discord.Message, extra_text=""):
-    print("LOGGED MESSAGE:", message.content)
     common.log_text(f"Server: {message.guild} - Channel: {message.channel} - User: {message.author} - Command: {message.content} {extra_text}")
     return common.full_command_log(message, extra_text)
 
