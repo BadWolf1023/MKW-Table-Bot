@@ -211,7 +211,7 @@ def get_prefix(bot,msg: discord.Message) -> str:
 
 class BadWolfBot(ext_commands.Bot):
     def __init__(self):
-        super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS, intents=intents) #debug_guilds=common.SLASH_GUILDS
+        super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS, intents=intents, chunk_guilds_at_startup=False) #debug_guilds=common.SLASH_GUILDS
         self.table_bots: Dict[int, Dict[int, TableBot.ChannelBot]] = defaultdict(dict)
         self.lounge_submissions = lounge_submissions
         self.mentions = None
