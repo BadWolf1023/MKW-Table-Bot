@@ -1,4 +1,5 @@
 #Internal imports (stuff I coded) for this file
+from pip import main
 import ServerFunctions
 import Stats
 import LoungeAPIFunctions
@@ -25,7 +26,6 @@ from discord.ext import tasks
 from discord.ext import commands as ext_commands
 import traceback
 import sys
-import atexit
 import signal
 import dill as p
 import psutil
@@ -89,6 +89,7 @@ WAR_PICTURE_TERMS = {"wp", "warpicture", "wo", "w;", "w["}
 RACE_RESULTS_TERMS = {"rr", "raceresults"}
 RACES_TERMS = {"races", "tracks", "tracklist"}
 RXX_TERMS = {"rxx", "rlid", "roomid"}
+TABLE_ID_TERMS = {"tableid", "eventid", "id"}
 ALL_PLAYERS_TERMS = {"allplayers", "ap"}
 FCS_TERMS = {"fcs"}
 TRANSFER_TABLE_TERMS = {"transferfrom", "copyfrom", "transfer", "copy", "copytable", "transfertable", "movetable", "move"}
@@ -794,6 +795,9 @@ class BadWolfBot(ext_commands.Bot):
         elif main_command in RXX_TERMS:
             await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge_server)
                 
+        elif main_command in TABLE_ID_TERMS:
+            await commands.TablingCommands.table_id_command(message, this_bot, server_prefix, is_lounge_server)
+
         elif main_command in SERVER_USAGE_TERMS:
             await commands.BotOwnerCommands.server_process_memory_command(message)
             
