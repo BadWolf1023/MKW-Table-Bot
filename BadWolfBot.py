@@ -89,6 +89,7 @@ WAR_PICTURE_TERMS = {"wp", "warpicture", "wo", "w;", "w["}
 RACE_RESULTS_TERMS = {"rr", "raceresults"}
 RACES_TERMS = {"races", "tracks", "tracklist"}
 RXX_TERMS = {"rxx", "rlid", "roomid"}
+TABLE_ID_TERMS = {"tableid", "eventid", "id"}
 ALL_PLAYERS_TERMS = {"allplayers", "ap"}
 FCS_TERMS = {"fcs"}
 TRANSFER_TABLE_TERMS = {"transferfrom", "copyfrom", "transfer", "copy", "copytable", "transfertable", "movetable", "move"}
@@ -181,7 +182,8 @@ finished_on_ready = False
 REGISTER_SLASH_COMMANDS = True #whether the bot should register its slash commands (since there is no reason to use slash commands until April 2022)
 
 intents = discord.Intents.default()
-intents.message_content = True
+intents.typing = False
+intents.presences = False
 
 SLASH_EXTENSIONS = [
     'slash_cogs.TablingSlashCommands', 
@@ -211,7 +213,7 @@ def get_prefix(bot,msg: discord.Message) -> str:
 
 class BadWolfBot(ext_commands.Bot):
     def __init__(self):
-        super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS, intents=intents) #debug_guilds=common.SLASH_GUILDS
+        super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS, intents=intents, chunk_guilds_at_startup=False) #debug_guilds=common.SLASH_GUILDS
         self.table_bots: Dict[int, Dict[int, TableBot.ChannelBot]] = defaultdict(dict)
         self.lounge_submissions = lounge_submissions
         self.mentions = None
@@ -794,6 +796,9 @@ class BadWolfBot(ext_commands.Bot):
         elif main_command in RXX_TERMS:
             await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge_server)
                 
+        elif main_command in TABLE_ID_TERMS:
+            await commands.TablingCommands.table_id_command(message, this_bot, server_prefix, is_lounge_server)
+
         elif main_command in SERVER_USAGE_TERMS:
             await commands.BotOwnerCommands.server_process_memory_command(message)
             
@@ -985,6 +990,7 @@ class BadWolfBot(ext_commands.Bot):
     async def on_exit(self):
         await self.save_data()
         self.destroy_all_tablebots()
+        await DataTracker.on_exit()
         print(f"{str(datetime.now())}: All table bots cleaned up.")
 
 def commandIsAllowed(isLoungeServer: bool, message_author: discord.Member, this_bot: TableBot.ChannelBot, command: str, is_interaction: bool = False):

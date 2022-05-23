@@ -15,6 +15,7 @@ from collections import defaultdict
 from copy import deepcopy
 from itertools import chain
 from typing import List, Dict, Tuple, Set
+from datetime import datetime
 
 import aiosqlite
 
@@ -689,13 +690,18 @@ def load_room_data():
 
 async def start_database():
     global db_connection
+    print(f"{datetime.now()}: Starting database...")
     db_connection = ConnectionWrapper(await aiosqlite.connect(common.ROOM_DATA_TRACKING_DATABASE_FILE,isolation_level=None))
-
+    print(f"{datetime.now()}: Started database successfully.")
+    
 async def populate_tier_table():
+    print(f"{datetime.now()}: Populating tier table...")
     populate_tier_table_script = common.read_sql_file(common.ROOM_DATA_POPULATE_TIER_TABLE_SQL)
     await db_connection.executescript(populate_tier_table_script)
+    print(f"{datetime.now()}: Finished populating tier table.")
 
 async def populate_score_matrix_table():
+    print(f"{datetime.now()}: Populating score matrix table...")
     rows = []
 
     for room_size in range(0,12):
@@ -704,6 +710,7 @@ async def populate_score_matrix_table():
 
     await db_connection.executescript("DELETE FROM Score_Matrix;")
     await db_connection.executemany("INSERT INTO Score_Matrix VALUES (?, ?, ?)", rows)
+    print(f"{datetime.now()}: Finished populating score matrix table.")
 
 async def populate_player_fcs_table():
     rows = []
@@ -745,6 +752,7 @@ async def vacuum():
     await db_connection.executescript("VACUUM;")
 
 async def fix_shas(shas:Dict):
+    print(f"{datetime.now()}: Fixing shas...")
     for sha, track_name in shas.items():
         no_author_name = Race.remove_author_and_version_from_name(track_name)
         lookup = Race.get_track_name_lookup(no_author_name)
@@ -754,9 +762,9 @@ async def fix_shas(shas:Dict):
             DELETE FROM Track WHERE track.track_name = "{sha}";
         """
         await db_connection.executescript(script)
+    print(f"{datetime.now()}: Finished fixing shas.")
 
 async def initialize():
-    from datetime import datetime
     print(f"{datetime.now()}: Database initialization started")
     load_room_data()
     await start_database()
@@ -768,16 +776,18 @@ async def initialize():
     # Race.initialize needs to be called first
     await fix_shas(Race.sha_track_name_mappings)
     if common.is_prod or common.is_beta:
+        print(f"{datetime.now()}: Vacuuming...")
         await vacuum()
+        print(f"{datetime.now()}: Done vacuuming.")
     print(f"{datetime.now()}: Database initialization finished")
 
 def save_data():
     pass
 
-# Unused
-def on_exit():
+async def on_exit():
     save_data()
-    db_connection.close()
+    await db_connection.close()
+    print("Database fully closed.")
 
 if __name__ == '__main__':
     os.chdir("..")
