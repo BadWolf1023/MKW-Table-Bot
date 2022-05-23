@@ -1,11 +1,12 @@
-Updated: Feb. 18, 2022
+Updated: May 23, 2022
 
 # Change Log
 
-This document servers as an overview of MKW Table Bot's releases over time, along with milestones. Many minor updates addressing bugs and text issues were issued between releases, but these are considered the large releases.
+This document serves as an overview of MKW Table Bot's releases over time, along with milestones. Many minor updates addressing bugs and text issues were issued between releases, but these are considered the large releases.
 
 ## Version 1.0.0
 **Released on 08-01-2020**
+
 MKW Table Bot is officially released to the public as a Discord bot to automate making Tables for Mario Kart Wii!
 
 ## Version 2.0.0
@@ -162,26 +163,26 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 
 ## Version 11.2.0
 **Released on 10-25-2021**
-- New tag AI is implemented, which is faster and more accurate in determining correct teams.
+- New tag AI is implemented, which is faster and more accurate in determining teams.
 
 ## Version 11.3.0
 **Released on 11-19-2021**
 - Miis on table image are no longer cropped; rather, they are resized to fit.
 - Custom track SHA names are fixed.
-- Special Grand Star Cup ?wp command.
+- Special Grand Star Cup `?wp gsc` command.
 - Miis pulled multiple at a time instead of one at a time. This fixes issues with miis missing from tables.
 
 ## Version 11.4.0
 **Released on 12-18-2021**
 - Ability to add rewards/bonuses to players via `?penalty` using negative numbers.
-- `?redo` command
+- `?redo` command added.
 - Data tracking commands `?populartracks` and `?unpopulartracks` added.
 
 ## Version 11.5.0
 **Released on 12-27-2021**
-- Ability to specify max races for `?wp` and `?tt`
-- Bug fixes for `?redo`
-- Bug fixes for `?help` not sending because of Discord character limits
+- Ability to specify max races for `?wp` and `?tt`.
+- Bug fixes for `?redo`.
+- Bug fixes for `?help` not sending because of Discord character limits.
 
 ## Version 11.6.0
 **Released on 01-13-2022**
@@ -198,7 +199,7 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 
 ## Version 12.0.0
 **Released on 02-04-2022**
-- Major dependency change: discord.py -> pycord
+- Major dependency change: discord.py -> pycord.
 - Table Bot supports Discord Components and Interactions.
 - Buttons are displayed to confirm and update rooms.
 - Table Bot displays error-correcting buttons.
@@ -222,11 +223,29 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - Table updates automatically on room load.
 - Patch issued for bug when a button receives more than one interaction at the same time.
 
-## Version 12.1.1
-**Released on 02-21-2022**
+## Version 12.2.0
+**Released on 02-25-2022**
+- `?predict` command added--users can now see MMR previews during the course of a Mogi.
 - Manual DC placements and placement changes were being applied separately, causing an error where Table Bot would try to edit a placement that no longer existed; patch is issued.
 
+## Version 12.3.0
+**Released on 03-13-2022**
+- Table Bot API is released into Beta testing.
+- Patch issued for bugs regarding room merges and substitutions when races are removed.
+- Other minor bug fixes.
+
 ## Version 13.0.0
+**Released on 05-22-2022**
+- Discord API version bumped to v10.
+- Slash commands' permission system completely reworked.
+- Table Bot API becomes public.
+- Abuse tracking system removed.
+- `?mii` command given a 5 second per-user cooldown.
+- `?copyfrom` command updated so only a channel is required.
+- `?tableid` command added.
+- Various minor bug fixes.
+
+## Version 14.0.0
 **Released on TBD**
 - TableBot changes from HTML parsing to mkwx JSON, updating itself every 10 seconds, and forms a picture of rooms and times.
 - Paves way for faster ?wp commands since ?wp no longer pings mkwx. Paves way for automatic table updating and allows rooms to be started before the first race finishes.
