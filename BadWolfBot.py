@@ -25,6 +25,7 @@ from discord.ext import tasks
 from discord.ext import commands as ext_commands
 import traceback
 import sys
+import atexit
 import signal
 import dill as p
 import psutil
