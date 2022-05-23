@@ -366,6 +366,17 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         
         await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge)
+    
+    @slash_command(name="tableid",
+    description="Get the Table ID",
+    guild_ids=common.SLASH_GUILDS)
+    async def _table_id(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+
+        await commands.TablingCommands.table_id_command(message, this_bot, server_prefix, is_lounge)
 
     @slash_command(name='ap',
     description="List all players who have been in the room",

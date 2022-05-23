@@ -183,7 +183,8 @@ REGISTER_SLASH_COMMANDS = True #whether the bot should register its slash comman
 
 intents = discord.Intents.default()
 intents.typing = False
-intents.presences = False
+if common.is_dev:
+    intents.message_content = True
 
 SLASH_EXTENSIONS = [
     'slash_cogs.TablingSlashCommands', 
