@@ -178,7 +178,7 @@ ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | I
 common.needPermissionCommands.update(needPermissionCommands)
 
 finished_on_ready = False
-REGISTER_SLASH_COMMANDS = False #whether the bot should register its slash commands (since there is no reason to use slash commands until April 2022)
+REGISTER_SLASH_COMMANDS = True #whether the bot should register its slash commands (since there is no reason to use slash commands until April 2022)
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -212,19 +212,16 @@ def get_prefix(bot,msg: discord.Message) -> str:
 class BadWolfBot(ext_commands.Bot):
     def __init__(self):
         super().__init__(description="MKW Table Bot", owner_ids=common.OWNERS, intents=intents, chunk_guilds_at_startup=False) #debug_guilds=common.SLASH_GUILDS
-        print("I finished?")
         self.table_bots: Dict[int, Dict[int, TableBot.ChannelBot]] = defaultdict(dict)
         self.lounge_submissions = lounge_submissions
         self.mentions = None
         self.mii_cooldowns = {}
-        print("I finished...")
         # self.sug_views = {}
         # self.pic_views = {}
 
         if REGISTER_SLASH_COMMANDS:
             for ext in SLASH_EXTENSIONS:
                 self.load_extension(ext)
-        print("I finished ....?")
 
     #Strips the given prefix from the start of the command
     #Note, the caller must ensure that the given string has a prefix by using has_prefix to ensure proper behaviour
