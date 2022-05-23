@@ -239,7 +239,8 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - Abuse tracking system removed.
 - `?mii` command given a 5 second per-user cooldown.
 - `?copyfrom` command updated so only channel is needed.
-- Various other minor bug fixes.
+- `?tableid` command added.
+- Various minor bug fixes.
 
 ## Version 14.0.0
 **Released on TBD**
