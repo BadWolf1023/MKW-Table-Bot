@@ -784,9 +784,9 @@ async def initialize():
 def save_data():
     pass
 
-def on_exit():
+async def on_exit():
     save_data()
-    db_connection.close()
+    await db_connection.close()
     print("Database fully closed.")
 
 if __name__ == '__main__':
