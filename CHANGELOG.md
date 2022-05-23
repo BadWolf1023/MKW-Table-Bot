@@ -222,14 +222,16 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - Table updates automatically on room load.
 - Patch issued for bug when a button receives more than one interaction at the same time.
 
-## Version 12.1.1
-**Released on 02-21-2022**
+## Version 12.2.0
+**Released on 02-25-2022**
+- `?predict` command added--users can now see MMR previews during the course of a Mogi.
 - Manual DC placements and placement changes were being applied separately, causing an error where Table Bot would try to edit a placement that no longer existed; patch is issued.
 
-## Version 12.2.0
+## Version 12.3.0
 **Released on 03-13-2022**
 - Table Bot API is released into Beta testing.
 - Patch issued for bugs regarding room merges and substitutions when races are removed.
+- Other minor bug fixes.
 
 ## Version 13.0.0
 **Released on 05-22-2022**
