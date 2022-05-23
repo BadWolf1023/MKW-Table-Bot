@@ -48,7 +48,7 @@ class MessagePaginator(pages.Paginator):
         :class:`~discord.Message`
             The message that was sent with the paginator.
         """
-        if not isinstance(message, discord.Message):
+        if not hasattr(message, 'proxy') and not isinstance(message, discord.Message):
             raise TypeError(f"expected Message not {message.__class__!r}")
 
         if target is not None and not isinstance(target, discord.abc.Messageable):
