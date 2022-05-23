@@ -761,7 +761,7 @@ async def fix_shas(shas:Dict):
             DELETE FROM Track WHERE track.track_name = "{sha}";
         """
         await db_connection.executescript(script)
-     print(f"{datetime.now()}: Finished fixing shas.")
+    print(f"{datetime.now()}: Finished fixing shas.")
 
 async def initialize():
     from datetime import datetime
