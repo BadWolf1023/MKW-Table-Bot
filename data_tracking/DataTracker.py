@@ -774,10 +774,10 @@ async def initialize():
 def save_data():
     pass
 
-# Unused
 def on_exit():
     save_data()
     db_connection.close()
+    print("Database fully closed.")
 
 if __name__ == '__main__':
     os.chdir("..")
