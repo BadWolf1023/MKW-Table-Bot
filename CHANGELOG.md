@@ -226,7 +226,22 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 **Released on 02-21-2022**
 - Manual DC placements and placement changes were being applied separately, causing an error where Table Bot would try to edit a placement that no longer existed; patch is issued.
 
+## Version 12.2.0
+**Released on 03-13-2022**
+- Table Bot API is released into Beta testing.
+- Patch issued for bugs regarding room merges and substitutions when races are removed.
+
 ## Version 13.0.0
+**Released on 05-22-2022**
+- Discord API version bumped to v10.
+- Slash commands' permission system completely reworked.
+- Table Bot API becomes public.
+- Abuse tracking system removed.
+- `?mii` command given a 5 second per-user cooldown.
+- `?copyfrom` command updated so only channel is needed.
+- Various other minor bug fixes.
+
+## Version 14.0.0
 **Released on TBD**
 - TableBot changes from HTML parsing to mkwx JSON, updating itself every 10 seconds, and forms a picture of rooms and times.
 - Paves way for faster ?wp commands since ?wp no longer pings mkwx. Paves way for automatic table updating and allows rooms to be started before the first race finishes.
