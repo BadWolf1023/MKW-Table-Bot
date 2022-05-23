@@ -41,25 +41,25 @@ async def safe_defer(ctx: discord.ApplicationContext):
         pass
 
 class ChannelWrapper():
-    def __init__(self,channel, ctx: discord.ApplicationContext):
+    def __init__(self, channel, ctx: discord.ApplicationContext):
         self.channel = channel
         self.ctx = ctx
         if self.ctx:
             self.ctx.responded = False
             asyncio.create_task(safe_defer(ctx))
 
-    async def send(self,*args,**args2):
+    async def send(self,*args,**kwargs):
         if self.ctx and not self.ctx.responded:
             self.ctx.responded = True
             try:
-                msg = await self.ctx.respond(*args,**args2)
+                msg = await self.ctx.respond(*args,**kwargs)
             except:
-                return await self.channel.send(*args,**args2)
+                return await self.channel.send(*args,**kwargs)
             if isinstance(msg, discord.WebhookMessage):
                 return msg
             return await msg.original_message()
         else:
-            return await self.channel.send(*args,**args2)
+            return await self.channel.send(*args,**kwargs)
 
     def __getattr__(self,attr):
         return self.channel.__getattribute__(attr)
