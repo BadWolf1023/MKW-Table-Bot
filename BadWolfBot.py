@@ -990,7 +990,7 @@ class BadWolfBot(ext_commands.Bot):
     async def on_exit(self):
         await self.save_data()
         self.destroy_all_tablebots()
-        DataTracker.on_exit()
+        await DataTracker.on_exit()
         print(f"{str(datetime.now())}: All table bots cleaned up.")
 
 def commandIsAllowed(isLoungeServer: bool, message_author: discord.Member, this_bot: TableBot.ChannelBot, command: str, is_interaction: bool = False):
