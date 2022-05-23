@@ -1,9 +1,12 @@
 import discord
 from discord.ext import pages, commands
 from typing import Optional, Union
+import InteractionUtils
 
 class MessagePaginator(pages.Paginator):
     def __init__(self, pages, show_disabled=True, show_indicator=False, timeout=120):
+        if len(pages)==0:
+            pages = ["```Nothing to display```"]
         super().__init__(pages, show_disabled=show_disabled, show_indicator=show_indicator, timeout=float(timeout))
     
     async def send(
@@ -85,16 +88,26 @@ class MessagePaginator(pages.Paginator):
                 )
             messageable = target
 
-        self.message = await messageable.send(
-            content=page_content.content,
-            embeds=page_content.embeds,
-            files=page_content.files,
-            view=self,
-            reference=reference,
-            allowed_mentions=allowed_mentions,
-            mention_author=mention_author,
-            delete_after=delete_after,
-        )
+        if isinstance(messageable, InteractionUtils.ChannelWrapper):
+            self.message = await messageable.send(
+                content=page_content.content,
+                embeds=page_content.embeds,
+                files=page_content.files,
+                view=self,
+                allowed_mentions=allowed_mentions,
+                delete_after=delete_after,
+            )
+        else:
+            self.message = await messageable.send(
+                content=page_content.content,
+                embeds=page_content.embeds,
+                files=page_content.files,
+                view=self,
+                reference=reference,
+                allowed_mentions=allowed_mentions,
+                mention_author=mention_author,
+                delete_after=delete_after,
+            )
 
         return self.message
 

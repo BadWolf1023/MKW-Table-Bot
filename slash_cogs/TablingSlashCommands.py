@@ -3,7 +3,7 @@ from re import M
 import discord
 from discord.ext import commands as ext_commands
 from discord.commands import slash_command, Option
-from discord import option
+# from discord import option
 
 #Internal Imports
 import UtilityFunctions
@@ -29,15 +29,6 @@ class Table_Slash(ext_commands.Cog):
     @slash_command(name='sw',
     description= 'Start a table',
     guild_ids=common.SLASH_GUILDS)
-    @option(
-        "gps", 
-        int,
-        description="Number of GPs", 
-        min_value=1,
-        max_value=15,
-        default=None,
-        required=False
-    )
     @TimerDebuggers.timer_coroutine
     async def _start_war(
         self,
@@ -45,7 +36,7 @@ class Table_Slash(ext_commands.Cog):
         format: Option(str, "Format", choices=['FFA', '2v2', '3v3', '4v4', '5v5', '6v6']),
         num_teams: Option(int, 'Number of teams'),
         room_arg: Option(str, 'Lounge Name/Mention/rxx/FC', required=False, default=None),
-        gps: int,
+        gps: Option(int, "Number of GPs", min_value=1, max_value=15, default=None),
         psb: Option(str, 'Suppress large finish time warnings', required=False, default=None, choices=['yes', 'no']),
         miis: Option(str, 'Show miis on table', required=False, default=None, choices=['on', 'off'])
     ):
@@ -181,18 +172,11 @@ class Table_Slash(ext_commands.Cog):
     @slash_command(name='changeroomsize',
     description="Change the number of players in a race",
     guild_ids=common.SLASH_GUILDS)
-    @option(
-        'room_size',
-        int,
-        description="Corrected room size",
-        min_value=1,
-        max_value=12
-    )
     async def _change_room_size(
         self, 
         ctx: discord.ApplicationContext,
         race: Option(int, "Race to change room size"),
-        room_size: int
+        room_size: Option(int, "Corrected room size", min_value=1, max_value=12)
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, str(race), str(room_size)]
