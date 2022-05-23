@@ -182,7 +182,8 @@ finished_on_ready = False
 REGISTER_SLASH_COMMANDS = True #whether the bot should register its slash commands (since there is no reason to use slash commands until April 2022)
 
 intents = discord.Intents.default()
-intents.message_content = True
+intents.typing = False
+intents.presences = False
 
 SLASH_EXTENSIONS = [
     'slash_cogs.TablingSlashCommands', 
