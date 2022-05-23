@@ -266,6 +266,16 @@ class BadWolfBot(ext_commands.Bot):
         content = message.content.strip().lower()
         return content in ["?help"] or (any([mention in content for mention in self.mentions]) and 'help' in content)
     
+    async def send_mass_information(self):
+        for num, guild in enumerate(self.guilds, start=1):
+            for channel in guild.channels:
+                try:
+                    await channel.send("**IMPORTANT TABLE BOT INFORMATION**\n\nTable Bot does not support prefix commands anymore, only slash commands. Normal text commands using a prefix, like `?sw 2v2 6`, will no longer work.\n\n**If Table Bot slash commands do not pop up in your server, click Table Bot in the members list, and then click “Add to server”, and then follow the prompts. You *do not* need to kick the bot first.\nIf you need help, please send a friend request on Discord to: Bad Wolf#1288**\n\nIf you are struggling with slash commands:\n- Remember that the `/raw` slash command works for most things. Example: `/raw sw 2v2 6 gps=10`\n- Mentioning the bot will always work as a prefix. Example: @MKW Table Bot sw 2v2 6\n\nAs a reminder, **it was Discord’s decision to turn off normal text commands**, not ours.")
+                    print(f'{num}. GUILD: {guild.name} | CHANNEL: #{channel.name}')
+                    break
+                except:
+                    pass
+
     async def on_ready(self):
         global finished_on_ready
         print("Logging in...")
@@ -274,9 +284,11 @@ class BadWolfBot(ext_commands.Bot):
             self.load_tablebot_pickle()
             load_CTGP_region_pickle()
             commands.load_vr_is_on()
+            await self.send_mass_information()
         
         AbuseTracking.set_bot_abuse_report_channel(self)
         common.ERROR_LOGS_CHANNEL = self.get_channel(common.ERROR_LOGS_CHANNEL_ID)
+
 
         try:
             self.updatePresence.start()
