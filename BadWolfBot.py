@@ -178,7 +178,7 @@ ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | I
 common.needPermissionCommands.update(needPermissionCommands)
 
 finished_on_ready = False
-REGISTER_SLASH_COMMANDS = True #whether the bot should register its slash commands (since there is no reason to use slash commands until April 2022)
+REGISTER_SLASH_COMMANDS = False #whether the bot should register its slash commands (since there is no reason to use slash commands until April 2022)
 
 intents = discord.Intents.default()
 intents.message_content = True
