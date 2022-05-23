@@ -40,8 +40,6 @@ from fastapi import FastAPI
 import uvicorn
 from collections import defaultdict
 
-discord.http.API_VERSION = 9 # Version 10 deprecates message content
-
 CT_WAR_LOUNGE_ECHELONS_CAT_ID = 851666104228249652
 WAR_LOUNGE_ECHELONS_CAT_ID = 751956338912788559
 WAR_LOUNGE_COMP_DISC_CAT_ID = 751956337612685405
