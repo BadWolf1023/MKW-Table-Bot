@@ -15,6 +15,7 @@ from collections import defaultdict
 from copy import deepcopy
 from itertools import chain
 from typing import List, Dict, Tuple, Set
+from datetime import datetime
 
 import aiosqlite
 
@@ -764,7 +765,6 @@ async def fix_shas(shas:Dict):
     print(f"{datetime.now()}: Finished fixing shas.")
 
 async def initialize():
-    from datetime import datetime
     print(f"{datetime.now()}: Database initialization started")
     load_room_data()
     await start_database()
