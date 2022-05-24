@@ -1348,7 +1348,10 @@ class LoungeCommands:
 
                     await submissionMessage.clear_reaction("\u274C")
                     await submissionMessage.add_reaction("\u2705")
-                    await message.add_reaction(u"\U0001F197")
+                    try:
+                        await message.add_reaction(u"\U0001F197")
+                    except AttributeError: #it's a proxy message from a slash command - you can't react to a slash command
+                        await message.channel.send(u"\U0001F197") #so send it instead
                 else:
                     await submissionMessage.clear_reaction("\u2705")
                     await submissionMessage.add_reaction("\u274C")
@@ -1359,7 +1362,10 @@ class LoungeCommands:
                         extra_message_text = f"Double denying a submission doesn't do anything, so you don't need to worry. You simply might have made a typo for your submission ID, and you should deny the correct one." if is_denied else f"I've given it the X reaction anyway. Don't bother 'approving' it again if it was previously approved and sent to the correct summaries (as this will resend it to the summary channels). Simply check your `?deny` command for typos so you deny the right submission."
                         await submissionMessage.channel.send(f"**Warning:** The submission ({submissionID}) was already **{submission_status}**. {extra_message_text}")
                     lounge_server_updates.deny_submission_id(submissionID)
-                    await message.add_reaction(u"\U0001F197")
+                    try:
+                        await message.add_reaction(u"\U0001F197")
+                    except AttributeError: #it's a proxy message from a slash command - you can't react to a slash command
+                        await message.channel.send(u"\U0001F197") #so send it instead
             else:
                 await message.channel.send("I couldn't find this submission ID. Make sure you have the right submission ID.")
         else:

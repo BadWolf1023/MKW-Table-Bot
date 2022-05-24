@@ -284,7 +284,7 @@ class BadWolfBot(ext_commands.Bot):
             self.load_tablebot_pickle()
             load_CTGP_region_pickle()
             commands.load_vr_is_on()
-            await self.send_mass_information()
+            # await self.send_mass_information()
         
         AbuseTracking.set_bot_abuse_report_channel(self)
         common.ERROR_LOGS_CHANNEL = self.get_channel(common.ERROR_LOGS_CHANNEL_ID)
