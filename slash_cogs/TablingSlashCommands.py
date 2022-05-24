@@ -421,6 +421,18 @@ class Table_Slash(ext_commands.Cog):
 
         await commands.TablingCommands.reset_command(message, self.bot.table_bots)
     
+    @slash_command(
+        name="predict",
+        description="Preview MMR changes of the event",
+        guild_ids=common.SLASH_GUILDS
+    )
+    async def _predict(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+        await commands.TablingCommands.predict_command(message, this_bot, [command], server_prefix, is_lounge)
+    
     @slash_command(name="copyfrom",
     description="Make this table a copy of another table",
     guild_ids=common.SLASH_GUILDS)
@@ -454,7 +466,7 @@ class Table_Slash(ext_commands.Cog):
     @slash_command(name='wws',
     description="Show all active RT Worldwide rooms",
     guild_ids=common.SLASH_GUILDS)
-    async def _ww(
+    async def _wws(
         self,
         ctx: discord.ApplicationContext
     ):
@@ -465,13 +477,24 @@ class Table_Slash(ext_commands.Cog):
     @slash_command(name='ctwws',
     description="Show all active CT Worldwide rooms",
     guild_ids=common.SLASH_GUILDS)
-    async def _ctww(
+    async def _ctwws(
         self,
         ctx: discord.ApplicationContext
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
 
         await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.CTGP_CTWW_REGION)
+    
+    @slash_command(name="btwws",
+        description="Show all active Battle Worldwide rooms",
+        guild_ids=common.SLASH_GUILDS
+    )
+    async def _btwws(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        _, message, this_bot, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
+        await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.BATTLE_REGION)
     
     @slash_command(name='help',
     description="Show help for Table Bot",

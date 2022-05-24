@@ -1,7 +1,7 @@
 import discord
 from discord.commands import slash_command, Option, SlashCommandGroup
 from discord.ext import commands as ext_commands
-from discord import permissions
+from discord import OptionChoice, permissions
 import commands
 import common
 import InteractionUtils
@@ -115,7 +115,17 @@ class LoungeSlash(ext_commands.Cog):
     async def _rt_update(
         self, 
         ctx: discord.ApplicationContext,
-        tier: Option(str, "Tier of event", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'squadqueue']),
+        tier: Option(str, "Tier of event", choices=[
+            OptionChoice('T1', '1'), 
+            OptionChoice('T2', '2'), 
+            OptionChoice('T3', '3'), 
+            OptionChoice('T4', '4'), 
+            OptionChoice('T5', '5'), 
+            OptionChoice('T6', '6'), 
+            OptionChoice('T7', '7'), 
+            OptionChoice('T8', '8'),
+            'squadqueue'
+        ]),
         races_played: Option(int, "Number of races played in event"),
         table_text: Option(bool, "Whether you're including table text for a manual submission", required=False, default=None)
     ):
@@ -134,7 +144,16 @@ class LoungeSlash(ext_commands.Cog):
     async def _ct_update(
         self,
         ctx: discord.ApplicationContext,
-        tier: Option(str, "Tier of event", choices=['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'squadqueue']),
+        tier: Option(str, "Tier of event", choices=[
+            OptionChoice('T1', '1'), 
+            OptionChoice('T2', '2'), 
+            OptionChoice('T3', '3'), 
+            OptionChoice('T4', '4'), 
+            OptionChoice('T5', '5'), 
+            OptionChoice('T6', '6'), 
+            OptionChoice('T7', '7'), 
+            'squadqueue'
+        ]),
         races_played: Option(int, "Number of races played in event"),
         table_text: Option(bool, "Whether you're including table text for a manual submission", required=False, default=None)
     ):
