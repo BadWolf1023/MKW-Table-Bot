@@ -430,7 +430,7 @@ class Table_Slash(ext_commands.Cog):
         ctx: discord.ApplicationContext
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-        await commands.TablingCommands.predict_command(message, this_bot, [command], server_prefix, common.client.lounge_submissions)
+        await commands.TablingCommands.predict_command(message, this_bot, [command], server_prefix, self.bot.lounge_submissions)
     
     @slash_command(name="copyfrom",
     description="Make this table a copy of another table",
