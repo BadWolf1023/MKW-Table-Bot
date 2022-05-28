@@ -1,5 +1,4 @@
 #External
-from re import M
 import discord
 from discord.ext import commands as ext_commands
 from discord.commands import slash_command, Option
@@ -431,7 +430,7 @@ class Table_Slash(ext_commands.Cog):
         ctx: discord.ApplicationContext
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-        await commands.TablingCommands.predict_command(message, this_bot, [command], server_prefix, is_lounge)
+        await commands.TablingCommands.predict_command(message, this_bot, [command], server_prefix, self.bot.lounge_submissions)
     
     @slash_command(name="copyfrom",
     description="Make this table a copy of another table",
