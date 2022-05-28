@@ -17,7 +17,7 @@ import asyncio
 from data_tracking import DataTracker
 import TimerDebuggers
 import copy
-
+import re
 
 lorenzi_style_key = "#style"
 #The key and first item of the tuple are sent when the list of options is requested, the second value is the code Lorenzi's site uses
@@ -406,7 +406,8 @@ class ChannelBot(object):
             return "No commands to undo."
         
         for i, (command, _) in enumerate(undos[::-1]):
-            ret+=f"\n   {i+1}. `{command}`"
+            command = re.sub(r"<!?@\d+>\s*", "/", command)
+            ret+=f'\n   {i+1}. `{command}`'
         
         return ret
     
@@ -417,7 +418,8 @@ class ChannelBot(object):
             return "No commands to redo."
 
         for i, (command, _) in enumerate(redos):
-            ret+=f"\n   {i+1}. `{command}`"
+            command = re.sub(r"<!?@\d+>\s*", "/", command)
+            ret+=f'\n   {i+1}. `{command}`'
         
         return ret
         

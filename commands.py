@@ -116,7 +116,7 @@ def get_room_not_loaded_message(server_prefix: str, is_lounge_server=False, cust
             # Example goal: starting a table for a player who is registered in Lounge, show that spaces are allowed, show that capitalization does not matter
             f"""  {BULLET_POINT} Table a 3v3 room with 2 teams that someone with the Lounge name "Jack Ryan" (mention them in the command if you don't know their Lounge name) is in: `{server_prefix}sw 3v3 2 Jack ryan`""",
             # Example goal: starting a table for a room that has ended
-            f"  {BULLET_POINT} Has the room already ended? Use the `{server_prefix}page playername` command, find the room on the website that you want to table, then use the rxx number in the URL (eg r4203018): `{server_prefix}sw 2v2 6 r4203018`"
+            f"  {BULLET_POINT} Has the room already ended? Use the `/page playername` command, find the room on the website that you want to table, then use the rxx number in the URL (eg r4203018): `{server_prefix}sw 2v2 6 r4203018`"
             ]
     example_str = "**Here are some examples to get you started:\n**" + "\n".join(ROOM_LOAD_EXAMPLES)
     if custom_message is not None:
@@ -768,7 +768,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
         command = " ".join(args[1:])
         days = None
-        matches = [x[0] for x in re.findall('((^|\s)\d+d?($|\s))',command)]
+        matches = [x[0] for x in re.findall(r'((^|\s)\d+d?($|\s))',command)]
         if len(matches) > 0:
             match = matches[-1].strip()
             if 'd' in match:
@@ -1286,7 +1286,7 @@ class LoungeCommands:
     @staticmethod
     async def _submission_action_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge, is_approval=True):
         if len(args) < 2:
-            await message.channel.send(f"The way to use this command is: `?{args[0]} submissionID`.")
+            await message.channel.send(f"The way to use this command is: `/{args[0]} submissionID`.")
             return
 
         submissionID = args[1]
@@ -1359,7 +1359,7 @@ class LoungeCommands:
                     if not is_pending:
                         is_denied = lounge_server_updates.submission_id_is_denied(submissionID)
                         submission_status = "denied" if is_denied else "approved"
-                        extra_message_text = f"Double denying a submission doesn't do anything, so you don't need to worry. You simply might have made a typo for your submission ID, and you should deny the correct one." if is_denied else f"I've given it the X reaction anyway. Don't bother 'approving' it again if it was previously approved and sent to the correct summaries (as this will resend it to the summary channels). Simply check your `?deny` command for typos so you deny the right submission."
+                        extra_message_text = f"Double denying a submission doesn't do anything, so you don't need to worry. You simply might have made a typo for your submission ID, and you should deny the correct one." if is_denied else f"I've given it the X reaction anyway. Don't bother 'approving' it again if it was previously approved and sent to the correct summaries (as this will resend it to the summary channels). Simply check your `/deny` command for typos so you deny the right submission."
                         await submissionMessage.channel.send(f"**Warning:** The submission ({submissionID}) was already **{submission_status}**. {extra_message_text}")
                     lounge_server_updates.deny_submission_id(submissionID)
                     try:
@@ -1369,7 +1369,7 @@ class LoungeCommands:
             else:
                 await message.channel.send("I couldn't find this submission ID. Make sure you have the right submission ID.")
         else:
-            await message.channel.send(f"The way to use this command is: `?{args[0]} submissionID` - `submissionID` must be a number")
+            await message.channel.send(f"The way to use this command is: `/{args[0]} submissionID` - `submissionID` must be a number")
 
 
     @staticmethod
@@ -2089,7 +2089,7 @@ class TablingCommands:
             to_load = ' '.join(args[1:])
 
         if to_load in this_bot.getRoom().rLIDs:
-            await message.channel.send(f"The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `{server_prefix}undo`.")
+            await message.channel.send(f"The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `/undo`.")
         
         smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.ROOM_LOOKUP_TYPES)
         status, rxx, _ = await WiimmfiSiteFunctions.get_races_smart(smart_type, hit_lounge_api=True)
@@ -2200,8 +2200,9 @@ class TablingCommands:
         if undone_command is False:
             await message.channel.send("No commands to undo.")
             return
+        undone_command = re.sub(r"<!?@\d+>\s*", "/", undone_command)
         mes = "All possible commands have been undone." if do_all else f"The following command has been undone: `{UtilityFunctions.clean_for_output(undone_command)}`"
-        await message.channel.send(f"{mes}\nRun `{server_prefix}wp` to make sure table bot is fully refreshed.")
+        await message.channel.send(f"{mes}\nRun `/wp` to make sure table bot is fully refreshed.")
 
     @staticmethod
     async def redo_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool):
@@ -2211,9 +2212,9 @@ class TablingCommands:
         redone_command = this_bot.restore_last_redo_state(do_all=do_all)
         if redone_command is False:
             return await message.channel.send("No commands to redo.")
-
+        undone_command = re.sub(r"<!?@\d+>\s*", "/", undone_command)
         mes = "All possible commands have been redone." if do_all else f"The following command has been redone: `{UtilityFunctions.clean_for_output(redone_command)}`"
-        await message.channel.send(f"{mes}\nRun `{server_prefix}wp` to make sure table bot is fully refreshed.")
+        await message.channel.send(f"{mes}\nRun `/wp` to make sure table bot is fully refreshed.")
 
     @staticmethod
     async def early_dc_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False): 
@@ -2244,7 +2245,7 @@ class TablingCommands:
         this_bot.add_save_state(message.content)
         this_bot.getRoom().forceRoomSize(raceNum, roomSize)
         mes = f"Changed room size to {roomSize} players for race #{raceNum}."
-        if dont_send: return mes + " Give DC points with `?edit` if necessary."
+        if dont_send: return mes + " Give DC points with `/edit` if necessary."
         await message.channel.send(mes)
     
 
@@ -2253,14 +2254,14 @@ class TablingCommands:
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
 
         if len(args) < 3:
-            await message.channel.send("Specify a race number. Do: " + server_prefix + 'changeroomsize <racenumber> <roomsize>')
+            await message.channel.send("Specify a race number. Do: /changeroomsize <racenumber> <roomsize>")
             return
 
         if not args[1].isnumeric():
-            await message.channel.send("racenumber must be a number. Do: " + server_prefix + 'changeroomsize <racenumber> <roomsize>')
+            await message.channel.send("racenumber must be a number. Do: /changeroomsize <racenumber> <roomsize>")
             return
         if not args[2].isnumeric():
-            await message.channel.send("roomsize must be a number. Do: " + server_prefix + 'changeroomsize <racenumber> <roomsize>')
+            await message.channel.send("roomsize must be a number. Do: /changeroomsize <racenumber> <roomsize>")
             return
 
         raceNum = int(args[1])
@@ -2270,11 +2271,16 @@ class TablingCommands:
         elif roomSize < 2 or roomSize > 12:
             await message.channel.send("Room size must be between 2 and 12 players. (24P support may come eventually).")
         else:
+            async def send_mes():
+                mes = f"Changed room size to {roomSize} players for race #{raceNum}."
+                if not dont_send: await message.channel.send(mes)
+                return mes + " Give DC points with `/edit` if necessary."
+
+            if roomSize == this_bot.room.races[raceNum-1]:
+                return await send_mes()
             this_bot.add_save_state(message.content)
             this_bot.getRoom().forceRoomSize(raceNum, roomSize)
-            mes = f"Changed room size to {roomSize} players for race #{raceNum}."
-            if not dont_send: await message.channel.send(mes)
-            return mes + " Give DC points with `?edit` if necessary."
+            return await send_mes()
 
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2418,7 +2424,7 @@ class TablingCommands:
                 #request_message = f"\n\nPicture requested by {requester}" if requester is not None else ''
                 request_message = ""
                 if len(temp) + len(error_message) + len(request_message) >= 2048:
-                    temp = temp[:2048-len(error_message)-len(request_message)] + error_message + (request_message if request_message else '')
+                    temp = temp[:2048-len(error_message)-len(request_message)] + error_message + request_message
                 embed.set_footer(text=temp+(request_message if request_message else ''))
                 
                 @TimerDebuggers.timer_coroutine
@@ -2441,7 +2447,7 @@ class TablingCommands:
                 if error_types and len(error_types)>0:
                     # don't display large time suggestions if it's a 5v5 war
                     if this_bot.war.is_5v5():
-                        error_types = [x for x in error_types if x['type'] != 'large_time']
+                        error_types = [e for e in error_types if e['type'] != 'large_time']
 
                     if len(error_types) != 0:
                         sug_view = Components.SuggestionView(error_types, this_bot, server_prefix, is_lounge_server)
