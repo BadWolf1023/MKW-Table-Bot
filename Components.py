@@ -143,8 +143,8 @@ class ConfirmView(discord.ui.View):
             return False
 
         if not self.bot.prev_command_sw:
+            await interaction.response.send_message("This has already been responded to.", ephemeral=True)
             await self.delete(interaction)
-            await interaction.followup.send("This has already been responded to.", ephemeral=True)
             return False
 
         if self.responded:
@@ -353,7 +353,7 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
             self.view.errors.pop()
         except IndexError:
             pass #rare case where it hits here (people click the button at almost the exact same time), error should be ignored
-
+        
         await self.view.next_suggestion()
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
@@ -418,39 +418,10 @@ class SuggestionView(discord.ui.View):
             pass
 
     async def refresh_suggestions(self):
-        """Race removal happened and buttons must be updated."""
+        """Race removal happened, so buttons must be updated."""
         self.errors = self.bot.getRoom().suggestion_errors
         # print(self.errors)
         await self.next_suggestion()
-    
-    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
-        
-    async def send(self, messageable, file=None, embed=None):
-        if hasattr(messageable, 'channel'):
-            messageable = messageable.channel
-        
-        self.bot.add_sug_view(self)
-
-        self.message: discord.Message = await messageable.send(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", file=file, embed=embed, view=self)
-        return self.message
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        can_interact = interaction.channel.permissions_for(interaction.user).send_messages
-        if not can_interact:
-            await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
-            return False
-
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction', is_interaction=True) # InteractionUtils.convert_key_to_command(self.current_error['type'])
-        if not allowed: 
-            await interaction.response.send_message("You cannot use these buttons.", ephemeral=True, delete_after=3.0)
-            return False
-        
-        if self.current_error['id'] in self.responded:
-            await interaction.response.send_message("This button has already been used.", ephemeral=True)
-            return False
-
-        return allowed
     
     async def next_suggestion(self):
         if len(self.errors) > 0:
@@ -499,6 +470,35 @@ class SuggestionView(discord.ui.View):
     def enable_confirm(self):
         for child in self.children:
             child.disabled=False
+    
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
+        
+    async def send(self, messageable, file=None, embed=None):
+        if hasattr(messageable, 'channel'):
+            messageable = messageable.channel
+        
+        self.bot.add_sug_view(self)
+
+        self.message: discord.Message = await messageable.send(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", file=file, embed=embed, view=self)
+        return self.message
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        can_interact = interaction.channel.permissions_for(interaction.user).send_messages
+        if not can_interact:
+            await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
+            return False
+
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction', is_interaction=True) # InteractionUtils.convert_key_to_command(self.current_error['type'])
+        if not allowed: 
+            await interaction.response.send_message("You cannot use these buttons.", ephemeral=True, delete_after=3.0)
+            return False
+        
+        if self.current_error['id'] in self.responded:
+            await interaction.response.send_message("This button has already been used.", ephemeral=True)
+            return False
+
+        return allowed
 
 
 def get_command_args(error, info, bot):

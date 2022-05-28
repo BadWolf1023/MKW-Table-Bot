@@ -420,7 +420,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
 
         await commands.TablingCommands.reset_command(message, self.bot.table_bots)
-    
+
     @slash_command(
         name="predict",
         description="Preview MMR changes of the event",
@@ -428,7 +428,7 @@ class Table_Slash(ext_commands.Cog):
     )
     async def _predict(
         self,
-        ctx: discord.ApplicationContext
+        ctx: discord.ApplicationContext,
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         await commands.TablingCommands.predict_command(message, this_bot, [command], server_prefix, is_lounge)

@@ -254,13 +254,6 @@ class BadWolfBot(ext_commands.Bot):
 
     def get_table_bots(self):
         return self.table_bots
-
-    def is_vr_command(message:discord.Message):
-        str_msg = message.content.strip()
-        if str_msg[0] not in {"!"}:
-            return False
-        str_msg = str_msg.lstrip("!").strip()
-        return str_msg.lower() in VERIFY_ROOM_TERMS
     
     def should_send_help(self, message):
         content = message.content.strip().lower()
@@ -326,6 +319,13 @@ class BadWolfBot(ext_commands.Bot):
         finished_on_ready = True
         print(f"Logged in as {self.user}")
     
+    # For memory purposes; don't want dictionary to keep ballooning
+    @tasks.loop(hours=8)
+    async def prune_mii_cooldowns(self):
+        for user, last_used in list(self.mii_cooldowns.items())[::-1]:
+            if time.monotonic()-last_used > 5:
+                self.mii_cooldowns.pop(user)
+
     #This function will run every 1 minute. It will remove any table bots that are
     #"finished" in Lounge - the definition of what is finished can be found in the ChannelBot class
     @tasks.loop(minutes=1)
@@ -335,13 +335,6 @@ class BadWolfBot(ext_commands.Bot):
             for lounge_bot_channel_id in self.table_bots[lock_server_id]:
                 if self.table_bots[lock_server_id][lounge_bot_channel_id].isFinishedLounge(): 
                     self.table_bots[lock_server_id][lounge_bot_channel_id].freeLock()
-    
-    # For memory purposes; don't want dictionary to keep ballooning
-    @tasks.loop(hours=8)
-    async def prune_mii_cooldowns(self):
-        for user, last_used in list(self.mii_cooldowns.items())[::-1]:
-            if time.monotonic()-last_used > 5:
-                self.mii_cooldowns.pop(user)
 
     #This function will run every 15 min, removing any table bots that are
     #inactive, as defined by TableBot.isinactive() (currently 2.5 hours)
@@ -1034,6 +1027,13 @@ def command_is_spam(command:str):
         if c in common.COMMAND_TRIGGER_CHARS:
             return False
     return True
+
+def is_vr_command(message:discord.Message):
+    str_msg = message.content.strip()
+    if str_msg[0] not in {"!"}:
+        return False
+    str_msg = str_msg.lstrip("!").strip()
+    return str_msg.lower() in VERIFY_ROOM_TERMS
 
 
 async def send_lounge_locked_message(message, this_bot):

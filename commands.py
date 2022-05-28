@@ -1351,7 +1351,7 @@ class LoungeCommands:
                     try:
                         await message.add_reaction(u"\U0001F197")
                     except AttributeError: #it's a proxy message from a slash command - you can't react to a slash command
-                        await message.channel.send(u"\U0001F197") #so send it instead
+                        await message.channel.send(f"Approved `{submissionID}`") #so send a message instead
                 else:
                     await submissionMessage.clear_reaction("\u2705")
                     await submissionMessage.add_reaction("\u274C")
@@ -1365,7 +1365,7 @@ class LoungeCommands:
                     try:
                         await message.add_reaction(u"\U0001F197")
                     except AttributeError: #it's a proxy message from a slash command - you can't react to a slash command
-                        await message.channel.send(u"\U0001F197") #so send it instead
+                        await message.channel.send(f"Denied `{submissionID}`") #so send a message instead
             else:
                 await message.channel.send("I couldn't find this submission ID. Make sure you have the right submission ID.")
         else:
@@ -2055,7 +2055,7 @@ class TablingCommands:
         if args[0].lower().strip() in ['no', 'n']:
             this_bot.manualWarSetUp = True
             # view = Components.ManualTeamsView(this_bot, server_prefix, is_lounge_server)
-            return await message.channel.send(content=f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{server_prefix}A 2 3 / B 1 4 / Player 5 6*")
+            return await message.channel.send(content=f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{common.client.user.mention}A 2 3 / B 1 4 / Player 5 6*")
             #return await message.channel.send(f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  `@MKW Table Bot A 2 3 / B 1 4 / Player 5 6` (**you must use my bot mention as the prefix or the `/raw` slash command**)")
 
         numGPS = this_bot.getWar().numberOfGPs
@@ -2794,13 +2794,6 @@ async def send_available_mii_options(message:discord.Message, args:List[str], th
 `2.` {get_mii_option(2)}"""
     return await message.channel.send(to_send)
 
-async def send_available_large_time_options(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot, server_prefix:str, server_wide=False):
-    to_send = f"Choose an option from this list or comma-separate multiple options and do `{server_prefix}{args[0]} <option>`. (You can either input the number or the word):\n"
-    for numVal, val, in LARGE_TIME_OPTIONS.items():
-        to_send+="   - `{}` / `{}`\n".format(val, numVal)
-    
-    return await message.channel.send(to_send)
-
 LARGE_TIME_OPTIONS = {
     '0': "Never",
     '1+': "Always",
@@ -2815,6 +2808,13 @@ LARGE_TIME_OPTIONS = {
     '5+': "5v5+",
     '6': "6v6"
 }
+
+async def send_available_large_time_options(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot, server_prefix:str, server_wide=False):
+    to_send = f"Choose an option from this list or comma-separate multiple options and do `{server_prefix}{args[0]} <option>`. (You can either input the number or the word):\n"
+    for numVal, val, in LARGE_TIME_OPTIONS.items():
+        to_send+="   - `{}` / `{}`\n".format(val, numVal)
+    
+    return await message.channel.send(to_send)
 
 def dump_vr_is_on():
     with open(common.VR_IS_ON_FILE, "wb") as pickle_out:

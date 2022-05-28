@@ -480,17 +480,22 @@ def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
             pass
     return text
 
-image_downloader_session = aiohttp.ClientSession()
+
+image_downloader_session = None
+
 @TimerDebuggers.timer_coroutine
 async def download_image(image_url, image_path):
     global image_downloader_session
+    if not image_downloader_session:
+        image_downloader_session = aiohttp.ClientSession()
+
     try:
         async with image_downloader_session.get(image_url, ssl=sslcontext) as resp:
             if resp.status == 200:
                 with open(image_path, mode='wb+') as f:
                     f.write(await resp.read())
                     return True
-    except:
+    except Exception as e:
         await image_downloader_session.close()
         image_downloader_session = aiohttp.ClientSession()
     return False
