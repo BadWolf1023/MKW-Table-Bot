@@ -1884,6 +1884,7 @@ class TablingCommands:
 
     @staticmethod
     async def change_all_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
         command_name = args[0]
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
