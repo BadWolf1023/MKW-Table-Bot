@@ -4,6 +4,7 @@ Created on Jun 26, 2021
 @author: willg
 '''
 
+#Who's Joe? LOL!
 #Bot internal imports - stuff I coded
 import ComponentPaginator
 from Placement import Placement
@@ -1912,7 +1913,6 @@ class TablingCommands:
         for x in range(0, len(scores_arg)):
             player_fc, mii_name = players[x]
             this_bot.getWar().addEdit(player_fc, gp_num, scores_arg[x])
-
 
         await message.channel.send(f"Edited all players' scores for GP{gp_num}.")
 
