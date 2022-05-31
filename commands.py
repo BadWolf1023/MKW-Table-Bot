@@ -1906,13 +1906,14 @@ class TablingCommands:
             await message.channel.send(f"The current table is only set to {table_gps} GPs. Your GP number was: {gp_num}")
             return
 
+        this_bot.add_save_state(message.content)
+
         players = this_bot.getRoom().get_sorted_player_list()
         for x in range(0, len(scores_arg)):
             player_fc, mii_name = players[x]
             this_bot.getWar().addEdit(player_fc, gp_num, scores_arg[x])
 
 
-        this_bot.add_save_state(message.content)
         await message.channel.send(f"Edited all players' scores for GP{gp_num}.")
 
     #Code is quite similar to chane_player_tag_command, potential refactor opportunity?
