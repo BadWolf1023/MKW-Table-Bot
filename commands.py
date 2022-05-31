@@ -1884,7 +1884,6 @@ class TablingCommands:
 
     @staticmethod
     async def change_all_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
-        ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
         command_name = args[0]
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
@@ -1896,11 +1895,11 @@ class TablingCommands:
             await message.channel.send(example_help(server_prefix, command_name))
             return
 
-        try:
-            gp_num, scores_arg = int(args[1]), [int(gp_score) for gp_score in args[2:]]
-        except:
-            await message.channel.send(f"GP Number and GP scores must all be numbers. {example_help(server_prefix, command_name)}")
+        if not all(UtilityFunctions.is_int(x) for x in args[1:]):
+            await message.channel.send(f"GP Number and all scores must be numbers. {example_help(server_prefix, command_name)}")
             return
+
+        gp_num, scores_arg = int(args[1]), [int(gp_score) for gp_score in args[2:]]
 
         table_gps = this_bot.getWar().numberOfGPs
         if gp_num < 1 or gp_num > table_gps:
@@ -1912,9 +1911,10 @@ class TablingCommands:
             player_fc, mii_name = players[x]
             this_bot.getWar().addEdit(player_fc, gp_num, scores_arg[x])
 
+
         this_bot.add_save_state(message.content)
-        await message.channel.send(f"Edited all players' scores for GP{gp_num}")
-        
+        await message.channel.send(f"Edited all players' scores for GP{gp_num}.")
+
     #Code is quite similar to chane_player_tag_command, potential refactor opportunity?
     @staticmethod
     async def change_player_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
