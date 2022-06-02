@@ -1,4 +1,5 @@
 #Internal imports (stuff I coded) for this file
+#Who's Joe? LOL!
 import ServerFunctions
 import Stats
 import LoungeAPIFunctions
@@ -67,6 +68,7 @@ SUBSTITUTE_TERMS = {"sub", "substitute"}
 PLAYER_PENALTY_TERMS = {"pen", "penalty"}
 TEAM_PENALTY_TERMS = {"teampen", "teampenalty", "tagpen", "tagpenalty"}
 EDIT_PLAYER_SCORE_TERMS = {"edit"}
+EDIT_FULL_GP_TERMS = {"fulledit", "editgp", "editall", "gpedit"}
 PLAYER_DISCONNECT_TERMS = {"dc", "dcs"}
 MERGE_ROOM_TERMS = {"mr", "mergeroom"}
 SET_TABLE_NAME_TERMS = {"setwarname", "settablename"}
@@ -785,6 +787,9 @@ class BadWolfBot(ext_commands.Bot):
         
         elif main_command in EDIT_PLAYER_SCORE_TERMS:
             await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge_server)
+
+        elif main_command in EDIT_FULL_GP_TERMS:
+            await commands.TablingCommands.change_all_player_score_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in PLAYER_PENALTY_TERMS:
             # if False:
