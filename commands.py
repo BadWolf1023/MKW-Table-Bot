@@ -1882,6 +1882,43 @@ class TablingCommands:
         this_bot.getWar().addEdit(player_fc, gp_num, amount)
         await message.channel.send(f"{player_name} GP{gp_num} score edited to {amount} points.")
 
+    @staticmethod
+    async def change_all_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
+
+        command_name = args[0]
+
+        if len(args) == 1:
+            to_send = this_bot.getRoom().get_sorted_player_list_string()
+            to_send += f"\n**To edit everyone's GP 2, please enter the Players' score in the order they appear in the list above:** *{server_prefix}{command_name} 2 10 33 32 35 14 32 29 30 22 25 16 14*" # yes this adds to 292
+            await message.channel.send(to_send)
+            return
+
+        if not all(UtilityFunctions.is_int(x) for x in args[1:]):
+            await message.channel.send(f"GP Number and all scores must be numbers. {example_help(server_prefix, command_name)}")
+            return
+
+        table_gps = this_bot.getWar().numberOfGPs
+        if int(args[1]) < 1 or int(args[1]) > table_gps: #didnt use variable to make code clearer
+            await message.channel.send(f"The current table is only set to {table_gps} GPs. Your GP number was: {args[1]}. {example_help(server_prefix, command_name)}")
+            return
+
+        if len(args) != len(this_bot.getRoom().get_sorted_player_list())+2:
+            await message.channel.send(example_help(server_prefix, command_name))
+            return
+
+
+        gp_num, scores_arg = int(args[1]), [int(gp_score) for gp_score in args[2:]]
+
+        this_bot.add_save_state(message.content)
+
+        players = this_bot.getRoom().get_sorted_player_list()
+        for x in range(0, len(scores_arg)):
+            player_fc, mii_name = players[x]
+            this_bot.getWar().addEdit(player_fc, gp_num, scores_arg[x])
+
+        await message.channel.send(f"Edited all players' scores for GP{gp_num}.")
+
     #Code is quite similar to chane_player_tag_command, potential refactor opportunity?
     @staticmethod
     async def change_player_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
