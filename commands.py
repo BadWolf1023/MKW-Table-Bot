@@ -1890,7 +1890,7 @@ class TablingCommands:
 
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"\n**To edit everyone's GP 2, please enter the Players' score in the order they appear in the list above:** *{server_prefix}{command_name} 2 10 33 32 35 14 32 29 30 22 25 16 14*" # yes this adds to 292
+            to_send += f"\n**To edit everyone's GP 2, please enter the players' score in the order they appear in the list above:** *{server_prefix}{command_name} 2 10 33 32 35 14 32 29 30 22 25 16 14*" # yes this adds to 292
             await message.channel.send(to_send)
             return
 
