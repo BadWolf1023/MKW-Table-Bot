@@ -121,6 +121,20 @@ class Table_Slash(ext_commands.Cog):
         args = [command, player, str(gp), str(score)]
 
         await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge)
+
+    @slash_command(name='gpedit',
+    description="Edit all players' score for a GP",
+    guild_ids=common.SLASH_GUILDS)
+    async def _edit_all_scores(
+        self,
+        ctx: discord.ApplicationContext,
+        gp: Option(int, "GP to edit"),
+        scores: Option(str, "New scores for players")
+    ):
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command, str(gp)] + scores.split(" ")
+
+        await commands.TablingCommands.change_all_player_score_command(message, this_bot, args, server_prefix, is_lounge)
     
     @slash_command(name='cp',
     description="Change a player's finish position in a race",
