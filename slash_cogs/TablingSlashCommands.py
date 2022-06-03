@@ -122,7 +122,7 @@ class Table_Slash(ext_commands.Cog):
 
         await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge)
 
-    @slash_command(name='fulledit',
+    @slash_command(name='gpedit',
     description="Edit all players' score for a GP",
     guild_ids=common.SLASH_GUILDS)
     async def _edit_all_scores(
