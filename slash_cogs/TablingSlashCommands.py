@@ -129,10 +129,10 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         gp: Option(int, "GP to edit"),
-        scores: Option(int, "New scores for players")
+        scores: Option(str, "New scores for players")
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-        args = [command, str(gp)] + str(scores).split(" ")
+        args = [command, str(gp)] + scores.split(" ")
 
         await commands.TablingCommands.change_all_player_score_command(message, this_bot, args, server_prefix, is_lounge)
     
