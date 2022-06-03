@@ -129,7 +129,7 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         gp: Option(int, "GP to edit"),
-        scores: Option(str, "New scores for players")
+        scores: Option(str, "New scores for players, in the order listed by running /ap")
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, str(gp)] + scores.split(" ")
