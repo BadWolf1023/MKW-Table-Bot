@@ -809,6 +809,15 @@ class OtherCommands:
     This class contains all of the non administrative "stateless" commands"""
 
     @staticmethod
+    async def stats_command(message: discord.Message, client: common.client):
+        num_wars = client.getNumActiveWars()
+        stats_str = Stats.stats(num_wars, client)
+        if stats_str is None:
+            await message.channel.send("Error fetching stats. Try again.")
+        else:
+            await message.channel.send(stats_str)
+
+    @staticmethod
     async def get_flag_command(message: discord.Message, args: List[str], server_prefix: str):
         to_load = SmartTypes.create_you_discord_id(message.author.id)
         if len(args) > 1:

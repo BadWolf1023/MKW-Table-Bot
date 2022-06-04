@@ -248,7 +248,8 @@ def get_from_messages_logging_file(commands_logging=common.MESSAGE_LOGGING_FILE)
 
 def dump_to_stats_file(stats_file=common.STATS_FILE, commands_logging=common.MESSAGE_LOGGING_FILE):
     global user_delimiter
-    war_picture_count, total_commands, total_code_lines, servers, users = get_combined_stats_from_both(stats_file, commands_logging)
+    war_picture_count, total_commands, _, servers, users = get_combined_stats_from_both(stats_file, commands_logging)
+    total_code_lines = count_lines_of_code()
     temp_stats = f"{stats_file}_temp"
     with open(temp_stats, "w+", encoding="utf-8", errors="replace") as temp_out:
         temp_out.write(str(war_picture_count) + "\n")

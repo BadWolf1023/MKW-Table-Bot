@@ -17,7 +17,7 @@ import ssl
 import certifi
 import dill
 import TimerDebuggers
-from typing import Dict, List
+from typing import TYPE_CHECKING, Dict, List
 
 # I don't know the exact details because I'm not extremely familiar with how SSL certification actually works, but
 # this was necessary at one point because a main SSL certificate list expired a while ago,
@@ -30,7 +30,7 @@ sslcontext = ssl.create_default_context(cafile=certifi.where())
 main = None
 client = None
 
-if False: # for IDE autocompletion
+if TYPE_CHECKING: # for IDE autocompletion
     import BadWolfBot; main = BadWolfBot
     client: BadWolfBot.BadWolfBot = None
 

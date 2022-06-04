@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands as ext_commands
 from discord.commands import slash_command, Option
 # from discord import option
+from typing import TYPE_CHECKING
 
 #Internal Imports
 import UtilityFunctions
@@ -10,8 +11,10 @@ import Race
 import help_documentation
 import commands
 import common
-
 import TimerDebuggers
+
+if TYPE_CHECKING:
+    from BadWolfBot import BadWolfBot
 
 EMPTY_CHAR = '\u200b'
 
@@ -22,7 +25,7 @@ class Table_Slash(ext_commands.Cog):
     '''
     Cog that holds all slash commands; only exists for organizational purposes.
     '''
-    def __init__(self, bot):
+    def __init__(self, bot: 'BadWolfBot'):
         self.bot = bot
 
     @slash_command(name='sw',
@@ -73,8 +76,7 @@ class Table_Slash(ext_commands.Cog):
         show_lounge_names: Option(bool,"Show lounge names on table",required=False,default=None),
         show_mii_names: Option(bool,"Show mii names on table",required=False,default=None)
     ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-        args = [command]
+        args = []
 
         bool_map = {True: 'yes', False: 'no'}
 
@@ -88,11 +90,13 @@ class Table_Slash(ext_commands.Cog):
             args.append('uselounge=' + bool_map[show_lounge_names])
         if show_mii_names is not None:
             args.append('usemii=' + bool_map[show_mii_names])
+        
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx, args=args)
+        args.insert(0, command)
 
-        # await ctx.defer()
         await commands.TablingCommands.war_picture_command(message, this_bot, args, server_prefix, is_lounge)
     
-    @slash_command(name='dc', 
+    @slash_command(name='dc',
     description="Confirm a player's DC status for a race",
     guilds_ids=common.SLASH_GUILDS)
     async def _dc_config(

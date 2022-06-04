@@ -1,4 +1,6 @@
 import asyncio
+from datetime import datetime
+from typing import Union
 import discord
 import SmartTypes as ST
 import common
@@ -63,22 +65,62 @@ class ChannelWrapper():
 
     def __getattr__(self,attr):
         return self.channel.__getattribute__(attr)
+    
+def create_user_payload(user: Union[discord.Member, discord.User]):
+    if isinstance(user, discord.Member):
+        user = user._user
+
+    user_payload = {
+        'username': user.name,
+        'id': str(user.id),
+        'discriminator': user.discriminator,
+        'avatar': user._avatar,
+        'banner': user._banner,
+        'accent_color': user._accent_colour,
+        'public_flags': user._public_flags,
+        'bot': user.bot,
+        'system': user.system
+    }
+
+    if isinstance(user, discord.Member):
+        payload = {}
+        payload['user'] = user_payload
+        payload['avatar'] = user._avatar
+        payload['nick'] = user.nick
+        payload['premium_since'] = user.premium_since
+        payload['pending'] = user.pending
+        payload['permissions'] = ""
+        payload['joined_at'] = user.joined_at
+        payload['communication_disabled_until'] = user.communication_disabled_until
+        payload['roles'] = user.roles 
+
+        return payload
+
+    return user_payload
+
 
 def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
-    proxyMsg = discord.Object(id=interaction.id)
-    #print(interaction)
-    #for attr in dir(interaction):
-    #    try:
-    #        print(f"{attr}: {getattr(interaction, attr)}")
-    #    except:
-    #        print(f"Can't get value for: {attr}")
-    proxyMsg.channel = ChannelWrapper(interaction.channel, ctx)
-    proxyMsg.guild = interaction.guild
-    proxyMsg.content = build_msg_content(interaction.data, args)
-    proxyMsg.author = interaction.user
-    proxyMsg.proxy = True
-    proxyMsg.mentions = build_mentions(interaction.data)
-    return proxyMsg
+    msg_data = {
+        'id': interaction.id,
+        'channel_id': interaction.channel_id,
+        'author': create_user_payload(interaction.user),
+        'content': build_msg_content(interaction.data, args),
+        'timestamp': datetime.utcnow(),
+        'edited_timestamp': None,
+        'tts': False,
+        'mention_everyone': False,
+        'mentions': build_mentions_payload(interaction),
+        'mention_roles': [],
+        'attachments': [],
+        'embeds': [],
+        'pinned': False,
+        'type': 0
+    }
+
+    proxy_msg = discord.Message(state=interaction._state, channel=interaction.channel, data=msg_data)
+    proxy_msg.channel = ChannelWrapper(proxy_msg.channel, ctx)
+
+    return proxy_msg
 
 def build_msg_content(data, args=None):
     if args: 
@@ -90,7 +132,9 @@ def build_msg_content(data, args=None):
         args.append(str(arg.get('value', '')))
     return '/' + ' '.join(args)
 
-def build_mentions(data):
+def build_mentions_payload(interaction: discord.Interaction):
+    data = interaction.data
+
     result = []
     found_discord_ids = []
     for option in data.get('options', []):
@@ -109,12 +153,13 @@ def build_mentions(data):
         member_json = members.get(discord_id, None)
         if user_json is None:
             continue
-        user = discord.User(state=None, data=user_json)
+
+        member_or_user = user_json
         if member_json is not None:
-            nickname = member_json.get('nick', None)
-            if nickname is not None:
-                user.name = nickname
-        result.append(user)
+            member_json['user'] = user_json
+            member_or_user = member_json
+
+        result.append(member_or_user)
     return result
 
 async def on_component_error(error: Exception, interaction: discord.Interaction, prefix: str, channel_bot):

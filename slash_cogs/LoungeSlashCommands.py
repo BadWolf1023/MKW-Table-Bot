@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 import discord
 from discord.commands import slash_command, Option, SlashCommandGroup
 from discord.ext import commands as ext_commands
@@ -6,6 +7,9 @@ import commands
 import common
 import InteractionUtils
 import MogiUpdate
+
+if TYPE_CHECKING:
+    from BadWolfBot import BadWolfBot
 
 # REQUIRED_PERMISSIONS = [CommandPermission(role, 1, True, (common.TABLE_BOT_DISCORD_SERVER_ID if common.is_beta else common.MKW_LOUNGE_SERVER_ID)) for role in list(common.reporter_plus_roles)]
 GUILDS = [common.MKW_LOUNGE_SERVER_ID]
@@ -108,7 +112,7 @@ async def get_rt_tiers(ctx: discord.AutocompleteContext):
         return [tier for tier in ['T1', 'T2', 'T3', 'T4'] if ctx.value.lower() in tier]
         
 class LoungeSlash(ext_commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: 'BadWolfBot'):
         self.bot = bot
     
     update = SlashCommandGroup("update", "Submit tables to updaters", guild_ids=GUILDS) 

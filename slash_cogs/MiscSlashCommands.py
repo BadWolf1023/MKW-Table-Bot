@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 import discord
 from discord.ext import commands as ext_commands
 from discord.commands import slash_command, SlashCommandGroup, Option
@@ -7,13 +8,16 @@ import TableBot
 import commands
 import common
 
+if TYPE_CHECKING:
+    from BadWolfBot import BadWolfBot
+
 EMPTY_CHAR = "\u200b"
 GUILDS = common.SLASH_GUILDS
 # SETTING_PERMISSIONS = [CommandPermission("owner", 2, True)]
 
 PLAYER_ARG_DESCRIPTION = "Lounge name, FC, Discord user (mention), or Discord ID"
 class MiscSlash(ext_commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: 'BadWolfBot'):
         self.bot = bot
     
     @slash_command(
@@ -209,6 +213,17 @@ class MiscSlash(ext_commands.Cog):
         args = [command]
         if player: args.append(player)
         await commands.OtherCommands.lounge_name_command(message, args)
+    
+    @slash_command(name="stats",
+    description="See some cool Table Bot stats",
+    guild_ids=GUILDS)
+    async def _stats(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        _, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
+
+        await commands.OtherCommands.stats_command(message, self.bot)
 
 
 def setup(bot):

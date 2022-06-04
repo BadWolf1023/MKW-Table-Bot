@@ -712,12 +712,7 @@ class BadWolfBot(ext_commands.Bot):
             
         #Fun commands
         elif main_command in STATS_TERMS:
-            num_wars = self.getNumActiveWars()
-            stats_str = Stats.stats(num_wars, self)
-            if stats_str is None:
-                await message.channel.send("Error fetching stats. Try again.")
-            else:
-                await message.channel.send(stats_str)
+            await commands.OtherCommands.stats_command(message, self)
         
         elif (main_command in ["badwolf"]) or (len(args) > 1 and (main_command in ["bad"] and args[1] in ["wolf"])):
             await message.channel.send(file=discord.File(common.BADWOLF_PICTURE_FILE))    
