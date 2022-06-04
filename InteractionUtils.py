@@ -66,9 +66,10 @@ class ChannelWrapper():
     def __getattr__(self,attr):
         return self.channel.__getattribute__(attr)
     
-def create_user_payload(user: Union[discord.Member, discord.User]):
+def build_user_payload(original: Union[discord.Member, discord.User]):
+    user = original
     if isinstance(user, discord.Member):
-        user = user._user
+        user = original._user
 
     user_payload = {
         'username': user.name,
@@ -82,19 +83,20 @@ def create_user_payload(user: Union[discord.Member, discord.User]):
         'system': user.system
     }
 
-    if isinstance(user, discord.Member):
-        payload = {}
-        payload['user'] = user_payload
-        payload['avatar'] = user._avatar
-        payload['nick'] = user.nick
-        payload['premium_since'] = user.premium_since
-        payload['pending'] = user.pending
-        payload['permissions'] = ""
-        payload['joined_at'] = user.joined_at
-        payload['communication_disabled_until'] = user.communication_disabled_until
-        payload['roles'] = user.roles 
+    # if isinstance(original, discord.Member):
+    #     member_payload = {}
+    #     member_payload['user'] = user_payload
+    #     member_payload['avatar'] = original._avatar
+    #     member_payload['nick'] = original.nick
+    #     member_payload['premium_since'] = original.premium_since
+    #     member_payload['pending'] = original.pending
+    #     member_payload['permissions'] = ""
+    #     member_payload['joined_at'] = original.joined_at
+    #     member_payload['communication_disabled_until'] = original.communication_disabled_until
+    #     member_payload['roles'] = original.roles 
+    #     print(member_payload)
 
-        return payload
+    #     return member_payload
 
     return user_payload
 
@@ -103,7 +105,7 @@ def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
     msg_data = {
         'id': interaction.id,
         'channel_id': interaction.channel_id,
-        'author': create_user_payload(interaction.user),
+        'author': build_user_payload(interaction.user),
         'content': build_msg_content(interaction.data, args),
         'timestamp': datetime.utcnow(),
         'edited_timestamp': None,
@@ -149,8 +151,8 @@ def build_mentions_payload(interaction: discord.Interaction):
     users = resolved_data.get('users', {})
     members = resolved_data.get('members', {})
     for discord_id in found_discord_ids:
-        user_json = users.get(discord_id, None)
-        member_json = members.get(discord_id, None)
+        user_json = users.get(discord_id)
+        member_json = members.get(discord_id)
         if user_json is None:
             continue
 
