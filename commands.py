@@ -1116,8 +1116,6 @@ class LoungeCommands:
 
 
 
-
-
     #TODO: Refactor this - in an rushed effort to release this, the code is sloppy.
     #It should be refactored as this is some of the worst code in TableBot
     @staticmethod  # TODO: It seems this method will break when slash commands try to use it with tabletext
@@ -2331,6 +2329,7 @@ class TablingCommands:
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
+
 
         if len(args) == 1:
             await message.channel.send(str(this_bot.getRoom().races[-1]))
