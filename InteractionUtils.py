@@ -179,7 +179,8 @@ def build_mentions_payload(interaction: discord.Interaction):
 
         member_or_user = user_json
         if member_json is not None:
-            member_json['user'] = user_json
+            if 'user' not in member_json:
+                member_json['user'] = user_json
             member_or_user = member_json
 
         result.append(member_or_user)
