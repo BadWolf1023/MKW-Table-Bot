@@ -42,6 +42,30 @@ async def safe_defer(ctx: discord.ApplicationContext):
     except:
         pass
 
+CANT_IMPLEMENT = {
+    'reply',
+    'edit',
+    'add_reaction',
+    'remove_reaction',
+    'pin',
+    'publish',
+    'unpin',
+    'clear_reaction',
+    'clear_reactions',
+    'create_thread'
+}
+
+class MessageWrapper():
+    def __init__(self, state, channel, data, ctx):
+        self.message = discord.Message(state=state, channel=channel, data=data)
+        self.message.channel = ChannelWrapper(self.message.channel, ctx)
+        self.is_proxy = True
+    
+    def __getattr__(self, attr):
+        if attr in CANT_IMPLEMENT:
+            raise NotImplementedError(f"Proxy message from interaction cannot {attr}")
+        return self.message.__getattribute__(attr)
+
 class ChannelWrapper():
     def __init__(self, channel, ctx: discord.ApplicationContext):
         self.channel = channel
@@ -70,7 +94,6 @@ def build_user_payload(original: Union[discord.Member, discord.User]):
     user = original
     if isinstance(user, discord.Member):
         user = original._user
-
     user_payload = {
         'username': user.name,
         'id': str(user.id),
@@ -118,8 +141,7 @@ def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
         'type': 0
     }
 
-    proxy_msg = discord.Message(state=interaction._state, channel=interaction.channel, data=msg_data)
-    proxy_msg.channel = ChannelWrapper(proxy_msg.channel, ctx)
+    proxy_msg = MessageWrapper(state=interaction._state, channel=interaction.channel, data=msg_data, ctx=ctx)
 
     return proxy_msg
 

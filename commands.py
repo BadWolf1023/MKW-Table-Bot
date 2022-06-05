@@ -1355,10 +1355,10 @@ class LoungeCommands:
 
                     await submissionMessage.clear_reaction("\u274C")
                     await submissionMessage.add_reaction("\u2705")
-                    try:
-                        await message.add_reaction(u"\U0001F197")
-                    except AttributeError: #it's a proxy message from a slash command - you can't react to a slash command
+                    if hasattr(message, 'is_proxy'): #it's a proxy message from a slash command - you can't react to a slash command
                         await message.channel.send(f"Approved `{submissionID}`") #so send a message instead
+                    else:
+                        await message.add_reaction(u"\U0001F197")
                 else:
                     await submissionMessage.clear_reaction("\u2705")
                     await submissionMessage.add_reaction("\u274C")
@@ -1369,10 +1369,11 @@ class LoungeCommands:
                         extra_message_text = f"Double denying a submission doesn't do anything, so you don't need to worry. You simply might have made a typo for your submission ID, and you should deny the correct one." if is_denied else f"I've given it the X reaction anyway. Don't bother 'approving' it again if it was previously approved and sent to the correct summaries (as this will resend it to the summary channels). Simply check your `/deny` command for typos so you deny the right submission."
                         await submissionMessage.channel.send(f"**Warning:** The submission ({submissionID}) was already **{submission_status}**. {extra_message_text}")
                     lounge_server_updates.deny_submission_id(submissionID)
-                    try:
-                        await message.add_reaction(u"\U0001F197")
-                    except AttributeError: #it's a proxy message from a slash command - you can't react to a slash command
+
+                    if hasattr(message, 'is_proxy'): #it's a proxy message from a slash command - you can't react to a slash command
                         await message.channel.send(f"Denied `{submissionID}`") #so send a message instead
+                    else:
+                        await message.add_reaction(u"\U0001F197")
             else:
                 await message.channel.send("I couldn't find this submission ID. Make sure you have the right submission ID.")
         else:
@@ -2099,7 +2100,7 @@ class TablingCommands:
         if args[0].lower().strip() in ['no', 'n']:
             this_bot.manualWarSetUp = True
             # view = Components.ManualTeamsView(this_bot, server_prefix, is_lounge_server)
-            return await message.channel.send(content=f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{common.client.user.mention}A 2 3 / B 1 4 / Player 5 6*")
+            return await message.channel.send(content=f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{common.client.user.mention} A 2 3 / B 1 4 / Player 5 6*")
             #return await message.channel.send(f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  `@MKW Table Bot A 2 3 / B 1 4 / Player 5 6` (**you must use my bot mention as the prefix or the `/raw` slash command**)")
 
         numGPS = this_bot.getWar().numberOfGPs
@@ -2244,7 +2245,7 @@ class TablingCommands:
         if undone_command is False:
             await message.channel.send("No commands to undo.")
             return
-        undone_command = re.sub(r"<!?@\d+>\s*", "/", undone_command)
+        undone_command = re.sub(r"<@!?(\d{15,20})>\s*", "/", undone_command)
         mes = "All possible commands have been undone." if do_all else f"The following command has been undone: `{UtilityFunctions.clean_for_output(undone_command)}`"
         await message.channel.send(f"{mes}\nRun `/wp` to make sure table bot is fully refreshed.")
 
@@ -2256,7 +2257,7 @@ class TablingCommands:
         redone_command = this_bot.restore_last_redo_state(do_all=do_all)
         if redone_command is False:
             return await message.channel.send("No commands to redo.")
-        undone_command = re.sub(r"<!?@\d+>\s*", "/", undone_command)
+        redone_command = re.sub(r"<@!?(\d{15,20})>\s*", "/", redone_command)
         mes = "All possible commands have been redone." if do_all else f"The following command has been redone: `{UtilityFunctions.clean_for_output(redone_command)}`"
         await message.channel.send(f"{mes}\nRun `/wp` to make sure table bot is fully refreshed.")
 
@@ -2330,7 +2331,6 @@ class TablingCommands:
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
 
-
         if len(args) == 1:
             await message.channel.send(str(this_bot.getRoom().races[-1]))
         else:
@@ -2356,7 +2356,7 @@ class TablingCommands:
             return
 
         server_id = message.guild.id
-        should_send_notification = this_bot.shouldSendNoticiation()
+        should_send_notification = this_bot.shouldSendNotificiation()
         this_bot.updateWPCoolDown()
         await this_bot.clear_last_wp_button()
         this_bot.clear_last_sug_view()

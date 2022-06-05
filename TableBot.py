@@ -299,7 +299,7 @@ class ChannelBot(object):
     def updateWPCoolDown(self):
         self.lastWPTime = datetime.now()
         
-    def shouldSendNoticiation(self) -> bool:
+    def shouldSendNotificiation(self) -> bool:
         if self.is_table_loaded():
             return self.should_send_mii_notification
         return False
@@ -406,7 +406,7 @@ class ChannelBot(object):
             return "No commands to undo."
         
         for i, (command, _) in enumerate(undos[::-1]):
-            command = re.sub(r"<!?@\d+>\s*", "/", command)
+            command = re.sub(r"<@!?(\d{15,20})>\s*", "/", command)
             ret+=f'\n   {i+1}. `{command}`'
         
         return ret
@@ -418,7 +418,7 @@ class ChannelBot(object):
             return "No commands to redo."
 
         for i, (command, _) in enumerate(redos):
-            command = re.sub(r"<!?@\d+>\s*", "/", command)
+            command = re.sub(r"<@!?(\d{15,20})>\s*", "/", command)
             ret+=f'\n   {i+1}. `{command}`'
         
         return ret

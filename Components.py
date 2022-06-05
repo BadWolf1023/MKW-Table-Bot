@@ -313,7 +313,7 @@ class RejectButton(discord.ui.Button['SuggestionView']):
         except IndexError:
             pass
 
-        await self.view.next_suggestion()
+        await self.view.next_suggestion(interaction=interaction)
 
 class SuggestionButton(discord.ui.Button['SuggestionView']):
     def __init__(self, error, label, value=None, confirm=False):
@@ -354,7 +354,7 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
         except IndexError:
             pass #rare case where it hits here (people click the button at almost the exact same time), error should be ignored
         
-        await self.view.next_suggestion()
+        await self.view.next_suggestion(interaction=interaction)
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
     def __init__(self, values, name):
@@ -423,12 +423,22 @@ class SuggestionView(discord.ui.View):
         # print(self.errors)
         await self.next_suggestion()
     
-    async def next_suggestion(self):
+    async def next_suggestion(self, interaction: discord.Interaction = None):
         if len(self.errors) > 0:
             self.current_error = self.errors[-1]
+            content = f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**"
             self.clear_items()
             self.create_suggestion()
-            await common.safe_edit(self.message, content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", view=self)
+
+            if interaction:
+                await interaction.response.defer()  # needed to force webhook message edit route for files kwarg support
+                await interaction.followup.edit_message(
+                    message_id=self.message.id,
+                    content=content,
+                    view=self
+                )
+            else:
+                await common.safe_edit(self.message, content=content, view=self)
         else:
             await self.on_timeout()
 
