@@ -2443,35 +2443,50 @@ class TablingCommands:
             tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs()
             header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
             footer_combine_success = True
+            lorenzi_edit_link = f"[Edit this table on Lorenzi's website]({common.base_url_edit_table_lorenzi + display_url_table_text})"
 
             if header_combine_success and this_bot.getWar().displayMiis:
                 footer_combine_success = ImageCombine.add_miis_to_table(this_bot, table_sorted_data, table_image_path=table_image_path, out_image_path=table_image_path)
+           
             if not header_combine_success or not footer_combine_success:
                 await common.safe_delete(message3)
                 await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")
             else:
+                if len(lorenzi_edit_link)>=4000:
+                    att = 0
+                    while att < 3:
+                        try:
+                            lorenzi_edit_link = await URLShortener.tinyurl_shorten_url(lorenzi_edit_link)
+                            break
+                        except URLShortener.URLShortenFailure: 
+                            pass
+                        att+=1
+
                 embed = discord.Embed(
                     title = "",
-                    description=f"[Edit this table on Lorenzi's website]({common.base_url_edit_table_lorenzi + display_url_table_text})",
+                    description = lorenzi_edit_link ,
                     colour = discord.Colour.dark_blue()
                 )
 
                 file = discord.File(table_image_path, filename=table_image)
                 numRaces = 0
                 if this_bot.getRoom() is not None and this_bot.getRoom().races is not None:
-                    numRaces = min( (len(this_bot.getRoom().races), this_bot.getRoom().getNumberOfGPS()*4) )
+                    numRaces = min((len(this_bot.getRoom().races), this_bot.getRoom().getNumberOfGPS()*4))
                 if up_to is not None:
                     numRaces = up_to
-                embed.set_author(name=this_bot.getWar().getWarName(numRaces), icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
+                
+                embed_title = this_bot.getWar().getWarName(numRaces)
+                embed.set_author(name=embed_title, icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                 embed.set_image(url="attachment://" + table_image)
                 
                 init_string, footer_string, error_types = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), this_bot.get_all_resolved_errors(), lounge_replace, up_to_race=up_to)
                 full_string = init_string+footer_string
                 error_message = "(Too many errors - cannot show previous errors. Full list in file.)\n..."
                 error_file = False
-                if len(full_string) >= 2048:
+                footer_max = min(6000-len(embed_title+lorenzi_edit_link), 2048)
+                if len(full_string) >= footer_max:
                     error_file = True
-                    cutoff = len(full_string+error_message)-2048
+                    cutoff = len(full_string+error_message)-footer_max
                     full_string = init_string + error_message + footer_string[cutoff:]
 
                 embed.set_footer(text=full_string)
