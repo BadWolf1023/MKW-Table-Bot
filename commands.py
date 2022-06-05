@@ -2430,7 +2430,9 @@ class TablingCommands:
         display_url_table_text = urllib.parse.quote(table_text)
         true_url_table_text = urllib.parse.quote(table_text_with_style_and_graph)
         image_url = common.base_url_lorenzi + true_url_table_text
-        table_image_path = str(message.id) + ".png"
+        temp_path = './temp/'
+        table_image = f"{message.id}_picture.png"
+        table_image_path=temp_path+table_image
         try:
             image_download_success = await common.download_image(image_url, table_image_path)
             if not image_download_success:
@@ -2454,23 +2456,25 @@ class TablingCommands:
                     colour = discord.Colour.dark_blue()
                 )
 
-                file = discord.File(table_image_path, filename=table_image_path)
+                file = discord.File(table_image_path, filename=table_image)
                 numRaces = 0
                 if this_bot.getRoom() is not None and this_bot.getRoom().races is not None:
                     numRaces = min( (len(this_bot.getRoom().races), this_bot.getRoom().getNumberOfGPS()*4) )
                 if up_to is not None:
                     numRaces = up_to
                 embed.set_author(name=this_bot.getWar().getWarName(numRaces), icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
-                embed.set_image(url="attachment://" + table_image_path)
+                embed.set_image(url="attachment://" + table_image)
                 
-                temp, error_types = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), this_bot.get_all_resolved_errors(), lounge_replace, up_to_race=up_to)
+                init_string, footer_string, error_types = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), this_bot.get_all_resolved_errors(), lounge_replace, up_to_race=up_to)
+                full_string = init_string+footer_string
+                error_message = "(Too many errors - cannot show previous errors. Full list in file.)\n..."
+                error_file = False
+                if len(full_string) >= 2048:
+                    error_file = True
+                    cutoff = len(full_string+error_message)-2048
+                    full_string = init_string + error_message + footer_string[cutoff:]
 
-                error_message = "\nMore errors occurred. Embed only allows so many errors to display."
-                #request_message = f"\n\nPicture requested by {requester}" if requester is not None else ''
-                request_message = ""
-                if len(temp) + len(error_message) + len(request_message) >= 2048:
-                    temp = temp[:2048-len(error_message)-len(request_message)] + error_message + request_message
-                embed.set_footer(text=temp+(request_message if request_message else ''))
+                embed.set_footer(text=full_string)
                 
                 @TimerDebuggers.timer_coroutine
                 async def pic_view_func(this_bot:ChannelBot, server_prefix, is_lounge_server):
@@ -2488,6 +2492,16 @@ class TablingCommands:
                         this_bot.get_war().set_discord_picture_url(pic_view.message.embeds[0].image.url)     
                     
                 await pic_view_func(this_bot, server_prefix, is_lounge_server)
+
+                if error_file:
+                    error_file_path = f'{message.id}_full_errors.txt'
+                    error_file = common.create_temp_file(error_file_path, init_string+footer_string, dir=temp_path)
+                    try:
+                        os.remove(temp_path+error_file_path)
+                    except Exception:
+                        pass
+                    
+                    await message.channel.send(file=discord.File(fp=error_file, filename=error_file_path))
 
                 if error_types and len(error_types)>0:
                     # don't display large time suggestions if it's a 5v5 war

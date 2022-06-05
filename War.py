@@ -247,8 +247,9 @@ class War(object):
         num_errors_no_large_times = sum( [ len(raceErrors) for raceErrors in errors_no_large_times.values()])
         num_errors_large_times = sum( [ len(raceErrors) for raceErrors in errors_large_times.values()])
 
-        build_string = "Errors that might affect the table:\n"
+        init_string = "Errors that might affect the table:\n"
         info_string = ""
+        build_string = ""
         
         removedRaceString = room.get_removed_races_string()
         info_string += removedRaceString
@@ -262,7 +263,7 @@ class War(object):
         elif len(errors) == 0 and len(info_string) == 0:
             return "Room had no errors. Table should be correct.", None
         
-        build_string += info_string
+        init_string += info_string
 
         for raceNum, error_messages in sorted(errors.items(), key=lambda x:x[0]):
             if raceNum > len(room.races):
@@ -272,7 +273,7 @@ class War(object):
             
             for error_message in error_messages:
                 build_string += "\t- " + error_message + "\n"
-        return build_string, error_types
+        return init_string, build_string, error_types
     
     def get_all_war_errors_players(self, room, lounge_replace=True):
         return ErrorChecker.get_war_errors_players(self, room, defaultdict(list), lounge_replace, ignoreLargeTimes=False)
