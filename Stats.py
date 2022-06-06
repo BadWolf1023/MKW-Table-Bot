@@ -186,7 +186,7 @@ def count_lines_of_code(dir='.') -> int:
     for file in os.listdir(dir):
         if os.path.isdir(dir+'/'+file):
             lines_count+=count_lines_of_code(dir+'/'+file)
-        if re.match(r'.*\.(py|sql|css)$', file):
+        if re.match(r'.*\.(py|sql)$', file):
             with open(dir+'/'+file, encoding='utf-8') as f:
                 for _ in f:
                     lines_count += 1
