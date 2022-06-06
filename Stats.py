@@ -21,30 +21,10 @@ meta = {
     "command_count": {}
 }
 
-SLASH_TERMS_CONVERSIONS = {
-    "flag show": 'getflag',
-    "flag set": 'setflag',
-    "flag remove": 'setflag',
-    "update rt": 'rtupdate',
-    "update ct": 'ctupdate',
-    "setting prefix": 'setprefix',
-    "setting theme": 'defaulttheme',
-    "setting graph": 'defaultgraph',
-    "setting ignore_large_times": 'defaultlargetimes',
-    "blacklist user add": 'blacklistuser',
-    "blacklist user remove": 'blacklistuser',
-    "blacklist word add": 'blacklistword',
-    "blacklist word remove": 'removeblacklistword',
-    "sha add": 'addsha',
-    "sha remove": 'removesha',
-    "admin add": 'addadmin',
-    "admin remove": 'removeadmin'
-}
-
 def initialize():
     global meta
     if os.path.isfile(common.JSON_META_FILE):
-        with open(common.JSON_META_FILE) as f:
+        with open(common.JSON_META_FILE, 'r') as f:
             meta = json.load(f)
 
 def save_metadata():
@@ -52,16 +32,18 @@ def save_metadata():
     meta["command_count"] = {k:counts[k] for k in sorted(counts.keys(),reverse=True)}
 
     with open(common.JSON_META_FILE,'w') as f:
-        json.dump(meta, f)
+        json.dump(meta, f, indent=4)
 
-def log_command(command):
-    command = SLASH_TERMS_CONVERSIONS.get(command, command)
+def log_command(command, slash=False):
+    command = common.SLASH_TERMS_CONVERSIONS.get(command, command)
     
     for name in dir(common.main):
         if re.fullmatch("([A-Z]+_)*TERMS",name):
             command_terms = common.main.__getattribute__(name)
             if command in command_terms:
                 meta["command_count"][name] = meta["command_count"].get(name, 0) + 1
+                if slash:
+                    meta["slash_commands_count"] = meta.get('slash_commands_count', 0) + 1
 
 def backup_files(to_back_up=common.FILES_TO_BACKUP):
     Path(backup_folder).mkdir(parents=True, exist_ok=True)

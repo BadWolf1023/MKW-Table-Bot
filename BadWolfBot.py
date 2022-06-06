@@ -495,7 +495,7 @@ class BadWolfBot(ext_commands.Bot):
             command_level = new_level
         
         full_command_name = " ".join(full_command_name)
-        Stats.log_command(full_command_name)
+        Stats.log_command(full_command_name, slash=True)
         await self.process_application_commands(interaction)
     
     async def on_connect(self):
@@ -515,6 +515,7 @@ class BadWolfBot(ext_commands.Bot):
             this_bot.freeLock()
 
         name = ctx.command.full_parent_name + " " + ctx.interaction.data['name']
+        name = common.SLASH_TERMS_CONVERSIONS.get(name, name)
         return name.strip(), message, this_bot, '/', is_lounge_server
 
 
@@ -662,13 +663,17 @@ class BadWolfBot(ext_commands.Bot):
         else:
             pass
     
-    async def process_message_commands(self, message, args, this_bot, server_prefix, is_lounge_server):
+    async def process_message_commands(self, message, args, this_bot, server_prefix, is_lounge_server, from_slash=False):
         main_command = args[0].lower()
-        Stats.log_command(main_command)
+        if not from_slash:
+            Stats.log_command(main_command, slash=from_slash)
 
         #Core commands
         if main_command in RESET_TERMS:
-            await commands.TablingCommands.reset_command(message, self.table_bots)          
+            await commands.TablingCommands.reset_command(message, self.table_bots)   
+
+        elif main_command in START_WAR_TERMS:
+            await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, common.author_is_table_bot_support_plus)       
 
         elif this_bot.manualWarSetUp:
             await commands.TablingCommands.manual_war_setup(message, this_bot, args, server_prefix, is_lounge_server)
@@ -678,9 +683,6 @@ class BadWolfBot(ext_commands.Bot):
         
         elif main_command in GARBAGE_COLLECT_TERMS:
             await commands.BotOwnerCommands.garbage_collect_command(message)
-                
-        elif main_command in START_WAR_TERMS:
-            await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, common.author_is_table_bot_support_plus)
         
         elif main_command in TABLE_TEXT_TERMS:
             await commands.TablingCommands.table_text_command(message, this_bot, args, server_prefix, is_lounge_server)

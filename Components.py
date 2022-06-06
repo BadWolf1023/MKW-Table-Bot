@@ -117,19 +117,21 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
 
 
 class ConfirmView(discord.ui.View):
-    def __init__(self, bot, prefix, is_lounge):
-        super().__init__()
+    def __init__(self, message, bot, prefix, is_lounge):
+        super().__init__(timeout=300)
+        self.message = message
         self.bot = bot
         self.prefix = prefix
         self.is_lounge = is_lounge
         self.responded = False
         self.add_item(ConfirmButton('Yes'))
         self.add_item(ConfirmButton('No'))
+        self.bot.add_component(self)
     
-    async def delete(self, interaction: discord.Interaction):
+    async def on_timeout(self):
         self.clear_items()
         self.stop()
-        await common.safe_edit(interaction.message, view=None)
+        await common.safe_edit(self.message, view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         can_interact = interaction.channel.permissions_for(interaction.user).send_messages
@@ -143,8 +145,8 @@ class ConfirmView(discord.ui.View):
             return False
 
         if not self.bot.prev_command_sw:
-            await interaction.response.send_message("This has already been responded to.", ephemeral=True)
-            await self.delete(interaction)
+            await interaction.response.send_message("This button has expired.", ephemeral=True)
+            await self.on_timeout()
             return False
 
         if self.responded:

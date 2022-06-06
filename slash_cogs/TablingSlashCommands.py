@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING
 
 #Internal Imports
 import UtilityFunctions
-import Race 
-import help_documentation
 import commands
 import common
 import TimerDebuggers
@@ -17,9 +15,6 @@ if TYPE_CHECKING:
     from BadWolfBot import BadWolfBot
 
 EMPTY_CHAR = '\u200b'
-
-def get_help_categories(ctx: discord.AutocompleteContext):
-    return [category for category in help_documentation.HELP_CATEGORIES if category.startswith(ctx.value.lower())]
 
 class Table_Slash(ext_commands.Cog):
     '''
@@ -61,7 +56,7 @@ class Table_Slash(ext_commands.Cog):
             miis = 'miis='+miis
             args.append(miis)
         
-        await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge, common.author_is_table_bot_support_plus)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
         
     
     @slash_command(name='wp',
@@ -94,7 +89,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx, args=args)
         args.insert(0, command)
 
-        await commands.TablingCommands.war_picture_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
     
     @slash_command(name='dc',
     description="Confirm a player's DC status for a race",
@@ -109,7 +104,7 @@ class Table_Slash(ext_commands.Cog):
 
         args = [command, str(dc_number), status]
         
-        await commands.TablingCommands.disconnections_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name='edit',
     description="Edit a player's GP score",
@@ -124,7 +119,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, player, str(gp), str(score)]
 
-        await commands.TablingCommands.change_player_score_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name='gpedit',
     description="Edit all players' score for a GP",
@@ -138,7 +133,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, str(gp)] + scores.split(" ")
 
-        await commands.TablingCommands.change_all_player_score_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
     
     @slash_command(name='cp',
     description="Change a player's finish position in a race",
@@ -153,7 +148,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, player, str(race), str(position)]
         
-        await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
 
     @slash_command(name='pen',
@@ -168,7 +163,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, player, str(amount)]
         
-        await commands.TablingCommands.player_penalty_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
     
     @slash_command(
         name="teampen",
@@ -184,7 +179,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, team, str(amount)]
 
-        await commands.TablingCommands.team_penalty_command(message, this_bot, args, prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, prefix, is_lounge, from_slash=True)
 
     @slash_command(name='changeroomsize',
     description="Change the number of players in a race",
@@ -198,7 +193,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, str(race), str(room_size)]
         
-        await commands.TablingCommands.change_room_size_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name="mergeroom",
     description="Merge another room into the table",
@@ -211,7 +206,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, room_arg]
 
-        await commands.TablingCommands.merge_room_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name="removerace",
     description="Remove a race from the table",
@@ -224,7 +219,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, str(race)]
         
-        await commands.TablingCommands.remove_race_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name="changename",
     description="Change a player's name",
@@ -238,7 +233,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, player, name]
         
-        await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name="changetag",
     description="Change a player's tag",
@@ -252,7 +247,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, player, tag]
         
-        await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name="earlydc",
     description="Fix player incorrectly missing from race 1 of GP",
@@ -265,7 +260,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, str(gp)]
         
-        await commands.TablingCommands.early_dc_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
     
     @slash_command(name='sub',
     description="Sub a player in for another",
@@ -280,7 +275,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, sub_in, sub_out, str(race)]
         
-        await commands.TablingCommands.substitute_player_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
     
     @slash_command(name="undo",
     description="Undo a table modification you made",
@@ -294,7 +289,7 @@ class Table_Slash(ext_commands.Cog):
         args = [command]
         if undo_all: args.append("all")
         
-        await commands.TablingCommands.undo_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
     
     @slash_command(name="redo",
     description="Redo a table modification you undid",
@@ -308,7 +303,7 @@ class Table_Slash(ext_commands.Cog):
         args = [command]
         if redo_all: args.append("all")
         
-        await commands.TablingCommands.redo_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
     
     @slash_command(name="undos",
     description="Show which commands you can undo and in which order",
@@ -319,7 +314,7 @@ class Table_Slash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         
-        await commands.TablingCommands.get_undos_command(message, this_bot, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, [command], this_bot, server_prefix, is_lounge, from_slash=True)
     
     @slash_command(name="redos",
     description="Show which commands you can redo and in which order",
@@ -330,7 +325,7 @@ class Table_Slash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         
-        await commands.TablingCommands.get_redos_command(message, this_bot, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, [command], this_bot, server_prefix, is_lounge, from_slash=True)
     
     @slash_command(name="subs",
     description="Show the table's subs",
@@ -339,9 +334,9 @@ class Table_Slash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext
     ):
-        _, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         
-        await commands.TablingCommands.get_subs_command(message, this_bot, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, [command], this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name='tt',
     description="Get the Lorenzi table text",
@@ -355,7 +350,7 @@ class Table_Slash(ext_commands.Cog):
         args = [command]
         if max_race: args.append(str(max_race))
         
-        await commands.TablingCommands.table_text_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name='rxx',
     description="Get the rxx and Wiimmfi link of room",
@@ -366,7 +361,7 @@ class Table_Slash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         
-        await commands.TablingCommands.rxx_command(message, this_bot, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, [command], this_bot, server_prefix, is_lounge, from_slash=True)
     
     @slash_command(name="tableid",
     description="Get the Table ID",
@@ -377,7 +372,7 @@ class Table_Slash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
 
-        await commands.TablingCommands.table_id_command(message, this_bot, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, [command], this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name='ap',
     description="List all players who have been in the room",
@@ -388,7 +383,7 @@ class Table_Slash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         
-        await commands.TablingCommands.all_players_command(message, this_bot, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, [command], this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name='dcs',
     description="List all DCs that have occurred",
@@ -400,7 +395,7 @@ class Table_Slash(ext_commands.Cog):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command]
         
-        await commands.TablingCommands.disconnections_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name='races',
     description="List all races that have been played",
@@ -411,7 +406,7 @@ class Table_Slash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         
-        await commands.TablingCommands.display_races_played_command(message, this_bot, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, [command], this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name="rr",
     description="Show a race's results",
@@ -425,7 +420,7 @@ class Table_Slash(ext_commands.Cog):
         args = [command]
         if race: args.append(str(race))
         
-        await commands.TablingCommands.race_results_command(message, this_bot, args, server_prefix, is_lounge)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name='reset',
     description='Reset the table in this channel',
@@ -436,7 +431,7 @@ class Table_Slash(ext_commands.Cog):
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
 
-        await commands.TablingCommands.reset_command(message, self.bot.table_bots)
+        await self.bot.process_message_commands(message, [command], this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(
         name="predict",
@@ -448,7 +443,7 @@ class Table_Slash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-        await commands.TablingCommands.predict_command(message, this_bot, [command], server_prefix, self.bot.lounge_submissions)
+        await self.bot.process_message_commands(message, [command], this_bot, server_prefix, is_lounge, from_slash=True)
     
     @slash_command(name="copyfrom",
     description="Make this table a copy of another table",
@@ -463,69 +458,7 @@ class Table_Slash(ext_commands.Cog):
         args = [command, channel]
         # if guild: args.append(guild)
         
-        await commands.TablingCommands.transfer_table_command(message, this_bot, args, server_prefix, is_lounge, self.bot.table_bots, self.bot)
-
-
-    @slash_command(name="vr",
-    description="Show details of a room",
-    guild_ids=common.SLASH_GUILDS)
-    async def _vr(
-        self,
-        ctx: discord.ApplicationContext,
-        players: Option(str, "Player in the room (FC/Lounge Name/Discord Mention)", required=False, default=None)
-    ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-        args = [command]
-        if players: args.append(players)
-        
-        await commands.OtherCommands.vr_command(message, this_bot, args)
-    
-    @slash_command(name='wws',
-    description="Show all active RT Worldwide rooms",
-    guild_ids=common.SLASH_GUILDS)
-    async def _wws(
-        self,
-        ctx: discord.ApplicationContext
-    ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-
-        await commands.OtherCommands.wws_command(message, this_bot)
-    
-    @slash_command(name='ctwws',
-    description="Show all active CT Worldwide rooms",
-    guild_ids=common.SLASH_GUILDS)
-    async def _ctwws(
-        self,
-        ctx: discord.ApplicationContext
-    ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-
-        await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.CTGP_CTWW_REGION)
-    
-    @slash_command(name="btwws",
-        description="Show all active Battle Worldwide rooms",
-        guild_ids=common.SLASH_GUILDS
-    )
-    async def _btwws(
-        self,
-        ctx: discord.ApplicationContext
-    ):
-        _, message, this_bot, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
-        await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.BATTLE_REGION)
-    
-    @slash_command(name='help',
-    description="Show help for Table Bot",
-    guild_ids=common.SLASH_GUILDS)
-    async def _help(
-        self, 
-        ctx: discord.ApplicationContext,
-        # category: Option(str, "The category you need help with", required=False, default=None, choices=help_documentation.HELP_CATEGORIES + list(help_documentation.TABLING_HELP_FILES.keys())) #autocomplete=discord.utils.basic_autocomplete(get_help_categories)
-    ):
-        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-        args = [command]
-        # if category: args.append(category)
-        
-        await help_documentation.send_help(message, is_lounge, args, server_prefix)
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
 def setup(bot):
     bot.add_cog(Table_Slash(bot))

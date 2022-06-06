@@ -201,7 +201,7 @@ ERROR_LOGS_FILE = f"{LOGGING_PATH}error_logs.txt"
 #It only logs commands that are sent to it
 MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}messages_logging.txt"
 
-JSON_META_FILE = f"{DATA_PATH}meta.txt"
+JSON_META_FILE = f"{DATA_PATH}meta.json"
 
 FULL_LOGGING_FILE_NAME = "full_logging"
 FULL_MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}/{FULL_LOGGING_FILE_NAME}.txt"
@@ -244,6 +244,26 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    ROOM_DATA_TRACKING_DATABASE_FILE,
                    JSON_META_FILE
                    }
+
+SLASH_TERMS_CONVERSIONS = {
+    "flag show": 'getflag',
+    "flag set": 'setflag',
+    "flag remove": 'setflag',
+    "update rt": 'rtupdate',
+    "update ct": 'ctupdate',
+    "setting prefix": 'setprefix',
+    "setting theme": 'defaulttheme',
+    "setting graph": 'defaultgraph',
+    "setting ignore_large_times": 'defaultlargetimes',
+    "blacklist user add": 'blacklistuser',
+    "blacklist user remove": 'blacklistuser',
+    "blacklist word add": 'blacklistword',
+    "blacklist word remove": 'removeblacklistword',
+    "sha add": 'addsha',
+    "sha remove": 'removesha',
+    "admin add": 'addadmin',
+    "admin remove": 'removeadmin'
+}
 
 LEFT_ARROW_EMOTE = '\u25c0'
 RIGHT_ARROW_EMOTE = '\u25b6'

@@ -2062,8 +2062,7 @@ class TablingCommands:
             failure_message = TablingCommands.get_room_load_failure_message(message, smart_type, status)
             await message2.edit(failure_message)
             return
-
-
+        
         this_bot.freeLock()
         this_bot.getRoom().setSetupUser(author_id,  message.author.display_name)
         if this_bot.getWar() is not None:
@@ -2073,7 +2072,7 @@ class TablingCommands:
 
             if not this_bot.getWar().is_ffa():
                 to_send = f"{this_bot.getWar().get_tags_str()}\n***Is this correct?***"
-                view = Components.ConfirmView(this_bot, server_prefix, is_lounge_server)
+                view = Components.ConfirmView(message2, this_bot, server_prefix, is_lounge_server)
                 this_bot.prev_command_sw = True
                 await message2.edit(to_send, view=view)
             else:
@@ -2098,6 +2097,7 @@ class TablingCommands:
 
         this_bot.prev_command_sw = False
         this_bot.manualWarSetUp = False
+        this_bot.clear_all_components()
         if args[0].lower().strip() in ['no', 'n']:
             this_bot.manualWarSetUp = True
             # view = Components.ManualTeamsView(this_bot, server_prefix, is_lounge_server)

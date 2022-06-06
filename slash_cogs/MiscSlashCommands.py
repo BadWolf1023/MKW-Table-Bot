@@ -7,6 +7,8 @@ from discord import Permissions
 import TableBot
 import commands
 import common
+import help_documentation
+import Race
 
 if TYPE_CHECKING:
     from BadWolfBot import BadWolfBot
@@ -35,6 +37,67 @@ class MiscSlash(ext_commands.Cog):
         message.content = input
         
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge)
+    
+    @slash_command(name="vr",
+    description="Show details of a room",
+    guild_ids=common.SLASH_GUILDS)
+    async def _vr(
+        self,
+        ctx: discord.ApplicationContext,
+        players: Option(str, "Player in the room (FC/Lounge Name/Discord Mention)", required=False, default=None)
+    ):
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command]
+        if players: args.append(players)
+        
+        await commands.OtherCommands.vr_command(message, this_bot, args)
+    
+    @slash_command(name='wws',
+    description="Show all active RT Worldwide rooms",
+    guild_ids=common.SLASH_GUILDS)
+    async def _wws(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+
+        await commands.OtherCommands.wws_command(message, this_bot)  
+
+    @slash_command(name='ctwws',
+    description="Show all active CT Worldwide rooms",
+    guild_ids=common.SLASH_GUILDS)
+    async def _ctwws(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+
+        await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.CTGP_CTWW_REGION)
+    
+    @slash_command(name="btwws",
+        description="Show all active Battle Worldwide rooms",
+        guild_ids=common.SLASH_GUILDS
+    )
+    async def _btwws(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        command, message, this_bot, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
+        await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.BATTLE_REGION)
+    
+    @slash_command(name='help',
+    description="Show help for Table Bot",
+    guild_ids=common.SLASH_GUILDS)
+    async def _help(
+        self, 
+        ctx: discord.ApplicationContext,
+        # category: Option(str, "The category you need help with", required=False, default=None, choices=help_documentation.HELP_CATEGORIES + list(help_documentation.TABLING_HELP_FILES.keys())) #autocomplete=discord.utils.basic_autocomplete(get_help_categories)
+    ):
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command]
+        # if category: args.append(category)
+        
+        await help_documentation.send_help(message, is_lounge, args, server_prefix)
         
     @slash_command(name="settings",
     description="Show your Table Bot server settings",
