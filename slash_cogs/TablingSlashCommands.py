@@ -146,12 +146,12 @@ class Table_Slash(ext_commands.Cog):
     async def _change_position(
         self,
         ctx: discord.ApplicationContext,
-        race: Option(int, "Race number (run /races) to change positions for"),
         player: Option(str, "Player number (run /ap) or Lounge name"),
+        race: Option(int, "Race number (run /races) to change positions for"),
         position: Option(int, "New position for player")
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-        args = [command, str(race), player, str(position)]
+        args = [command, player, str(race), str(position)]
         
         await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge)
 
