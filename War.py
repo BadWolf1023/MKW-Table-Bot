@@ -35,12 +35,13 @@ class War(object):
 
     __formatMapping = {u"ffa":1,u"1v1":1, u"2v2":2, u"3v3":3, u"4v4":4, u"5v5":5, u"6v6":6}
 
-    def __init__(self,format,numberOfTeams,message_id,numberOfGPs=3,missingRacePts=3,ignoreLargeTimes=False,displayMiis=True):
+    def __init__(self,format,numberOfTeams,message_id,numberOfGPs=3,missingRacePts=3,dc_race_pts=0,ignoreLargeTimes=False,displayMiis=True):
         self.teamColors = None
         self.setWarFormat(format,numberOfTeams)
         self.numberOfGPs = numberOfGPs
         self.warName = None
         self.missingRacePts = missingRacePts
+        self.dc_race_pts = dc_race_pts
         self.manualEdits = {}
         self.ignoreLargeTimes = ignoreLargeTimes
         self.displayMiis = displayMiis

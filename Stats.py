@@ -4,6 +4,7 @@ Created on Aug 4, 2020
 @author: willg
 '''
 import fnmatch
+import re
 import json
 import os
 import re
@@ -180,14 +181,17 @@ def hard_check(discord_username, limit=None):
                     return results
     return results   
 
-def count_lines_of_code():
+def count_lines_of_code(dir='.') -> int:
     lines_count = 0
-    for file in os.listdir('.'):
-        if fnmatch.fnmatch(file, '*.py'):
-            with open(file, encoding='utf-8') as f:
+    for file in os.listdir(dir):
+        if os.path.isdir(dir+'/'+file):
+            lines_count+=count_lines_of_code(dir+'/'+file)
+        if re.match(r'.*\.(py|sql|css)$', file):
+            with open(dir+'/'+file, encoding='utf-8') as f:
                 for _ in f:
                     lines_count += 1
     return lines_count
+
 
 def get_from_stats_file(stats_file=common.STATS_FILE):
     global user_delimiter
@@ -321,5 +325,5 @@ def stats(num_bots:int, client=None, stats_file=common.STATS_FILE, commands_logg
  
         
 if __name__ == '__main__':
-    print(hard_check("Dash8r#2342"))
+    # print(hard_check("Dash8r#2342"))
     print(count_lines_of_code())

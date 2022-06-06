@@ -77,15 +77,15 @@ def get_room_errors_players(war, room, error_types, startrace=None, endrace=None
                 if race.raceNumber in dc_on_or_before and fc in dc_on_or_before[race.raceNumber]:
                     stuffs = [4, 3, 2, 1]
                     numberOfDCPtsGivenMissing = war.missingRacePts * stuffs[(int(race.raceNumber)-1)%4]
-                    numberOfDCPtsGivenOn = war.missingRacePts * stuffs[(int(race.raceNumber)-1)%4] - war.missingRacePts
+                    numberOfDCPtsGivenOn = numberOfDCPtsGivenMissing - war.missingRacePts + war.dc_race_pts
                     
                     if dc_on_or_before[race.raceNumber][fc] == 'on':
-                        errors.append(f"{player_name} DCed and was on results. Giving {numberOfDCPtsGivenOn} total DC points. ({len(race.placements)} players on results)")
+                        errors.append(f"{player_name} DCed and was on results. {numberOfDCPtsGivenOn} DC points this GP ({f'{war.dc_race_pts} this race + ' if war.dc_race_pts else''}{war.missingRacePts} per missing race). ({len(race.placements)} players on results)")
                     else:
-                        errors.append(f"{player_name} DCed before this race. Giving {numberOfDCPtsGivenMissing} total DC points. ({len(race.placements)} players on results)")
+                        errors.append(f"{player_name} DCed before this race. {numberOfDCPtsGivenMissing} DC points this GP ({war.missingRacePts} per missing race). ({len(race.placements)} players on results)")
                 else:
                     # if not race.raceNumber in dc_on_or_before or fc not in dc_on_or_before[race.raceNumber]:
-                    errors.append(f"{player_name} had a blank race time. Disconnected unless mkwx bug. No DC points this race - use /changeroomsize if they were not on the results of this race")
+                    errors.append(f"{player_name} had a blank race time. Disconnected unless mkwx bug. {war.dc_race_pts} DC points for this race - use /changeroomsize if they were not on results")
                     # if int(race.raceNumber) == lastRace:
                     #     error_types[int(race.raceNumber)].append({'type': 'blank_player', 'player_name': UserDataProcessing.lounge_get_fill(fc, name, lounge_replace), 'player_fc': fc})
                     blank_time_counter +=1 
@@ -211,10 +211,10 @@ def get_war_errors_players(war, room, error_types, lounge_replace=True, ignoreLa
                                 pass # already handled earlier
                                 #race_errors[int(race.raceNumber)].append(f"{clean_name} DCed and was on results. Giving {numberOfDCPtsGivenOn} total DC points (3 per missing race). ({len(race.placements)} players in room this race)")
                             else:
-                                race_errors[int(race.raceNumber)].append(f"{clean_name} DCed before this race. Giving {numberOfDCPtsGivenMissing} total DC points. ({len(race.placements)} players on results)")
+                                race_errors[int(race.raceNumber)].append(f"{clean_name} DCed before this race. {numberOfDCPtsGivenMissing} DC points this GP ({war.missingRacePts} per missing race). ({len(race.placements)} players on results)")
     
                         else:
-                            err_mes = f"{clean_name} is missing. Giving {numberOfDCPtsGivenMissing} total DC points. ({len(race.placements)} players on results)"
+                            err_mes = f"{clean_name} is missing. {numberOfDCPtsGivenMissing} DC points this GP ({war.missingRacePts} per missing race). ({len(race.placements)} players on results)"
                             race_errors[int(race.raceNumber)].append(err_mes)
                             
                             # if int(race.raceNumber) == lastRace:   

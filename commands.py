@@ -5,6 +5,7 @@ Created on Jun 26, 2021
 '''
 
 #Bot internal imports - stuff I coded
+import asyncio
 import ComponentPaginator
 from Placement import Placement
 import WiimmfiSiteFunctions
@@ -2454,12 +2455,12 @@ class TablingCommands:
             else:
                 if len(lorenzi_edit_link)>=4000:
                     att = 0
-                    while att < 3:
+                    while att < 2:
                         try:
                             lorenzi_edit_link = await URLShortener.tinyurl_shorten_url(lorenzi_edit_link)
                             break
                         except URLShortener.URLShortenFailure: 
-                            pass
+                            asyncio.sleep(.75)
                         att+=1
 
                 embed = discord.Embed(
