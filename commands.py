@@ -2505,7 +2505,7 @@ class TablingCommands:
                             pic_view.add_item(Components.SubmitButton(this_bot, type, tier, len(this_bot.room.races)))
 
                     await pic_view.send(message, file=file, embed=embed)
-                    TableBot.last_wp_message[this_bot.channel_id] = pic_view.message
+                    TableBot.last_wp_button[this_bot.channel_id] = pic_view
                     if len(pic_view.message.embeds) == 1: #The embeds were sent successfully
                         this_bot.get_war().set_discord_picture_url(pic_view.message.embeds[0].image.url)     
                     
@@ -2720,7 +2720,7 @@ class TablingCommands:
         try:
             copied_instance = copy.deepcopy(table_bots[guild_id][channel_id])
         except KeyError:
-            return await message.channel.send("The table you are trying to copy has not been loaded, or the channel couldn't be found. Make sure you enter the correct channel ID and that a table is active in that channel.")
+            return await message.channel.send("The table you are trying to copy has not been loaded, or the channel couldn't be found. Make sure you enter the correct channel ID (and that I have access to that channel) and that a table is active in that channel.")
 
         ensure_table_loaded_check(copied_instance, server_prefix, is_lounge_server, custom_message="The table you are trying to copy has not been loaded.")
 
@@ -2731,12 +2731,14 @@ class TablingCommands:
             copied_instance.set_style_and_graph(message.guild.id)
             copied_instance.set_dc_points(message.guild.id)
 
-        
+        table_bots[message.guild.id][message.channel.id].reset() #need to kill the previous instance
+        del table_bots[message.guild.id][message.channel.id]
         table_bots[message.guild.id][message.channel.id] = copied_instance #change current channel's instance
 
         pic_view = Components.PictureView(copied_instance, server_prefix, is_lounge_server)
         
         await pic_view.send(message, content=f"Table has been copied from <#{channel_id}>.")
+        TableBot.last_wp_button[this_bot.channel_id] = pic_view
 
 
 #============== Helper functions ================

@@ -179,7 +179,7 @@ class PictureButton(discord.ui.Button['PictureView']):
         await asyncio.sleep(self.bot.getWPCooldownSeconds())
         self.style = discord.ButtonStyle.primary
         try:
-            if self.view.message.channel.id in TableBot.last_wp_message:
+            if self.view.message.channel.id in TableBot.last_wp_button:
                 await common.safe_edit(self.view.message, view=self.view)
         except:
             pass

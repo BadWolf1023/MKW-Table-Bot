@@ -18,7 +18,7 @@ MAXIMUM_DELTA_VALUE = 10
 NO_DELTA_DISPLAY_RANGE = (-.5, .5)
 
 def is_valid_time_str(time_str):
-    return re.match("^([\d]{1,3}:)?[\d]{1,3}\.[\d]{3}$", time_str.strip()) is not None
+    return re.match(r"^([\d]{1,3}:)?[\d]{1,3}\.[\d]{3}$", time_str.strip()) is not None
     
 
 class Placement:

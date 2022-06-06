@@ -558,7 +558,7 @@ async def safe_send(message:discord.Message, content=None, embed=None, delete_af
 async def safe_edit(message:discord.Message, **kwargs):
     try:
         await message.edit(**kwargs)
-    except:
+    except Exception:
         pass
 
 #Function only for testing purposes. Do not use this in the main program code.

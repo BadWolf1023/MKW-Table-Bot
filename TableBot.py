@@ -44,7 +44,7 @@ graphs = {"1":("None", "default graph"),
           }
 
 DEFAULT_DC_POINTS = 3
-last_wp_message = {}
+last_wp_button = {}
 last_sug_view = {}
 active_components = defaultdict(list)
 
@@ -470,8 +470,8 @@ class ChannelBot(object):
 
     async def clear_last_wp_button(self):
         try:
-            await last_wp_message[self.channel_id].edit(view=None)
-            last_wp_message.pop(self.channel_id, None)
+            await last_wp_button[self.channel_id].on_timeout()
+            last_wp_button.pop(self.channel_id, None)
         except Exception:
             pass
     

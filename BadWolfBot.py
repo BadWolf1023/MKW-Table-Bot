@@ -385,7 +385,7 @@ class BadWolfBot(ext_commands.Bot):
                 self.table_bots[server_id][channel_id].destroy()
     
     async def save_data(self):
-        print(f"{str(datetime.now())}: Saving data")
+        print(f"{str(datetime.now())}: Saving data...")
         successful = UserDataProcessing.non_async_dump_data()
         if not successful:
             print("LOUNGE API DATA DUMP FAILED! CRITICAL!")

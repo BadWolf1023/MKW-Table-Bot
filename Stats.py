@@ -38,7 +38,7 @@ def log_command(command, slash=False):
     command = common.SLASH_TERMS_CONVERSIONS.get(command, command)
     
     for name in dir(common.main):
-        if re.fullmatch("([A-Z]+_)*TERMS",name):
+        if re.fullmatch(r"([A-Z]+_)*TERMS",name):
             command_terms = common.main.__getattribute__(name)
             if command in command_terms:
                 meta["command_count"][name] = meta["command_count"].get(name, 0) + 1

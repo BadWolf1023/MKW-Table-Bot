@@ -75,12 +75,11 @@ def decode_email(encoded_string: str) -> str:
 
 
 def fix_cloudflare_email(text: str) -> str:
-    email_regex = 'data-cfemail=\"([^\"]+)\"'
+    email_regex = r'data-cfemail=\"([^\"]+)\"'
     tag_regex = r'<a [^>]*="\/cdn-cgi\/l\/email-protection"[^>]*>([^<]+)<\/a>'
     out = []
     for line in text.split("\n"):
-        m = re.search(email_regex, line)
-        if m:
+        if m := re.search(email_regex, line):
             line = re.sub(tag_regex, decode_email(m.group(1)), line)
         out.append(line)
     return "\n".join(out)
