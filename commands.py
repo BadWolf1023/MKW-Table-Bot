@@ -2453,15 +2453,17 @@ class TablingCommands:
                 await common.safe_delete(message3)
                 await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")
             else:
-                if len(lorenzi_edit_link)>=4000:
+                if len(lorenzi_edit_link)>=100:
+                    max_attempts = 3
                     att = 0
-                    while att < 2:
+                    while att < max_attempts:
+                        att+=1
                         try:
                             lorenzi_edit_link = await URLShortener.tinyurl_shorten_url(lorenzi_edit_link)
                             break
-                        except URLShortener.URLShortenFailure: 
-                            asyncio.sleep(.75)
-                        att+=1
+                        except URLShortener.URLShortenFailure:
+                            if att < max_attempts:
+                                await asyncio.sleep(1)
 
                 embed = discord.Embed(
                     title = "",
