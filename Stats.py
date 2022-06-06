@@ -36,6 +36,9 @@ def save_metadata():
 
 def log_command(command, slash=False):
     command = common.SLASH_TERMS_CONVERSIONS.get(command, command)
+    if command == 'raw':
+        meta['raw_slash_count'] = meta.get('raw_slash_count', 0) + 1
+        return
     
     for name in dir(common.main):
         if re.fullmatch(r"([A-Z]+_)*TERMS",name):

@@ -122,7 +122,7 @@ class Table_Slash(ext_commands.Cog):
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name='gpedit',
-    description="Edit all players' score for a GP",
+    description="Edit all players' scores for a GP",
     guild_ids=common.SLASH_GUILDS)
     async def _edit_all_scores(
         self,
