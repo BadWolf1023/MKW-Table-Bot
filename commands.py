@@ -2453,7 +2453,7 @@ class TablingCommands:
                 await common.safe_delete(message3)
                 await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")
             else:
-                if len(lorenzi_edit_link)>=100:
+                if len(lorenzi_edit_link)>=4000:
                     max_attempts = 3
                     att = 0
                     while att < max_attempts:
