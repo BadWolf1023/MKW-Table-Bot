@@ -1746,7 +1746,7 @@ class TablingCommands:
 
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"\n**To give the 2nd player on the list a 15 point penalty:** *{server_prefix}{command} 2 15*"
+            to_send += f"\n**To give the 2nd player on the list a 15 point penalty:** `{server_prefix}{command} 2 15` (negative number for bonuses)"
             await message.channel.send(to_send)
             return
 
@@ -1757,8 +1757,8 @@ class TablingCommands:
         player_arg, amount_arg = " ".join(args[1:-1]), args[-1]
         players = this_bot.getRoom().get_sorted_player_list()
         player_num, error_message = get_player_number_in_room(message, player_arg, this_bot.getRoom(), server_prefix, command)
-        if not UtilityFunctions.is_int(amount_arg):
-            await message.channel.send(f"The penalty amount must be a number. {example_help(server_prefix, command)}")
+        if not UtilityFunctions.is_int(amount_arg) or int(amount_arg) == 0:
+            await message.channel.send(f"The penalty amount must be a non-zero number. {example_help(server_prefix, command)}")
             return
         else:
             amount =  int(amount_arg)
@@ -1770,7 +1770,7 @@ class TablingCommands:
         this_bot.add_save_state(message.content)
         this_bot.getRoom().addPlayerPenalty(player_fc, amount)
         player_name = UserDataProcessing.proccessed_lounge_add(mii_name, player_fc)
-        await message.channel.send(f"{player_name} given a {amount} point penalty.")
+        await message.channel.send(f"{player_name} given a {abs(amount) if amount<0 else amount} point {'penalty' if amount>0 else 'bonus'}.")
 
     @staticmethod
     async def get_subs_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
@@ -1897,39 +1897,40 @@ class TablingCommands:
 
         command_name = args[0]
 
+        players = this_bot.getRoom().get_sorted_player_list()
+
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
             num_players = len(to_send.strip().split('\n'))
-            to_send += f"\n**To edit everyone's GP2 score, please enter the players' scores in the order they appear in the list above:\n** `{server_prefix}{command_name} 2 [#1's score] [#2's score] [#3's score]... [#{num_players}'s score]`"
+            to_send += f"\n**To edit everyone's GP2 score, please enter the players' scores in the order they appear in the list above:\n** `{server_prefix}{command_name} 2 [#1's GP2 score] [#2's GP2 score] [#3's GP2 score]... [#{num_players}'s GP2 score]`"
             await message.channel.send(to_send)
             return
 
         if not all(UtilityFunctions.is_int(x) for x in args[1:]):
             await message.channel.send(f"GP Number and all scores must be numbers. {example_help(server_prefix, command_name)}")
             return
+        
+        gp_num, scores_arg = int(args[1]), [int(gp_score) for gp_score in args[2:]]
 
         table_gps = this_bot.getWar().numberOfGPs
         if int(args[1]) < 1 or int(args[1]) > table_gps: #didnt use variable to make code clearer
-            await message.channel.send(f"The current table is only set to {table_gps} GPs. Your GP number was: {args[1]}. {example_help(server_prefix, command_name)}")
+            await message.channel.send(f"GP number {gp_num} is invalid; the current table has {table_gps} GPs. {example_help(server_prefix, command_name)}")
             return
 
-        if len(args) != len(this_bot.getRoom().get_sorted_player_list())+2:
-            await message.channel.send(example_help(server_prefix, command_name))
+        if len(scores_arg) != len(players):
+            descriptive = f"included {len(scores_arg)-len(players)} too many" if len(scores_arg)>len(players) else f"are missing {len(players)-len(scores_arg)}"
+            await message.channel.send(f"You {descriptive} player scores. "+example_help(server_prefix, command_name))
             return
-
-
-        gp_num, scores_arg = int(args[1]), [int(gp_score) for gp_score in args[2:]]
 
         this_bot.add_save_state(message.content)
 
-        players = this_bot.getRoom().get_sorted_player_list()
         for x in range(0, len(scores_arg)):
             player_fc, mii_name = players[x]
             this_bot.getWar().addEdit(player_fc, gp_num, scores_arg[x])
 
         await message.channel.send(f"Edited all players' scores for GP{gp_num}.")
 
-    #Code is quite similar to chane_player_tag_command, potential refactor opportunity?
+    #Code is quite similar to change_player_tag_command, potential refactor opportunity?
     @staticmethod
     async def change_player_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
@@ -1937,7 +1938,7 @@ class TablingCommands:
         
         if len(args) < 3:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"""\n**To change the name of the 8th player on the list to "joe", do:** *{server_prefix}{command_name} 8 joe*"""
+            to_send += f"""\n**To change the name of the 8th player on the list to "Joe", do:** *{server_prefix}{command_name} 8 Joe*"""
             await message.channel.send(to_send)
             return
 
