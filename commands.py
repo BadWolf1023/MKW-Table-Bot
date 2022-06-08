@@ -2657,7 +2657,7 @@ class TablingCommands:
             return
 
         
-        player_arg, race_arg, placement_arg = " ".join(args[1:-2]), args[-2], args[3]
+        player_arg, race_arg, placement_arg = " ".join(args[1:-2]), args[-2], args[-1]
         player_num, error_message = get_player_number_in_room(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
         if player_num is None:
             await message.channel.send(error_message)
