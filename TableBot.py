@@ -11,13 +11,16 @@ import War
 from datetime import datetime
 import humanize
 import common
-from typing import Dict, Tuple, Union, List
+from typing import TYPE_CHECKING, Dict, Tuple, Union, List
 import ServerFunctions
 import asyncio
 from data_tracking import DataTracker
 import TimerDebuggers
 import copy
 import re
+
+if TYPE_CHECKING:
+    from Components import PictureView
 
 lorenzi_style_key = "#style"
 #The key and first item of the tuple are sent when the list of options is requested, the second value is the code Lorenzi's site uses
@@ -44,7 +47,7 @@ graphs = {"1":("None", "default graph"),
           }
 
 DEFAULT_DC_POINTS = 3
-last_wp_button = {}
+last_wp_button: Dict[int, 'PictureView'] = {}
 last_sug_view = {}
 active_components = defaultdict(list)
 

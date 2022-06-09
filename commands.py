@@ -1901,7 +1901,7 @@ class TablingCommands:
 
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            num_players = len(to_send.strip().split('\n'))
+            num_players = len(players)
             to_send += f"\n**To edit everyone's GP2 score, please enter the players' scores in the order they appear in the list above:\n** `{server_prefix}{command_name} 2 [#1's GP2 score] [#2's GP2 score] [#3's GP2 score]... [#{num_players}'s GP2 score]`"
             await message.channel.send(to_send)
             return
@@ -2324,8 +2324,8 @@ class TablingCommands:
                 if not dont_send: await message.channel.send(mes)
                 return mes + " Give DC points with `/edit` if necessary."
 
-            if roomSize == this_bot.room.races[raceNum-1]:
-                return await send_mes()
+            # if roomSize == this_bot.room.races[raceNum-1].get_race_size(): # roomSize is already that number
+            #     return await send_mes()
             this_bot.add_save_state(message.content)
             this_bot.getRoom().forceRoomSize(raceNum, roomSize)
             return await send_mes()
@@ -2457,15 +2457,12 @@ class TablingCommands:
             else:
                 if len(lorenzi_edit_link)>=4000:
                     max_attempts = 3
-                    att = 0
-                    while att < max_attempts:
-                        att+=1
+                    for _ in range(max_attempts):
                         try:
                             lorenzi_edit_link = await URLShortener.tinyurl_shorten_url(lorenzi_edit_link)
                             break
                         except URLShortener.URLShortenFailure:
-                            if att < max_attempts:
-                                await asyncio.sleep(1)
+                            await asyncio.sleep(1)
 
                 embed = discord.Embed(
                     title = "",
