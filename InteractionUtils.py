@@ -126,8 +126,8 @@ def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
     msg_data = {
         'id': interaction.id,
         'channel_id': interaction.channel_id,
-        'author': build_user_payload(interaction.user),
-        'member': build_user_payload(interaction.user, member=True),
+        # 'author': build_user_payload(interaction.user),
+        # 'member': build_user_payload(interaction.user, member=True),
         'content': build_msg_content(interaction.data, args),
         'timestamp': str(datetime.utcnow()),
         'edited_timestamp': None,
@@ -141,7 +141,7 @@ def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
         'type': 0
     }
     msg = discord.Message(state=interaction._state, channel=interaction.channel, data=msg_data)
-    # msg.author = interaction.user
+    msg.author = interaction.user
     # print(msg.mentions[-1].roles)
     proxy_msg = MessageWrapper(msg, ctx=ctx)
 
