@@ -111,11 +111,11 @@ def build_user_payload(original: Union[discord.Member, discord.User], member=Fal
         member_payload['user'] = user_payload
         member_payload['avatar'] = original._avatar
         member_payload['nick'] = original.nick
-        member_payload['premium_since'] = str(original.premium_since)
+        member_payload['premium_since'] = str(original.premium_since) or ""
         member_payload['pending'] = original.pending
         member_payload['permissions'] = ""
-        member_payload['joined_at'] = str(original.joined_at)
-        member_payload['communication_disabled_until'] = str(original.communication_disabled_until)
+        member_payload['joined_at'] = str(original.joined_at) or ""
+        member_payload['communication_disabled_until'] = str(original.communication_disabled_until) or ""
         member_payload['roles'] = original._roles
 
         return member_payload
