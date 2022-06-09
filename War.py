@@ -236,7 +236,7 @@ class War(object):
 
         errors = ErrorChecker.get_war_errors_players(self, room, error_types, replaceLounge, ignoreLargeTimes=self.ignoreLargeTimes)
         if errors is None:
-            return "Room not loaded.", None
+            return "Room not loaded.", "", None
 
         error_types = self.clear_resolved_errors(error_types, resolved_errors)
 
@@ -262,7 +262,7 @@ class War(object):
             errors = {k: v for (k, v) in errors.items() if k<=up_to_race}
 
         elif len(errors) == 0 and len(info_string) == 0:
-            return "Room had no errors. Table should be correct.", None
+            return "Room had no errors. Table should be correct.", "", None
         
         init_string += info_string
 
