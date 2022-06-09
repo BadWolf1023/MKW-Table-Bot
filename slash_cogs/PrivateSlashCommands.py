@@ -1,9 +1,13 @@
+from typing import TYPE_CHECKING
 import discord
 import commands
 from discord.ext import commands as ext_commands
 from discord.commands import SlashCommandGroup, slash_command, Option
 from discord import Permissions
 import common
+
+if TYPE_CHECKING:
+    from BadWolfBot import BadWolfBot
 
 # REQUIRED_PERMISSIONS = [CommandPermission(id,2,True) for id in common.OWNERS]
 
@@ -12,7 +16,7 @@ EMPTY_CHAR = '\u200b'
 GUILDS = [common.MKW_TABLE_BOT_CENTRAL_SERVER_ID] if common.is_prod else common.SLASH_GUILDS
 
 class PrivateSlash(ext_commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: 'BadWolfBot'):
         self.bot = bot
     
     admin = SlashCommandGroup("admin", "Configure Table Bot admins", guild_ids=GUILDS, default_member_permissions=Permissions(administrator=True))

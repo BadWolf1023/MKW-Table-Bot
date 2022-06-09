@@ -19,6 +19,7 @@ logging/full_logging.txt
 logging/error_logs.txt
 logging/messages_logging.txt
 discord_server_settings/*
+temp/*
 
 #keep ILT setting migration script
 !ILT_migration.py 
@@ -26,6 +27,7 @@ discord_server_settings/*
 #keep description files
 !description.txt
 !BadWolf.jpg
+!README.md
 
 #dev files
 chrome-cli/*

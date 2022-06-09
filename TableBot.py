@@ -11,13 +11,16 @@ import War
 from datetime import datetime
 import humanize
 import common
-from typing import Dict, Tuple, Union, List
+from typing import TYPE_CHECKING, Dict, Tuple, Union, List
 import ServerFunctions
 import asyncio
 from data_tracking import DataTracker
 import TimerDebuggers
 import copy
+import re
 
+if TYPE_CHECKING:
+    from Components import PictureView
 
 lorenzi_style_key = "#style"
 #The key and first item of the tuple are sent when the list of options is requested, the second value is the code Lorenzi's site uses
@@ -44,7 +47,7 @@ graphs = {"1":("None", "default graph"),
           }
 
 DEFAULT_DC_POINTS = 3
-last_wp_message = {}
+last_wp_button: Dict[int, 'PictureView'] = {}
 last_sug_view = {}
 active_components = defaultdict(list)
 
@@ -299,7 +302,7 @@ class ChannelBot(object):
     def updateWPCoolDown(self):
         self.lastWPTime = datetime.now()
         
-    def shouldSendNoticiation(self) -> bool:
+    def shouldSendNotificiation(self) -> bool:
         if self.is_table_loaded():
             return self.should_send_mii_notification
         return False
@@ -406,7 +409,8 @@ class ChannelBot(object):
             return "No commands to undo."
         
         for i, (command, _) in enumerate(undos[::-1]):
-            ret+=f"\n   {i+1}. `{command}`"
+            command = re.sub(r"<@!?(\d{15,20})>\s*", "/", command)
+            ret+=f'\n   {i+1}. `{command}`'
         
         return ret
     
@@ -417,7 +421,8 @@ class ChannelBot(object):
             return "No commands to redo."
 
         for i, (command, _) in enumerate(redos):
-            ret+=f"\n   {i+1}. `{command}`"
+            command = re.sub(r"<@!?(\d{15,20})>\s*", "/", command)
+            ret+=f'\n   {i+1}. `{command}`'
         
         return ret
         
@@ -468,8 +473,8 @@ class ChannelBot(object):
 
     async def clear_last_wp_button(self):
         try:
-            await last_wp_message[self.channel_id].edit(view=None)
-            last_wp_message.pop(self.channel_id, None)
+            await last_wp_button[self.channel_id].on_timeout()
+            last_wp_button.pop(self.channel_id, None)
         except Exception:
             pass
     

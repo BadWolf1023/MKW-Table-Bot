@@ -3,8 +3,13 @@ from discord.ext import commands as ext_commands
 from discord.commands import slash_command, SlashCommandGroup, Option
 import commands
 import common
+from typing import TYPE_CHECKING
 # import Race
 # from data_tracking import DataTracker
+
+
+if TYPE_CHECKING:
+    from BadWolfBot import BadWolfBot
 
 EMPTY_CHAR = "\u200b"
 GUILDS = common.SLASH_GUILDS
@@ -28,7 +33,7 @@ async def get_all_tracks(ctx: discord.AutocompleteContext):
     return [lookup for lookup in ALL_TRACK_LOOKUPS if ctx.value.lower() in lookup.lower()]
 
 class StatisticsSlash(ext_commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: 'BadWolfBot'):
         self.bot = bot
     
     @slash_command(

@@ -18,10 +18,16 @@ MAXIMUM_DELTA_VALUE = 10
 NO_DELTA_DISPLAY_RANGE = (-.5, .5)
 
 def is_valid_time_str(time_str):
-    return re.match("^([\d]{1,3}:)?[\d]{1,3}\.[\d]{3}$", time_str.strip()) is not None
+    return re.match(r"^([\d]{1,3}:)?[\d]{1,3}\.[\d]{3}$", time_str.strip()) is not None
     
 
 class Placement:
+    def __init__(self, player, time, delta=None, is_wiimmfi_place=False):
+        self.player = player
+        self.place = -1
+        self.time = self._createTime_(time)
+        self.delta = self._process_delta_(delta)
+        self.is_wiimmfi_place = is_wiimmfi_place
 
     def _createTime_(self, time):
         temp = ""
@@ -78,13 +84,6 @@ class Placement:
 
         reconstructed_time = (int(str(self.time[0])[1:]), self.time[1], self.time[2])
         return reconstructed_time
-    
-    def __init__(self, player, time, delta=None, is_wiimmfi_place=False):
-        self.player = player
-        self.place = -1
-        self.time = self._createTime_(time)
-        self.delta = self._process_delta_(delta)
-        self.is_wiimmfi_place = is_wiimmfi_place
     
     def __lt__(self, other):
         return self.time < other.time

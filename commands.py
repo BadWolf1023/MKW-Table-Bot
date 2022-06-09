@@ -5,6 +5,7 @@ Created on Jun 26, 2021
 '''
 
 #Bot internal imports - stuff I coded
+import asyncio
 import ComponentPaginator
 from Placement import Placement
 import WiimmfiSiteFunctions
@@ -116,7 +117,7 @@ def get_room_not_loaded_message(server_prefix: str, is_lounge_server=False, cust
             # Example goal: starting a table for a player who is registered in Lounge, show that spaces are allowed, show that capitalization does not matter
             f"""  {BULLET_POINT} Table a 3v3 room with 2 teams that someone with the Lounge name "Jack Ryan" (mention them in the command if you don't know their Lounge name) is in: `{server_prefix}sw 3v3 2 Jack ryan`""",
             # Example goal: starting a table for a room that has ended
-            f"  {BULLET_POINT} Has the room already ended? Use the `{server_prefix}page playername` command, find the room on the website that you want to table, then use the rxx number in the URL (eg r4203018): `{server_prefix}sw 2v2 6 r4203018`"
+            f"  {BULLET_POINT} Has the room already ended? Use the `/page playername` command, find the room on the website that you want to table, then use the rxx number in the URL (eg r4203018): `{server_prefix}sw 2v2 6 r4203018`"
             ]
     example_str = "**Here are some examples to get you started:\n**" + "\n".join(ROOM_LOAD_EXAMPLES)
     if custom_message is not None:
@@ -768,7 +769,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 
         command = " ".join(args[1:])
         days = None
-        matches = [x[0] for x in re.findall('((^|\s)\d+d?($|\s))',command)]
+        matches = [x[0] for x in re.findall(r'((^|\s)\d+d?($|\s))',command)]
         if len(matches) > 0:
             match = matches[-1].strip()
             if 'd' in match:
@@ -807,6 +808,15 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
 class OtherCommands:
     """There is no point to this class, other than for organization purposes.
     This class contains all of the non administrative "stateless" commands"""
+
+    @staticmethod
+    async def stats_command(message: discord.Message, client: common.client):
+        num_wars = client.getNumActiveWars()
+        stats_str = Stats.stats(num_wars, client)
+        if stats_str is None:
+            await message.channel.send("Error fetching stats. Try again.")
+        else:
+            await message.channel.send(stats_str)
 
     @staticmethod
     async def get_flag_command(message: discord.Message, args: List[str], server_prefix: str):
@@ -1107,8 +1117,6 @@ class LoungeCommands:
 
 
 
-
-
     #TODO: Refactor this - in an rushed effort to release this, the code is sloppy.
     #It should be refactored as this is some of the worst code in TableBot
     @staticmethod  # TODO: It seems this method will break when slash commands try to use it with tabletext
@@ -1286,7 +1294,7 @@ class LoungeCommands:
     @staticmethod
     async def _submission_action_command(client, message:discord.Message, args:List[str], lounge_server_updates:Lounge.Lounge, is_approval=True):
         if len(args) < 2:
-            await message.channel.send(f"The way to use this command is: `?{args[0]} submissionID`.")
+            await message.channel.send(f"The way to use this command is: `/{args[0]} submissionID`.")
             return
 
         submissionID = args[1]
@@ -1348,10 +1356,10 @@ class LoungeCommands:
 
                     await submissionMessage.clear_reaction("\u274C")
                     await submissionMessage.add_reaction("\u2705")
-                    try:
+                    if hasattr(message, 'is_proxy'): #it's a proxy message from a slash command - you can't react to a slash command
+                        await message.channel.send(f"Approved `{submissionID}`") #so send a message instead
+                    else:
                         await message.add_reaction(u"\U0001F197")
-                    except AttributeError: #it's a proxy message from a slash command - you can't react to a slash command
-                        await message.channel.send(u"\U0001F197") #so send it instead
                 else:
                     await submissionMessage.clear_reaction("\u2705")
                     await submissionMessage.add_reaction("\u274C")
@@ -1359,17 +1367,18 @@ class LoungeCommands:
                     if not is_pending:
                         is_denied = lounge_server_updates.submission_id_is_denied(submissionID)
                         submission_status = "denied" if is_denied else "approved"
-                        extra_message_text = f"Double denying a submission doesn't do anything, so you don't need to worry. You simply might have made a typo for your submission ID, and you should deny the correct one." if is_denied else f"I've given it the X reaction anyway. Don't bother 'approving' it again if it was previously approved and sent to the correct summaries (as this will resend it to the summary channels). Simply check your `?deny` command for typos so you deny the right submission."
+                        extra_message_text = f"Double denying a submission doesn't do anything, so you don't need to worry. You simply might have made a typo for your submission ID, and you should deny the correct one." if is_denied else f"I've given it the X reaction anyway. Don't bother 'approving' it again if it was previously approved and sent to the correct summaries (as this will resend it to the summary channels). Simply check your `/deny` command for typos so you deny the right submission."
                         await submissionMessage.channel.send(f"**Warning:** The submission ({submissionID}) was already **{submission_status}**. {extra_message_text}")
                     lounge_server_updates.deny_submission_id(submissionID)
-                    try:
+
+                    if hasattr(message, 'is_proxy'): #it's a proxy message from a slash command - you can't react to a slash command
+                        await message.channel.send(f"Denied `{submissionID}`") #so send a message instead
+                    else:
                         await message.add_reaction(u"\U0001F197")
-                    except AttributeError: #it's a proxy message from a slash command - you can't react to a slash command
-                        await message.channel.send(u"\U0001F197") #so send it instead
             else:
                 await message.channel.send("I couldn't find this submission ID. Make sure you have the right submission ID.")
         else:
-            await message.channel.send(f"The way to use this command is: `?{args[0]} submissionID` - `submissionID` must be a number")
+            await message.channel.send(f"The way to use this command is: `/{args[0]} submissionID` - `submissionID` must be a number")
 
 
     @staticmethod
@@ -1737,7 +1746,7 @@ class TablingCommands:
 
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"\n**To give the 2nd player on the list a 15 point penalty:** *{server_prefix}{command} 2 15*"
+            to_send += f"\n**To give the 2nd player on the list a 15 point penalty:** `{server_prefix}{command} 2 15` (negative number for bonuses)"
             await message.channel.send(to_send)
             return
 
@@ -1748,8 +1757,8 @@ class TablingCommands:
         player_arg, amount_arg = " ".join(args[1:-1]), args[-1]
         players = this_bot.getRoom().get_sorted_player_list()
         player_num, error_message = get_player_number_in_room(message, player_arg, this_bot.getRoom(), server_prefix, command)
-        if not UtilityFunctions.is_int(amount_arg):
-            await message.channel.send(f"The penalty amount must be a number. {example_help(server_prefix, command)}")
+        if not UtilityFunctions.is_int(amount_arg) or int(amount_arg) == 0:
+            await message.channel.send(f"The penalty amount must be a non-zero number. {example_help(server_prefix, command)}")
             return
         else:
             amount =  int(amount_arg)
@@ -1761,7 +1770,7 @@ class TablingCommands:
         this_bot.add_save_state(message.content)
         this_bot.getRoom().addPlayerPenalty(player_fc, amount)
         player_name = UserDataProcessing.proccessed_lounge_add(mii_name, player_fc)
-        await message.channel.send(f"{player_name} given a {amount} point penalty.")
+        await message.channel.send(f"{player_name} given a {abs(amount) if amount<0 else amount} point {'penalty' if amount>0 else 'bonus'}.")
 
     @staticmethod
     async def get_subs_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
@@ -1888,38 +1897,40 @@ class TablingCommands:
 
         command_name = args[0]
 
+        players = this_bot.getRoom().get_sorted_player_list()
+
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"\n**To edit everyone's GP 2, please enter the players' score in the order they appear in the list above:** *{server_prefix}{command_name} 2 10 33 32 35 14 32 29 30 22 25 16 14*" # yes this adds to 292
+            num_players = len(players)
+            to_send += f"\n**To edit everyone's GP2 score, please enter the players' scores in the order they appear in the list above:\n** `{server_prefix}{command_name} 2 [#1's GP2 score] [#2's GP2 score] [#3's GP2 score]... [#{num_players}'s GP2 score]`"
             await message.channel.send(to_send)
             return
 
         if not all(UtilityFunctions.is_int(x) for x in args[1:]):
             await message.channel.send(f"GP Number and all scores must be numbers. {example_help(server_prefix, command_name)}")
             return
+        
+        gp_num, scores_arg = int(args[1]), [int(gp_score) for gp_score in args[2:]]
 
         table_gps = this_bot.getWar().numberOfGPs
         if int(args[1]) < 1 or int(args[1]) > table_gps: #didnt use variable to make code clearer
-            await message.channel.send(f"The current table is only set to {table_gps} GPs. Your GP number was: {args[1]}. {example_help(server_prefix, command_name)}")
+            await message.channel.send(f"GP number {gp_num} is invalid; the current table has {table_gps} GPs. {example_help(server_prefix, command_name)}")
             return
 
-        if len(args) != len(this_bot.getRoom().get_sorted_player_list())+2:
-            await message.channel.send(example_help(server_prefix, command_name))
+        if len(scores_arg) != len(players):
+            descriptive = f"included {len(scores_arg)-len(players)} too many" if len(scores_arg)>len(players) else f"are missing {len(players)-len(scores_arg)}"
+            await message.channel.send(f"You {descriptive} player scores. "+example_help(server_prefix, command_name))
             return
-
-
-        gp_num, scores_arg = int(args[1]), [int(gp_score) for gp_score in args[2:]]
 
         this_bot.add_save_state(message.content)
 
-        players = this_bot.getRoom().get_sorted_player_list()
         for x in range(0, len(scores_arg)):
             player_fc, mii_name = players[x]
             this_bot.getWar().addEdit(player_fc, gp_num, scores_arg[x])
 
         await message.channel.send(f"Edited all players' scores for GP{gp_num}.")
 
-    #Code is quite similar to chane_player_tag_command, potential refactor opportunity?
+    #Code is quite similar to change_player_tag_command, potential refactor opportunity?
     @staticmethod
     async def change_player_name_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
@@ -1927,7 +1938,7 @@ class TablingCommands:
         
         if len(args) < 3:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
-            to_send += f"""\n**To change the name of the 8th player on the list to "joe", do:** *{server_prefix}{command_name} 8 joe*"""
+            to_send += f"""\n**To change the name of the 8th player on the list to "Joe", do:** *{server_prefix}{command_name} 8 Joe*"""
             await message.channel.send(to_send)
             return
 
@@ -2053,8 +2064,7 @@ class TablingCommands:
             failure_message = TablingCommands.get_room_load_failure_message(message, smart_type, status)
             await message2.edit(failure_message)
             return
-
-
+        
         this_bot.freeLock()
         this_bot.getRoom().setSetupUser(author_id,  message.author.display_name)
         if this_bot.getWar() is not None:
@@ -2064,7 +2074,7 @@ class TablingCommands:
 
             if not this_bot.getWar().is_ffa():
                 to_send = f"{this_bot.getWar().get_tags_str()}\n***Is this correct?***"
-                view = Components.ConfirmView(this_bot, server_prefix, is_lounge_server)
+                view = Components.ConfirmView(message2, this_bot, server_prefix, is_lounge_server)
                 this_bot.prev_command_sw = True
                 await message2.edit(to_send, view=view)
             else:
@@ -2089,10 +2099,11 @@ class TablingCommands:
 
         this_bot.prev_command_sw = False
         this_bot.manualWarSetUp = False
+        this_bot.clear_all_components()
         if args[0].lower().strip() in ['no', 'n']:
             this_bot.manualWarSetUp = True
             # view = Components.ManualTeamsView(this_bot, server_prefix, is_lounge_server)
-            return await message.channel.send(content=f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{server_prefix}A 2 3 / B 1 4 / Player 5 6*")
+            return await message.channel.send(content=f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  *{common.client.user.mention} A 2 3 / B 1 4 / Player 5 6*")
             #return await message.channel.send(f"***Input the teams in the following format: *** Suppose for a 2v2v2, tag A is 2 and 3 on the list, B is 1 and 4, and Player is 5 and 6, you would enter:  `@MKW Table Bot A 2 3 / B 1 4 / Player 5 6` (**you must use my bot mention as the prefix or the `/raw` slash command**)")
 
         numGPS = this_bot.getWar().numberOfGPs
@@ -2126,7 +2137,7 @@ class TablingCommands:
             to_load = ' '.join(args[1:])
 
         if to_load in this_bot.getRoom().rLIDs:
-            await message.channel.send(f"The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `{server_prefix}undo`.")
+            await message.channel.send(f"The rxx number you gave is already merged for this room. I assume you know what you're doing, so I will allow this duplicate merge. If this was a mistake, do `/undo`.")
         
         smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.ROOM_LOOKUP_TYPES)
         status, rxx, _ = await WiimmfiSiteFunctions.get_races_smart(smart_type, hit_lounge_api=True)
@@ -2237,8 +2248,9 @@ class TablingCommands:
         if undone_command is False:
             await message.channel.send("No commands to undo.")
             return
+        undone_command = re.sub(r"<@!?(\d{15,20})>\s*", "/", undone_command)
         mes = "All possible commands have been undone." if do_all else f"The following command has been undone: `{UtilityFunctions.clean_for_output(undone_command)}`"
-        await message.channel.send(f"{mes}\nRun `{server_prefix}wp` to make sure table bot is fully refreshed.")
+        await message.channel.send(f"{mes}\nRun `/wp` to make sure table bot is fully refreshed.")
 
     @staticmethod
     async def redo_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool):
@@ -2248,9 +2260,9 @@ class TablingCommands:
         redone_command = this_bot.restore_last_redo_state(do_all=do_all)
         if redone_command is False:
             return await message.channel.send("No commands to redo.")
-
+        redone_command = re.sub(r"<@!?(\d{15,20})>\s*", "/", redone_command)
         mes = "All possible commands have been redone." if do_all else f"The following command has been redone: `{UtilityFunctions.clean_for_output(redone_command)}`"
-        await message.channel.send(f"{mes}\nRun `{server_prefix}wp` to make sure table bot is fully refreshed.")
+        await message.channel.send(f"{mes}\nRun `/wp` to make sure table bot is fully refreshed.")
 
     @staticmethod
     async def early_dc_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False): 
@@ -2281,7 +2293,7 @@ class TablingCommands:
         this_bot.add_save_state(message.content)
         this_bot.getRoom().forceRoomSize(raceNum, roomSize)
         mes = f"Changed room size to {roomSize} players for race #{raceNum}."
-        if dont_send: return mes + " Give DC points with `?edit` if necessary."
+        if dont_send: return mes + " Give DC points with `/edit` if necessary."
         await message.channel.send(mes)
     
 
@@ -2290,14 +2302,14 @@ class TablingCommands:
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
 
         if len(args) < 3:
-            await message.channel.send("Specify a race number. Do: " + server_prefix + 'changeroomsize <racenumber> <roomsize>')
+            await message.channel.send("Specify a race number. Do: /changeroomsize <racenumber> <roomsize>")
             return
 
         if not args[1].isnumeric():
-            await message.channel.send("racenumber must be a number. Do: " + server_prefix + 'changeroomsize <racenumber> <roomsize>')
+            await message.channel.send("racenumber must be a number. Do: /changeroomsize <racenumber> <roomsize>")
             return
         if not args[2].isnumeric():
-            await message.channel.send("roomsize must be a number. Do: " + server_prefix + 'changeroomsize <racenumber> <roomsize>')
+            await message.channel.send("roomsize must be a number. Do: /changeroomsize <racenumber> <roomsize>")
             return
 
         raceNum = int(args[1])
@@ -2307,11 +2319,16 @@ class TablingCommands:
         elif roomSize < 2 or roomSize > 12:
             await message.channel.send("Room size must be between 2 and 12 players. (24P support may come eventually).")
         else:
+            async def send_mes():
+                mes = f"Changed room size to {roomSize} players for race #{raceNum}."
+                if not dont_send: await message.channel.send(mes)
+                return mes + " Give DC points with `/edit` if necessary."
+
+            # if roomSize == this_bot.room.races[raceNum-1].get_race_size(): # roomSize is already that number
+            #     return await send_mes()
             this_bot.add_save_state(message.content)
             this_bot.getRoom().forceRoomSize(raceNum, roomSize)
-            mes = f"Changed room size to {roomSize} players for race #{raceNum}."
-            if not dont_send: await message.channel.send(mes)
-            return mes + " Give DC points with `?edit` if necessary."
+            return await send_mes()
 
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
@@ -2342,7 +2359,7 @@ class TablingCommands:
             return
 
         server_id = message.guild.id
-        should_send_notification = this_bot.shouldSendNoticiation()
+        should_send_notification = this_bot.shouldSendNotificiation()
         this_bot.updateWPCoolDown()
         await this_bot.clear_last_wp_button()
         this_bot.clear_last_sug_view()
@@ -2416,7 +2433,9 @@ class TablingCommands:
         display_url_table_text = urllib.parse.quote(table_text)
         true_url_table_text = urllib.parse.quote(table_text_with_style_and_graph)
         image_url = common.base_url_lorenzi + true_url_table_text
-        table_image_path = str(message.id) + ".png"
+        temp_path = './temp/'
+        table_image = f"{message.id}_picture.png"
+        table_image_path=temp_path+table_image
         try:
             image_download_success = await common.download_image(image_url, table_image_path)
             if not image_download_success:
@@ -2427,36 +2446,52 @@ class TablingCommands:
             tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs()
             header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
             footer_combine_success = True
+            lorenzi_edit_link = f"[Edit this table on Lorenzi's website]({common.base_url_edit_table_lorenzi + display_url_table_text})"
 
             if header_combine_success and this_bot.getWar().displayMiis:
                 footer_combine_success = ImageCombine.add_miis_to_table(this_bot, table_sorted_data, table_image_path=table_image_path, out_image_path=table_image_path)
+           
             if not header_combine_success or not footer_combine_success:
                 await common.safe_delete(message3)
                 await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")
             else:
+                if len(lorenzi_edit_link)>=4000:
+                    max_attempts = 3
+                    for _ in range(max_attempts):
+                        try:
+                            lorenzi_edit_link = await URLShortener.tinyurl_shorten_url(lorenzi_edit_link)
+                            break
+                        except URLShortener.URLShortenFailure:
+                            await asyncio.sleep(1)
+
                 embed = discord.Embed(
                     title = "",
-                    description=f"[Edit this table on Lorenzi's website]({common.base_url_edit_table_lorenzi + display_url_table_text})",
+                    description = lorenzi_edit_link ,
                     colour = discord.Colour.dark_blue()
                 )
 
-                file = discord.File(table_image_path, filename=table_image_path)
+                file = discord.File(table_image_path, filename=table_image)
                 numRaces = 0
                 if this_bot.getRoom() is not None and this_bot.getRoom().races is not None:
-                    numRaces = min( (len(this_bot.getRoom().races), this_bot.getRoom().getNumberOfGPS()*4) )
+                    numRaces = min((len(this_bot.getRoom().races), this_bot.getRoom().getNumberOfGPS()*4))
                 if up_to is not None:
                     numRaces = up_to
-                embed.set_author(name=this_bot.getWar().getWarName(numRaces), icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
-                embed.set_image(url="attachment://" + table_image_path)
                 
-                temp, error_types = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), this_bot.get_all_resolved_errors(), lounge_replace, up_to_race=up_to)
+                embed_title = this_bot.getWar().getWarName(numRaces)
+                embed.set_author(name=embed_title, icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
+                embed.set_image(url="attachment://" + table_image)
+                
+                init_string, footer_string, error_types = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), this_bot.get_all_resolved_errors(), lounge_replace, up_to_race=up_to)
+                full_string = init_string+footer_string
+                error_message = "(Too many errors - cannot show previous errors. Full list in file.)\n..."
+                error_file = False
+                footer_max = min(6000-len(embed_title+lorenzi_edit_link), 2048)
+                if len(full_string) >= footer_max:
+                    error_file = True
+                    cutoff = len(full_string+error_message)-footer_max
+                    full_string = init_string + error_message + footer_string[cutoff:]
 
-                error_message = "\nMore errors occurred. Embed only allows so many errors to display."
-                #request_message = f"\n\nPicture requested by {requester}" if requester is not None else ''
-                request_message = ""
-                if len(temp) + len(error_message) + len(request_message) >= 2048:
-                    temp = temp[:2048-len(error_message)-len(request_message)] + error_message + (request_message if request_message else '')
-                embed.set_footer(text=temp+(request_message if request_message else ''))
+                embed.set_footer(text=full_string)
                 
                 @TimerDebuggers.timer_coroutine
                 async def pic_view_func(this_bot:ChannelBot, server_prefix, is_lounge_server):
@@ -2469,16 +2504,26 @@ class TablingCommands:
                             pic_view.add_item(Components.SubmitButton(this_bot, type, tier, len(this_bot.room.races)))
 
                     await pic_view.send(message, file=file, embed=embed)
-                    TableBot.last_wp_message[this_bot.channel_id] = pic_view.message
+                    TableBot.last_wp_button[this_bot.channel_id] = pic_view
                     if len(pic_view.message.embeds) == 1: #The embeds were sent successfully
                         this_bot.get_war().set_discord_picture_url(pic_view.message.embeds[0].image.url)     
                     
                 await pic_view_func(this_bot, server_prefix, is_lounge_server)
 
+                if error_file:
+                    error_file_path = f'{message.id}_full_errors.txt'
+                    error_file = common.create_temp_file(error_file_path, init_string+footer_string, dir=temp_path)
+                    try:
+                        os.remove(temp_path+error_file_path)
+                    except Exception:
+                        pass
+                    
+                    await message.channel.send(file=discord.File(fp=error_file, filename=error_file_path))
+
                 if error_types and len(error_types)>0:
                     # don't display large time suggestions if it's a 5v5 war
                     if this_bot.war.is_5v5():
-                        error_types = [x for x in error_types if x['type'] != 'large_time']
+                        error_types = [e for e in error_types if e['type'] != 'large_time']
 
                     if len(error_types) != 0:
                         sug_view = Components.SuggestionView(error_types, this_bot, server_prefix, is_lounge_server)
@@ -2609,7 +2654,7 @@ class TablingCommands:
             return
 
         
-        player_arg, race_arg, placement_arg = " ".join(args[1:-2]), args[-2], args[3]
+        player_arg, race_arg, placement_arg = " ".join(args[1:-2]), args[-2], args[-1]
         player_num, error_message = get_player_number_in_room(message, player_arg, this_bot.getRoom(), server_prefix, command_name)
         if player_num is None:
             await message.channel.send(error_message)
@@ -2674,7 +2719,7 @@ class TablingCommands:
         try:
             copied_instance = copy.deepcopy(table_bots[guild_id][channel_id])
         except KeyError:
-            return await message.channel.send("The table you are trying to copy has not been loaded, or the channel couldn't be found. Make sure you enter the correct channel ID and that a table is active in that channel.")
+            return await message.channel.send("The table you are trying to copy has not been loaded, or the channel couldn't be found. Make sure you enter the correct channel ID (and that I have access to that channel) and that a table is active in that channel.")
 
         ensure_table_loaded_check(copied_instance, server_prefix, is_lounge_server, custom_message="The table you are trying to copy has not been loaded.")
 
@@ -2685,12 +2730,14 @@ class TablingCommands:
             copied_instance.set_style_and_graph(message.guild.id)
             copied_instance.set_dc_points(message.guild.id)
 
-        
+        table_bots[message.guild.id][message.channel.id].reset() #need to kill the previous instance
+        del table_bots[message.guild.id][message.channel.id]
         table_bots[message.guild.id][message.channel.id] = copied_instance #change current channel's instance
 
         pic_view = Components.PictureView(copied_instance, server_prefix, is_lounge_server)
         
         await pic_view.send(message, content=f"Table has been copied from <#{channel_id}>.")
+        TableBot.last_wp_button[this_bot.channel_id] = pic_view
 
 
 #============== Helper functions ================
@@ -2831,13 +2878,6 @@ async def send_available_mii_options(message:discord.Message, args:List[str], th
 `2.` {get_mii_option(2)}"""
     return await message.channel.send(to_send)
 
-async def send_available_large_time_options(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot, server_prefix:str, server_wide=False):
-    to_send = f"Choose an option from this list or comma-separate multiple options and do `{server_prefix}{args[0]} <option>`. (You can either input the number or the word):\n"
-    for numVal, val, in LARGE_TIME_OPTIONS.items():
-        to_send+="   - `{}` / `{}`\n".format(val, numVal)
-    
-    return await message.channel.send(to_send)
-
 LARGE_TIME_OPTIONS = {
     '0': "Never",
     '1+': "Always",
@@ -2852,6 +2892,13 @@ LARGE_TIME_OPTIONS = {
     '5+': "5v5+",
     '6': "6v6"
 }
+
+async def send_available_large_time_options(message:discord.Message, args:List[str], this_bot:TableBot.ChannelBot, server_prefix:str, server_wide=False):
+    to_send = f"Choose an option from this list or comma-separate multiple options and do `{server_prefix}{args[0]} <option>`. (You can either input the number or the word):\n"
+    for numVal, val, in LARGE_TIME_OPTIONS.items():
+        to_send+="   - `{}` / `{}`\n".format(val, numVal)
+    
+    return await message.channel.send(to_send)
 
 def dump_vr_is_on():
     with open(common.VR_IS_ON_FILE, "wb") as pickle_out:

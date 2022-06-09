@@ -172,7 +172,10 @@ class Race:
         return self.region
     def is_from_wiimmfi(self):
         return self.is_wiimmfi_race
-        
+    
+    def get_race_size(self):
+        """Return number of players in race"""
+        return len(self.placements)
     
     def track_check(self):
         if len(self.track) > 0 and UtilityFunctions.is_hex(self.track):

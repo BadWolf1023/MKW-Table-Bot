@@ -255,13 +255,6 @@ class BadWolfBot(ext_commands.Bot):
 
     def get_table_bots(self):
         return self.table_bots
-
-    def is_vr_command(message:discord.Message):
-        str_msg = message.content.strip()
-        if str_msg[0] not in {"!"}:
-            return False
-        str_msg = str_msg.lstrip("!").strip()
-        return str_msg.lower() in VERIFY_ROOM_TERMS
     
     def should_send_help(self, message):
         content = message.content.strip().lower()
@@ -327,6 +320,13 @@ class BadWolfBot(ext_commands.Bot):
         finished_on_ready = True
         print(f"Logged in as {self.user}")
     
+    # For memory purposes; don't want dictionary to keep ballooning
+    @tasks.loop(hours=8)
+    async def prune_mii_cooldowns(self):
+        for user, last_used in list(self.mii_cooldowns.items())[::-1]:
+            if time.monotonic()-last_used > 5:
+                self.mii_cooldowns.pop(user)
+
     #This function will run every 1 minute. It will remove any table bots that are
     #"finished" in Lounge - the definition of what is finished can be found in the ChannelBot class
     @tasks.loop(minutes=1)
@@ -336,13 +336,6 @@ class BadWolfBot(ext_commands.Bot):
             for lounge_bot_channel_id in self.table_bots[lock_server_id]:
                 if self.table_bots[lock_server_id][lounge_bot_channel_id].isFinishedLounge(): 
                     self.table_bots[lock_server_id][lounge_bot_channel_id].freeLock()
-    
-    # For memory purposes; don't want dictionary to keep ballooning
-    @tasks.loop(hours=8)
-    async def prune_mii_cooldowns(self):
-        for user, last_used in list(self.mii_cooldowns.items())[::-1]:
-            if time.monotonic()-last_used > 5:
-                self.mii_cooldowns.pop(user)
 
     #This function will run every 15 min, removing any table bots that are
     #inactive, as defined by TableBot.isinactive() (currently 2.5 hours)
@@ -392,7 +385,7 @@ class BadWolfBot(ext_commands.Bot):
                 self.table_bots[server_id][channel_id].destroy()
     
     async def save_data(self):
-        print(f"{str(datetime.now())}: Saving data")
+        print(f"{str(datetime.now())}: Saving data...")
         successful = UserDataProcessing.non_async_dump_data()
         if not successful:
             print("LOUNGE API DATA DUMP FAILED! CRITICAL!")
@@ -502,7 +495,7 @@ class BadWolfBot(ext_commands.Bot):
             command_level = new_level
         
         full_command_name = " ".join(full_command_name)
-        Stats.log_command(full_command_name)
+        Stats.log_command(full_command_name, slash=True)
         await self.process_application_commands(interaction)
     
     async def on_connect(self):
@@ -522,6 +515,7 @@ class BadWolfBot(ext_commands.Bot):
             this_bot.freeLock()
 
         name = ctx.command.full_parent_name + " " + ctx.interaction.data['name']
+        name = common.SLASH_TERMS_CONVERSIONS.get(name, name)
         return name.strip(), message, this_bot, '/', is_lounge_server
 
 
@@ -669,13 +663,17 @@ class BadWolfBot(ext_commands.Bot):
         else:
             pass
     
-    async def process_message_commands(self, message, args, this_bot, server_prefix, is_lounge_server):
+    async def process_message_commands(self, message, args, this_bot, server_prefix, is_lounge_server, from_slash=False):
         main_command = args[0].lower()
-        Stats.log_command(main_command)
+        if not from_slash:
+            Stats.log_command(main_command, slash=from_slash)
 
         #Core commands
         if main_command in RESET_TERMS:
-            await commands.TablingCommands.reset_command(message, self.table_bots)          
+            await commands.TablingCommands.reset_command(message, self.table_bots)   
+
+        elif main_command in START_WAR_TERMS:
+            await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, common.author_is_table_bot_support_plus)       
 
         elif this_bot.manualWarSetUp:
             await commands.TablingCommands.manual_war_setup(message, this_bot, args, server_prefix, is_lounge_server)
@@ -685,9 +683,6 @@ class BadWolfBot(ext_commands.Bot):
         
         elif main_command in GARBAGE_COLLECT_TERMS:
             await commands.BotOwnerCommands.garbage_collect_command(message)
-                
-        elif main_command in START_WAR_TERMS:
-            await commands.TablingCommands.start_war_command(message, this_bot, args, server_prefix, is_lounge_server, common.author_is_table_bot_support_plus)
         
         elif main_command in TABLE_TEXT_TERMS:
             await commands.TablingCommands.table_text_command(message, this_bot, args, server_prefix, is_lounge_server)
@@ -720,12 +715,7 @@ class BadWolfBot(ext_commands.Bot):
             
         #Fun commands
         elif main_command in STATS_TERMS:
-            num_wars = self.getNumActiveWars()
-            stats_str = Stats.stats(num_wars, self)
-            if stats_str is None:
-                await message.channel.send("Error fetching stats. Try again.")
-            else:
-                await message.channel.send(stats_str)
+            await commands.OtherCommands.stats_command(message, self)
         
         elif (main_command in ["badwolf"]) or (len(args) > 1 and (main_command in ["bad"] and args[1] in ["wolf"])):
             await message.channel.send(file=discord.File(common.BADWOLF_PICTURE_FILE))    
@@ -1038,6 +1028,13 @@ def command_is_spam(command:str):
         if c in common.COMMAND_TRIGGER_CHARS:
             return False
     return True
+
+def is_vr_command(message:discord.Message):
+    str_msg = message.content.strip()
+    if str_msg[0] not in {"!"}:
+        return False
+    str_msg = str_msg.lstrip("!").strip()
+    return str_msg.lower() in VERIFY_ROOM_TERMS
 
 
 async def send_lounge_locked_message(message, this_bot):

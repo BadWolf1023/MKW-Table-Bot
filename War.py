@@ -35,12 +35,13 @@ class War(object):
 
     __formatMapping = {u"ffa":1,u"1v1":1, u"2v2":2, u"3v3":3, u"4v4":4, u"5v5":5, u"6v6":6}
 
-    def __init__(self,format,numberOfTeams,message_id,numberOfGPs=3,missingRacePts=3,ignoreLargeTimes=False,displayMiis=True):
+    def __init__(self,format,numberOfTeams,message_id,numberOfGPs=3,missingRacePts=3,dc_race_pts=0,ignoreLargeTimes=False,displayMiis=True):
         self.teamColors = None
         self.setWarFormat(format,numberOfTeams)
         self.numberOfGPs = numberOfGPs
         self.warName = None
         self.missingRacePts = missingRacePts
+        self.dc_race_pts = dc_race_pts
         self.manualEdits = {}
         self.ignoreLargeTimes = ignoreLargeTimes
         self.displayMiis = displayMiis
@@ -247,8 +248,9 @@ class War(object):
         num_errors_no_large_times = sum( [ len(raceErrors) for raceErrors in errors_no_large_times.values()])
         num_errors_large_times = sum( [ len(raceErrors) for raceErrors in errors_large_times.values()])
 
-        build_string = "Errors that might affect the table:\n"
+        init_string = "Errors that might affect the table:\n"
         info_string = ""
+        build_string = ""
         
         removedRaceString = room.get_removed_races_string()
         info_string += removedRaceString
@@ -262,7 +264,7 @@ class War(object):
         elif len(errors) == 0 and len(info_string) == 0:
             return "Room had no errors. Table should be correct.", None
         
-        build_string += info_string
+        init_string += info_string
 
         for raceNum, error_messages in sorted(errors.items(), key=lambda x:x[0]):
             if raceNum > len(room.races):
@@ -272,7 +274,7 @@ class War(object):
             
             for error_message in error_messages:
                 build_string += "\t- " + error_message + "\n"
-        return build_string, error_types
+        return init_string, build_string, error_types
     
     def get_all_war_errors_players(self, room, lounge_replace=True):
         return ErrorChecker.get_war_errors_players(self, room, defaultdict(list), lounge_replace, ignoreLargeTimes=False)

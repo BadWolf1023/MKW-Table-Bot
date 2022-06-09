@@ -117,19 +117,21 @@ class ConfirmButton(discord.ui.Button['ConfirmView']):
 
 
 class ConfirmView(discord.ui.View):
-    def __init__(self, bot, prefix, is_lounge):
-        super().__init__()
+    def __init__(self, message, bot, prefix, is_lounge):
+        super().__init__(timeout=300)
+        self.message = message
         self.bot = bot
         self.prefix = prefix
         self.is_lounge = is_lounge
         self.responded = False
         self.add_item(ConfirmButton('Yes'))
         self.add_item(ConfirmButton('No'))
+        self.bot.add_component(self)
     
-    async def delete(self, interaction: discord.Interaction):
+    async def on_timeout(self):
         self.clear_items()
         self.stop()
-        await common.safe_edit(interaction.message, view=None)
+        await common.safe_edit(self.message, view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         can_interact = interaction.channel.permissions_for(interaction.user).send_messages
@@ -143,8 +145,8 @@ class ConfirmView(discord.ui.View):
             return False
 
         if not self.bot.prev_command_sw:
-            await self.delete(interaction)
-            await interaction.followup.send("This has already been responded to.", ephemeral=True)
+            await interaction.response.send_message("This button has expired.", ephemeral=True)
+            await self.on_timeout()
             return False
 
         if self.responded:
@@ -177,7 +179,7 @@ class PictureButton(discord.ui.Button['PictureView']):
         await asyncio.sleep(self.bot.getWPCooldownSeconds())
         self.style = discord.ButtonStyle.primary
         try:
-            if self.view.message.channel.id in TableBot.last_wp_message:
+            if self.view.message.channel.id in TableBot.last_wp_button:
                 await common.safe_edit(self.view.message, view=self.view)
         except:
             pass
@@ -313,7 +315,7 @@ class RejectButton(discord.ui.Button['SuggestionView']):
         except IndexError:
             pass
 
-        await self.view.next_suggestion()
+        await self.view.next_suggestion(interaction=interaction)
 
 class SuggestionButton(discord.ui.Button['SuggestionView']):
     def __init__(self, error, label, value=None, confirm=False):
@@ -353,8 +355,8 @@ class SuggestionButton(discord.ui.Button['SuggestionView']):
             self.view.errors.pop()
         except IndexError:
             pass #rare case where it hits here (people click the button at almost the exact same time), error should be ignored
-
-        await self.view.next_suggestion()
+        
+        await self.view.next_suggestion(interaction=interaction)
 
 class SuggestionSelectMenu(discord.ui.Select['SuggestionView']):
     def __init__(self, values, name):
@@ -418,46 +420,27 @@ class SuggestionView(discord.ui.View):
             pass
 
     async def refresh_suggestions(self):
-        """Race removal happened and buttons must be updated."""
+        """Race removal happened, so buttons must be updated."""
         self.errors = self.bot.getRoom().suggestion_errors
         # print(self.errors)
         await self.next_suggestion()
     
-    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
-        
-    async def send(self, messageable, file=None, embed=None):
-        if hasattr(messageable, 'channel'):
-            messageable = messageable.channel
-        
-        self.bot.add_sug_view(self)
-
-        self.message: discord.Message = await messageable.send(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", file=file, embed=embed, view=self)
-        return self.message
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        can_interact = interaction.channel.permissions_for(interaction.user).send_messages
-        if not can_interact:
-            await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
-            return False
-
-        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction', is_interaction=True) # InteractionUtils.convert_key_to_command(self.current_error['type'])
-        if not allowed: 
-            await interaction.response.send_message("You cannot use these buttons.", ephemeral=True, delete_after=3.0)
-            return False
-        
-        if self.current_error['id'] in self.responded:
-            await interaction.response.send_message("This button has already been used.", ephemeral=True)
-            return False
-
-        return allowed
-    
-    async def next_suggestion(self):
+    async def next_suggestion(self, interaction: discord.Interaction = None):
         if len(self.errors) > 0:
             self.current_error = self.errors[-1]
+            content = f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**"
             self.clear_items()
             self.create_suggestion()
-            await common.safe_edit(self.message, content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", view=self)
+
+            if interaction:
+                await interaction.response.defer()  # needed to force webhook message edit route for files kwarg support
+                await interaction.followup.edit_message(
+                    message_id=self.message.id,
+                    content=content,
+                    view=self
+                )
+            else:
+                await common.safe_edit(self.message, content=content, view=self)
         else:
             await self.on_timeout()
 
@@ -499,6 +482,35 @@ class SuggestionView(discord.ui.View):
     def enable_confirm(self):
         for child in self.children:
             child.disabled=False
+    
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
+        
+    async def send(self, messageable, file=None, embed=None):
+        if hasattr(messageable, 'channel'):
+            messageable = messageable.channel
+        
+        self.bot.add_sug_view(self)
+
+        self.message: discord.Message = await messageable.send(content=f"**Suggested Fix ({ERROR_TYPE_DESCRIPTIONS[self.current_error['type']]}):**", file=file, embed=embed, view=self)
+        return self.message
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        can_interact = interaction.channel.permissions_for(interaction.user).send_messages
+        if not can_interact:
+            await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
+            return False
+
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction', is_interaction=True) # InteractionUtils.convert_key_to_command(self.current_error['type'])
+        if not allowed: 
+            await interaction.response.send_message("You cannot use these buttons.", ephemeral=True, delete_after=3.0)
+            return False
+        
+        if self.current_error['id'] in self.responded:
+            await interaction.response.send_message("This button has already been used.", ephemeral=True)
+            return False
+
+        return allowed
 
 
 def get_command_args(error, info, bot):

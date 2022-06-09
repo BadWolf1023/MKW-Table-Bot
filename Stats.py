@@ -4,6 +4,7 @@ Created on Aug 4, 2020
 @author: willg
 '''
 import fnmatch
+import re
 import json
 import os
 import re
@@ -20,30 +21,10 @@ meta = {
     "command_count": {}
 }
 
-SLASH_TERMS_CONVERSIONS = {
-    "flag show": 'getflag',
-    "flag set": 'setflag',
-    "flag remove": 'setflag',
-    "update rt": 'rtupdate',
-    "update ct": 'ctupdate',
-    "setting prefix": 'setprefix',
-    "setting theme": 'defaulttheme',
-    "setting graph": 'defaultgraph',
-    "setting ignore_large_times": 'defaultlargetimes',
-    "blacklist user add": 'blacklistuser',
-    "blacklist user remove": 'blacklistuser',
-    "blacklist word add": 'blacklistword',
-    "blacklist word remove": 'removeblacklistword',
-    "sha add": 'addsha',
-    "sha remove": 'removesha',
-    "admin add": 'addadmin',
-    "admin remove": 'removeadmin'
-}
-
 def initialize():
     global meta
     if os.path.isfile(common.JSON_META_FILE):
-        with open(common.JSON_META_FILE) as f:
+        with open(common.JSON_META_FILE, 'r') as f:
             meta = json.load(f)
 
 def save_metadata():
@@ -51,16 +32,21 @@ def save_metadata():
     meta["command_count"] = {k:counts[k] for k in sorted(counts.keys(),reverse=True)}
 
     with open(common.JSON_META_FILE,'w') as f:
-        json.dump(meta, f)
+        json.dump(meta, f, indent=4)
 
-def log_command(command):
-    command = SLASH_TERMS_CONVERSIONS.get(command, command)
+def log_command(command, slash=False):
+    command = common.SLASH_TERMS_CONVERSIONS.get(command, command)
+    if command == 'raw':
+        meta['raw_slash_count'] = meta.get('raw_slash_count', 0) + 1
+        return
     
     for name in dir(common.main):
-        if re.fullmatch("([A-Z]+_)*TERMS",name):
+        if re.fullmatch(r"([A-Z]+_)*TERMS",name):
             command_terms = common.main.__getattribute__(name)
             if command in command_terms:
                 meta["command_count"][name] = meta["command_count"].get(name, 0) + 1
+                if slash:
+                    meta["slash_commands_count"] = meta.get('slash_commands_count', 0) + 1
 
 def backup_files(to_back_up=common.FILES_TO_BACKUP):
     Path(backup_folder).mkdir(parents=True, exist_ok=True)
@@ -180,14 +166,17 @@ def hard_check(discord_username, limit=None):
                     return results
     return results   
 
-def count_lines_of_code():
+def count_lines_of_code(dir='.') -> int:
     lines_count = 0
-    for file in os.listdir('.'):
-        if fnmatch.fnmatch(file, '*.py'):
-            with open(file, encoding='utf-8') as f:
+    for file in os.listdir(dir):
+        if os.path.isdir(dir+'/'+file):
+            lines_count+=count_lines_of_code(dir+'/'+file)
+        if re.match(r'.*\.(py|sql)$', file):
+            with open(dir+'/'+file, encoding='utf-8') as f:
                 for _ in f:
                     lines_count += 1
     return lines_count
+
 
 def get_from_stats_file(stats_file=common.STATS_FILE):
     global user_delimiter
@@ -248,7 +237,8 @@ def get_from_messages_logging_file(commands_logging=common.MESSAGE_LOGGING_FILE)
 
 def dump_to_stats_file(stats_file=common.STATS_FILE, commands_logging=common.MESSAGE_LOGGING_FILE):
     global user_delimiter
-    war_picture_count, total_commands, total_code_lines, servers, users = get_combined_stats_from_both(stats_file, commands_logging)
+    war_picture_count, total_commands, _, servers, users = get_combined_stats_from_both(stats_file, commands_logging)
+    total_code_lines = count_lines_of_code()
     temp_stats = f"{stats_file}_temp"
     with open(temp_stats, "w+", encoding="utf-8", errors="replace") as temp_out:
         temp_out.write(str(war_picture_count) + "\n")
@@ -320,5 +310,5 @@ def stats(num_bots:int, client=None, stats_file=common.STATS_FILE, commands_logg
  
         
 if __name__ == '__main__':
-    print(hard_check("Dash8r#2342"))
+    # print(hard_check("Dash8r#2342"))
     print(count_lines_of_code())

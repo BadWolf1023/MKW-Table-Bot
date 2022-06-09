@@ -4,6 +4,10 @@ from discord import Permissions
 import discord
 import commands
 import common
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from BadWolfBot import BadWolfBot
 
 EMPTY_CHAR = '\u200b'
 
@@ -13,7 +17,7 @@ allowed = common.botAdmins | common.OWNERS
 GUILDS = [] if common.is_prod else common.SLASH_GUILDS
 
 class AdminSlash(ext_commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: 'BadWolfBot'):
         self.bot = bot
 
     sha = SlashCommandGroup("sha", "Configure Table Bot's SHA-track mappings", guild_ids=GUILDS)

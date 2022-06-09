@@ -119,7 +119,7 @@ def update_summary_channels(all_channels: list):
     for channel in all_channels:
         if isinstance(channel, discord.channel.TextChannel):
             channel_name = channel.name.lower()
-            summary_channel_regex = "([rc]t)-(tier-)?(.+)-summary"
+            summary_channel_regex = r"([rc]t)-(tier-)?(.+)-summary"
             if m := re.search(summary_channel_regex, channel_name):
                 is_rt = m.groups()[0] == "rt"
                 channel_summary_key = str(m.groups()[-1])

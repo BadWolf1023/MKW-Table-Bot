@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 import discord
 from discord.commands import slash_command, Option, SlashCommandGroup
 from discord.ext import commands as ext_commands
@@ -5,6 +6,10 @@ from discord import OptionChoice, permissions
 import commands
 import common
 import InteractionUtils
+import MogiUpdate
+
+if TYPE_CHECKING:
+    from BadWolfBot import BadWolfBot
 
 # REQUIRED_PERMISSIONS = [CommandPermission(role, 1, True, (common.TABLE_BOT_DISCORD_SERVER_ID if common.is_beta else common.MKW_LOUNGE_SERVER_ID)) for role in list(common.reporter_plus_roles)]
 GUILDS = [common.MKW_LOUNGE_SERVER_ID]
@@ -102,10 +107,12 @@ class TableTextView(discord.ui.View):
 
         self.message = await messageable.send(content=content, embed=embed, file=file, view=self)
 
-
+async def get_rt_tiers(ctx: discord.AutocompleteContext):
+        print(ctx.value)
+        return [tier for tier in ['T1', 'T2', 'T3', 'T4'] if ctx.value.lower() in tier]
         
 class LoungeSlash(ext_commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: 'BadWolfBot'):
         self.bot = bot
     
     update = SlashCommandGroup("update", "Submit tables to updaters", guild_ids=GUILDS) 
@@ -126,6 +133,7 @@ class LoungeSlash(ext_commands.Cog):
             OptionChoice('T8', '8'),
             'squadqueue'
         ]),
+        # tier: Option(str, "Tier of event", autocomplete=get_rt_tiers),
         races_played: Option(int, "Number of races played in event"),
         table_text: Option(bool, "Whether you're including table text for a manual submission", required=False, default=None)
     ):
@@ -137,7 +145,7 @@ class LoungeSlash(ext_commands.Cog):
             return await commands.LoungeCommands.rt_mogi_update(self.bot, message, this_bot, args, self.bot.lounge_submissions)
         
         view = TableTextView(self.bot, this_bot, server_prefix, is_lounge, ctx, message, args, 'rt')
-        await view.send(message, content="Copy your table text from `/tt` before clicking this button.")
+        await view.send(message, content="Copy your table text before clicking this button.")
         
     @update.command(name='ct',
     description="Submit a CT table to updaters")
@@ -165,7 +173,7 @@ class LoungeSlash(ext_commands.Cog):
             return await commands.LoungeCommands.ct_mogi_update(self.bot, message, this_bot, args, self.bot.lounge_submissions)
 
         view = TableTextView(self.bot, this_bot, server_prefix, is_lounge, ctx, message, args, 'ct')
-        await view.send(message, content="Copy your table text from `/tt` before clicking this button.")
+        await view.send(message, content="Copy your table text before clicking this button.")
     
     @slash_command(name="approve",
     description="Approve a lounge submission",

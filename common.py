@@ -17,7 +17,7 @@ import ssl
 import certifi
 import dill
 import TimerDebuggers
-from typing import Dict, List
+from typing import TYPE_CHECKING, Dict, List
 
 # I don't know the exact details because I'm not extremely familiar with how SSL certification actually works, but
 # this was necessary at one point because a main SSL certificate list expired a while ago,
@@ -30,7 +30,7 @@ sslcontext = ssl.create_default_context(cafile=certifi.where())
 main = None
 client = None
 
-if False: # for IDE autocompletion
+if TYPE_CHECKING: # for IDE autocompletion
     import BadWolfBot; main = BadWolfBot
     client: BadWolfBot.BadWolfBot = None
 
@@ -201,7 +201,7 @@ ERROR_LOGS_FILE = f"{LOGGING_PATH}error_logs.txt"
 #It only logs commands that are sent to it
 MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}messages_logging.txt"
 
-JSON_META_FILE = f"{DATA_PATH}meta.txt"
+JSON_META_FILE = f"{DATA_PATH}meta.json"
 
 FULL_LOGGING_FILE_NAME = "full_logging"
 FULL_MESSAGE_LOGGING_FILE = f"{LOGGING_PATH}/{FULL_LOGGING_FILE_NAME}.txt"
@@ -244,6 +244,26 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    ROOM_DATA_TRACKING_DATABASE_FILE,
                    JSON_META_FILE
                    }
+
+SLASH_TERMS_CONVERSIONS = {
+    "flag show": 'getflag',
+    "flag set": 'setflag',
+    "flag remove": 'setflag',
+    "update rt": 'rtupdate',
+    "update ct": 'ctupdate',
+    "setting prefix": 'setprefix',
+    "setting theme": 'defaulttheme',
+    "setting graph": 'defaultgraph',
+    "setting ignore_large_times": 'defaultlargetimes',
+    "blacklist user add": 'blacklistuser',
+    "blacklist user remove": 'blacklistuser',
+    "blacklist word add": 'blacklistword',
+    "blacklist word remove": 'removeblacklistword',
+    "sha add": 'addsha',
+    "sha remove": 'removesha',
+    "admin add": 'addadmin',
+    "admin remove": 'removeadmin'
+}
 
 LEFT_ARROW_EMOTE = '\u25c0'
 RIGHT_ARROW_EMOTE = '\u25b6'
@@ -480,17 +500,22 @@ def log_text(text, logging_type=MESSAGE_LOGGING_TYPE):
             pass
     return text
 
-image_downloader_session = aiohttp.ClientSession()
+
+image_downloader_session = None
+
 @TimerDebuggers.timer_coroutine
 async def download_image(image_url, image_path):
     global image_downloader_session
+    if not image_downloader_session:
+        image_downloader_session = aiohttp.ClientSession()
+
     try:
         async with image_downloader_session.get(image_url, ssl=sslcontext) as resp:
             if resp.status == 200:
                 with open(image_path, mode='wb+') as f:
                     f.write(await resp.read())
                     return True
-    except:
+    except Exception as e:
         await image_downloader_session.close()
         image_downloader_session = aiohttp.ClientSession()
     return False
@@ -533,7 +558,7 @@ async def safe_send(message:discord.Message, content=None, embed=None, delete_af
 async def safe_edit(message:discord.Message, **kwargs):
     try:
         await message.edit(**kwargs)
-    except:
+    except Exception:
         pass
 
 #Function only for testing purposes. Do not use this in the main program code.
