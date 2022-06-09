@@ -129,9 +129,10 @@ class ConfirmView(discord.ui.View):
         self.bot.add_component(self)
     
     async def on_timeout(self):
-        self.clear_items()
-        self.stop()
-        await common.safe_edit(self.message, view=None)
+        if not self.responded:
+            self.clear_items()
+            self.stop()
+            await common.safe_edit(self.message, view=None)
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         can_interact = interaction.channel.permissions_for(interaction.user).send_messages
