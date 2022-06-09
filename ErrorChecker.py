@@ -79,14 +79,16 @@ def get_room_errors_players(war, room, error_types, startrace=None, endrace=None
                     numberOfDCPtsGivenMissing = war.missingRacePts * stuffs[(int(race.raceNumber)-1)%4]
                     numberOfDCPtsGivenOn = numberOfDCPtsGivenMissing - war.missingRacePts + war.dc_race_pts
                     cur_race = len(room.races)
-                    this_gp = int(race.raceNumber)//4 + 1
+                    this_gp = (int(race.raceNumber)-1)//4 + 1
                     
                     if dc_on_or_before[race.raceNumber][fc] == 'on':
                         dc_pts_so_far = numberOfDCPtsGivenOn - (war.missingRacePts * max(this_gp*4 - cur_race, 0))
-                        errors.append(f"{player_name} DCed and was on results. {dc_pts_so_far} of {numberOfDCPtsGivenOn} DC points this GP given ({f'{war.dc_race_pts} this race + ' if war.dc_race_pts else ''}{war.missingRacePts} per missing race). ({len(race.placements)} players on results)")
+                        dc_given_str = f"{dc_pts_so_far} of {numberOfDCPtsGivenOn}" if numberOfDCPtsGivenOn != dc_pts_so_far else f"{numberOfDCPtsGivenOn}"
+                        errors.append(f"{player_name} DCed and was on results. {dc_given_str} DC points this GP given ({f'{war.dc_race_pts} this race + ' if war.dc_race_pts else ''}{war.missingRacePts} per missing race). ({len(race.placements)} players on results)")
                     else:
                         dc_pts_so_far = numberOfDCPtsGivenMissing - (war.missingRacePts * max(this_gp*4 - cur_race, 0))
-                        errors.append(f"{player_name} DCed before this race. {dc_pts_so_far} of {numberOfDCPtsGivenMissing} DC points this GP given ({war.missingRacePts} per missing race). ({len(race.placements)} players on results)")
+                        dc_given_str = f"{dc_pts_so_far} of {numberOfDCPtsGivenMissing}" if numberOfDCPtsGivenMissing != dc_pts_so_far else f"{numberOfDCPtsGivenMissing}"
+                        errors.append(f"{player_name} DCed before this race. {dc_given_str} DC points this GP given ({war.missingRacePts} per missing race). ({len(race.placements)} players on results)")
                 else:
                     # if not race.raceNumber in dc_on_or_before or fc not in dc_on_or_before[race.raceNumber]:
                     errors.append(f"{player_name} had a blank race time. Disconnected unless mkwx bug. {war.dc_race_pts} DC points for this race - use /changeroomsize if they were not on results")
@@ -216,16 +218,18 @@ def get_war_errors_players(war, room, error_types, lounge_replace=True, ignoreLa
                                 pass # already handled earlier
                                 #race_errors[int(race.raceNumber)].append(f"{clean_name} DCed and was on results. Giving {numberOfDCPtsGivenOn} total DC points (3 per missing race). ({len(race.placements)} players in room this race)")
                             else:
-                                this_gp = int(race.raceNumber)//4 + 1
+                                this_gp = (int(race.raceNumber)-1)//4 + 1
                                 cur_race = len(room.races)
                                 dc_pts_so_far = numberOfDCPtsGivenMissing - (war.missingRacePts * max(this_gp*4 - cur_race, 0))
-                                race_errors[int(race.raceNumber)].append(f"{clean_name} DCed before this race. {dc_pts_so_far} of {numberOfDCPtsGivenMissing} DC points this GP given ({war.missingRacePts} per missing race). ({len(race.placements)} players on results)")
+                                dc_given_str = f"{dc_pts_so_far} of {numberOfDCPtsGivenMissing}" if numberOfDCPtsGivenMissing != dc_pts_so_far else f"{numberOfDCPtsGivenMissing}"
+                                race_errors[int(race.raceNumber)].append(f"{clean_name} DCed before this race. {dc_given_str} DC points this GP given ({war.missingRacePts} per missing race). ({len(race.placements)} players on results)")
     
                         else:
-                            this_gp = int(race.raceNumber)//4 + 1
+                            this_gp = (int(race.raceNumber)-1)//4 + 1
                             cur_race = len(room.races)
                             dc_pts_so_far = numberOfDCPtsGivenMissing - (war.missingRacePts * max(this_gp*4 - cur_race, 0))
-                            err_mes = f"{clean_name} is missing. {dc_pts_so_far} of {numberOfDCPtsGivenMissing} DC points this GP given ({war.missingRacePts} per missing race). ({len(race.placements)} players on results)"
+                            dc_given_str = f"{dc_pts_so_far} of {numberOfDCPtsGivenMissing}" if numberOfDCPtsGivenMissing != dc_pts_so_far else f"{numberOfDCPtsGivenMissing}"
+                            err_mes = f"{clean_name} is missing. {dc_given_str} DC points this GP given ({war.missingRacePts} per missing race). ({len(race.placements)} players on results)"
                             race_errors[int(race.raceNumber)].append(err_mes)
                             
                             # if int(race.raceNumber) == lastRace:   
