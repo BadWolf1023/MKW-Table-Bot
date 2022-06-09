@@ -142,6 +142,7 @@ def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
     }
     msg = discord.Message(state=interaction._state, channel=interaction.channel, data=msg_data)
     # msg.author = interaction.user
+    # print(msg.mentions[-1].roles)
     proxy_msg = MessageWrapper(msg, ctx=ctx)
 
     return proxy_msg
@@ -182,7 +183,7 @@ def build_mentions_payload(interaction: discord.Interaction):
         if member_json is not None:
             if 'user' not in member_json:
                 member_json['user'] = user_json
-            member_or_user = member_json
+            member_or_user['member'] = member_json
 
         result.append(member_or_user)
     return result
