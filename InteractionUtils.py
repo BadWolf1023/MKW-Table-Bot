@@ -56,8 +56,8 @@ CANT_IMPLEMENT = {
 }
 
 class MessageWrapper():
-    def __init__(self, state, channel, data, ctx):
-        self.message = discord.Message(state=state, channel=channel, data=data)
+    def __init__(self, message: discord.Message, ctx):
+        self.message = message
         self.message.channel = ChannelWrapper(self.message.channel, ctx)
         self.is_proxy = True
     
@@ -90,7 +90,7 @@ class ChannelWrapper():
     def __getattr__(self,attr):
         return self.channel.__getattribute__(attr)
     
-def build_user_payload(original: Union[discord.Member, discord.User]):
+def build_user_payload(original: Union[discord.Member, discord.User], member=False):
     user = original
     if isinstance(user, discord.Member):
         user = original._user
@@ -106,20 +106,19 @@ def build_user_payload(original: Union[discord.Member, discord.User]):
         'system': user.system
     }
 
-    # if isinstance(original, discord.Member):
-    #     member_payload = {}
-    #     member_payload['user'] = user_payload
-    #     member_payload['avatar'] = original._avatar
-    #     member_payload['nick'] = original.nick
-    #     member_payload['premium_since'] = original.premium_since
-    #     member_payload['pending'] = original.pending
-    #     member_payload['permissions'] = ""
-    #     member_payload['joined_at'] = original.joined_at
-    #     member_payload['communication_disabled_until'] = original.communication_disabled_until
-    #     member_payload['roles'] = original.roles 
-    #     print(member_payload)
+    if member:
+        member_payload = {}
+        member_payload['user'] = user_payload
+        member_payload['avatar'] = original._avatar
+        member_payload['nick'] = original.nick
+        member_payload['premium_since'] = original.premium_since
+        member_payload['pending'] = original.pending
+        member_payload['permissions'] = ""
+        member_payload['joined_at'] = str(original.joined_at)
+        member_payload['communication_disabled_until'] = original.communication_disabled_until
+        member_payload['roles'] = original._roles
 
-    #     return member_payload
+        return member_payload
 
     return user_payload
 
@@ -128,6 +127,7 @@ def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
         'id': interaction.id,
         'channel_id': interaction.channel_id,
         'author': build_user_payload(interaction.user),
+        'member': build_user_payload(interaction.user, member=True),
         'content': build_msg_content(interaction.data, args),
         'timestamp': datetime.utcnow(),
         'edited_timestamp': None,
@@ -140,8 +140,9 @@ def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
         'pinned': False,
         'type': 0
     }
-
-    proxy_msg = MessageWrapper(state=interaction._state, channel=interaction.channel, data=msg_data, ctx=ctx)
+    msg = discord.Message(state=interaction._state, channel=interaction.channel, data=msg_data)
+    # msg.author = interaction.user
+    proxy_msg = MessageWrapper(msg, ctx=ctx)
 
     return proxy_msg
 
