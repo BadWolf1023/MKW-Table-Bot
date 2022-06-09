@@ -179,13 +179,13 @@ def build_mentions_payload(interaction: discord.Interaction):
         if user_json is None:
             continue
 
-        member_or_user = user_json
+        user_with_member = user_json
         if member_json is not None:
             if 'user' not in member_json:
                 member_json['user'] = user_json
-            member_or_user['member'] = member_json
+            user_with_member['member'] = member_json
 
-        result.append(member_or_user)
+        result.append(user_with_member)
     return result
 
 async def on_component_error(error: Exception, interaction: discord.Interaction, prefix: str, channel_bot):
