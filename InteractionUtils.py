@@ -111,11 +111,11 @@ def build_user_payload(original: Union[discord.Member, discord.User], member=Fal
         member_payload['user'] = user_payload
         member_payload['avatar'] = original._avatar
         member_payload['nick'] = original.nick
-        member_payload['premium_since'] = original.premium_since
+        member_payload['premium_since'] = str(original.premium_since)
         member_payload['pending'] = original.pending
         member_payload['permissions'] = ""
         member_payload['joined_at'] = str(original.joined_at)
-        member_payload['communication_disabled_until'] = original.communication_disabled_until
+        member_payload['communication_disabled_until'] = str(original.communication_disabled_until)
         member_payload['roles'] = original._roles
 
         return member_payload
@@ -129,7 +129,7 @@ def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
         'author': build_user_payload(interaction.user),
         'member': build_user_payload(interaction.user, member=True),
         'content': build_msg_content(interaction.data, args),
-        'timestamp': datetime.utcnow(),
+        'timestamp': str(datetime.utcnow()),
         'edited_timestamp': None,
         'tts': False,
         'mention_everyone': False,
