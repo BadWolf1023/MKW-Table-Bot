@@ -147,7 +147,6 @@ class ChannelBot(object):
     def set_race_size(self, new_race_size:int):
         self.race_size = new_race_size
 
-    
     def set_style_and_graph(self, server_id):
         self.graph = ServerFunctions.get_server_graph(server_id)
         self.style = ServerFunctions.get_server_table_theme(server_id)

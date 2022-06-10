@@ -1049,7 +1049,6 @@ class OtherCommands:
         await message2.edit(f"{str_msg}```")
 
 
-
 class LoungeCommands:
 
     @staticmethod
@@ -1844,7 +1843,7 @@ class TablingCommands:
         sub_in_start_race = race_num
         sub_in_end_race = this_bot.getWar().getNumberOfRaces()
         this_bot.add_save_state(message.content)
-        this_bot.getRoom().add_sub(sub_in_fc, sub_in_start_race, sub_in_end_race, sub_out_fc, sub_out_name, sub_out_start_race, sub_out_end_race, sub_out_scores)
+        this_bot.getRoom().add_sub(sub_in_fc, sub_in_start_race, sub_in_end_race, sub_out_fc, sub_out_mii_name, sub_out_name, sub_out_start_race, sub_out_end_race, sub_out_scores)
         this_bot.getWar().setTeamForFC(sub_in_fc, sub_out_tag)
         sub_in_player_name = UserDataProcessing.proccessed_lounge_add(sub_in_mii_name, sub_in_fc)
         sub_out_player_name = UserDataProcessing.proccessed_lounge_add(sub_out_mii_name, sub_out_fc)
@@ -2333,18 +2332,21 @@ class TablingCommands:
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
-        if len(args) == 1:
-            await message.channel.send(str(this_bot.getRoom().races[-1]))
-        else:
-            if args[1].isnumeric():
-                raceNum = int(args[1])
-                if raceNum < 1 or raceNum > len(this_bot.getRoom().races):
-                    await message.channel.send("You haven't played that many races yet!")
-                else:
-                    await message.channel.send(str(this_bot.getRoom().races[raceNum-1]))
-            else:
-                await message.channel.send("That's not a race number!")
+        
+        race_num = 0
+        if len(args) > 1:
+            if not UtilityFunctions.is_int(args[1]):
+                return await message.channel.send("That's not a valid race number.")
+            race_num = int(args[1])
+            if race_num < 1 or race_num > len(this_bot.getRoom().races):
+                return await message.channel.send("You haven't played that many races yet!")
+            
+        race = this_bot.getRoom().races[race_num-1]
+        rr_str = str(race)
+        if not this_bot.getWar().is_ffa():
+            rr_str += race.get_team_points_string(this_bot.getWar().teams)
+        
+        await message.channel.send(rr_str)
 
     @staticmethod
     @TimerDebuggers.timer_coroutine

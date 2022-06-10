@@ -232,7 +232,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
                 player_table_name = player_table_name + " / " + discord
                 
         if fc in room.getNameChanges():
-            player_table_name = room.getNameChanges()[fc]
+            player_table_name = room.getNameChanges()[fc]['name']
         
         if room.fc_subbed_in(fc):
             player_table_name = room.get_sub_string(player_table_name, fc)
