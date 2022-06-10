@@ -642,10 +642,10 @@ class Room(object):
             for race in self.races:
                 for placement in race.getPlacements():
                     if placement.getPlayer().get_FC() == FC:
-                        change_info = "(Subbed Out)" if name_change_payload['is_sub'] else "(Tabler Changed)"
+                        change_info = "Subbed Out" if name_change_payload['is_sub'] else "Tabler Changed"
                         if name_change_payload['sub_name_change']:
-                            change_info = "(Tabler Changed & Subbed Out)"
-                        placement.getPlayer().set_name(f"{name_change_payload['name']} {change_info}")
+                            change_info = "Tabler Changed & Subbed Out"
+                        placement.getPlayer().set_name(f"{name_change_payload['name']} ({change_info})")
         
         #Next, we remove races
         if not suggestion_call:
