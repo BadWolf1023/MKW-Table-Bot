@@ -2467,9 +2467,10 @@ class TablingCommands:
                         except URLShortener.URLShortenFailure:
                             await asyncio.sleep(.75)
 
+                full_lorenzi_edit_link = full_lorenzi_edit_link.format(lorenzi_edit_link)
                 embed = discord.Embed(
                     title = "",
-                    description = full_lorenzi_edit_link.format(lorenzi_edit_link),
+                    description = full_lorenzi_edit_link,
                     colour = discord.Colour.dark_blue()
                 )
 
@@ -2488,7 +2489,7 @@ class TablingCommands:
                 full_string = init_string+footer_string
                 error_message = "(Too many errors - cannot show previous errors. Full list in file.)\n..."
                 error_file = False
-                footer_max = min(6000-len(embed_title+lorenzi_edit_link), 2048)
+                footer_max = min(6000-len(embed_title+full_lorenzi_edit_link), 2048)
                 if len(full_string) >= footer_max:
                     error_file = True
                     cutoff = len(full_string+error_message)-footer_max
