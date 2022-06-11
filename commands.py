@@ -2446,7 +2446,8 @@ class TablingCommands:
             tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs()
             header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
             footer_combine_success = True
-            lorenzi_edit_link = f"[Edit this table on Lorenzi's website]({common.base_url_edit_table_lorenzi + display_url_table_text})"
+            lorenzi_edit_link = common.base_url_edit_table_lorenzi + display_url_table_text
+            full_lorenzi_edit_link = "[Edit this table on Lorenzi's website]({0})"
 
             if header_combine_success and this_bot.getWar().displayMiis:
                 footer_combine_success = ImageCombine.add_miis_to_table(this_bot, table_sorted_data, table_image_path=table_image_path, out_image_path=table_image_path)
@@ -2455,18 +2456,18 @@ class TablingCommands:
                 await common.safe_delete(message3)
                 await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")
             else:
-                if len(lorenzi_edit_link)>=4000:
+                if len(full_lorenzi_edit_link.format(lorenzi_edit_link))>=3500:
                     max_attempts = 3
                     for _ in range(max_attempts):
                         try:
                             lorenzi_edit_link = await URLShortener.tinyurl_shorten_url(lorenzi_edit_link)
                             break
                         except URLShortener.URLShortenFailure:
-                            await asyncio.sleep(1)
-
+                            await asyncio.sleep(.75)
+                full_lorenzi_edit_link = full_lorenzi_edit_link.format(lorenzi_edit_link)
                 embed = discord.Embed(
                     title = "",
-                    description = lorenzi_edit_link ,
+                    description = full_lorenzi_edit_link,
                     colour = discord.Colour.dark_blue()
                 )
 
@@ -2485,7 +2486,7 @@ class TablingCommands:
                 full_string = init_string+footer_string
                 error_message = "(Too many errors - cannot show previous errors. Full list in file.)\n..."
                 error_file = False
-                footer_max = min(6000-len(embed_title+lorenzi_edit_link), 2048)
+                footer_max = min(6000-len(embed_title+full_lorenzi_edit_link), 2048)
                 if len(full_string) >= footer_max:
                     error_file = True
                     cutoff = len(full_string+error_message)-footer_max
