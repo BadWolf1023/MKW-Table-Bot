@@ -2462,10 +2462,10 @@ class TablingCommands:
                     max_attempts = 3
                     for _ in range(max_attempts):
                         try:
-                            lorenzi_edit_link = await URLShortener.tinyurl_shorten_url(lorenzi_edit_link)
+                            lorenzi_edit_link = await URLShortener.tinyurl_shorten_url_special(lorenzi_edit_link)
                             break
                         except URLShortener.URLShortenFailure:
-                            await asyncio.sleep(.75)
+                            await asyncio.sleep(.5)
 
                 full_lorenzi_edit_link = full_lorenzi_edit_link.format(lorenzi_edit_link)
                 embed = discord.Embed(
