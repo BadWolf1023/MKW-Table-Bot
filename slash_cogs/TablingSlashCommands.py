@@ -414,11 +414,14 @@ class Table_Slash(ext_commands.Cog):
     async def _race_results(
         self,
         ctx: discord.ApplicationContext,
-        race: Option(int, "Race to display results of", required=False, default=None)
+        race: Option(int, "Race to display results of", required=False, default=None),
+        show_team_points: Option(bool, "Whether to display team points for this race as well", default=None)
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command]
         if race: args.append(str(race))
+        if show_team_points: 
+            args.append("teampoints=true")
         
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 

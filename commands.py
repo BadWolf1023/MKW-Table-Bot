@@ -2344,7 +2344,16 @@ class TablingCommands:
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
         
+        command = " ".join(args)
         race_num = 0
+        show_team_points = False
+        show_team_points_regex = r"(teampoints|points|showpoints|pts|showpts|teampts|showteampts)(=(yes|true|y))?"
+        if re.search(show_team_points_regex, command, re.IGNORECASE):
+            show_team_points = True
+            command = re.sub(show_team_points_regex, "", command, flags=re.IGNORECASE)
+        
+        args = command.split()
+
         if len(args) > 1:
             if not UtilityFunctions.is_int(args[1]):
                 return await message.channel.send("That's not a valid race number.")
@@ -2354,7 +2363,7 @@ class TablingCommands:
             
         race = this_bot.getRoom().races[race_num-1]
         rr_str = str(race)
-        if not this_bot.getWar().is_ffa():
+        if show_team_points and not this_bot.getWar().is_ffa():
             rr_str += race.get_team_points_string(this_bot.getWar().teams)
         
         await message.channel.send(rr_str)
