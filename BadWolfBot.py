@@ -1080,7 +1080,8 @@ def private_data_init():
         beta_bot_key = read_next_token(f)
         testing_bot_key = read_next_token(f)
         URLShortener.BITLY_API_TOKEN = read_next_token(f)
-        URLShortener.reload_module()
+        URLShortener.TINYURL_API_TOKEN = read_next_token(f)
+        # URLShortener.reload_module()
         LoungeAPIFunctions.code = read_next_token(f)
 
 
