@@ -633,6 +633,8 @@ class BadWolfBot(ext_commands.Bot):
         except TableBotExceptions.WarSetupStillRunning:
             await common.safe_send(message,
                                    f"I'm still trying to set up your table. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your table again.")
+        except URLShortener.URLShortenFailure:
+            await common.safe_send(message, f"TinyURL failed to shorten a link. Retrying the command probably won't work.")
         except discord.errors.DiscordServerError:
             await common.safe_send(message,
                                    "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")

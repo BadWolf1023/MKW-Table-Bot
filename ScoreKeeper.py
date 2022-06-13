@@ -74,7 +74,6 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
                 #         if curRoom.dc_on_or_before[raceNum][fc] == 'on':
                 #             mkwxNumRacers += 1
                 
-                
                 if fc not in raceFCs:
                     was_in_manual_dcs = False
                     if raceNum in curRoom.dc_on_or_before:
@@ -103,7 +102,7 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
                 else:
                     placement_score = scoreMatrix[mkwxNumRacers-1][placement.place-1]
             
-            fc_score[placement.player.FC].append( placement_score )
+            fc_score[placement.player.FC].append(placement_score)
     #Fille awkward sized arrays with 0
     for fc in fc_score:
         difference = endRace-(startRace-1) - len(fc_score[fc])
@@ -111,10 +110,7 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
             for _ in range(difference):
                 fc_score[fc].append(0)
         
-    
-                
     return fc_score
-
     
 def calculateGPScoresDCS(GPNumber, curRoom, missingRacePts=3, server_id=None):
     startRace = ((GPNumber-1)*4)+1

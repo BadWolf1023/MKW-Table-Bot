@@ -1869,13 +1869,16 @@ class TablingCommands:
         if player_num is None:
             await message.channel.send(error_message)
             return
-            
+        
+        append = amount_arg[0] in "+-"
+
         if not UtilityFunctions.is_int(gp_arg) or not UtilityFunctions.is_int(amount_arg):
             await message.channel.send(f"GP Number and amount must all be numbers. {example_help(server_prefix, command_name)}")
             return
         else:
             gp_num = int(gp_arg)
             amount = int(amount_arg)
+
 
         table_gps = this_bot.getWar().numberOfGPs
         if gp_num < 1 or gp_num > table_gps:
@@ -1885,6 +1888,14 @@ class TablingCommands:
         players = this_bot.getRoom().get_sorted_player_list()
         player_fc, mii_name = players[player_num-1]
         player_name = UserDataProcessing.proccessed_lounge_add(mii_name, player_fc)
+
+        if append:
+            if amount==0:
+                return await message.channel.send(f"{player_name} GP{gp_num} score not changed.")
+            player_gp_score = sum(SK.calculateGPScoresDCS(gp_num, this_bot.room, this_bot.war.missingRacePts, this_bot.server_id)[player_fc])
+            amount += player_gp_score
+            if amount<0:
+                return await message.channel.send("That's an invalid edit. Players cannot have negative GP scores. Use `/pen` to penalize players.")
 
         this_bot.add_save_state(message.content)
         this_bot.getWar().addEdit(player_fc, gp_num, amount)
