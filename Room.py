@@ -337,14 +337,18 @@ class Room(object):
         return self.playerPenalties
     
     def setNameForFC(self, FC, name, is_sub=False):
-        changing_sub_out = False
         try:
-            changing_sub_out = self.name_changes[FC]['is_sub']
-            if changing_sub_out:
-                is_sub = True
+            changing_sub_out = 'sub' in self.name_changes[FC]['type']
         except KeyError:
-            pass
-        self.name_changes[FC] = {'name': name, 'is_sub': is_sub, 'sub_name_change': changing_sub_out}
+            changing_sub_out = False
+
+        _type = 'change'
+        if changing_sub_out:
+            _type = 'change_sub'
+        elif is_sub:
+            _type = 'sub'
+
+        self.name_changes[FC] = {'name': name, 'type': _type}
     
     def getFCs(self):
         return self.get_fc_to_name_dict().keys()
@@ -642,9 +646,12 @@ class Room(object):
             for race in self.races:
                 for placement in race.getPlacements():
                     if placement.getPlayer().get_FC() == FC:
-                        change_info = "Subbed Out" if name_change_payload['is_sub'] else "Tabler Changed"
-                        if name_change_payload['sub_name_change']:
+                        change_info = "Tabler Changed"
+                        if name_change_payload['type'] == 'change_sub':
                             change_info = "Tabler Changed & Subbed Out"
+                        elif change_info == 'sub':
+                            change_info = "Subbed Out"
+
                         placement.getPlayer().set_name(f"{name_change_payload['name']} ({change_info})")
         
         #Next, we remove races
