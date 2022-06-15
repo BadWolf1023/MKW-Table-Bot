@@ -278,7 +278,7 @@ ANDREW_ID = 267395889423712258
 
 TABLEBOT_SERVER_INVITE_CODE = "K937DqM"
 
-OWNERS = {BAD_WOLF_ID,CW_ID,ANDREW_ID} if is_dev else {BAD_WOLF_ID,ANDREW_ID}
+OWNERS = {BAD_WOLF_ID,CW_ID,ANDREW_ID}
 
 MKW_LOUNGE_SERVER_ID = 387347467332485122
 TABLE_BOT_DISCORD_SERVER_ID = 739733336871665696
@@ -290,7 +290,7 @@ if is_beta:
 
 #Rather than using the builtin set declaration {}, I did an iterable because BadWolfBot.py kept giving an error in Eclipse, even though everything ran fine - this seems to have suppressed the error which was giving me major OCD
 mkw_lounge_staff_roles = set([387347888935534593, #Boss
-                            #   792805904047276032, #CT Admin
+                              792805904047276032, #CT Admin
                               399382503825211393, #HT RT Arb
                               399384750923579392, #LT RT Arb
                               521149807994208295, #HT CT Arb
