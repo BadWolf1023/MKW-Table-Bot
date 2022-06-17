@@ -175,7 +175,7 @@ class Race:
     
     def get_race_size(self):
         """Return number of players in race"""
-        return len(self.placements)
+        return self.numRacers()
     
     def track_check(self):
         if len(self.track) > 0 and UtilityFunctions.is_hex(self.track):
@@ -194,6 +194,11 @@ class Race:
         if (self.placements is None):
             return 0
         return len(self.placements)
+
+    def get_players_in_race(self):
+        """Return players in this race (in order by finishing position)"""
+        for placement in self.placements:
+            yield placement.get_player()
     
     def update_region(self):
         regionCount = defaultdict(int)
@@ -257,7 +262,11 @@ class Race:
         for place, placement in enumerate(self.placements, 1):
             placement.place = place
 
-    
+    def set_placement_changes(self, player_fcs: List[str]):
+        self.placements = sorted(self.placements, key=lambda p: player_fcs.index(p.get_fc()))
+        for place, placement in enumerate(self.placements, start=1):
+            placement.place = place
+        
     def getPlacements(self) -> List[Placement]:
         return self.placements
     

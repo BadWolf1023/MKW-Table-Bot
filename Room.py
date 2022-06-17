@@ -164,7 +164,11 @@ class Room(object):
         position_change = {'type': 'change', 'payload': position_change_payload}
         self.placement_history[race_num].append(position_change)        
         self.races[race_num-1].applyPlacementChanges([position_change_payload])
-
+    
+    def change_race_placements(self, race_num: int, player_fcs: List[str]):
+        race_change = {'type': 'race_change', 'payload': player_fcs}
+        self.placement_history[race_num].append(race_change)
+        self.races[race_num-1].set_placement_changes(player_fcs)
     
     def had_subs(self):
         return len(self.sub_ins) != 0
@@ -694,8 +698,10 @@ class Room(object):
                         race.addPlacement(DC_placement)
                     elif p['type'] == 'remove':
                         race.remove_placement_by_FC(payload)
-                    else:
+                    elif p['type'] == 'change':
                         race.applyPlacementChanges([payload])
+                    else:
+                        race.set_placement_changes(payload)
         
     def getRacesPlayed(self):
         return [r.track for r in self.races]

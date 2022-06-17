@@ -131,7 +131,21 @@ class Table_Slash(ext_commands.Cog):
         scores: Option(str, "New scores for players, in the order listed by running /ap")
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-        args = [command, str(gp)] + scores.split(" ")
+        args = [command, str(gp)] + scores.split()
+
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
+    
+    @slash_command(name='editrace',
+    description="Manually set placements for a race",
+    guild_ids=common.SLASH_GUILDS)
+    async def _edit_race_placements(
+        self,
+        ctx: discord.ApplicationContext,
+        race: Option(int, "Race to edit"),
+        placements: Option(str, "Players in correct placements for race (Lounge name or player number)")
+    ):
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command, str(race)] + placements.split()
 
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
     

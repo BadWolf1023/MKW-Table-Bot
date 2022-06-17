@@ -97,15 +97,21 @@ class Player(object):
         return self.pid
     def get_mkwx_url(self):
         return self.playerPageLink
+    def get_FC(self):
+        return self.FC
+    
+    @property
+    def name(self):
+        return self.get_name()
+
     def get_name(self):
-        return self.display_name
+        return self.get_full_display_name()
+
     def get_display_name(self, for_table=False):
         if for_table:
             if self.subbed_out() and not self.display_name.strip().startswith('#'):
                 return '#' + self.display_name
         return self.display_name
-    def get_FC(self):
-        return self.FC
     
     def set_name(self, new_name, change_type):
         self.change_type = change_type

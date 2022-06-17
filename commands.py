@@ -2668,6 +2668,68 @@ class TablingCommands:
             await message.channel.send(f"Each section of the table will now be {new_size} races.")
 
     @staticmethod
+    async def race_edit_command(message: discord.Message, this_bot: ChannelBot, args: List[str], is_lounge_server: bool):
+        ensure_table_loaded_check(this_bot, '/', is_lounge_server)
+
+        command = args.pop(0)
+
+        syntax = f"\n**Command syntax:** `/{command} [raceNumber] [1st name/number] [2nd name/number]...[last name/number]` (Lounge names with spaces must be entered as one word)"
+
+        if len(args) == 0:
+            return await message.channel.send(this_bot.room.get_sorted_player_list_string() + syntax)
+        
+        try:
+            race_num = int(args[0])
+            assert(0<race_num<=len(this_bot.room.races))
+        except ValueError:
+            return await message.channel.send("`raceNumber` must be a number"+syntax)
+        except AssertionError:
+            return await message.channel.send(f"Invalid `raceNumber`: `raceNumber` must be between 1 and {len(this_bot.room.races)}"+syntax)
+        
+        race = this_bot.room.races[race_num-1]
+        placements = args[1:]
+        
+        diff = len(placements) - race.numRacers()
+        if diff > 0:
+            return await message.channel.send(f"You included {diff} too many placements.")
+        elif diff < 0:
+            return await message.channel.send(f"You are missing {abs(diff)} placements.")
+        
+        player_nums = list()
+        errors = list()
+        for player in placements:
+            player_num, error_message = get_player_number_in_room(message, player, this_bot.getRoom(), '/', command)
+            if player_num is None:
+                errors.append(f'**Error:** Player `{player}` - '+error_message)
+                continue
+            player_nums.append(player_num)
+        
+        if len(errors):
+            return await message.channel.send("\n".join(errors))
+        
+        players_in_race = {p.FC: p.get_full_display_name() for p in race.get_players_in_race()}
+
+        sorted_list = this_bot.room.get_sorted_player_list()
+        players = {sorted_list[num-1][0]: sorted_list[num-1][1] for num in player_nums}
+        
+        players_in_race_comp = set(players_in_race.keys())
+        players_comp = set(players.keys())
+        if missing:=players_in_race_comp.difference(players_comp): #they put incorrect players
+            missing = [UserDataProcessing.lounge_name_or_mii_name(FC, players_in_race[FC]) for FC in missing]
+            incorrect = players_comp.difference(players_in_race_comp)
+            incorrect = [UserDataProcessing.lounge_name_or_mii_name(FC, players[FC]) for FC in incorrect]
+            incorrect_str = (f"These players aren't in race {race_num}: "+', '.join(incorrect)) if incorrect else ''
+            missing_str = (f"\nYou are missing these players in your command: "+', '.join(missing)) if missing else ''
+            return await message.channel.send(incorrect_str+missing_str)
+
+        # finally, input has been validated
+        this_bot.add_save_state(message.content)
+
+        this_bot.room.change_race_placements(race_num, list(players.keys()))
+        await message.channel.send(f"Race {race_num} placements successfully edited.")
+
+
+    @staticmethod
     async def quick_edit_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
         command_name = args[0]
