@@ -1277,6 +1277,7 @@ class LoungeCommands:
                     os.remove(table_image_path)
         lounge_server_updates.update_user_cooldown(message.author)
         await common.safe_delete(delete_me)
+        await TableBot.last_wp_button[this_bot.channel_id].on_timeout()
 
     @staticmethod
     async def ct_mogi_update(client, message: discord.Message, this_bot: TableBot.ChannelBot, args: List[str], lounge_server_updates: Lounge.Lounge):

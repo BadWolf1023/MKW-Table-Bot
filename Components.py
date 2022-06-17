@@ -234,7 +234,7 @@ class SubmitButton(discord.ui.Button['PictureView']):
                 else:
                     await commands.LoungeCommands.rt_mogi_update(common.client, message, self.channel_bot, args, common.client.lounge_submissions)
                 
-                await self.view.on_timeout() #remove picture button as well, since table has been submitted
+                # await self.view.on_timeout() #remove picture button as well, since table has been submitted
             except Exception as e:
                 await InteractionUtils.handle_component_exception(e, message, self.view.prefix, self.view.bot)
 
@@ -282,6 +282,8 @@ class PictureView(discord.ui.View):
         return True
     
     async def on_timeout(self) -> None:
+        if self.is_finished():
+            return
         self.clear_items()
         self.stop()
         if self.message:

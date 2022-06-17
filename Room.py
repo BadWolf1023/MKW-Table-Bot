@@ -177,7 +177,7 @@ class Room(object):
         
         for ind, (sub_in_fc, sub_data) in enumerate(self.sub_ins.items(), 1):
             subInName = UserDataProcessing.proccessed_lounge_add(self.getMiiNameByFC(sub_in_fc), sub_in_fc)
-            out_player: self.get_player_from_FC(sub_data['out_fc'])
+            out_player = self.get_player_from_FC(sub_data['out_fc'])
             sub_out_fc = out_player.FC
             subOutName = UserDataProcessing.proccessed_lounge_add(out_player.get_full_display_name(), sub_out_fc)
             race = sub_data['in_start_race']
