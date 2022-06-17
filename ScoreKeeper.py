@@ -194,41 +194,44 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     for x in range(numGPs):
         GPs.append(calculateGPScoresDCS(x+1, room, missingRacePts, server_id))
         
-    fcs_players = room.get_fc_to_name_dict(1, numGPs*4)
+    # fcs_players = room.get_fc_to_name_dict(1, numGPs*4)
+    players = room.players
     
     FC_table_dict = {}
     table_dict = create_table_dict()
     
     
-    for fc, mii_name in fcs_players.items():
+    # for fc, display_name in fcs_players.items():
+    for player in players:
+        fc = player.FC
         FC_table_dict[fc] = create_player()
         player_tag = war.getTeamForFC(fc)
         
-        player_table_name = mii_name
+        player_table_name = mii_name = player.get_display_name(for_table=True)
         lounge_name = UserDataProcessing.lounge_get(fc)
 
         if use_lounge_otherwise_mii:
-            if lounge_name != "":
+            if lounge_name != "" and not player.name_is_changed():
                 player_table_name = lounge_name
+            
         else:
             if not use_miis and not use_lounge_names: # Player name for table should be their FC
                 player_table_name = fc
-            elif not use_miis and use_lounge_names: # Player name for table should be their mii name with a / and then their Lounge name
-                if lounge_name == "":
-                    player_table_name = mii_name + " / No Discord"
-                else:
+            elif not use_miis and use_lounge_names: # Player name for table should be just Lounge name
+                if lounge_name!="" and not player.name_is_changed():
                     player_table_name = lounge_name
             elif use_miis and not use_lounge_names: # Player name for table should be mii name
                 player_table_name = mii_name
-            elif use_miis and use_lounge_names:  # Player name for table should be their lounge name with a / and then their lounge name...?
-                player_table_name = mii_name
-                discord = "No Discord"
-                if lounge_name != "":
-                    discord = lounge_name
-                player_table_name = player_table_name + " / " + discord
+            elif use_miis and use_lounge_names:  # Player name for table should be their mii name with a / and then their lounge name...?
+                if lounge_name == "":
+                    player_table_name = mii_name + " / No Discord"
+                else:
+                    player_table_name = mii_name + " / " + lounge_name
                 
-        if fc in room.getNameChanges():
-            player_table_name = room.getNameChanges()[fc]['name']
+        # if fc in room.getNameChanges():
+        #     player_table_name = room.getNameChanges()[fc]['name']
+        if not player.name_is_changed() and player_table_name.strip().startswith("#"):
+            player_table_name = "\u200b" + player_table_name
         
         if room.fc_subbed_in(fc):
             player_table_name = room.get_sub_string(player_table_name, fc)
@@ -256,7 +259,6 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
         if room.fc_subbed_out(fc):
             FC_table_dict[fc]["subbed_out"] = True
         
-        
 
     # Compute individual race scores for each FC
     for GPnum, GP_scores in enumerate(GPs, 1):
@@ -275,6 +277,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
 
             GP_scores[fc] = gp_amount
     
+    
     #after GP scores have been determined, if `up_to_race` has been set, set all races after `up_to_race` to 0 pts
     if up_to_race:
         up_to_race = min(up_to_race, len(room.races)) #`up_to_race` cannot be greater than the maximum number of races
@@ -289,11 +292,12 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             
     resizedGPs = GPs if step == 4 else resizeGPsInto(GPs, step)
     for GPnum, GP_scores in enumerate(resizedGPs, 1):
-        for fc, mii_name in FC_table_dict.items():
+        for fc, _ in FC_table_dict.items():
             FC_table_dict[fc]["race_scores"].extend(GP_scores[fc])
             FC_table_dict[fc]["gp_scores"].append(GP_scores[fc])
-                
+    
 
+                
     #build table string
     numRaces = up_to_race if up_to_race else min( (len(room.races), war.getNumberOfGPS()*4) )
     table_dict["title_str"] = f"#title {war.getTableWarName(numRaces)}\n"

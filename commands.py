@@ -1843,7 +1843,7 @@ class TablingCommands:
         sub_in_start_race = race_num
         sub_in_end_race = this_bot.getWar().getNumberOfRaces()
         this_bot.add_save_state(message.content)
-        this_bot.getRoom().add_sub(sub_in_fc, sub_in_start_race, sub_in_end_race, sub_out_fc, sub_out_mii_name, sub_out_name, sub_out_start_race, sub_out_end_race, sub_out_scores)
+        this_bot.getRoom().add_sub(sub_in_fc, sub_in_start_race, sub_in_end_race, sub_out_fc, sub_out_start_race, sub_out_end_race, sub_out_scores)
         this_bot.getWar().setTeamForFC(sub_in_fc, sub_out_tag)
         sub_in_player_name = UserDataProcessing.proccessed_lounge_add(sub_in_mii_name, sub_in_fc)
         sub_out_player_name = UserDataProcessing.proccessed_lounge_add(sub_out_mii_name, sub_out_fc)
@@ -2095,7 +2095,8 @@ class TablingCommands:
                 # await message2.edit(this_bot.get_room_started_message(), view=Components.PictureView(this_bot, server_prefix, is_lounge_server))
                 # TableBot.last_wp_message[this_bot.channel_id] = message2
                 await message2.edit(content=this_bot.get_room_started_message())
-                await TablingCommands.war_picture_command(message2, this_bot, ['wp'], server_prefix, is_lounge_server)
+                if this_bot.getWPCooldownSeconds() == 0:
+                    await TablingCommands.war_picture_command(message2, this_bot, ['wp'], server_prefix, is_lounge_server)
             this_bot.setShouldSendNotification(True)
 
             

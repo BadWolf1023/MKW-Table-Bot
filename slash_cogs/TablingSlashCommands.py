@@ -268,9 +268,9 @@ class Table_Slash(ext_commands.Cog):
     async def _substitute(
         self,
         ctx: discord.ApplicationContext,
-        race: Option(int, "Race when sub occurred"),
         sub_in: Option(str, "Player subbing in (number or Lounge name)"),
-        sub_out: Option(str, "Player subbing out (number or Lounge name)")
+        sub_out: Option(str, "Player subbing out (number or Lounge name)"),
+        race: Option(int, "Race when sub occurred"),
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, sub_in, sub_out, str(race)]
@@ -319,7 +319,7 @@ class Table_Slash(ext_commands.Cog):
     @slash_command(name="redos",
     description="Show which commands you can redo and in which order",
     guild_ids=common.SLASH_GUILDS)
-    async def _show_undos(
+    async def _show_redos(
         self,
         ctx: discord.ApplicationContext
     ):

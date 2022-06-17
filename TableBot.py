@@ -141,7 +141,7 @@ class ChannelBot(object):
         if self.getWar().ignoreLargeTimes:
             started_war_str += " (ignoring errors for large finish times)"
         started_war_str += f". {self.getRoom().getRXXText()}"
-        started_war_str += F"\n\n{self.getRoom().get_table_id_text()}"
+        started_war_str += F"\n{self.getRoom().get_table_id_text()}"
         return started_war_str
         
     def set_race_size(self, new_race_size:int):
@@ -258,7 +258,7 @@ class ChannelBot(object):
         if not status:
             return status
         self.reset()
-        room = Room.Room(rxx, room_races, message_id, setup_discord_id, setup_display_name)
+        room = Room.Room(self, rxx, room_races, message_id, setup_discord_id, setup_display_name)
         self.setWar(war)
         self.setRoom(room)
         asyncio.create_task(self.room.populate_miis()) # We can create this task before adjustments are applied since calling this load_room_smart function loads a new room (with no real tabler adjustments)

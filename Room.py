@@ -4,6 +4,7 @@ Created on Jul 12, 2020
 @author: willg
 '''
 import asyncio
+from Player import Player
 import Race
 import Placement
 import WiimmfiSiteFunctions
@@ -17,11 +18,15 @@ import TagAIShell
 from copy import copy, deepcopy
 from UtilityFunctions import isint, isfloat
 import Mii
-from typing import List, Any, Dict, Union
+from typing import TYPE_CHECKING, List, Any, Dict, Union, Tuple
 import TimerDebuggers
 
 DEBUG_RACES = False
 DEBUG_PLACEMENTS = False
+
+if TYPE_CHECKING:
+    from TableBot import ChannelBot
+
 
 watched_suggestions = {}
 
@@ -41,7 +46,9 @@ class Room(object):
     '''
     classdocs
     '''
-    def __init__(self, rxx: str, races: List[Race.Race], event_id, setup_discord_id, setup_display_name: str):
+    def __init__(self, table: 'ChannelBot', rxx: str, races: List[Race.Race], event_id, setup_discord_id, setup_display_name: str):
+        self.table = table
+
         self.name_changes: Dict[str, Dict[str, Union[str, bool]]] = {}
         self.removed_races = []
         
@@ -170,8 +177,9 @@ class Room(object):
         
         for ind, (sub_in_fc, sub_data) in enumerate(self.sub_ins.items(), 1):
             subInName = UserDataProcessing.proccessed_lounge_add(self.getMiiNameByFC(sub_in_fc), sub_in_fc)
-            sub_out_fc = sub_data['out_fc']
-            subOutName = UserDataProcessing.proccessed_lounge_add(self.getMiiNameByFC(sub_out_fc), sub_out_fc)
+            out_player: self.get_player_from_FC(sub_data['out_fc'])
+            sub_out_fc = out_player.FC
+            subOutName = UserDataProcessing.proccessed_lounge_add(out_player.get_full_display_name(), sub_out_fc)
             race = sub_data['in_start_race']
             ret+=f"\n\t{ind}. **{subInName}** subbed in for **{subOutName}** on race {race}."
         
@@ -201,10 +209,13 @@ class Room(object):
         
         subinStartRace = self.sub_ins[subin_fc]['in_start_race']
         subinEndRace = self.sub_ins[subin_fc]['in_end_race']
-        suboutName = self.sub_ins[subin_fc]['out_name']
+        subOutPlayer: Player = self.get_player_from_FC(self.sub_ins[subin_fc]['out_fc'])
         suboutStartRace = self.sub_ins[subin_fc]['out_start_race']
         suboutEndRace = self.sub_ins[subin_fc]['out_end_race']
-        return f"{suboutName}({suboutEndRace-suboutStartRace+1})/{subin_name}({subinEndRace-subinStartRace+1})"
+
+        sub_out_name = subOutPlayer.get_sub_out_name()
+        
+        return f"{sub_out_name}({suboutEndRace-suboutStartRace+1})/{subin_name}({subinEndRace-subinStartRace+1})"
     
     def fc_subbed_in(self, fc):
         return fc in self.sub_ins
@@ -215,27 +226,30 @@ class Room(object):
             subInStartRace = sub_data['in_start_race']
             if race_num != subInStartRace:
                 continue
-            subInName = UserDataProcessing.proccessed_lounge_add(self.getMiiNameByFC(sub_in_fc), sub_in_fc)
-            if sub_in_fc in self.name_changes:
-                subInName = UtilityFunctions.clean_for_output(self.name_changes[sub_in_fc]['name'])
-            suboutName = UtilityFunctions.clean_for_output(sub_data['out_name'])
+            sub_in_player = self.get_player_by_fc(sub_in_fc)
+            subInName = UtilityFunctions.clean_for_output(UserDataProcessing.proccessed_lounge_add(sub_in_player.get_full_display_name(), sub_in_fc))
+            # if sub_in_fc in self.name_changes:
+            #     subInName = UtilityFunctions.clean_for_output(self.name_changes[sub_in_fc]['name'])
+            out_player = self.get_player_from_FC(sub_data['out_fc'])
+            suboutName = UserDataProcessing.proccessed_lounge_add(out_player.get_full_display_name(), sub_data['out_fc'])
+            suboutName = UtilityFunctions.clean_for_output(suboutName)
+
             sub_str_list.append(f"Tabler subbed in {subInName} for {suboutName} this race")
         return sub_str_list
     
-    def add_sub(self, subInFC, subInStartRace, subInEndRace, subOutFC, subOutMiiName, subOutName, subOutStartRace, subOutEndRace, subOutScores):
+    def add_sub(self, subInFC, subInStartRace, subInEndRace, subOutFC, subOutStartRace, subOutEndRace, subOutScores):
         #dictionary of fcs that subbed in with the values being lists: fc: [subinstartrace, subinendrace, suboutfc, suboutname, suboutstartrace, suboutendrace, [suboutstartracescore, suboutstartrace+1score,...]]
         # self.sub_ins[subInFC] = [subInStartRace, subInEndRace, subOutFC, subOutName, subOutStartRace, subOutEndRace, subOutScores]
         self.sub_ins[subInFC] = {
             'in_start_race': subInStartRace,
             'in_end_race': subInEndRace,
             'out_fc': subOutFC,
-            'out_mii_name': subOutMiiName,
-            'out_name': subOutName,
             'out_start_race': subOutStartRace,
             'out_end_race': subOutEndRace,
             'out_scores': subOutScores
         }
-        self.setNameForFC(subOutFC, f"#{subOutMiiName}", is_sub=True)
+        # subOutPlayer = self.get_player_from_FC(subOutFC)
+        self.setNameForFC(subOutFC, None, is_sub=True)
         
     
     #Outside caller should use this, it will add the removed race to the class' history
@@ -338,7 +352,9 @@ class Room(object):
     
     def setNameForFC(self, FC, name, is_sub=False):
         try:
-            changing_sub_out = 'sub' in self.name_changes[FC]['type']
+            changing_sub_out = 'sub' in self.name_changes[FC]['type'] or (FC in self.name_changes and is_sub)
+            if FC in self.name_changes and is_sub:
+                name = self.name_changes[FC]['name']
         except KeyError:
             changing_sub_out = False
 
@@ -349,19 +365,21 @@ class Room(object):
             _type = 'sub'
 
         self.name_changes[FC] = {'name': name, 'type': _type}
+        for race in self.races:
+            for placement in race.getPlacements():
+                if placement.getPlayer().get_FC() == FC:
+                    placement.getPlayer().set_name(name, _type)
     
     def getFCs(self):
         return self.get_fc_to_name_dict().keys()
     
-    def getPlayers(self):
-        return self.get_fc_to_name_dict().values()
-    
-            
+    def get_player_by_fc(self, fc):
+        return self.get_player_from_FC(fc)
+
     def setRaces(self, races):
         self.races = races
         
     def getRaces(self, startRace=1, endRace=None):
-        
         return self.races
     
     def getRXXText(self):
@@ -506,7 +524,7 @@ class Room(object):
                 self.placement_history[raceNum].append(remove_dict)
                 race.remove_placement_by_FC(player_fc)
     
-    def get_player_from_FC(self, FC):
+    def get_player_from_FC(self, FC) -> Player:
         for race in self.races:
             for placement in race.placements:
                 if placement.player.FC == FC:
@@ -540,6 +558,7 @@ class Room(object):
     def get_sorted_player_list(self, startrace=None, endrace=None):
         players = list(self.get_fc_to_name_dict(startrace, endrace).items())
         return sorted(players, key=lambda x: (TagAIShell.getTag(x[1]), x[0]))
+        # return sorted(players, key=lambda p: (self.table.war.teams.get(x[0], TagAIShell.getTag(x[1])), x[0]))
        
     def get_sorted_player_list_string(self, startrace=None, endrace=None, lounge_replace=True, include_fc=False):
         players = self.get_sorted_player_list(startrace, endrace)
@@ -586,10 +605,17 @@ class Room(object):
 
     def get_room_FCs(self):
         return self.get_fc_to_name_dict().keys()
-    
-    def getPlayers(self):
-        return self.get_fc_to_name_dict().values()
 
+    @property
+    def players(self):
+        return self.getPlayers()
+
+    def getPlayers(self) -> List[Player]:
+        players = {}
+        for race in self.races:
+            for placement in race.getPlacements():
+                players[placement.get_fc()] = placement.get_player()
+        return players.values()
 
     async def populate_miis(self):
         if common.MIIS_ON_TABLE_DISABLED:
@@ -646,13 +672,7 @@ class Room(object):
             for race in self.races:
                 for placement in race.getPlacements():
                     if placement.getPlayer().get_FC() == FC:
-                        change_info = "Tabler Changed"
-                        if name_change_payload['type'] == 'change_sub':
-                            change_info = "Tabler Changed & Subbed Out"
-                        elif change_info == 'sub':
-                            change_info = "Subbed Out"
-
-                        placement.getPlayer().set_name(f"{name_change_payload['name']} ({change_info})")
+                        placement.getPlayer().set_name(name_change_payload['name'], name_change_payload['type'])
         
         #Next, we remove races
         if not suggestion_call:

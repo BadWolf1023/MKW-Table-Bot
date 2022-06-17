@@ -22,7 +22,7 @@ def is_valid_time_str(time_str):
     
 
 class Placement:
-    def __init__(self, player, time, delta=None, is_wiimmfi_place=False):
+    def __init__(self, player: Player.Player, time, delta=None, is_wiimmfi_place=False):
         self.player = player
         self.place = -1
         self.time = self._createTime_(time)
@@ -86,20 +86,29 @@ class Placement:
         return reconstructed_time
     
     def __lt__(self, other):
+        if not isinstance(other, Placement):
+            return False
+
         return self.time < other.time
     def __gt__(self, other):
+        if not isinstance(other, Placement):
+            return False
         return self.time > other.time
     def __cmp__(self, other):
+        if not isinstance(other, Placement):
+            return False
         if self.time < other.time:
             return -1
         if self.time > other.time:
             return 1
         return 0
     def __eq__(self, other):
+        if not isinstance(other, Placement):
+            return False
         return self.time == other.time
     
     def get_fc_and_name(self):
-        return self.player.FC, self.player.name
+        return self.player.FC, self.player.get_full_display_name()
     
     def get_time(self):
         return self.time
