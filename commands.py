@@ -834,7 +834,8 @@ class OtherCommands:
 
         flag = smart_type.get_country_flag()
         if flag is None:
-            await message.channel.send(f"{SmartTypes.capitalize(descriptive)} does not have a flag set. To set {SmartTypes.possessive(pronoun)} flag for tables, {descriptive} should use `{server_prefix}setflag flagcode`. Flagcodes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+            adverb = "do not" if descriptive == 'you' else 'does not'
+            await message.channel.send(f"{SmartTypes.capitalize(descriptive)} {adverb} have a flag set. To set {SmartTypes.possessive(pronoun)} flag for tables, {descriptive} should use `{server_prefix}setflag flagcode`. Flagcodes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
             return
 
         image_name = f"{flag}.png"
