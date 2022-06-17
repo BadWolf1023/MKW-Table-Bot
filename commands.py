@@ -2481,8 +2481,8 @@ class TablingCommands:
                 await common.safe_delete(message3)
                 await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")
             else:
-                if len(full_lorenzi_edit_link.format(lorenzi_edit_link))>=3500:
-                    max_attempts = 3
+                if len(full_lorenzi_edit_link.format(lorenzi_edit_link))>=4000:
+                    max_attempts = 2
                     for _ in range(max_attempts):
                         try:
                             lorenzi_edit_link = await URLShortener.tinyurl_shorten_url_special(lorenzi_edit_link)
