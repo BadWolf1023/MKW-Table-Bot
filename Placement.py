@@ -85,28 +85,6 @@ class Placement:
         reconstructed_time = (int(str(self.time[0])[1:]), self.time[1], self.time[2])
         return reconstructed_time
     
-    def __lt__(self, other):
-        if not isinstance(other, Placement):
-            return False
-
-        return self.time < other.time
-    def __gt__(self, other):
-        if not isinstance(other, Placement):
-            return False
-        return self.time > other.time
-    def __cmp__(self, other):
-        if not isinstance(other, Placement):
-            return False
-        if self.time < other.time:
-            return -1
-        if self.time > other.time:
-            return 1
-        return 0
-    def __eq__(self, other):
-        if not isinstance(other, Placement):
-            return False
-        return self.time == other.time
-    
     def get_fc_and_name(self):
         return self.player.FC, self.player.get_full_display_name()
     
@@ -163,6 +141,21 @@ class Placement:
         milliseconds = self.time[2]
 
         return minutes*60+seconds+milliseconds/1000
+
+    def __lt__(self, other):
+        return isinstance(other, Placement) and self.time < other.time
+    def __gt__(self, other):
+        return isinstance(other, Placement) and self.time > other.time
+    def __eq__(self, other):
+        return isinstance(other, Placement) and self.time == other.time
+    def __cmp__(self, other):
+        if not isinstance(other, Placement):
+            return False
+        if self.time < other.time:
+            return -1
+        if self.time > other.time:
+            return 1
+        return 0
     
     def __str__(self):
         
