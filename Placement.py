@@ -148,14 +148,6 @@ class Placement:
         return isinstance(other, Placement) and self.time > other.time
     def __eq__(self, other):
         return isinstance(other, Placement) and self.time == other.time
-    def __cmp__(self, other):
-        if not isinstance(other, Placement):
-            return False
-        if self.time < other.time:
-            return -1
-        if self.time > other.time:
-            return 1
-        return 0
     
     def __str__(self):
         
