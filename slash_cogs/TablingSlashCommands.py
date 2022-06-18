@@ -215,10 +215,12 @@ class Table_Slash(ext_commands.Cog):
     async def _merge_room(
         self,
         ctx: discord.ApplicationContext,
-        room_arg: Option(str, "Lounge name or rxx number", name="with")
+        room_arg: Option(str, "Lounge name/mention/FC/rxx", name="with", default=None)
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-        args = [command, room_arg]
+        args = [command]
+        if room_arg:
+            args.append(room_arg)
 
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
