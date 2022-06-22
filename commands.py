@@ -1612,7 +1612,7 @@ class TablingCommands:
         is_primary = rt_ct == 'rt'
 
         updater_channel_id, updater_link, preview_link, type_text = lounge_server_updates.get_information(is_primary)
-        error_code, newTableText, json_data = await MogiUpdate.textInputUpdate(table_text, str(tier), 12, is_rt=is_primary)
+        error_code, newTableText, json_data = await MogiUpdate.textInputUpdate(table_text, str(tier), this_bot.war.numberOfGPs*4, is_rt=is_primary)
 
         if error_code != MogiUpdate.SUCCESS_EC:
             await message.channel.send(
