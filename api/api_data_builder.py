@@ -236,7 +236,7 @@ def style_equal_width(html_tag_attrs, num_boxes):
 def style_equal_height(html_tag_attrs, num_boxes):
     html_tag_attrs.update({"style": f"height:{(1/num_boxes):.2%};"})
 
-def build_team_html(table_data: dict, style=None, table_background_picture_url=None, table_background_color=None, table_text_color=None, table_font=None, border_color=None, text_size=None):
+def build_team_html(table_data: dict, style=None, table_background_picture_url=None, table_background_color=None, table_text_color=None, table_font=None, border_color=None, text_size=None, include_team_names=True):
     '''
     table_data is what is returned by ScoreKeeper.get_war_table_DCS 
     '''    
@@ -254,18 +254,24 @@ def build_team_html(table_data: dict, style=None, table_background_picture_url=N
                 soup.head.script.string += build_neon_text_js_injection(table_text_color)
         
         for id_index, (team_tag, score) in enumerate(team_name_score_generator(table_data), 1):
-            # Add the team name divs:
-            team_name_box = soup.new_tag('div', attrs={"class": "team_name_box"})
-            team_name_div = soup.new_tag('div', attrs={"class": "team_name", "id": f"team_name_{id_index}"})
-            team_name_div.string = team_tag
-            team_name_box.append(team_name_div)
+            if include_team_names:
+                # Add the team name divs:
+                team_name_box = soup.new_tag('div', attrs={"class": "team_name_box"})
+                team_name_div = soup.new_tag('div', attrs={"class": "team_name", "id": f"team_name_{id_index}"})
+                team_name_div.string = team_tag
+                team_name_box.append(team_name_div)
 
             team_score_box = soup.new_tag('div', attrs={"class": "score_box"})
             team_score_div = soup.new_tag('div', attrs={"class": "team_score", "id": f"team_score_{id_index}"})
             team_score_div.string = score
             team_score_box.append(team_score_div)
 
-            soup.find(id="team_names_box").append(team_name_box)
+            if include_team_names:
+                soup.find(id="team_names_box").append(team_name_box)
+            else:
+                if team_names_container := soup.find(id="team_names_box"):
+                    team_names_container.decompose()
+                    
             soup.find(id="scores_box").append(team_score_box)
             
         return str(soup)

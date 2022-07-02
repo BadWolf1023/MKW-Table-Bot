@@ -183,7 +183,7 @@ def create_player():
             "flag": ""
             }
 
-def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False, step=None, up_to_race=None):
+def get_war_table_DCS(channel_bot:TableBot.ChannelBot, sort_teams=True, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False, step=None, up_to_race=None):
     war = channel_bot.getWar()
     room = channel_bot.getRoom()
     if step is None:
@@ -320,8 +320,12 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             compute_total_player_score(player_dict)
         team_dict["players"] = UtilityFunctions.sort_dict(team_dict["players"], key=lambda fc: team_dict["players"][fc]["total_score"], reverse=True)
         compute_team_score(team_dict)
-    table_dict["teams"] = UtilityFunctions.sort_dict(table_dict["teams"], key=lambda tag: table_dict["teams"][tag]["total_score"], reverse=True)
     
+    if sort_teams:
+        table_dict["teams"] = UtilityFunctions.sort_dict(table_dict["teams"], key=lambda tag: table_dict["teams"][tag]["total_score"], reverse=True)
+    else:
+        table_dict["teams"] = UtilityFunctions.sort_dict(table_dict["teams"])
+
     input_table_text(table_dict)
 
     return build_table_text(table_dict), table_dict
