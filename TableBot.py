@@ -318,7 +318,7 @@ class ChannelBot(object):
             return 0
         curTime = datetime.now()
         time_passed = curTime - self.lastWPTime
-        return min(0, common.wp_cooldown_seconds - int(time_passed.total_seconds()))
+        return max(0, common.wp_cooldown_seconds - int(time_passed.total_seconds()))
     
     
     def updateRLCoolDown(self):
@@ -331,7 +331,7 @@ class ChannelBot(object):
             return 0
         curTime = datetime.now()
         time_passed = curTime - self.roomLoadTime
-        return min(0, common.mkwx_page_cooldown_seconds - int(time_passed.total_seconds()))
+        return max(0, common.mkwx_page_cooldown_seconds - int(time_passed.total_seconds()))
         
         
     def isFinishedLounge(self) -> bool:
