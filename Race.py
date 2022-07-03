@@ -8,7 +8,6 @@ from Placement import DISCONNECTION_TIME, Placement
 from collections import defaultdict
 from typing import List
 import common
-import ScoreKeeper
 
 CTGP_CTWW_REGION = 'vs_54'
 BATTLE_REGION = 'bt'
@@ -404,7 +403,7 @@ class Race:
             tag = teams_data[placement.player.FC]
             team_placements[tag].append(placement.place)
         
-        score_mat = ScoreKeeper.alternate_Matrices[server_id] if server_id in ScoreKeeper.alternate_Matrices else ScoreKeeper.scoreMatrix
+        score_mat = common.alternate_Matrices[server_id] if server_id in common.alternate_Matrices else common.scoreMatrix
         score_matrix = score_mat[len(self.placements)-1]
         team_placements = dict(sorted(team_placements.items(), key=lambda team: sum(score_matrix[p-1] for p in team[1]), reverse=True))
 

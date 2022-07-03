@@ -2142,7 +2142,7 @@ class TablingCommands:
         # TableBot.last_wp_message[this_bot.channel_id] = view.message
         await message.channel.send(this_bot.get_room_started_message())
         message.content = '/wp (auto)'
-        if this_bot.getWPCooldownSeconds == 0:
+        if this_bot.getWPCooldownSeconds() == 0:
             await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
 
     @staticmethod

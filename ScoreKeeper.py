@@ -9,39 +9,8 @@ from collections import defaultdict
 from typing import List
 import TableBot
 import UtilityFunctions
+import common
 DEBUGGING = False
-
-
-scoreMatrix = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 8, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 9, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 9, 5, 2, 1, 0, 0, 0, 0, 0, 0, 0],
-    [15, 10, 6, 3, 1, 0, 0, 0, 0, 0, 0, 0],
-    [15, 10, 7, 5, 3, 1, 0, 0, 0, 0, 0, 0],
-    [15, 11, 8, 6, 4, 2, 1, 0, 0, 0, 0, 0],
-    [15, 11, 8, 6, 4, 3, 2, 1, 0, 0, 0, 0],
-    [15, 12, 10, 8, 6, 4, 3, 2, 1, 0, 0, 0],
-    [15, 12, 10, 8, 6, 5, 4, 3, 2, 1, 0, 0],
-    [15, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-    ]
-
-alternate_Matrices = {
-    771417753843925023:[
-    [15, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 9 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 10 ,5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 11 ,7, 3, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 11 ,8, 5, 3, 0, 0, 0, 0, 0, 0, 0],
-    [15, 11 ,9, 6, 4, 3, 0, 0, 0, 0, 0, 0],
-    [15, 12 ,10, 7, 5, 4, 3, 0, 0, 0, 0, 0],
-    [15, 13 ,10, 8, 6, 4, 3, 2, 0, 0, 0, 0],
-    [15, 13 ,10, 8, 7, 6, 4, 3, 2, 0, 0, 0],
-    [15, 13 ,11, 9, 8, 6, 5, 4, 3, 2, 0, 0],
-    [15, 13 ,12, 10, 8, 7, 6, 5, 3, 2, 1, 0],
-    [15, 13 ,12, 10, 8, 7, 6, 5, 3, 2, 1, 0]
-    ]}
 
 
 def print_scores(fc_score, fc_player):
@@ -96,10 +65,10 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
         for placement in race.getPlacements():
             placement_score = 0
             if placement.place <= 12: #Only get people's score if their place is less than 12
-                if server_id in alternate_Matrices:
-                    placement_score = alternate_Matrices[server_id][mkwxNumRacers-1][placement.place-1]
+                if server_id in common.alternate_Matrices:
+                    placement_score = common.alternate_Matrices[server_id][mkwxNumRacers-1][placement.place-1]
                 else:
-                    placement_score = scoreMatrix[mkwxNumRacers-1][placement.place-1]
+                    placement_score = common.scoreMatrix[mkwxNumRacers-1][placement.place-1]
             
             fc_score[placement.player.FC].append(placement_score)
     #Fille awkward sized arrays with 0
