@@ -32,8 +32,8 @@ def initialize(app_: FastAPI):
         font: Optional[str] = Query(None),
         border_color: Optional[str] = Query(None),
         text_size: Optional[int] = Query(None),
-        show_team_names: bool = Query(True),
-        sort_teams: bool = Query(True),
+        show_team_names: Optional[bool] = Query(True),
+        sort_teams: Optional[bool] = Query(True),
 
     ):
         table_bot = cb_interface.get_table_bot(table_id)

@@ -62,21 +62,6 @@ MAX_PREFIX_LENGTH = 3
 
 INVITE_LINK = "https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=274878031936&scope=bot%20applications.commands"
 
-SCORE_MATRIX = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 8, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 9, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 9, 5, 2, 1, 0, 0, 0, 0, 0, 0, 0],
-    [15, 10, 6, 3, 1, 0, 0, 0, 0, 0, 0, 0],
-    [15, 10, 7, 5, 3, 1, 0, 0, 0, 0, 0, 0],
-    [15, 11, 8, 6, 4, 2, 1, 0, 0, 0, 0, 0],
-    [15, 11, 8, 6, 4, 3, 2, 1, 0, 0, 0, 0],
-    [15, 12, 10, 8, 6, 4, 3, 2, 1, 0, 0, 0],
-    [15, 12, 10, 8, 6, 5, 4, 3, 2, 1, 0, 0],
-    [15, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-    ]
-
 #current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
 
 #Main loop constants
@@ -290,7 +275,7 @@ if is_beta:
 
 #Rather than using the builtin set declaration {}, I did an iterable because BadWolfBot.py kept giving an error in Eclipse, even though everything ran fine - this seems to have suppressed the error which was giving me major OCD
 mkw_lounge_staff_roles = set([387347888935534593, #Boss
-                              792805904047276032, #CT Admin
+                            #   792805904047276032, #CT Admin
                               399382503825211393, #HT RT Arb
                               399384750923579392, #LT RT Arb
                               521149807994208295, #HT CT Arb

@@ -614,9 +614,14 @@ class Room(object):
     def players(self):
         return self.getPlayers()
 
-    def getPlayers(self) -> List[Player]:
+    def getPlayers(self, start=None, end=None) -> List[Player]:
+        if start is None:
+            start = 1
+        if end is None:
+            end = self.table.war.numberOfGPs()*4
+            
         players = {}
-        for race in self.races:
+        for race in self.races[start-1:end-1]:
             for placement in race.getPlacements():
                 players[placement.get_fc()] = placement.get_player()
         return players.values()

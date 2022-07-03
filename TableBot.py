@@ -312,13 +312,13 @@ class ChannelBot(object):
     def getWPCooldownSeconds(self) -> int:
         if self.should_send_mii_notification:
             self.should_send_mii_notification = False
-        # if common.is_dev:
-        #     return -1
+        if common.is_dev:
+            return 0
         if self.lastWPTime is None:
-            return -1
+            return 0
         curTime = datetime.now()
         time_passed = curTime - self.lastWPTime
-        return common.wp_cooldown_seconds - int(time_passed.total_seconds())
+        return min(0, common.wp_cooldown_seconds - int(time_passed.total_seconds()))
     
     
     def updateRLCoolDown(self):
@@ -326,12 +326,12 @@ class ChannelBot(object):
 
     def getRLCooldownSeconds(self) -> int:
         if common.is_dev:
-            return -1
+            return 0
         if self.roomLoadTime is None:
-            return -1
+            return 0
         curTime = datetime.now()
         time_passed = curTime - self.roomLoadTime
-        return common.mkwx_page_cooldown_seconds - int(time_passed.total_seconds())
+        return min(0, common.mkwx_page_cooldown_seconds - int(time_passed.total_seconds()))
         
         
     def isFinishedLounge(self) -> bool:

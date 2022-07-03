@@ -2109,6 +2109,7 @@ class TablingCommands:
                 await message2.edit(content=this_bot.get_room_started_message())
                 if this_bot.getWPCooldownSeconds() == 0:
                     await TablingCommands.war_picture_command(message2, this_bot, ['wp'], server_prefix, is_lounge_server)
+
             this_bot.setShouldSendNotification(True)
 
             
@@ -2141,7 +2142,8 @@ class TablingCommands:
         # TableBot.last_wp_message[this_bot.channel_id] = view.message
         await message.channel.send(this_bot.get_room_started_message())
         message.content = '/wp (auto)'
-        await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
+        if this_bot.getWPCooldownSeconds == 0:
+            await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
 
     @staticmethod
     @TimerDebuggers.timer_coroutine
@@ -2377,7 +2379,7 @@ class TablingCommands:
         race = this_bot.getRoom().races[race_num-1]
         rr_str = str(race)
         if show_team_points and not this_bot.getWar().is_ffa():
-            rr_str += race.get_team_points_string(this_bot.getWar().teams)
+            rr_str += race.get_team_points_string(this_bot.getWar().teams, server_id=this_bot.server_id)
         
         await message.channel.send(rr_str)
 

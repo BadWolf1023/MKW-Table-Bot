@@ -176,7 +176,8 @@ class PictureButton(discord.ui.Button['PictureView']):
         super().__init__(style=discord.ButtonStyle.gray if (cooldown > 0) else discord.ButtonStyle.primary, label='Update', row=0)
         self.bot = bot
         self.responded = False
-        asyncio.create_task(self.activate())
+        if cooldown > 0:
+            asyncio.create_task(self.activate())
 
     async def activate(self):
         await asyncio.sleep(self.bot.getWPCooldownSeconds())

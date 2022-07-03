@@ -61,7 +61,6 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
         return fc_score
     
     
-    
     #Iterating over the splice - no, this isn't an error. Check how splicing works, this won't go out of bounds.
     for raceNum, race in enumerate(curRoom.getRaces()[startRace-1:endRace], startRace):
         mkwxNumRacers = race.numRacers()
@@ -195,11 +194,10 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, sort_teams=True, use_loun
         GPs.append(calculateGPScoresDCS(x+1, room, missingRacePts, server_id))
         
     # fcs_players = room.get_fc_to_name_dict(1, numGPs*4)
-    players = room.players
+    players = room.getPlayers(start=1, end=numGPs*4)
     
     FC_table_dict = {}
     table_dict = create_table_dict()
-    
     
     # for fc, display_name in fcs_players.items():
     for player in players:
