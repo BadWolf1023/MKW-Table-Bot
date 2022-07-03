@@ -175,13 +175,12 @@ class Race:
     
     def get_race_size(self):
         """Return number of players in race"""
-        return len(self.placements)
+        return self.numRacers()
     
     def track_check(self):
         if len(self.track) > 0 and UtilityFunctions.is_hex(self.track):
             common.log_error(f"The following track had no SHA mapping: {self.track}")
             
-    
     def hasFC(self, FC):
         return False if self.getPlacement(FC) is None else True
         
@@ -195,6 +194,11 @@ class Race:
         if (self.placements is None):
             return 0
         return len(self.placements)
+
+    def get_players_in_race(self):
+        """Return players in this race (in order by finishing position)"""
+        for placement in self.placements:
+            yield placement.get_player()
     
     def update_region(self):
         regionCount = defaultdict(int)
@@ -258,7 +262,11 @@ class Race:
         for place, placement in enumerate(self.placements, 1):
             placement.place = place
 
-    
+    def set_placement_changes(self, player_fcs: List[str]):
+        self.placements = sorted(self.placements, key=lambda p: player_fcs.index(p.get_fc()))
+        for place, placement in enumerate(self.placements, start=1):
+            placement.place = place
+        
     def getPlacements(self) -> List[Placement]:
         return self.placements
     
@@ -389,6 +397,25 @@ class Race:
     def multipleBlankTimes(self):
         return not self.entireRoomBlankTimes() and sum(1 for placement in self.getPlacements() if placement.is_disconnected()) > 1
         
+    def get_team_points_string(self, teams_data, server_id):
+        team_placements = defaultdict(list)
+        for placement in self.placements:
+            tag = teams_data[placement.player.FC]
+            team_placements[tag].append(placement.place)
+        
+        score_mat = common.alternate_Matrices[server_id] if server_id in common.alternate_Matrices else common.scoreMatrix
+        score_matrix = score_mat[len(self.placements)-1]
+        team_placements = dict(sorted(team_placements.items(), key=lambda team: sum(score_matrix[p-1] for p in team[1]), reverse=True))
+
+        ret = []
+        for team, placements in team_placements.items():
+            r = f"**{team}** - " + ", ".join(list(map(str, placements)))
+            pts_sum = sum(score_matrix[p-1] for p in placements)
+            r+=f" (**{pts_sum}** {'pt' if pts_sum==1 else 'pts'})"
+            ret.append(r)
+
+        return '\n\n'+"  |  ".join(ret)
+
     def __str__(self):
         curStr = "Race #" + str(self.raceNumber) + " - " + UtilityFunctions.clean_for_output(self.getTrackNameWithoutAuthor()) + " - " + str(self.cc) + "cc" + \
          "\nMatch end time: " + str(self.matchTime)

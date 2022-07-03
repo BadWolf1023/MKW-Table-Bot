@@ -706,7 +706,7 @@ async def populate_score_matrix_table():
 
     for room_size in range(0,12):
         for place in range(0,12):
-            rows.append((room_size+1, place+1, common.SCORE_MATRIX[room_size][place]))
+            rows.append((room_size+1, place+1, common.scoreMatrix[room_size][place]))
 
     await db_connection.executescript("DELETE FROM Score_Matrix;")
     await db_connection.executemany("INSERT INTO Score_Matrix VALUES (?, ?, ?)", rows)

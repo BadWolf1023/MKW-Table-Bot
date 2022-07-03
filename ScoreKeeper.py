@@ -9,39 +9,8 @@ from collections import defaultdict
 from typing import List
 import TableBot
 import UtilityFunctions
+import common
 DEBUGGING = False
-
-
-scoreMatrix = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 8, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 9, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 9, 5, 2, 1, 0, 0, 0, 0, 0, 0, 0],
-    [15, 10, 6, 3, 1, 0, 0, 0, 0, 0, 0, 0],
-    [15, 10, 7, 5, 3, 1, 0, 0, 0, 0, 0, 0],
-    [15, 11, 8, 6, 4, 2, 1, 0, 0, 0, 0, 0],
-    [15, 11, 8, 6, 4, 3, 2, 1, 0, 0, 0, 0],
-    [15, 12, 10, 8, 6, 4, 3, 2, 1, 0, 0, 0],
-    [15, 12, 10, 8, 6, 5, 4, 3, 2, 1, 0, 0],
-    [15, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-    ]
-
-alternate_Matrices = {
-    771417753843925023:[
-    [15, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 9 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 10 ,5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 11 ,7, 3, 0, 0, 0, 0, 0, 0, 0, 0],
-    [15, 11 ,8, 5, 3, 0, 0, 0, 0, 0, 0, 0],
-    [15, 11 ,9, 6, 4, 3, 0, 0, 0, 0, 0, 0],
-    [15, 12 ,10, 7, 5, 4, 3, 0, 0, 0, 0, 0],
-    [15, 13 ,10, 8, 6, 4, 3, 2, 0, 0, 0, 0],
-    [15, 13 ,10, 8, 7, 6, 4, 3, 2, 0, 0, 0],
-    [15, 13 ,11, 9, 8, 6, 5, 4, 3, 2, 0, 0],
-    [15, 13 ,12, 10, 8, 7, 6, 5, 3, 2, 1, 0],
-    [15, 13 ,12, 10, 8, 7, 6, 5, 3, 2, 1, 0]
-    ]}
 
 
 def print_scores(fc_score, fc_player):
@@ -61,7 +30,6 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
         return fc_score
     
     
-    
     #Iterating over the splice - no, this isn't an error. Check how splicing works, this won't go out of bounds.
     for raceNum, race in enumerate(curRoom.getRaces()[startRace-1:endRace], startRace):
         mkwxNumRacers = race.numRacers()
@@ -73,7 +41,6 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
                 #     if fc in curRoom.dc_on_or_before[raceNum]:
                 #         if curRoom.dc_on_or_before[raceNum][fc] == 'on':
                 #             mkwxNumRacers += 1
-                
                 
                 if fc not in raceFCs:
                     was_in_manual_dcs = False
@@ -98,12 +65,12 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
         for placement in race.getPlacements():
             placement_score = 0
             if placement.place <= 12: #Only get people's score if their place is less than 12
-                if server_id in alternate_Matrices:
-                    placement_score = alternate_Matrices[server_id][mkwxNumRacers-1][placement.place-1]
+                if server_id in common.alternate_Matrices:
+                    placement_score = common.alternate_Matrices[server_id][mkwxNumRacers-1][placement.place-1]
                 else:
-                    placement_score = scoreMatrix[mkwxNumRacers-1][placement.place-1]
+                    placement_score = common.scoreMatrix[mkwxNumRacers-1][placement.place-1]
             
-            fc_score[placement.player.FC].append( placement_score )
+            fc_score[placement.player.FC].append(placement_score)
     #Fille awkward sized arrays with 0
     for fc in fc_score:
         difference = endRace-(startRace-1) - len(fc_score[fc])
@@ -111,10 +78,7 @@ def calculateScoresDCs(curRoom:Room.Room, startRace=1, endRace=12, missingRacePt
             for _ in range(difference):
                 fc_score[fc].append(0)
         
-    
-                
     return fc_score
-
     
 def calculateGPScoresDCS(GPNumber, curRoom, missingRacePts=3, server_id=None):
     startRace = ((GPNumber-1)*4)+1
@@ -187,7 +151,7 @@ def create_player():
             "flag": ""
             }
 
-def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False, step=None, up_to_race=None):
+def get_war_table_DCS(channel_bot:TableBot.ChannelBot, sort_teams=True, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False, step=None, up_to_race=None):
     war = channel_bot.getWar()
     room = channel_bot.getRoom()
     if step is None:
@@ -198,41 +162,43 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
     for x in range(numGPs):
         GPs.append(calculateGPScoresDCS(x+1, room, missingRacePts, server_id))
         
-    fcs_players = room.get_fc_to_name_dict(1, numGPs*4)
+    # fcs_players = room.get_fc_to_name_dict(1, numGPs*4)
+    players = room.getPlayers(start=1, end=numGPs*4)
     
     FC_table_dict = {}
     table_dict = create_table_dict()
     
-    
-    for fc, mii_name in fcs_players.items():
+    # for fc, display_name in fcs_players.items():
+    for player in players:
+        fc = player.FC
         FC_table_dict[fc] = create_player()
         player_tag = war.getTeamForFC(fc)
         
-        player_table_name = mii_name
+        player_table_name = mii_name = player.get_display_name(for_table=True)
         lounge_name = UserDataProcessing.lounge_get(fc)
 
         if use_lounge_otherwise_mii:
-            if lounge_name != "":
+            if lounge_name != "" and not player.name_is_changed():
                 player_table_name = lounge_name
+            
         else:
             if not use_miis and not use_lounge_names: # Player name for table should be their FC
                 player_table_name = fc
-            elif not use_miis and use_lounge_names: # Player name for table should be their mii name with a / and then their Lounge name
-                if lounge_name == "":
-                    player_table_name = mii_name + " / No Discord"
-                else:
+            elif not use_miis and use_lounge_names: # Player name for table should be just Lounge name
+                if lounge_name!="" and not player.name_is_changed():
                     player_table_name = lounge_name
             elif use_miis and not use_lounge_names: # Player name for table should be mii name
                 player_table_name = mii_name
-            elif use_miis and use_lounge_names:  # Player name for table should be their lounge name with a / and then their lounge name...?
-                player_table_name = mii_name
-                discord = "No Discord"
-                if lounge_name != "":
-                    discord = lounge_name
-                player_table_name = player_table_name + " / " + discord
+            elif use_miis and use_lounge_names:  # Player name for table should be their mii name with a / and then their lounge name...?
+                if lounge_name == "":
+                    player_table_name = mii_name + " / No Discord"
+                else:
+                    player_table_name = mii_name + " / " + lounge_name
                 
-        if fc in room.getNameChanges():
-            player_table_name = room.getNameChanges()[fc]
+        # if fc in room.getNameChanges():
+        #     player_table_name = room.getNameChanges()[fc]['name']
+        if not player.name_is_changed() and player_table_name.strip().startswith("#"):
+            player_table_name = "\u200b" + player_table_name
         
         if room.fc_subbed_in(fc):
             player_table_name = room.get_sub_string(player_table_name, fc)
@@ -260,7 +226,6 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
         if room.fc_subbed_out(fc):
             FC_table_dict[fc]["subbed_out"] = True
         
-        
 
     # Compute individual race scores for each FC
     for GPnum, GP_scores in enumerate(GPs, 1):
@@ -279,6 +244,7 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
 
             GP_scores[fc] = gp_amount
     
+    
     #after GP scores have been determined, if `up_to_race` has been set, set all races after `up_to_race` to 0 pts
     if up_to_race:
         up_to_race = min(up_to_race, len(room.races)) #`up_to_race` cannot be greater than the maximum number of races
@@ -293,11 +259,12 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             
     resizedGPs = GPs if step == 4 else resizeGPsInto(GPs, step)
     for GPnum, GP_scores in enumerate(resizedGPs, 1):
-        for fc, mii_name in FC_table_dict.items():
+        for fc, _ in FC_table_dict.items():
             FC_table_dict[fc]["race_scores"].extend(GP_scores[fc])
             FC_table_dict[fc]["gp_scores"].append(GP_scores[fc])
-                
+    
 
+                
     #build table string
     numRaces = up_to_race if up_to_race else min( (len(room.races), war.getNumberOfGPS()*4) )
     table_dict["title_str"] = f"#title {war.getTableWarName(numRaces)}\n"
@@ -320,8 +287,12 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, use_lounge_otherwise_mii=
             compute_total_player_score(player_dict)
         team_dict["players"] = UtilityFunctions.sort_dict(team_dict["players"], key=lambda fc: team_dict["players"][fc]["total_score"], reverse=True)
         compute_team_score(team_dict)
-    table_dict["teams"] = UtilityFunctions.sort_dict(table_dict["teams"], key=lambda tag: table_dict["teams"][tag]["total_score"], reverse=True)
     
+    if sort_teams:
+        table_dict["teams"] = UtilityFunctions.sort_dict(table_dict["teams"], key=lambda tag: table_dict["teams"][tag]["total_score"], reverse=True)
+    else:
+        table_dict["teams"] = UtilityFunctions.sort_dict(table_dict["teams"])
+
     input_table_text(table_dict)
 
     return build_table_text(table_dict), table_dict

@@ -5,6 +5,7 @@ Created on Jul 12, 2020
 '''
 import Mii
 import UtilityFunctions
+import UserDataProcessing
 
 vehicle_ratings = {"Mach Bike":10,
                   "Flame Runner":10,
@@ -57,9 +58,10 @@ class Player(object):
         self.character = None
         self.vehicle = None
         self.input_character_vehicle(character_vehicle)
-        self.name = str(playerName)
-        if self.name == "no name" or self.name == "":
-            self.name = "Player"
+        self.mii_name = str(playerName)
+        if self.mii_name == "no name" or self.mii_name == "":
+            self.mii_name = "Player"
+        self.display_name = self.mii_name
         self.discord_name = discord_name
         self.lounge_name = lounge_name
         self.mii_hex = mii_hex
@@ -95,18 +97,61 @@ class Player(object):
         return self.pid
     def get_mkwx_url(self):
         return self.playerPageLink
-    def get_name(self):
-        return self.name
     def get_FC(self):
         return self.FC
     
-    def set_name(self, new_name):
-        self.name = new_name
-        
-        
-        
-        
+    @property
+    def name(self):
+        return self.get_name()
+
+    def get_name(self):
+        return self.get_full_display_name()
+
+    def get_display_name(self, for_table=False):
+        if for_table:
+            if self.subbed_out() and not self.display_name.strip().startswith('#'):
+                return '#' + self.display_name
+        return self.display_name
     
+    def set_name(self, new_name, change_type):
+        self.change_type = change_type
+        if not new_name:
+            return
+        self.display_name = new_name
+    
+    def name_is_changed(self):
+        return self.display_name != self.mii_name or self.subbed_out()
+    
+    def subbed_out(self):
+        try: 
+            return 'sub' in self.change_type
+        except AttributeError:
+            return False
+
+    def get_sub_out_name(self):
+        name = self.display_name
+        use_lounge = self.change_type == 'sub' # name not changed
+        if use_lounge:
+            name = UserDataProcessing.lounge_name_or_mii_name(self.FC, name)
+        if name.startswith('#'): # if the sub out's name starts with a hashtag, the entire line would be excluded from table, so add an invisible character so line still displays
+            name = '\u200b' + name
+        
+        return name
+    
+    def get_full_display_name(self):
+        change_info = ""
+        try:
+            if self.change_type == 'change_sub':
+                change_info = " (Name Changed & Subbed Out)"
+            elif self.change_type == 'sub':
+                change_info = " (Subbed Out)"
+            else:
+                change_info = " (Name Changed)"
+        except AttributeError: # name hasn't been changed
+            pass
+
+        return self.display_name + change_info
+
     def input_character_vehicle(self, character_vehicle):
         if character_vehicle is None:
             self.character = None
@@ -147,10 +192,15 @@ class Player(object):
             
         return int(round(100*(get_scaled_rating(vehicle_rating * VEHICLE_WEIGHT + vr_scale_rating * VR_WEIGHT))))
         
-            
-            
+    # def __eq__(self, o: object) -> bool:
+    #     if not isinstance(o, Player):
+    #         return False
+    #     return o.FC == self.FC
     
+    # def __hash__(self) -> int:
+    #     return hash(self.FC)
+
     def __str__(self):
-        return "Name: " + str(self.name) + " - FC: " + self.FC + " - Role: " + self.role
+        return "Name: " + str(self.display_name) + " - FC: " + self.FC + " - Role: " + self.role
         
         

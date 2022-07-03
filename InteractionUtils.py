@@ -122,7 +122,7 @@ def build_user_payload(original: Union[discord.Member, discord.User], member=Fal
 
     return user_payload
 
-def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None):
+def create_proxy_msg(interaction: discord.Interaction, args=None, ctx=None) -> discord.Message:
     msg_data = {
         'id': interaction.id,
         'channel_id': interaction.channel_id,

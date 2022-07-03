@@ -141,13 +141,12 @@ class ChannelBot(object):
         if self.getWar().ignoreLargeTimes:
             started_war_str += " (ignoring errors for large finish times)"
         started_war_str += f". {self.getRoom().getRXXText()}"
-        started_war_str += F"\n\n{self.getRoom().get_table_id_text()}"
+        started_war_str += F"\n{self.getRoom().get_table_id_text()}"
         return started_war_str
         
     def set_race_size(self, new_race_size:int):
         self.race_size = new_race_size
 
-    
     def set_style_and_graph(self, server_id):
         self.graph = ServerFunctions.get_server_graph(server_id)
         self.style = ServerFunctions.get_server_table_theme(server_id)
@@ -259,7 +258,7 @@ class ChannelBot(object):
         if not status:
             return status
         self.reset()
-        room = Room.Room(rxx, room_races, message_id, setup_discord_id, setup_display_name)
+        room = Room.Room(self, rxx, room_races, message_id, setup_discord_id, setup_display_name)
         self.setWar(war)
         self.setRoom(room)
         asyncio.create_task(self.room.populate_miis()) # We can create this task before adjustments are applied since calling this load_room_smart function loads a new room (with no real tabler adjustments)
@@ -313,13 +312,13 @@ class ChannelBot(object):
     def getWPCooldownSeconds(self) -> int:
         if self.should_send_mii_notification:
             self.should_send_mii_notification = False
-        # if common.is_dev:
-        #     return -1
+        if common.is_dev:
+            return 0
         if self.lastWPTime is None:
-            return -1
+            return 0
         curTime = datetime.now()
         time_passed = curTime - self.lastWPTime
-        return common.wp_cooldown_seconds - int(time_passed.total_seconds())
+        return max(0, common.wp_cooldown_seconds - int(time_passed.total_seconds()))
     
     
     def updateRLCoolDown(self):
@@ -327,12 +326,12 @@ class ChannelBot(object):
 
     def getRLCooldownSeconds(self) -> int:
         if common.is_dev:
-            return -1
+            return 0
         if self.roomLoadTime is None:
-            return -1
+            return 0
         curTime = datetime.now()
         time_passed = curTime - self.roomLoadTime
-        return common.mkwx_page_cooldown_seconds - int(time_passed.total_seconds())
+        return max(0, common.mkwx_page_cooldown_seconds - int(time_passed.total_seconds()))
         
         
     def isFinishedLounge(self) -> bool:

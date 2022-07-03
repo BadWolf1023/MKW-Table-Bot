@@ -157,7 +157,6 @@ def isint(value):
 def is_int(value):
     return isint(value)
 
-
 def place_to_str(place):
     append = "th"
     if not 10<place%100<20:

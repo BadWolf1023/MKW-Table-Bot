@@ -7,6 +7,8 @@ import asyncio
 import TimerDebuggers
 import common
 import Stats
+import time
+from typing import Dict
 
 class ManualTeamsModal(discord.ui.Modal):
     def __init__(self, bot, prefix, is_lounge, view):
@@ -174,7 +176,8 @@ class PictureButton(discord.ui.Button['PictureView']):
         super().__init__(style=discord.ButtonStyle.gray if (cooldown > 0) else discord.ButtonStyle.primary, label='Update', row=0)
         self.bot = bot
         self.responded = False
-        asyncio.create_task(self.activate())
+        if cooldown > 0:
+            asyncio.create_task(self.activate())
 
     async def activate(self):
         await asyncio.sleep(self.bot.getWPCooldownSeconds())
@@ -234,7 +237,7 @@ class SubmitButton(discord.ui.Button['PictureView']):
                 else:
                     await commands.LoungeCommands.rt_mogi_update(common.client, message, self.channel_bot, args, common.client.lounge_submissions)
                 
-                await self.view.on_timeout() #remove picture button as well, since table has been submitted
+                # await self.view.on_timeout() #remove picture button as well, since table has been submitted
             except Exception as e:
                 await InteractionUtils.handle_component_exception(e, message, self.view.prefix, self.view.bot)
 
@@ -282,6 +285,8 @@ class PictureView(discord.ui.View):
         return True
     
     async def on_timeout(self) -> None:
+        if self.is_finished():
+            return
         self.clear_items()
         self.stop()
         if self.message:
@@ -299,6 +304,93 @@ class PictureView(discord.ui.View):
 
 
 ###########################################################################################
+
+class UpdateVRButton(discord.ui.Button['VRView']):
+    def __init__(self, bot: TableBot.ChannelBot):
+        self.bot = bot
+        super().__init__(style=discord.ButtonStyle.gray if self.bot.getRLCooldownSeconds() > 0 else discord.ButtonStyle.primary, label="Refresh")
+        self.responded = False
+
+        asyncio.create_task(self.update())
+
+    async def update(self):
+        await asyncio.sleep(self.bot.getRLCooldownSeconds())
+        self.style = discord.ButtonStyle.primary
+        try:
+            await common.safe_edit(self.view.message, view=self.view)
+        except:
+            pass
+    
+    async def callback(self, interaction: discord.Interaction):
+        if self.responded:
+            return
+
+        self.responded = True
+        await interaction.response.edit_message(content='Refreshing room...')
+        # await interaction.response.defer()
+        msg = InteractionUtils.create_proxy_msg(interaction, [self.view.trigger_command])
+        # Stats.log_command('vr')
+
+        data = await commands.OtherCommands.vr_command(msg, self.bot, msg.content.split(), self_refresh=True)
+            
+        await self.view.refresh_vr(interaction, data)
+
+class VRView(discord.ui.View):
+    def __init__(self, trigger_command, bot: TableBot.ChannelBot):
+        super().__init__(timeout=300)
+        self.bot = bot
+        self.trigger_command = trigger_command
+        self.message: discord.Message = None
+        self.last_vr_content = None
+
+        self.add_item(UpdateVRButton(self.bot))
+    
+    async def refresh_vr(self, interaction: discord.Interaction, data: Dict[str, str]):
+        super().__init__(timeout=300)
+        self.add_item(UpdateVRButton(self.bot))
+
+        content = data['content']
+
+        if 'error' in data:
+            content += '\n' + self.last_vr_content
+        else:
+            self.last_vr_content = content
+        
+        # await interaction.followup.edit_message(self.message.id, content=content, view=self)
+        await common.safe_edit(self.message, content=content, view=self)
+    
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        can_interact = interaction.channel.permissions_for(interaction.user).send_messages
+        if not can_interact:
+            await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
+            return False
+
+        cooldown_active = self.bot.getRLCooldownSeconds() > 0
+        if cooldown_active:
+            await interaction.response.send_message(f"The VR command is on cooldown. Please wait {self.bot.getRLCooldownSeconds()} more seconds.", 
+                                                        ephemeral=True, delete_after=3.0)
+            return False
+
+        return True
+    
+    async def on_timeout(self) -> None:
+        self.clear_items()
+        self.stop()
+        if self.message:
+            await common.safe_edit(self.message, view=None)
+    
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
+
+    async def send(self, messageable, content=None, file=None, embed=None):
+        if hasattr(messageable, 'channel'):
+            messageable = messageable.channel
+
+        self.last_vr_content = content
+        self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
+        return self.message
+
+#######################################################################################################
 
 
 class RejectButton(discord.ui.Button['SuggestionView']):

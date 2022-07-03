@@ -131,7 +131,21 @@ class Table_Slash(ext_commands.Cog):
         scores: Option(str, "New scores for players, in the order listed by running /ap")
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-        args = [command, str(gp)] + scores.split(" ")
+        args = [command, str(gp)] + scores.split()
+
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
+    
+    @slash_command(name='editrace',
+    description="Manually set placements for a race",
+    guild_ids=common.SLASH_GUILDS)
+    async def _edit_race_placements(
+        self,
+        ctx: discord.ApplicationContext,
+        race: Option(int, "Race to edit"),
+        placements: Option(str, "Players in correct placements for race (Lounge name or player number)")
+    ):
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command, str(race)] + placements.split()
 
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
     
@@ -201,10 +215,12 @@ class Table_Slash(ext_commands.Cog):
     async def _merge_room(
         self,
         ctx: discord.ApplicationContext,
-        room_arg: Option(str, "Lounge name or rxx number", name="with")
+        room_arg: Option(str, "Lounge name/mention/FC/rxx", name="with", default=None)
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
-        args = [command, room_arg]
+        args = [command]
+        if room_arg:
+            args.append(room_arg)
 
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
@@ -268,9 +284,9 @@ class Table_Slash(ext_commands.Cog):
     async def _substitute(
         self,
         ctx: discord.ApplicationContext,
-        race: Option(int, "Race when sub occurred"),
         sub_in: Option(str, "Player subbing in (number or Lounge name)"),
-        sub_out: Option(str, "Player subbing out (number or Lounge name)")
+        sub_out: Option(str, "Player subbing out (number or Lounge name)"),
+        race: Option(int, "Race when sub occurred"),
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command, sub_in, sub_out, str(race)]
@@ -319,7 +335,7 @@ class Table_Slash(ext_commands.Cog):
     @slash_command(name="redos",
     description="Show which commands you can redo and in which order",
     guild_ids=common.SLASH_GUILDS)
-    async def _show_undos(
+    async def _show_redos(
         self,
         ctx: discord.ApplicationContext
     ):
@@ -414,11 +430,14 @@ class Table_Slash(ext_commands.Cog):
     async def _race_results(
         self,
         ctx: discord.ApplicationContext,
-        race: Option(int, "Race to display results of", required=False, default=None)
+        race: Option(int, "Race to display results of", required=False, default=None),
+        show_team_points: Option(bool, "Whether to display team points for this race as well", default=None)
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
         args = [command]
         if race: args.append(str(race))
+        if show_team_points: 
+            args.append("teampoints=true")
         
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 

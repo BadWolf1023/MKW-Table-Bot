@@ -62,7 +62,19 @@ MAX_PREFIX_LENGTH = 3
 
 INVITE_LINK = "https://discord.com/api/oauth2/authorize?client_id=735782213118853180&permissions=274878031936&scope=bot%20applications.commands"
 
-SCORE_MATRIX = [
+#current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
+
+#Main loop constants
+is_dev = properties['mode'] == 'dev'
+is_beta = properties['mode'] == 'beta'
+is_prod = properties['mode'] == 'prod'
+
+DISABLE_MKWX_COMMANDS = False
+LIMIT_MKWX_COMMANDS = False
+STUB_MKWX = False
+STUB_MKWX_FILE_NAME = "testing_rooms/mkwx.html"
+
+scoreMatrix = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [15, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [15, 8, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -75,19 +87,23 @@ SCORE_MATRIX = [
     [15, 12, 10, 8, 6, 4, 3, 2, 1, 0, 0, 0],
     [15, 12, 10, 8, 6, 5, 4, 3, 2, 1, 0, 0],
     [15, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-    ]
+]
 
-#current_notification = "Help documentation has been changed so you find what you're looking for quickly. Check it out by running `{SERVER_PREFIX}help`. Server administrators now have more table bot defaults they can set for their server."
-
-#Main loop constants
-is_dev = properties['mode'] == 'dev'
-is_beta = properties['mode'] == 'beta'
-is_prod = properties['mode'] == 'prod'
-
-DISABLE_MKWX_COMMANDS = False
-LIMIT_MKWX_COMMANDS = False
-STUB_MKWX = False
-STUB_MKWX_FILE_NAME = "testing_rooms/mkwx.html"
+alternate_Matrices = {
+    771417753843925023:[
+    [15, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [15, 9 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [15, 10 ,5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [15, 11 ,7, 3, 0, 0, 0, 0, 0, 0, 0, 0],
+    [15, 11 ,8, 5, 3, 0, 0, 0, 0, 0, 0, 0],
+    [15, 11 ,9, 6, 4, 3, 0, 0, 0, 0, 0, 0],
+    [15, 12 ,10, 7, 5, 4, 3, 0, 0, 0, 0, 0],
+    [15, 13 ,10, 8, 6, 4, 3, 2, 0, 0, 0, 0],
+    [15, 13 ,10, 8, 7, 6, 4, 3, 2, 0, 0, 0],
+    [15, 13 ,11, 9, 8, 6, 5, 4, 3, 2, 0, 0],
+    [15, 13 ,12, 10, 8, 7, 6, 5, 3, 2, 1, 0],
+    [15, 13 ,12, 10, 8, 7, 6, 5, 3, 2, 1, 0]
+]}
 
 LIMITED_DONT_INCLUDE_IN_COUNT = {776031312048947230, 826962131592544306, 888089086307475456}#503 server,  testing channel, 503-dup
 BAD_WOLFS_CHANNELS = {747290383297282156, 747290363433320539, 739734266199408651}#BW's server TB1, BW's server TB2,BW's server TB3
@@ -278,7 +294,7 @@ ANDREW_ID = 267395889423712258
 
 TABLEBOT_SERVER_INVITE_CODE = "K937DqM"
 
-OWNERS = {BAD_WOLF_ID,CW_ID,ANDREW_ID} if is_dev else {BAD_WOLF_ID,ANDREW_ID}
+OWNERS = {BAD_WOLF_ID,CW_ID,ANDREW_ID}
 
 MKW_LOUNGE_SERVER_ID = 387347467332485122
 TABLE_BOT_DISCORD_SERVER_ID = 739733336871665696
@@ -557,9 +573,9 @@ async def safe_send(message:discord.Message, content=None, embed=None, delete_af
 
 async def safe_edit(message:discord.Message, **kwargs):
     try:
-        await message.edit(**kwargs)
+        return await message.edit(**kwargs)
     except Exception:
-        pass
+        return None
 
 #Function only for testing purposes. Do not use this in the main program code.
 def run_async_function_no_loop(function_to_call):

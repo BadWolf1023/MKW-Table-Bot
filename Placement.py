@@ -22,7 +22,7 @@ def is_valid_time_str(time_str):
     
 
 class Placement:
-    def __init__(self, player, time, delta=None, is_wiimmfi_place=False):
+    def __init__(self, player: Player.Player, time, delta=None, is_wiimmfi_place=False):
         self.player = player
         self.place = -1
         self.time = self._createTime_(time)
@@ -85,21 +85,8 @@ class Placement:
         reconstructed_time = (int(str(self.time[0])[1:]), self.time[1], self.time[2])
         return reconstructed_time
     
-    def __lt__(self, other):
-        return self.time < other.time
-    def __gt__(self, other):
-        return self.time > other.time
-    def __cmp__(self, other):
-        if self.time < other.time:
-            return -1
-        if self.time > other.time:
-            return 1
-        return 0
-    def __eq__(self, other):
-        return self.time == other.time
-    
     def get_fc_and_name(self):
-        return self.player.FC, self.player.name
+        return self.player.FC, self.player.get_full_display_name()
     
     def get_time(self):
         return self.time
@@ -154,10 +141,17 @@ class Placement:
         milliseconds = self.time[2]
 
         return minutes*60+seconds+milliseconds/1000
+
+    def __lt__(self, other):
+        return isinstance(other, Placement) and self.time < other.time
+    def __gt__(self, other):
+        return isinstance(other, Placement) and self.time > other.time
+    def __eq__(self, other):
+        return isinstance(other, Placement) and self.time == other.time
     
     def __str__(self):
         
-        to_return = f"{self.place}. {UserDataProcessing.proccessed_lounge_add(self.player.name, self.player.FC)} - "
+        to_return = f"{self.place}. {UserDataProcessing.proccessed_lounge_add(self.player.get_full_display_name(), self.player.FC)} - "
         if self.is_disconnected():
             to_return += "DISCONNECTED"
         else:

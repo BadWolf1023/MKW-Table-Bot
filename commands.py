@@ -834,7 +834,8 @@ class OtherCommands:
 
         flag = smart_type.get_country_flag()
         if flag is None:
-            await message.channel.send(f"{SmartTypes.capitalize(descriptive)} does not have a flag set. To set {SmartTypes.possessive(pronoun)} flag for tables, {descriptive} should use `{server_prefix}setflag flagcode`. Flagcodes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
+            adverb = "do not" if descriptive == 'you' else 'does not'
+            await message.channel.send(f"{SmartTypes.capitalize(descriptive)} {adverb} have a flag set. To set {SmartTypes.possessive(pronoun)} flag for tables, {descriptive} should use `{server_prefix}setflag flagcode`. Flagcodes can be found at: {common.LORENZI_FLAG_PAGE_URL_NO_PREVIEW}")
             return
 
         image_name = f"{flag}.png"
@@ -1002,7 +1003,7 @@ class OtherCommands:
 
 
     @staticmethod
-    async def vr_command(message: discord.Message, this_bot: TableBot.ChannelBot, args: List[str]):
+    async def vr_command(message: discord.Message, this_bot: TableBot.ChannelBot, args: List[str], self_refresh=False):
         await mkwx_check(message, "VR command disabled.")
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
@@ -1010,7 +1011,8 @@ class OtherCommands:
             return
 
         this_bot.updateRLCoolDown()
-        message2 = await message.channel.send("Verifying room...")
+        if not self_refresh:
+            message2 = await message.channel.send("Verifying room...")
         status = False
         front_race = None
         to_load = SmartTypes.create_you_discord_id(message.author.id)
@@ -1020,7 +1022,10 @@ class OtherCommands:
         status, front_race = await this_bot.verify_room_smart(smart_type)
         if not status:
             failure_message = TablingCommands.get_room_load_failure_message(message, smart_type, status)
-            await message2.edit(failure_message)
+            if self_refresh:
+                return {'content': failure_message, 'error': 'load_failure'}
+            else:
+                await message2.edit(failure_message)
             return
 
         last_match_str = front_race.last_start_str
@@ -1031,7 +1036,6 @@ class OtherCommands:
         header = ["#.", "Lounge Name", "Mii Name", "FC"]
         rows = []
         for placement in front_race.getPlacements():
-            placement:Placement
             FC, mii_name = placement.get_fc_and_name()
             lounge_name = UserDataProcessing.lounge_get(FC)
             if lounge_name == "":
@@ -1046,8 +1050,14 @@ class OtherCommands:
             #go get races from room
             _, _, races = await WiimmfiSiteFunctions.get_races_for_rxx(front_race.get_rxx())
             str_msg += f"\n\nRaces (Last 12): {Room.Room.get_race_names_abbreviated(races, 12)}"
-        await message2.edit(f"{str_msg}```")
 
+        if self_refresh:
+            return {'content': f"{str_msg}```"}
+        else:
+            await message2.delete()
+            vr_view = Components.VRView(message.content, this_bot)
+            this_bot.add_component(vr_view)
+            await vr_view.send(message, content=f"{str_msg}```")
 
 
 class LoungeCommands:
@@ -1278,6 +1288,7 @@ class LoungeCommands:
                     os.remove(table_image_path)
         lounge_server_updates.update_user_cooldown(message.author)
         await common.safe_delete(delete_me)
+        await TableBot.last_wp_button[this_bot.channel_id].on_timeout()
 
     @staticmethod
     async def ct_mogi_update(client, message: discord.Message, this_bot: TableBot.ChannelBot, args: List[str], lounge_server_updates: Lounge.Lounge):
@@ -1611,7 +1622,7 @@ class TablingCommands:
         is_primary = rt_ct == 'rt'
 
         updater_channel_id, updater_link, preview_link, type_text = lounge_server_updates.get_information(is_primary)
-        error_code, newTableText, json_data = await MogiUpdate.textInputUpdate(table_text, str(tier), 12, is_rt=is_primary)
+        error_code, newTableText, json_data = await MogiUpdate.textInputUpdate(table_text, str(tier), this_bot.war.numberOfGPs*4, is_rt=is_primary)
 
         if error_code != MogiUpdate.SUCCESS_EC:
             await message.channel.send(
@@ -1844,7 +1855,7 @@ class TablingCommands:
         sub_in_start_race = race_num
         sub_in_end_race = this_bot.getWar().getNumberOfRaces()
         this_bot.add_save_state(message.content)
-        this_bot.getRoom().add_sub(sub_in_fc, sub_in_start_race, sub_in_end_race, sub_out_fc, sub_out_name, sub_out_start_race, sub_out_end_race, sub_out_scores)
+        this_bot.getRoom().add_sub(sub_in_fc, sub_in_start_race, sub_in_end_race, sub_out_fc, sub_out_start_race, sub_out_end_race, sub_out_scores)
         this_bot.getWar().setTeamForFC(sub_in_fc, sub_out_tag)
         sub_in_player_name = UserDataProcessing.proccessed_lounge_add(sub_in_mii_name, sub_in_fc)
         sub_out_player_name = UserDataProcessing.proccessed_lounge_add(sub_out_mii_name, sub_out_fc)
@@ -1870,13 +1881,16 @@ class TablingCommands:
         if player_num is None:
             await message.channel.send(error_message)
             return
-            
+        
+        append = amount_arg[0] in "+-"
+
         if not UtilityFunctions.is_int(gp_arg) or not UtilityFunctions.is_int(amount_arg):
             await message.channel.send(f"GP Number and amount must all be numbers. {example_help(server_prefix, command_name)}")
             return
         else:
             gp_num = int(gp_arg)
             amount = int(amount_arg)
+
 
         table_gps = this_bot.getWar().numberOfGPs
         if gp_num < 1 or gp_num > table_gps:
@@ -1886,6 +1900,14 @@ class TablingCommands:
         players = this_bot.getRoom().get_sorted_player_list()
         player_fc, mii_name = players[player_num-1]
         player_name = UserDataProcessing.proccessed_lounge_add(mii_name, player_fc)
+
+        if append:
+            if amount==0:
+                return await message.channel.send(f"{player_name} GP{gp_num} score not changed.")
+            player_gp_score = sum(SK.calculateGPScoresDCS(gp_num, this_bot.room, this_bot.war.missingRacePts, this_bot.server_id)[player_fc])
+            amount += player_gp_score
+            if amount<0:
+                return await message.channel.send("That's an invalid edit. Players cannot have negative GP scores. Use `/pen` to penalize players.")
 
         this_bot.add_save_state(message.content)
         this_bot.getWar().addEdit(player_fc, gp_num, amount)
@@ -2085,7 +2107,9 @@ class TablingCommands:
                 # await message2.edit(this_bot.get_room_started_message(), view=Components.PictureView(this_bot, server_prefix, is_lounge_server))
                 # TableBot.last_wp_message[this_bot.channel_id] = message2
                 await message2.edit(content=this_bot.get_room_started_message())
-                await TablingCommands.war_picture_command(message2, this_bot, ['wp'], server_prefix, is_lounge_server)
+                if this_bot.getWPCooldownSeconds() == 0:
+                    await TablingCommands.war_picture_command(message2, this_bot, ['wp'], server_prefix, is_lounge_server)
+
             this_bot.setShouldSendNotification(True)
 
             
@@ -2118,7 +2142,8 @@ class TablingCommands:
         # TableBot.last_wp_message[this_bot.channel_id] = view.message
         await message.channel.send(this_bot.get_room_started_message())
         message.content = '/wp (auto)'
-        await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
+        if this_bot.getWPCooldownSeconds() == 0:
+            await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
 
     @staticmethod
     @TimerDebuggers.timer_coroutine
@@ -2333,18 +2358,30 @@ class TablingCommands:
     @staticmethod
     async def race_results_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
+        
+        command = " ".join(args)
+        race_num = 0
+        show_team_points = False
+        show_team_points_regex = r"(teampoints|points|showpoints|pts|showpts|teampts|showteampts)(=(yes|true|y))?"
+        if re.search(show_team_points_regex, command, re.IGNORECASE):
+            show_team_points = True
+            command = re.sub(show_team_points_regex, "", command, flags=re.IGNORECASE)
+        
+        args = command.split()
 
-        if len(args) == 1:
-            await message.channel.send(str(this_bot.getRoom().races[-1]))
-        else:
-            if args[1].isnumeric():
-                raceNum = int(args[1])
-                if raceNum < 1 or raceNum > len(this_bot.getRoom().races):
-                    await message.channel.send("You haven't played that many races yet!")
-                else:
-                    await message.channel.send(str(this_bot.getRoom().races[raceNum-1]))
-            else:
-                await message.channel.send("That's not a race number!")
+        if len(args) > 1:
+            if not UtilityFunctions.is_int(args[1]):
+                return await message.channel.send("That's not a valid race number.")
+            race_num = int(args[1])
+            if race_num < 1 or race_num > len(this_bot.getRoom().races):
+                return await message.channel.send("You haven't played that many races yet!")
+            
+        race = this_bot.getRoom().races[race_num-1]
+        rr_str = str(race)
+        if show_team_points and not this_bot.getWar().is_ffa():
+            rr_str += race.get_team_points_string(this_bot.getWar().teams, server_id=this_bot.server_id)
+        
+        await message.channel.send(rr_str)
 
     @staticmethod
     @TimerDebuggers.timer_coroutine
@@ -2463,7 +2500,8 @@ class TablingCommands:
                             lorenzi_edit_link = await URLShortener.tinyurl_shorten_url_special(lorenzi_edit_link)
                             break
                         except URLShortener.URLShortenFailure:
-                            await asyncio.sleep(.75)
+                            await asyncio.sleep(.5)
+
                 full_lorenzi_edit_link = full_lorenzi_edit_link.format(lorenzi_edit_link)
                 embed = discord.Embed(
                     title = "",
@@ -2640,6 +2678,68 @@ class TablingCommands:
             this_bot.add_save_state(message.content)
             this_bot.set_race_size(new_size)
             await message.channel.send(f"Each section of the table will now be {new_size} races.")
+
+    @staticmethod
+    async def race_edit_command(message: discord.Message, this_bot: ChannelBot, args: List[str], is_lounge_server: bool):
+        ensure_table_loaded_check(this_bot, '/', is_lounge_server)
+
+        command = args.pop(0)
+
+        syntax = f"\n**Command syntax:** `/{command} [raceNumber] [1st name/number] [2nd name/number]...[last name/number]` (Lounge names with spaces must be entered as one word)"
+
+        if len(args) == 0:
+            return await message.channel.send(this_bot.room.get_sorted_player_list_string() + syntax)
+        
+        try:
+            race_num = int(args[0])
+            assert(0<race_num<=len(this_bot.room.races))
+        except ValueError:
+            return await message.channel.send("`raceNumber` must be a number"+syntax)
+        except AssertionError:
+            return await message.channel.send(f"Invalid `raceNumber`: `raceNumber` must be between 1 and {len(this_bot.room.races)}"+syntax)
+        
+        race = this_bot.room.races[race_num-1]
+        placements = args[1:]
+        
+        diff = len(placements) - race.numRacers()
+        if diff > 0:
+            return await message.channel.send(f"You included {diff} too many placements.")
+        elif diff < 0:
+            return await message.channel.send(f"You are missing {abs(diff)} placements.")
+        
+        player_nums = list()
+        errors = list()
+        for player in placements:
+            player_num, error_message = get_player_number_in_room(message, player, this_bot.getRoom(), '/', command)
+            if player_num is None:
+                errors.append(f'**Error:** Player `{player}` - '+error_message)
+                continue
+            player_nums.append(player_num)
+        
+        if len(errors):
+            return await message.channel.send("\n".join(errors))
+        
+        players_in_race = {p.FC: p.get_full_display_name() for p in race.get_players_in_race()}
+
+        sorted_list = this_bot.room.get_sorted_player_list()
+        players = {sorted_list[num-1][0]: sorted_list[num-1][1] for num in player_nums}
+        
+        players_in_race_comp = set(players_in_race.keys())
+        players_comp = set(players.keys())
+        if missing:=players_in_race_comp.difference(players_comp): #they put incorrect players
+            missing = [UserDataProcessing.lounge_name_or_mii_name(FC, players_in_race[FC]) for FC in missing]
+            incorrect = players_comp.difference(players_in_race_comp)
+            incorrect = [UserDataProcessing.lounge_name_or_mii_name(FC, players[FC]) for FC in incorrect]
+            incorrect_str = (f"These players aren't in race {race_num}: "+', '.join(incorrect)) if incorrect else ''
+            missing_str = (f"\nYou are missing these players in your command: "+', '.join(missing)) if missing else ''
+            return await message.channel.send(incorrect_str+missing_str)
+
+        # finally, input has been validated
+        this_bot.add_save_state(message.content)
+
+        this_bot.room.change_race_placements(race_num, list(players.keys()))
+        await message.channel.send(f"Race {race_num} placements successfully edited.")
+
 
     @staticmethod
     async def quick_edit_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False):
