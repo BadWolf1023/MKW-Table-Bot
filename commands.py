@@ -1003,7 +1003,7 @@ class OtherCommands:
 
 
     @staticmethod
-    async def vr_command(message: discord.Message, this_bot: TableBot.ChannelBot, args: List[str]):
+    async def vr_command(message: discord.Message, this_bot: TableBot.ChannelBot, args: List[str], self_refresh=False):
         await mkwx_check(message, "VR command disabled.")
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:
@@ -1011,7 +1011,8 @@ class OtherCommands:
             return
 
         this_bot.updateRLCoolDown()
-        message2 = await message.channel.send("Verifying room...")
+        if not self_refresh:
+            message2 = await message.channel.send("Verifying room...")
         status = False
         front_race = None
         to_load = SmartTypes.create_you_discord_id(message.author.id)
@@ -1021,7 +1022,10 @@ class OtherCommands:
         status, front_race = await this_bot.verify_room_smart(smart_type)
         if not status:
             failure_message = TablingCommands.get_room_load_failure_message(message, smart_type, status)
-            await message2.edit(failure_message)
+            if self_refresh:
+                return {'content': failure_message, 'error': 'load_failure'}
+            else:
+                await message2.edit(failure_message)
             return
 
         last_match_str = front_race.last_start_str
@@ -1032,7 +1036,6 @@ class OtherCommands:
         header = ["#.", "Lounge Name", "Mii Name", "FC"]
         rows = []
         for placement in front_race.getPlacements():
-            placement:Placement
             FC, mii_name = placement.get_fc_and_name()
             lounge_name = UserDataProcessing.lounge_get(FC)
             if lounge_name == "":
@@ -1047,7 +1050,14 @@ class OtherCommands:
             #go get races from room
             _, _, races = await WiimmfiSiteFunctions.get_races_for_rxx(front_race.get_rxx())
             str_msg += f"\n\nRaces (Last 12): {Room.Room.get_race_names_abbreviated(races, 12)}"
-        await message2.edit(f"{str_msg}```")
+
+        if self_refresh:
+            return {'content': f"{str_msg}```"}
+        else:
+            await message2.delete()
+            vr_view = Components.VRView(message.content, this_bot)
+            this_bot.add_component(vr_view)
+            await vr_view.send(message, content=f"{str_msg}```")
 
 
 class LoungeCommands:
