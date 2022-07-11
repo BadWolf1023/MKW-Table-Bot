@@ -30,6 +30,7 @@ import Components
 from data_tracking import DataTracker
 import SmartTypes
 import TimerDebuggers
+import api.api_common as api_common
 
 #Other library imports, other people codes
 import math
@@ -1288,7 +1289,7 @@ class LoungeCommands:
                     os.remove(table_image_path)
         lounge_server_updates.update_user_cooldown(message.author)
         await common.safe_delete(delete_me)
-        await TableBot.last_wp_button[this_bot.channel_id].on_timeout()
+        await this_bot.clear_last_wp_button()
 
     @staticmethod
     async def ct_mogi_update(client, message: discord.Message, this_bot: TableBot.ChannelBot, args: List[str], lounge_server_updates: Lounge.Lounge):
@@ -1608,6 +1609,27 @@ class TablingCommands:
     async def table_id_command(message:discord.Message, this_bot:ChannelBot, server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
         await message.channel.send(this_bot.getRoom().get_event_id())
+    
+    @staticmethod
+    async def get_api_command(message: discord.Message, this_bot: ChannelBot, server_prefix: str, is_lounge_server: bool):
+        ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
+
+        table_id = this_bot.room.get_event_id()
+
+        links = list()
+        endpoint_regex = r"([A-Z]+_)*ENDPOINT"
+        for name in dir(api_common):
+            if re.fullmatch(endpoint_regex, name):
+                link = api_common.API_URL + api_common.__getattribute__(name) + str(table_id)
+                name = name.replace("_", " ").lower()
+                name = name[0].upper() + name[1:]
+                links.append((name, link))
+        
+        ret_str = ""
+        for name, link in links:
+            ret_str+=f"{name}: {link}\n"
+
+        await message.channel.send(ret_str)
 
     @staticmethod
     async def predict_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix: str, lounge_server_updates: Lounge.Lounge):
@@ -2104,11 +2126,14 @@ class TablingCommands:
                 for teamNumber in range(0, min(this_bot.getWar().numberOfTeams, len(players))):
                     dummy_teams[players[teamNumber][0]] = str(teamNumber)
                 this_bot.getWar().setTeams(dummy_teams)
-                # await message2.edit(this_bot.get_room_started_message(), view=Components.PictureView(this_bot, server_prefix, is_lounge_server))
-                # TableBot.last_wp_message[this_bot.channel_id] = message2
                 await message2.edit(content=this_bot.get_room_started_message())
                 if this_bot.getWPCooldownSeconds() == 0:
                     await TablingCommands.war_picture_command(message2, this_bot, ['wp'], server_prefix, is_lounge_server)
+                else:
+                    pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+                    await message2.edit(this_bot.get_room_started_message(), view=pic_view)
+                    pic_view.message = message2
+                    TableBot.last_wp_button[this_bot.channel_id] = pic_view
 
             this_bot.setShouldSendNotification(True)
 
@@ -2137,13 +2162,14 @@ class TablingCommands:
             await message.channel.send(f'''**Warning:** *the number of players in the room doesn't match your table format and teams. **Table started, but teams might be incorrect.***''')
 
         this_bot.getWar().setTeams(this_bot.getWar().getConvertedTempTeams())
-        # view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
-        # await view.send(message, this_bot.get_room_started_message())
-        # TableBot.last_wp_message[this_bot.channel_id] = view.message
-        await message.channel.send(this_bot.get_room_started_message())
         message.content = '/wp (auto)'
         if this_bot.getWPCooldownSeconds() == 0:
+            await message.channel.send(this_bot.get_room_started_message())
             await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
+        else:
+            pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+            await pic_view.send(message, this_bot.get_room_started_message())
+            TableBot.last_wp_button[this_bot.channel_id] = pic_view
 
     @staticmethod
     @TimerDebuggers.timer_coroutine
@@ -2622,11 +2648,13 @@ class TablingCommands:
         else:
             this_bot.manualWarSetUp = False
             this_bot.getWar().setTeams(fc_tag)
-            # view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
-            # await view.send(message, this_bot.get_room_started_message())
-            # TableBot.last_wp_message[this_bot.channel_id] = view.message
-            await message.channel.send(this_bot.get_room_started_message())
-            await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
+            if this_bot.getWPCooldownSeconds() == 0:
+                await message.channel.send(this_bot.get_room_started_message())
+                await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
+            else:
+                pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
+                await pic_view.sedn(message, this_bot.get_room_started_message())
+                TableBot.last_wp_button[this_bot.channel_id] = pic_view
 
 
     @staticmethod
