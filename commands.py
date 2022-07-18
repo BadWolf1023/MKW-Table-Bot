@@ -1629,6 +1629,8 @@ class TablingCommands:
         for name, link in links:
             ret_str+=f"{name}: {link}\n"
 
+        ret_str+="\n**Note:** If you are a streamer, please do not provide these links to the chat. Instead, you can use *Nightbot* to create a command."
+        ret_str+=f"\n**eg.** `!commands add !table Table Link: $(eval let x=$(urlfetch json {api_common.API_URL}/api/json/picture/{table_id}); x.table_url;)`"
         await message.channel.send(ret_str)
 
     @staticmethod
