@@ -1926,8 +1926,24 @@ class TablingCommands:
         if append:
             if amount==0:
                 return await message.channel.send(f"{player_name} GP{gp_num} score not changed.")
-            player_gp_score = sum(SK.calculateGPScoresDCS(gp_num, this_bot.room, this_bot.war.missingRacePts, this_bot.server_id)[player_fc])
-            amount += player_gp_score
+
+            prev_edit = None
+            try:
+                for (gp, edit) in this_bot.war.manualEdits[player_fc]:
+                    if gp == gp_num:
+                        prev_edit = edit
+                        break
+            except KeyError:
+                pass
+
+            if prev_edit:
+                amount += prev_edit
+            else:
+                try:
+                    player_gp_score = sum(SK.calculateGPScoresDCS(gp_num, this_bot.room, this_bot.war.missingRacePts, this_bot.server_id)[player_fc])
+                    amount += player_gp_score
+                except KeyError:
+                    pass
             if amount<0:
                 return await message.channel.send("That's an invalid edit. Players cannot have negative GP scores. Use `/pen` to penalize players.")
 
