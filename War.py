@@ -11,6 +11,7 @@ import TableBotExceptions
 import UtilityFunctions
 import UserDataProcessing
 import base64
+import copy
 
 tableColorPairs = [("#244f96", "#cce7e8"),
                    ("#D11425","#E8EE28"),
@@ -155,33 +156,22 @@ class War(object):
             
     def addEdit(self, FC, gpNum, gpScore):
         if FC not in self.manualEdits:
-            self.manualEdits[FC] = []
-        
-        index = None
-        #Need to remove previous edit for this player's GP, if it exists
-        for i, (this_gpNum, _) in enumerate(self.manualEdits[FC]):
-            if this_gpNum == gpNum:
-                index = i
-                break
-        if index is not None:
-            del self.manualEdits[FC][index]
+            self.manualEdits[FC] = {}
             
-        self.manualEdits[FC].append((gpNum, gpScore))
+        self.manualEdits[FC][gpNum] = gpScore
     
     def getEditsForGP(self, gpNum):
         gp_edits = []
         for FC, edits in self.manualEdits.items():
-            for curGPNum, score in edits:
-                if curGPNum == gpNum:
-                    gp_edits.append((FC, score))
+            if gpNum in edits:
+                gp_edits.append((FC, edits[gpNum]))
         return gp_edits
     
     def getEditAmount(self, FC, gpNum):
-        if FC in self.manualEdits:
-            for edit in self.manualEdits[FC]:
-                if edit[0] == gpNum:
-                    return edit[1]
-        return None
+        if FC not in self.manualEdits or gpNum not in self.manualEdits[FC]:
+            return None
+        
+        return self.manualEdits[FC][gpNum]
                     
     def getTeamPenalities(self):
         return self.teamPenalties
@@ -320,7 +310,7 @@ class War(object):
     def get_recoverable_save_state(self):
         save_state = {}
         save_state['warName'] = self.warName
-        save_state['manualEdits'] = self.manualEdits.copy()
+        save_state['manualEdits'] = copy.deepcopy(self.manualEdits)
         save_state['teamPenalties'] = self.teamPenalties.copy()
         
         save_state['forcedRoomSize'] = self.forcedRoomSize.copy()

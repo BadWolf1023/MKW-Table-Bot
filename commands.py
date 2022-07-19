@@ -1889,6 +1889,7 @@ class TablingCommands:
     @staticmethod
     async def change_player_score_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
+
         command_name = args[0]
         if len(args) == 1:
             to_send = this_bot.getRoom().get_sorted_player_list_string()
@@ -1914,8 +1915,7 @@ class TablingCommands:
         else:
             gp_num = int(gp_arg)
             amount = int(amount_arg)
-
-
+            
         table_gps = this_bot.getWar().numberOfGPs
         if gp_num < 1 or gp_num > table_gps:
             await message.channel.send(f"The current table is only set to {table_gps} GPs. Your GP number was: {gp_num}")
@@ -1931,10 +1931,7 @@ class TablingCommands:
 
             prev_edit = None
             try:
-                for (gp, edit) in this_bot.war.manualEdits[player_fc]:
-                    if gp == gp_num:
-                        prev_edit = edit
-                        break
+                prev_edit = this_bot.war.manualEdits[player_fc][gp_num]
             except KeyError:
                 pass
 
