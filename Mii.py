@@ -48,6 +48,9 @@ class Mii(KaitaiStruct):
 
     def set_display_name(self, name):
         self.display_name = name
+    
+    def name_changed(self):
+        return self.display_name != self.mii_name
 
     def _read(self):
         self.invalid = self._io.read_bits_int_be(1) != 0
