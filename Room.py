@@ -580,7 +580,11 @@ class Room(object):
         return self.miis
 
     def get_available_miis_dict(self, FCs) -> Dict[str, Mii.Mii]:
-        return {fc: self.get_miis()[fc] for fc in FCs if fc in self.get_miis()}
+        miis = {fc: self.get_miis()[fc] for fc in FCs if fc in self.get_miis()}
+        for fc, mii in miis.items():
+            mii.set_display_name(self.get_player_by_fc(fc).display_name)
+
+        return miis
 
     def remove_miis_with_missing_files(self):
         to_delete = set()

@@ -96,6 +96,7 @@ ALL_PLAYERS_TERMS = {"allplayers", "ap"}
 FCS_TERMS = {"fcs"}
 TRANSFER_TABLE_TERMS = {"transferfrom", "copyfrom", "transfer", "copy", "copytable", "transfertable", "movetable", "move"}
 GET_SUBSTITUTIONS_TERMS = {"subs", "substitutes", "substitutions", "getsubs", "allsubs"}
+API_TERMS = {"api", "apilink", "obsoverlay", "overlay", "scoreboard"}
 
 #Button interactions (only people in room can use buttons in Lounge; however, this isn't applied to the commands)
 INTERACTIONS = {'restricted_interaction'}
@@ -750,6 +751,9 @@ class BadWolfBot(ext_commands.Bot):
                 
         elif main_command in VR_OFF_TERMS:
             await commands.BotAdminCommands.global_vr_command(message, on=False)
+        
+        elif main_command in API_TERMS:
+            await commands.TablingCommands.get_api_command(message, this_bot, server_prefix, is_lounge_server)
                 
         elif main_command in QUICK_START_TERMS:
             await help_documentation.send_quickstart(message)
