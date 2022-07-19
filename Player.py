@@ -132,8 +132,8 @@ class Player(object):
         name = self.display_name
         use_lounge = self.change_type == 'sub' # name not changed
         if use_lounge:
-            # name = UserDataProcessing.lounge_name_or_mii_name(self.FC, name)
-            name = self.lounge_name or name
+            name = UserDataProcessing.lounge_name_or_mii_name(self.FC, name)
+            # name = self.lounge_name or name
         if name.startswith('#'): # if the sub out's name starts with a hashtag, the entire line would be excluded from table, so add an invisible character so line still displays
             name = '\u200b' + name
         
