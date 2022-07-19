@@ -1629,7 +1629,7 @@ class TablingCommands:
         for name, link in links:
             ret_str+=f"{name}: {link}\n"
 
-        ret_str+="\n**Note:** If you are a streamer, please do not provide these links to the chat. Instead, you can use *Nightbot* to create a command."
+        ret_str+="\n**Note:** If you are a streamer, please do not paste these links in the chat directly. Instead, you can use *Nightbot* to create a command."
         ret_str+=f"\n**eg.** `!commands add !table Table Link: $(eval let x=$(urlfetch json {api_common.API_URL}/api/json/picture/{table_id}); x.table_url;)`"
         await message.channel.send(ret_str)
 
@@ -2672,7 +2672,7 @@ class TablingCommands:
                 await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
             else:
                 pic_view = Components.PictureView(this_bot, server_prefix, is_lounge_server)
-                await pic_view.sedn(message, this_bot.get_room_started_message())
+                await pic_view.send(message, this_bot.get_room_started_message())
                 TableBot.last_wp_button[this_bot.channel_id] = pic_view
 
 
