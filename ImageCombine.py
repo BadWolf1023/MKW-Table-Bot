@@ -6,7 +6,7 @@ Created on Aug 2, 2020
 import cv2
 import numpy as np
 from PIL import Image, ImageFont, ImageDraw
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from TableBot import ChannelBot
 import Mii
 import UtilityFunctions
@@ -180,7 +180,7 @@ def get_blank_autotable_footer(height=FOOTER_HEIGHT, color=common.DEFAULT_FOOTER
     return create_numpy_image_with_color(dimensions=(height, MINIMUM_TABLE_WIDTH), color=color)
 
 
-def generate_footer_section_for_team(miis:List[Mii.Mii], team_tag="No Tag", height=FOOTER_HEIGHT, background_color=common.DEFAULT_FOOTER_COLOR, forced_mii_dimension=common.MII_SIZE_FOR_TABLE, add_left_border=False):
+def generate_footer_section_for_team(miis: Dict[str, Mii.Mii], team_tag="No Tag", height=FOOTER_HEIGHT, background_color=common.DEFAULT_FOOTER_COLOR, forced_mii_dimension=common.MII_SIZE_FOR_TABLE, add_left_border=False):
     mii_dimension = forced_mii_dimension
     mii_padding_inside = MII_PADDING_INSIDE_SECTION
     mii_padding_outside_left = MII_PADDING_SECTION_LEFT

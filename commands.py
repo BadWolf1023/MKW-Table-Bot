@@ -2564,12 +2564,16 @@ class TablingCommands:
                 init_string, footer_string, error_types = this_bot.getWar().get_war_errors_string_2(this_bot.getRoom(), this_bot.get_all_resolved_errors(), lounge_replace, up_to_race=up_to)
                 full_string = init_string+footer_string
                 error_message = "(Too many errors - cannot show previous errors. Full list in file.)\n..."
+                init_error_message = "...\n"
                 error_file = False
-                footer_max = min(6000-len(embed_title+full_lorenzi_edit_link), 2048)
+                footer_max = min(6000-len(embed_title+full_lorenzi_edit_link), 2048) 
                 if len(full_string) >= footer_max:
                     error_file = True
-                    cutoff = len(full_string+error_message)-footer_max
-                    full_string = init_string + error_message + footer_string[cutoff:]
+                    cutoff = -(len(footer_string)+1) if (c:=(footer_max-len(init_string+error_message)))<=0 else c
+                    init_cutoff = footer_max-len(error_message) 
+                    edited_init_string = init_string[:init_cutoff-len(init_error_message)] + init_error_message if init_cutoff < len(init_string) else init_string
+
+                    full_string = edited_init_string + error_message + footer_string[-cutoff:]
 
                 embed.set_footer(text=full_string)
                 

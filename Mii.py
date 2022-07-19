@@ -41,9 +41,13 @@ class Mii(KaitaiStruct):
         self._parent = _parent
         self._root = _root if _root else self
         self._read()
+        self.display_name = self.mii_name
     
     def update_lounge_name(self):
         self.lounge_name = UserDataProcessing.lounge_get(self.FC)
+
+    def set_display_name(self, name):
+        self.display_name = name
 
     def _read(self):
         self.invalid = self._io.read_bits_int_be(1) != 0
