@@ -74,7 +74,7 @@ class Player(object):
             return self.mii_hex.mii_data_hex_str
         return self.mii_hex
     def get_lounge_name(self):
-        return self.lounge_name
+        return None if self.lounge_name == "" else self.lounge_name
     def get_discord_name(self):
         return self.discord_name
     def get_vehicle(self):
