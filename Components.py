@@ -574,7 +574,7 @@ class SuggestionView(discord.ui.View):
     
     def enable_confirm(self):
         for child in self.children:
-            child.disabled=False
+            child.disabled = False
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
         await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)

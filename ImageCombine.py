@@ -6,7 +6,7 @@ Created on Aug 2, 2020
 import cv2
 import numpy as np
 from PIL import Image, ImageFont, ImageDraw
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from TableBot import ChannelBot
 import Mii
 import UtilityFunctions
@@ -180,7 +180,7 @@ def get_blank_autotable_footer(height=FOOTER_HEIGHT, color=common.DEFAULT_FOOTER
     return create_numpy_image_with_color(dimensions=(height, MINIMUM_TABLE_WIDTH), color=color)
 
 
-def generate_footer_section_for_team(miis:List[Mii.Mii], team_tag="No Tag", height=FOOTER_HEIGHT, background_color=common.DEFAULT_FOOTER_COLOR, forced_mii_dimension=common.MII_SIZE_FOR_TABLE, add_left_border=False):
+def generate_footer_section_for_team(miis: Dict[str, Mii.Mii], team_tag="No Tag", height=FOOTER_HEIGHT, background_color=common.DEFAULT_FOOTER_COLOR, forced_mii_dimension=common.MII_SIZE_FOR_TABLE, add_left_border=False):
     mii_dimension = forced_mii_dimension
     mii_padding_inside = MII_PADDING_INSIDE_SECTION
     mii_padding_outside_left = MII_PADDING_SECTION_LEFT
@@ -211,7 +211,11 @@ def generate_footer_section_for_team(miis:List[Mii.Mii], team_tag="No Tag", heig
     canvas_for_text = ImageDraw.Draw(pil_image)
     #Put mii names on footer, above the mii pictures
     for index, mii in enumerate(miis.values()):
-        mii_name = mii.lounge_name if mii.lounge_name != "" else UtilityFunctions.clean_for_output(mii.mii_name)
+        if mii.name_changed() or mii.lounge_name == "":
+            mii_name = UtilityFunctions.clean_for_output(mii.display_name)
+        else:
+            mii_name = mii.lounge_name
+
         mii_name_start_location_x = mii_padding_outside_left + (index * (mii_dimension + mii_padding_inside))
         mii_name_end_location_x = mii_name_start_location_x + mii_dimension
         mii_name_start_location_y = MII_NAME_BASE_Y_LOCATION
