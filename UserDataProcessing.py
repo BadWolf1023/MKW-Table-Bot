@@ -49,7 +49,7 @@ def lounge_add(fc, lounge_replace=True):
             return " - (" + did_lounge[fc_did[fc][0]] + ")"
     return ""
 
-def lounge_get(fc, lounge_replace=True):
+def lounge_get(fc, lounge_replace=True) -> str:
     if lounge_replace:
         fc_did = fc_discordId
         did_lounge = discordId_lounges

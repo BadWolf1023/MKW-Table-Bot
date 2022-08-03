@@ -328,18 +328,19 @@ class UpdateVRButton(discord.ui.Button['VRView']):
         self.responded = True
         await interaction.response.edit_message(content='Refreshing room...')
         # await interaction.response.defer()
-        msg = InteractionUtils.create_proxy_msg(interaction, [self.view.trigger_command])
+        print(self.view.trigger_command_args)
+        msg = InteractionUtils.create_proxy_msg(interaction, self.view.trigger_command_args)
         # Stats.log_command('vr')
 
-        data = await commands.OtherCommands.vr_command(msg, self.bot, msg.content.split(), self_refresh=True)
+        data = await commands.OtherCommands.vr_command(msg, self.bot, self.view.trigger_command_args, self_refresh=True)
             
         await self.view.refresh_vr(interaction, data)
 
 class VRView(discord.ui.View):
-    def __init__(self, trigger_command, bot: TableBot.ChannelBot):
+    def __init__(self, trigger_command_args, bot: TableBot.ChannelBot):
         super().__init__(timeout=300)
         self.bot = bot
-        self.trigger_command = trigger_command
+        self.trigger_command_args = trigger_command_args
         self.message: discord.Message = None
         self.last_vr_content = None
 
