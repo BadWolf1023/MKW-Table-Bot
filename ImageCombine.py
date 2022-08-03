@@ -211,10 +211,10 @@ def generate_footer_section_for_team(miis: Dict[str, Mii.Mii], team_tag="No Tag"
     canvas_for_text = ImageDraw.Draw(pil_image)
     #Put mii names on footer, above the mii pictures
     for index, mii in enumerate(miis.values()):
-        if mii.name_changed():
+        if mii.name_changed() or mii.lounge_name == "":
             mii_name = UtilityFunctions.clean_for_output(mii.display_name)
         else:
-            mii_name = mii.lounge_name if mii.lounge_name != "" else UtilityFunctions.clean_for_output(mii.display_name)
+            mii_name = mii.lounge_name
 
         mii_name_start_location_x = mii_padding_outside_left + (index * (mii_dimension + mii_padding_inside))
         mii_name_end_location_x = mii_name_start_location_x + mii_dimension
