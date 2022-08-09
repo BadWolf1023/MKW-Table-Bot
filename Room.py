@@ -596,8 +596,7 @@ class Room(object):
         miis = {fc: self.get_miis()[fc] for fc in FCs if fc in self.get_miis()}
         for fc, mii in miis.items():
             try:
-                # mii.set_display_name(self.get_player_by_fc(fc).display_name)
-                mii.set_display_name(self.name_changes[fc]['name'])
+                mii.change_display_name(self.name_changes[fc]['name'])
             except KeyError: 
                 pass
         return miis
