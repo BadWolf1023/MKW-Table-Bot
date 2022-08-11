@@ -108,6 +108,7 @@ LOUNGE_NAME_TERMS = {"lounge", "loungename", "ln"}
 GET_FLAG_TERMS = {"getflag", "gf"}
 SET_FLAG_TERMS = {"setflag", "sf"}
 MII_TERMS = {"mii"}
+PAST_MII_TERMS = {"pastmii", "oldmii", "previousmii"}
 WORLDWIDE_TERMS = {"wws", "ww", "rtww", "rtwws", "worldwide", "worldwides"}
 CTWW_TERMS = {"ctgpww", "ctgpwws", "ctwws", "ctww", "ctww", "ctwws", "ctworldwide", "ctworldwides", "customtrackworldwide", "customtrackworldwides"}
 BATTLES_TERMS = {"battle", "battles", "btww", "btwws", "battleww", "battlewws", "battleworldwide", "battleworldwides"}
