@@ -2,6 +2,9 @@
 Created on Oct 29, 2021
 @author: willg
 '''
+from typing import List
+
+
 PLAYER_TABLE_NAMES = ["fc", "pid", "player_url"]
 RACE_TABLE_NAMES = ["race_id", "rxx", "time_added", "match_time", "race_number", "room_name", "track_name", "room_type", "cc", "region", "is_wiimmfi_race", "num_players", "first_place_time", "last_place_time", "avg_time"]
 TRACK_TABLE_NAMES = ["track_name", "url", "fixed_track_name", "is_ct", "track_name_lookup"]
@@ -309,6 +312,37 @@ class SQL_Search_Query_Builder(object):
         """
 
     @staticmethod
+    def get_fc_mii_hexes_query(fcs: List[str]):
+        """The query returned will include different events that included the sane first race. Meaning, you
+        may get duplicate races if they were tabled in multiple tables.
+        Another important nuance: if more than one of the fcs given were in a race, only one race for that FC is given back.
+        This function is only meant to be called for one distinct player, not multiple players, so the query is optimized under this
+        assumption. If you want a query that will return races and hexes for multiple players, use this:
+        SELECT Event_FCs.event_id, fc, mii_hex, x.match_time
+        FROM Event_FCs INNER JOIN (SELECT Event_Races.event_id, min(Race.race_id) as race_id, Race.match_time
+            FROM Event_Races INNER JOIN Race
+            ON Event_Races.race_id = Race.race_id
+            GROUP BY Event_Races.event_id
+            ORDER BY Event_Races.event_id) x
+        ON Event_FCs.event_id = x.event_id
+        WHERE mii_hex IS NOT NULL AND (fc = "4086-2278-0250" OR fc = "1079-7432-6162")
+        ORDER BY Event_FCs.event_id;
+        """
+
+
+        return f"""
+        SELECT Event_Races.event_id, MIN(Race.race_id) as race_id, Race.match_time, Track.is_ct, x.fc, x.mii_hex
+        FROM Event_Races INNER JOIN 
+                (SELECT Event_FCs.event_id, fc, mii_hex
+                FROM Event_FCs
+                WHERE mii_hex IS NOT NULL AND fc IN {build_sql_args_list(fcs)}) x ON x.event_id = Event_Races.event_id
+            INNER JOIN Race ON Event_Races.race_id = Race.race_id
+            INNER JOIN Track ON Race.track_name = Track.track_name
+        GROUP BY Event_Races.event_id
+        ORDER BY Event_Races.event_id;"""
+        
+
+    @staticmethod
     def get_player_races(did, days):
         days_filter_clause = f"AND Event.time_added > date('now','-{days} days')" if (days is not None) else ""
 
@@ -337,5 +371,3 @@ class SQL_Search_Query_Builder(object):
         JOIN ({SQL_Search_Query_Builder.get_player_races(opponent_did, days)}) as b 
         ON a.race_id = b.race_id
         """
-
-

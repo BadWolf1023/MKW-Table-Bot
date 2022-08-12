@@ -108,6 +108,7 @@ LOUNGE_NAME_TERMS = {"lounge", "loungename", "ln"}
 GET_FLAG_TERMS = {"getflag", "gf"}
 SET_FLAG_TERMS = {"setflag", "sf"}
 MII_TERMS = {"mii"}
+PREVIOUS_MII_TERMS = {"pastmii", "oldmii", "previousmii"}
 WORLDWIDE_TERMS = {"wws", "ww", "rtww", "rtwws", "worldwide", "worldwides"}
 CTWW_TERMS = {"ctgpww", "ctgpwws", "ctwws", "ctww", "ctww", "ctwws", "ctworldwide", "ctworldwides", "customtrackworldwide", "customtrackworldwides"}
 BATTLES_TERMS = {"battle", "battles", "btww", "btwws", "battleww", "battlewws", "battleworldwide", "battleworldwides"}
@@ -867,6 +868,9 @@ class BadWolfBot(ext_commands.Bot):
         
         elif main_command in MII_TERMS:
             await commands.OtherCommands.mii_command(message, args)
+        
+        elif main_command in PREVIOUS_MII_TERMS:
+            await commands.OtherCommands.previous_mii_command(message, args)
         
         elif main_command in SET_TABLE_NAME_TERMS:
             await commands.TablingCommands.set_table_name_command(message, this_bot, args, server_prefix, is_lounge_server)

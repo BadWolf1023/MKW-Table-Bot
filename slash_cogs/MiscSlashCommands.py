@@ -263,6 +263,20 @@ class MiscSlash(ext_commands.Cog):
         if player: args.append(player)
         
         await commands.OtherCommands.mii_command(message, args)
+
+    @slash_command(name='pastmii',
+    description="Get a random previous mii of a Lounge player",
+    guild_ids=GUILDS)
+    async def _past_mii(
+        self,
+        ctx: discord.ApplicationContext,
+        player: Option(str, PLAYER_ARG_DESCRIPTION, required=False, default=None)
+    ):
+        command, message, _, _, _ = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command]
+        if player: args.append(player)
+        
+        await commands.OtherCommands.previous_mii_command(message, args)
     
     @slash_command(name="loungename",
     description="Get a player's Lounge name",

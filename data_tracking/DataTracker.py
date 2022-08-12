@@ -91,6 +91,15 @@ class DataRetriever(object):
         return await db_connection.execute("SELECT track_name, url, fixed_track_name, is_ct, track_name_lookup "
                                            "FROM Track")
 
+    @staticmethod
+    async def get_mii_hexes(fcs: List[str]):
+        """Returns the event id, first race id in the event, first match time of the event, fc,
+        and mii hex of the mii used in the event for each that one of the given fcs was in.
+        IMPORTANT NUANCED INFORMATION: See get_fc_mii_hexes_query for returned data in special cases"""
+        mii_hex_query = QB.SQL_Search_Query_Builder.get_fc_mii_hexes_query(fcs)
+        return await db_connection.execute(mii_hex_query, fcs)
+    
+
 class ChannelBotSQLDataValidator(object):
     def wrong_type_message(self, data, expected_type, multi=False):
         if multi:
