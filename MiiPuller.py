@@ -210,6 +210,11 @@ async def get_mii_data_for_pids(pids:Dict[int, str]) -> str:
         mii_puller_session = aiohttp.ClientSession()
         return None
 
+def mii_hex_to_binary(mii_hex: str):
+    return binascii.unhexlify(mii_hex)
+            
+
+
 async def get_mii_data_for_fcs(fcs:Set[str]):
     if len(fcs) == 0:
         return {}
@@ -233,6 +238,14 @@ def get_mii_file_names(fc, message_id):
     cache_download_path = mii_cache_folder_path + cache_file_name
     full_download_path = folder_path + real_file_name
     return cache_download_path, full_download_path, folder_path, real_file_name
+
+async def get_one_time_mii(mii_hex_str: str, fc: str, message_id: int, picture_width=512):
+    _, full_download_path, folder_path, real_file_name = get_mii_file_names(fc, message_id)
+    success = await miirender.download_mii(mii_hex_str, full_download_path, picture_width=picture_width)
+    if success is None:
+        return MII_DOWNLOAD_FAILURE_ERROR_MESSAGE
+    if success:
+        return Mii.Mii(mii_hex_to_binary(mii_hex_str), mii_hex_str, folder_path, real_file_name, fc)
 
 async def download_mii_photo(fc, mii_hex_str, message_id, picture_width=512):
     cache_download_path, full_download_path, _, _ = get_mii_file_names(fc, message_id)
@@ -308,6 +321,8 @@ if __name__ == "__main__":
     #sake_response = format_sake_xml_response(sake_response)
     #print("Formatted...")
     #print(type(sake_response))
+
+    
     result_1 = common.run_async_function_no_loop(get_miis(["4086-2278-0250"], "1234566"))
     print(result_1)
     common.run_async_function_no_loop(asyncio.sleep(5))

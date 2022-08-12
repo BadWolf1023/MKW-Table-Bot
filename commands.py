@@ -6,6 +6,7 @@ Created on Jun 26, 2021
 
 #Bot internal imports - stuff I coded
 import asyncio
+import random
 import ComponentPaginator
 from Placement import Placement
 import WiimmfiSiteFunctions
@@ -960,6 +961,61 @@ class OtherCommands:
             await message.channel.send(file=file, embed=embed)
         finally:
             mii.clean_up()
+
+    @staticmethod
+    async def previous_mii_command(message: discord.Message, args: List[str]):
+        if common.MII_COMMAND_DISABLED and not common.is_bot_owner(message.author):
+            await message.channel.send("To ensure Table Bot remains stable and can access the website, miis have been disabled at this time.")
+            return
+        await mkwx_check(message, "Previous mii command disabled.")
+
+        if cooldown:=mii_cooldown_check(message.author.id):
+            return await message.channel.send(f"{message.author.mention}, wait {common.MII_COOLDOWN-cooldown:.1f} seconds before using this command again.")
+
+        to_load = SmartTypes.create_you_discord_id(message.author.id)
+        if len(args) > 1:
+            to_load = " ".join(args[1:])
+        smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
+        await smart_type.lounge_api_update()
+        fcs = smart_type.get_fcs()
+        # common.client.mii_cooldowns[message.author.id] = time.monotonic()
+
+        descriptive, pronoun = smart_type.get_clean_smart_print(message)
+        if fcs is None:
+            await message.channel.send(f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?")
+            return
+
+        mii_hexes = await DataTracker.DataRetriever.get_mii_hexes(fcs)
+        #First, to select a unique mii randomly with equal probability, we'll create a set of all of their mii hexes
+        unique_mii_hexes = {x[-1] for x in mii_hexes}
+        selected_mii_hex = random.choice(list(unique_mii_hexes))
+        #We might get back multiple races with the same mii (because multiple events tabled the same race), so filter those out and filter the mii hexes too
+        matching_races = {data[1]:data for data in mii_hexes if data[-1] == selected_mii_hex}
+        selected_race = random.choice(list(matching_races))
+        selected_data = matching_races[selected_race]
+        print(selected_data)
+        #Obtain mii picture for the selected mii
+        event_id, rxx, match_time, fc, mii_hex = selected_data
+        common.client.mii_cooldowns[message.author.id] = time.monotonic()
+        mii = await MiiPuller.get_one_time_mii(mii_hex, fc, message.id)
+
+        if isinstance(mii, str):
+            await message.channel.send(mii)
+            return
+
+        try:
+            file, embed = mii.get_previous_mii_embed(True, match_time)
+            embed.title = f"{SmartTypes.possessive(SmartTypes.capitalize(descriptive))} previous mii"
+            await message.channel.send(file=file, embed=embed)
+        finally:
+            mii.clean_up()
+        
+        
+
+
+
+
+
 
     @staticmethod
     async def wws_command(message: discord.Message, this_bot: TableBot.ChannelBot, ww_type=Race.RT_WW_REGION):

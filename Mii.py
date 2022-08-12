@@ -151,6 +151,30 @@ class Mii(KaitaiStruct):
         file = File(self.get_mii_picture_link())
         embed.set_image(url="attachment://" + self.file_name)
         return file, embed
+
+    def get_previous_mii_embed(self, is_ct: bool, date_stamp: str):
+        embed = Embed(
+                    title = f"",
+                    description="",
+                    colour = Mii.mii_color_dict[self.favorite_color]
+                )
+        
+        mii_name = UtilityFunctions.clean_for_output(self.mii_name)
+        mii_name = mii_name if len(mii_name) > 0 else '\u200b'
+        fc = self.FC if len(self.FC) > 0 else '\u200b'
+        #print(f"Mii name: '{mii_name}'\nLen: {len(mii_name)}")
+        #print(ord(mii_name))
+        embed.add_field(name="**Mii Name**",value=mii_name)
+        embed.add_field(name="**Gender**",value=f"{'Female' if self.gender else 'Male'}")
+        
+        embed.add_field(name="**FC**",value=fc)
+        embed.add_field(name="**Date used:**",value=date_stamp)
+        embed.add_field(name="**Used on:**",value="CTs" if is_ct else "RTs")
+        #file_name_id
+        file = File(self.get_mii_picture_link())
+        embed.set_image(url="attachment://" + self.file_name)
+        return file, embed
+
     
     def get_mii_picture_link(self):
         return self.folder_path + self.file_name
