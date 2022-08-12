@@ -326,17 +326,18 @@ class SQL_Search_Query_Builder(object):
             ORDER BY Event_Races.event_id) x
         ON Event_FCs.event_id = x.event_id
         WHERE mii_hex IS NOT NULL AND (fc = "4086-2278-0250" OR fc = "1079-7432-6162")
-        ORDER BY Event_FCs.event_id; 
+        ORDER BY Event_FCs.event_id;
         """
 
 
         return f"""
-        SELECT Event_Races.event_id, MIN(Race.race_id) as race_id, Race.match_time, x.fc, x.mii_hex
+        SELECT Event_Races.event_id, MIN(Race.race_id) as race_id, Race.match_time, Track.is_ct, x.fc, x.mii_hex
         FROM Event_Races INNER JOIN 
                 (SELECT Event_FCs.event_id, fc, mii_hex
                 FROM Event_FCs
                 WHERE mii_hex IS NOT NULL AND fc IN {build_sql_args_list(fcs)}) x ON x.event_id = Event_Races.event_id
             INNER JOIN Race ON Event_Races.race_id = Race.race_id
+            INNER JOIN Track ON Race.track_name = Track.track_name
         GROUP BY Event_Races.event_id
         ORDER BY Event_Races.event_id;"""
         

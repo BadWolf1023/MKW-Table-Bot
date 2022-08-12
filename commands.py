@@ -993,9 +993,8 @@ class OtherCommands:
         matching_races = {data[1]:data for data in mii_hexes if data[-1] == selected_mii_hex}
         selected_race = random.choice(list(matching_races))
         selected_data = matching_races[selected_race]
-        print(selected_data)
         #Obtain mii picture for the selected mii
-        event_id, rxx, match_time, fc, mii_hex = selected_data
+        _, _, match_time, is_ct, fc, mii_hex = selected_data
         common.client.mii_cooldowns[message.author.id] = time.monotonic()
         mii = await MiiPuller.get_one_time_mii(mii_hex, fc, message.id)
 
@@ -1004,8 +1003,8 @@ class OtherCommands:
             return
 
         try:
-            file, embed = mii.get_previous_mii_embed(True, match_time)
-            embed.title = f"{SmartTypes.possessive(SmartTypes.capitalize(descriptive))} previous mii"
+            file, embed = mii.get_previous_mii_embed(is_ct, match_time)
+            embed.title = f"{SmartTypes.possessive(SmartTypes.capitalize(descriptive))} mii from {embed.title}"
             await message.channel.send(file=file, embed=embed)
         finally:
             mii.clean_up()

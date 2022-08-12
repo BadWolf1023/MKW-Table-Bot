@@ -3,6 +3,7 @@ Created on Apr 3, 2021
 
 @author: willg
 '''
+from datetime import date
 from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
 from discord import Embed, File
 import UtilityFunctions
@@ -11,7 +12,7 @@ import cv2
 import UserDataProcessing
 import numpy as np
 import common
-
+import humanize
 
 class Mii(KaitaiStruct):
 
@@ -153,8 +154,15 @@ class Mii(KaitaiStruct):
         return file, embed
 
     def get_previous_mii_embed(self, is_ct: bool, date_stamp: str):
+        try:
+            year, month, day = date_stamp.split()[0].split("-")
+            month_text = date(day=int(day), month=int(month), year=int(year)).strftime('%B')
+            date_stamp = f"{month_text} {humanize.ordinal(day)}, {year}"
+        except:
+            pass
+        
         embed = Embed(
-                    title = f"",
+                    title = date_stamp,
                     description="",
                     colour = Mii.mii_color_dict[self.favorite_color]
                 )
@@ -166,10 +174,11 @@ class Mii(KaitaiStruct):
         #print(ord(mii_name))
         embed.add_field(name="**Mii Name**",value=mii_name)
         embed.add_field(name="**Gender**",value=f"{'Female' if self.gender else 'Male'}")
-        
         embed.add_field(name="**FC**",value=fc)
-        embed.add_field(name="**Date used:**",value=date_stamp)
+        
+        #embed.add_field(name="**Date used:**",value=date_stamp)
         embed.add_field(name="**Used on:**",value="CTs" if is_ct else "RTs")
+        embed.add_field(name="**Region:**",value="Unknown" if self.country_code is None else self.country_code)
         #file_name_id
         file = File(self.get_mii_picture_link())
         embed.set_image(url="attachment://" + self.file_name)
