@@ -978,12 +978,14 @@ class OtherCommands:
         smart_type = SmartTypes.SmartLookupTypes(to_load, allowed_types=SmartTypes.SmartLookupTypes.PLAYER_LOOKUP_TYPES)
         await smart_type.lounge_api_update()
         fcs = smart_type.get_fcs()
-        # common.client.mii_cooldowns[message.author.id] = time.monotonic()
 
         descriptive, pronoun = smart_type.get_clean_smart_print(message)
         if fcs is None:
             await message.channel.send(f"Could not find any FCs for {descriptive}, have {pronoun} verified an FC in Lounge?")
             return
+        
+        #Update cooldown
+        common.client.mii_cooldowns[message.author.id] = time.monotonic()
 
         mii_hexes = await DataTracker.DataRetriever.get_mii_hexes(fcs)
         #First, to select a unique mii randomly with equal probability, we'll create a set of all of their mii hexes
@@ -995,7 +997,6 @@ class OtherCommands:
         selected_data = matching_races[selected_race]
         #Obtain mii picture for the selected mii
         _, _, match_time, is_ct, fc, mii_hex = selected_data
-        common.client.mii_cooldowns[message.author.id] = time.monotonic()
         mii = await MiiPuller.get_one_time_mii(mii_hex, fc, message.id)
 
         if isinstance(mii, str):
