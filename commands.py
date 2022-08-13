@@ -989,7 +989,7 @@ class OtherCommands:
 
         mii_hexes = await DataTracker.DataRetriever.get_mii_hexes(fcs)
         if len(mii_hexes) == 0:
-            await message.channel.send(f"**I couldn't find any previous miis for {descriptive}.** I only have miis going back to November 2021. If {descriptive} has played after November 2021, please report it as a bug so we can look into it.")
+            await message.channel.send(f"**I couldn't find any previous miis for {descriptive}.** I only have miis going back to November 2021. If {descriptive} {'have' if descriptive=='you' else 'has'} played after November 2021, please report it as a bug so we can look into it.")
             return
         #First, to select a unique mii randomly with equal probability, we'll create a set of all of their mii hexes
         unique_mii_hexes = {x[-1] for x in mii_hexes}
@@ -1014,12 +1014,6 @@ class OtherCommands:
             mii.clean_up()
         
         
-
-
-
-
-
-
     @staticmethod
     async def wws_command(message: discord.Message, this_bot: TableBot.ChannelBot, ww_type=Race.RT_WW_REGION):
         await mkwx_check(message, "WWs command disabled.")
