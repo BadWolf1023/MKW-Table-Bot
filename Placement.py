@@ -121,7 +121,7 @@ class Placement:
         return self.is_wiimmfi_place
     
     def should_display_delta(self):
-        return self.delta < NO_DELTA_DISPLAY_RANGE[0] or self.delta > NO_DELTA_DISPLAY_RANGE[1]
+        return self.delta <= NO_DELTA_DISPLAY_RANGE[0] or self.delta >= NO_DELTA_DISPLAY_RANGE[1]
     
     def get_time_string(self):
         minutes = str(self.time[0])
