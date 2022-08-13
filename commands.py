@@ -988,6 +988,9 @@ class OtherCommands:
         common.client.mii_cooldowns[message.author.id] = time.monotonic()
 
         mii_hexes = await DataTracker.DataRetriever.get_mii_hexes(fcs)
+        if len(mii_hex) == 0:
+            await message.channel.send(f"**I couldn't find any previous miis for {descriptive}.** I only have miis going back to November 2021. If {descriptive} has played after November 2021, please report it as a bug so we can look into it.")
+            return
         #First, to select a unique mii randomly with equal probability, we'll create a set of all of their mii hexes
         unique_mii_hexes = {x[-1] for x in mii_hexes}
         selected_mii_hex = random.choice(list(unique_mii_hexes))
