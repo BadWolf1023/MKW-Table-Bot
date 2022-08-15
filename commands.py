@@ -1108,10 +1108,10 @@ class OtherCommands:
         if self_refresh:
             return {'content': f"{str_msg}```"}
         else:
-            await message2.delete()
+            # await message2.delete()
             vr_view = Components.VRView(args, this_bot)
             this_bot.add_component(vr_view)
-            await vr_view.send(message, content=f"{str_msg}```")
+            await vr_view.edit(message2, content=f"{str_msg}```")
 
 
 class LoungeCommands:

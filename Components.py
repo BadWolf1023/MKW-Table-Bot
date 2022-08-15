@@ -1,3 +1,4 @@
+from email.message import Message
 import discord
 import TableBot
 import commands
@@ -8,7 +9,7 @@ import TimerDebuggers
 import common
 import Stats
 import time
-from typing import Dict
+from typing import Dict, Union
 
 class ManualTeamsModal(discord.ui.Modal):
     def __init__(self, bot, prefix, is_lounge, view):
@@ -308,16 +309,18 @@ class PictureView(discord.ui.View):
 class UpdateVRButton(discord.ui.Button['VRView']):
     def __init__(self, bot: TableBot.ChannelBot):
         self.bot = bot
-        super().__init__(style=discord.ButtonStyle.gray if self.bot.getRLCooldownSeconds() > 0 else discord.ButtonStyle.primary, label="Refresh")
+        cooldown = self.bot.getRLCooldownSeconds()
+        super().__init__(style=discord.ButtonStyle.gray if cooldown > 0 else discord.ButtonStyle.primary, label="Refresh")
         self.responded = False
 
-        asyncio.create_task(self.update())
+        if cooldown > 0:
+            asyncio.create_task(self.update())
 
     async def update(self):
         await asyncio.sleep(self.bot.getRLCooldownSeconds())
         self.style = discord.ButtonStyle.primary
         try:
-            await common.safe_edit(self.view.message, view=self.view)
+            await common.safe_edit(self.view.message_ref, view=self.view)
         except:
             pass
     
@@ -328,12 +331,11 @@ class UpdateVRButton(discord.ui.Button['VRView']):
         self.responded = True
         await interaction.response.edit_message(content='Refreshing room...')
         # await interaction.response.defer()
-        print(self.view.trigger_command_args)
         msg = InteractionUtils.create_proxy_msg(interaction, self.view.trigger_command_args)
         # Stats.log_command('vr')
 
         data = await commands.OtherCommands.vr_command(msg, self.bot, self.view.trigger_command_args, self_refresh=True)
-            
+        
         await self.view.refresh_vr(interaction, data)
 
 class VRView(discord.ui.View):
@@ -341,7 +343,7 @@ class VRView(discord.ui.View):
         super().__init__(timeout=300)
         self.bot = bot
         self.trigger_command_args = trigger_command_args
-        self.message: discord.Message = None
+        self.message_ref: Union[discord.Message, discord.InteractionMessage] = None
         self.last_vr_content = None
 
         self.add_item(UpdateVRButton(self.bot))
@@ -357,8 +359,8 @@ class VRView(discord.ui.View):
         else:
             self.last_vr_content = content
         
-        # await interaction.followup.edit_message(self.message.id, content=content, view=self)
-        await common.safe_edit(self.message, content=content, view=self)
+        await interaction.followup.edit_message(self.message_ref.id, content=content, view=self)
+        # await common.safe_edit(self.message_ref, content=content, view=self)
     
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         can_interact = interaction.channel.permissions_for(interaction.user).send_messages
@@ -377,8 +379,8 @@ class VRView(discord.ui.View):
     async def on_timeout(self) -> None:
         self.clear_items()
         self.stop()
-        if self.message:
-            await common.safe_edit(self.message, view=None)
+        if self.message_ref:
+            await common.safe_edit(self.message_ref, view=None)
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
         await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
@@ -388,8 +390,15 @@ class VRView(discord.ui.View):
             messageable = messageable.channel
 
         self.last_vr_content = content
-        self.message = await messageable.send(content=content, file=file, embed=embed, view=self)
-        return self.message
+        self.message_ref = await messageable.send(content=content, file=file, embed=embed, view=self)
+        return self.message_ref
+    
+    async def edit(self, message: Union[discord.Message, discord.InteractionMessage], content=None):
+        self.last_vr_content = content
+        self.message_ref = message
+        await message.edit(content=content, view=self) # InteractionMessage._state gets messed up in Interaction.edit_original_message()
+
+        return self.message_ref
 
 #######################################################################################################
 
