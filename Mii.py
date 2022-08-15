@@ -48,7 +48,9 @@ class Mii(KaitaiStruct):
     def update_lounge_name(self):
         self.lounge_name = UserDataProcessing.lounge_get(self.FC)
 
-    def change_display_name(self, name):
+    def change_display_name(self, name: str):
+        if not name:
+            return
         self.display_name = name
         self.name_change = True
     
