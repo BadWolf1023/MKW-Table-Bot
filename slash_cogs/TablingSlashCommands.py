@@ -93,7 +93,7 @@ class Table_Slash(ext_commands.Cog):
     
     @slash_command(name='dc',
     description="Confirm a player's DC status for a race",
-    guilds_ids=common.SLASH_GUILDS)
+    guild_ids=common.SLASH_GUILDS)
     async def _dc_config(
         self,
         ctx: discord.ApplicationContext,
@@ -104,6 +104,19 @@ class Table_Slash(ext_commands.Cog):
 
         args = [command, str(dc_number), status]
         
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
+    
+    @slash_command(name='gpsize', 
+    description="Change display size of table",
+    guild_ids=common.SLASH_GUILDS)
+    async def _gp_size(
+        self,
+        ctx: discord.ApplicationContext,
+        size: Option(int, "GP display size")
+    ):
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command, str(size)]
+
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name='edit',
