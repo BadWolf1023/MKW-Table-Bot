@@ -208,6 +208,20 @@ class Table_Slash(ext_commands.Cog):
         args = [command, str(race), str(room_size)]
         
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
+    
+    @slash_command(name="changeraceorder",
+    description="Change the order of the races",
+    guild_ids=common.SLASH_GUILDS)
+    async def _change_race_order(
+        self,
+        ctx: discord.ApplicationContext,
+        order: Option(str, "New race order")
+    ):
+        command, message, this_bot, prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command] + order.split()
+
+        await self.bot.process_message_commands(message, args, this_bot, prefix, is_lounge, from_slash=True)
+
 
     @slash_command(name="mergeroom",
     description="Merge another room into the table",
