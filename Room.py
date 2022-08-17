@@ -131,12 +131,25 @@ class Room(object):
         #In case any outsiders have a reference to our race list, we want to update their reference
         self.races.clear()
         self.races.extend(races)
+    
+    def change_race_order(self, order: List[str]):
+        altered_races = [self.races.pop(race_num-1) for race_num in order]
+
+        is_consecutive = sorted(order) == list(range(min(order), max(order)+1))
+        
+        if is_consecutive:
+            ins = min(order)-1
+            for ind, race in enumerate(altered_races, ins):
+                self.races.insert(ind, race)
+        else:
+            self.set_races(altered_races + self.races)
+
+        self.fix_race_numbers()
 
     def fix_race_numbers(self):
         for race_num, race in enumerate(self.races, 1):
             race.set_race_number(race_num)
         
-
     def is_initialized(self):
         return self.races is not None and self.rLIDs is not None and len(self.rLIDs) > 0
         
@@ -582,8 +595,10 @@ class Room(object):
     def get_available_miis_dict(self, FCs) -> Dict[str, Mii.Mii]:
         miis = {fc: self.get_miis()[fc] for fc in FCs if fc in self.get_miis()}
         for fc, mii in miis.items():
-            mii.set_display_name(self.get_player_by_fc(fc).display_name)
-
+            try:
+                mii.change_display_name(self.name_changes[fc]['name'])
+            except KeyError: 
+                pass
         return miis
 
     def remove_miis_with_missing_files(self):

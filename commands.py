@@ -989,7 +989,7 @@ class OtherCommands:
 
         mii_hexes = await DataTracker.DataRetriever.get_mii_hexes(fcs)
         if len(mii_hexes) == 0:
-            await message.channel.send(f"**I couldn't find any previous miis for {descriptive}.** I only have miis going back to November 2021. If {descriptive} has played after November 2021, please report it as a bug so we can look into it.")
+            await message.channel.send(f"**I couldn't find any previous miis for {descriptive}.** I only have miis going back to November 2021. If {descriptive} {'have' if descriptive=='you' else 'has'} played after November 2021, please report it as a bug so we can look into it.")
             return
         #First, to select a unique mii randomly with equal probability, we'll create a set of all of their mii hexes
         unique_mii_hexes = {x[-1] for x in mii_hexes}
@@ -1014,12 +1014,6 @@ class OtherCommands:
             mii.clean_up()
         
         
-
-
-
-
-
-
     @staticmethod
     async def wws_command(message: discord.Message, this_bot: TableBot.ChannelBot, ww_type=Race.RT_WW_REGION):
         await mkwx_check(message, "WWs command disabled.")
@@ -1114,10 +1108,10 @@ class OtherCommands:
         if self_refresh:
             return {'content': f"{str_msg}```"}
         else:
-            await message2.delete()
-            vr_view = Components.VRView(message.content, this_bot)
+            # await message2.delete()
+            vr_view = Components.VRView(args, this_bot)
             this_bot.add_component(vr_view)
-            await vr_view.send(message, content=f"{str_msg}```")
+            await vr_view.edit(message2, content=f"{str_msg}```")
 
 
 class LoungeCommands:
@@ -2791,7 +2785,7 @@ class TablingCommands:
 
         command = args.pop(0)
 
-        syntax = f"\n**Command syntax:** `/{command} [raceNumber] [1st name/number] [2nd name/number]...[last name/number]` (Lounge names with spaces must be entered as one word)"
+        syntax = f"\n**Command syntax:** `/{command} [raceNumber] [1st name/number] [2nd name/number]... [last name/number]` (Lounge names with spaces must be entered as one word)"
 
         if len(args) == 0:
             return await message.channel.send(this_bot.room.get_sorted_player_list_string() + syntax)
@@ -2846,6 +2840,20 @@ class TablingCommands:
         this_bot.room.change_race_placements(race_num, list(players.keys()))
         await message.channel.send(f"Race {race_num} placements successfully edited.")
 
+    @staticmethod
+    async def change_race_order_command(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool):
+        ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
+
+        command = args.pop(0)
+
+        if len(args)<2:
+            return await message.channel.send(this_bot.getRoom().get_races_string() + f"\n\n**Command syntax:**: `{server_prefix}{command} [raceNumber #1] [raceNumber #2]... [raceNumber #{len(this_bot.room.races)}]`")
+
+        race_order = args.copy()
+
+        this_bot.add_save_state(message.content)
+        this_bot.room.change_race_order(race_order)
+        await message.channel.send("Race order changed.")
 
     @staticmethod
     async def quick_edit_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False):

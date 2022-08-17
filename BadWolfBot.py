@@ -78,6 +78,7 @@ EARLY_DC_TERMS = {'earlydc'}
 DEPRECATED_QUICK_EDIT_TERMS = {'quickedit', 'qe'}
 QUICK_EDIT_TERMS = DEPRECATED_QUICK_EDIT_TERMS | {"changeplace", "changeposition", "cp"}
 RACE_EDIT_TERMS = {'raceedit', 'editrace', 'racepositions', 'changerace'}
+RACE_ORDER_TERMS = {'raceorder', 'changeraces', 'changeraceorder'}
 
 TABLE_THEME_TERMS = {'style', 'theme', 'tablestyle', 'tabletheme'}
 GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
@@ -774,6 +775,9 @@ class BadWolfBot(ext_commands.Bot):
         
         elif main_command in RACE_EDIT_TERMS:
             await commands.TablingCommands.race_edit_command(message, this_bot, args, is_lounge_server)
+        
+        elif main_command in RACE_ORDER_TERMS:
+            await commands.TablingCommands.change_race_order_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in QUICK_EDIT_TERMS:
             # if main_command in DEPRECATED_QUICK_EDIT_TERMS:

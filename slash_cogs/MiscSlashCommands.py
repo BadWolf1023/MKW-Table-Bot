@@ -251,7 +251,7 @@ class MiscSlash(ext_commands.Cog):
         await commands.OtherCommands.player_page_command(message, args)
     
     @slash_command(name='mii',
-    description="Get a Lounge player's last used Mii",
+    description="Get a player's last used Mii",
     guild_ids=GUILDS)
     async def _get_mii(
         self,

@@ -571,10 +571,11 @@ async def safe_send(message:discord.Message, content=None, embed=None, delete_af
     except discord.Forbidden: #Missing permissions
         await safe_send_missing_permissions(message, delete_after=10)
 
-async def safe_edit(message:discord.Message, **kwargs):
+async def safe_edit(message: discord.Message, **kwargs):
     try:
         return await message.edit(**kwargs)
-    except Exception:
+    except Exception as e:
+        # print("safe_edit:", e)
         return None
 
 #Function only for testing purposes. Do not use this in the main program code.

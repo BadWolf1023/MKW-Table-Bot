@@ -38,7 +38,7 @@ class Player(object):
     '''
 
 
-    def __init__(self, FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, playerName, discord_name=None, lounge_name=None, mii_hex=None):
+    def __init__(self, FC, playerPageLink, ol_status, roomPosition, playerRegion, playerConnFails, role, vr, character_vehicle, playerName, discord_name=None, lounge_name: str=None, mii_hex=None):
         '''
         Constructor
         '''
@@ -63,9 +63,13 @@ class Player(object):
             self.mii_name = "Player"
         self.display_name = self.mii_name
         self.discord_name = discord_name
-        self.lounge_name = lounge_name or UserDataProcessing.lounge_get(self.FC)
+        self._lounge_name = lounge_name or UserDataProcessing.lounge_get(self.FC)
         self.mii_hex = mii_hex
     
+    @property
+    def lounge_name(self):
+        return self._lounge_name if self._lounge_name != "" else None
+
     def set_mii_hex(self, mii_hex):
         self.mii_hex = mii_hex
     
@@ -74,7 +78,7 @@ class Player(object):
             return self.mii_hex.mii_data_hex_str
         return self.mii_hex
     def get_lounge_name(self):
-        return None if self.lounge_name == "" else self.lounge_name
+        return self.lounge_name
     def get_discord_name(self):
         return self.discord_name
     def get_vehicle(self):
@@ -131,9 +135,10 @@ class Player(object):
     def get_sub_out_name(self):
         name = self.display_name
         use_lounge = self.change_type == 'sub' # name not changed
+
         if use_lounge:
-            name = UserDataProcessing.lounge_name_or_mii_name(self.FC, name)
-            # name = self.lounge_name or name
+            # name = UserDataProcessing.lounge_name_or_mii_name(self.FC, name)
+            name = self.lounge_name or name
         if name.startswith('#'): # if the sub out's name starts with a hashtag, the entire line would be excluded from table, so add an invisible character so line still displays
             name = '\u200b' + name
         
