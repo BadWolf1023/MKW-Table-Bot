@@ -3,7 +3,6 @@ Created on Jul 12, 2020
 
 @author: willg
 '''
-from sqlalchemy import true
 import Mii
 import UtilityFunctions
 import UserDataProcessing

@@ -1,4 +1,3 @@
-from email.message import Message
 import discord
 import TableBot
 import commands
