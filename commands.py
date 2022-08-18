@@ -2846,14 +2846,20 @@ class TablingCommands:
 
         command = args.pop(0)
 
-        if len(args)<2:
-            return await message.channel.send(this_bot.getRoom().get_races_string() + f"\n\n**Command syntax:**: `{server_prefix}{command} [raceNumber #1] [raceNumber #2]... [raceNumber #{len(this_bot.room.races)}]`")
+        if len(args)==0:
+            return await message.channel.send(this_bot.getRoom().get_races_string() + f"\n**Command syntax:**: `{server_prefix}{command} [raceNumber #1] [raceNumber #2]... [raceNumber #{len(this_bot.room.races)}]`")
 
         race_order = args.copy()
 
+        for i in range(len(race_order)):
+            race = race_order[i]
+            if not UtilityFunctions.is_int(race) or not (0<int(race)<=len(this_bot.room.races)):
+                return await message.channel.send(f"All `raceNumber`s must be numbers between 1 and {len(this_bot.room.races)}. Do `{server_prefix}{command}` to see how to use this command.")
+            race_order[i] = int(race_order[i])
+
         this_bot.add_save_state(message.content)
-        this_bot.room.change_race_order(race_order)
-        await message.channel.send("Race order changed.")
+        new_order = this_bot.room.change_race_order(race_order)
+        await message.channel.send(f"Race order changed to: `{new_order}`.")
 
     @staticmethod
     async def quick_edit_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False):

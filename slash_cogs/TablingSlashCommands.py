@@ -32,10 +32,10 @@ class Table_Slash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         format: Option(str, "Format", choices=['FFA', '2v2', '3v3', '4v4', '5v5', '6v6']),
         num_teams: Option(int, 'Number of teams'),
-        room_arg: Option(str, 'Lounge Name/Mention/rxx/FC', required=False, default=None),
-        gps: Option(int, "Number of GPs", min_value=1, max_value=15, default=None),
+        lookup: Option(str, 'Lounge Name/Mention/rxx/FC', required=False, default=None),
+        num_gps: Option(int, "Number of GPs", min_value=1, max_value=15, default=None),
         psb: Option(str, 'Suppress large finish time warnings', required=False, default=None, choices=['yes', 'no']),
-        miis: Option(str, 'Show miis on table', required=False, default=None, choices=['on', 'off'])
+        show_miis: Option(str, 'Show miis on table', required=False, default=None, choices=['on', 'off'])
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
 
@@ -44,8 +44,8 @@ class Table_Slash(ext_commands.Cog):
 
         args = [command, format, str(num_teams)]
 
-        if room_arg:
-            args.append(room_arg)
+        if lookup:
+            args.append(lookup)
         if gps:
             gps = 'gps='+str(gps)
             args.append(gps)
