@@ -50,8 +50,10 @@ class Room(object):
         self.table = table
 
         self.name_changes: Dict[str, Dict[str, Union[str, bool]]] = {}
-        self.removed_races = []
-        
+        # self.removed_races = []
+        #holds removed races and race order changes
+        self.race_changes: List[List[int]] = []
+
         #Key will be the race number, value will be a list of all the placements changed for the race (including manual DC placements)
         self.placement_history: defaultdict[int, List[Dict[str, Any]]] = defaultdict(list)
         
@@ -80,6 +82,15 @@ class Room(object):
         self.channel_id = None
         
         self.add_races(rxx, races)
+    
+    @property
+    def removed_races(self):
+        races = []
+        for i in self.race_changes:
+            if i['type'] == 'remove':
+                races.append(i['payload'])
+        
+        return races
 
     def add_races(self, rxx: str, races: List[Race.Race]):
         if not isinstance(rxx, str):
@@ -118,7 +129,7 @@ class Room(object):
             self.suggestion_errors = None
         
     def update_suggestions(self):
-        if self.suggestion_errors: #a suggestion view is active and must be updated after race removal
+        if self.suggestion_errors: #a suggestion view is active and must be updated after race removal/race order change
             view = watched_suggestions.get(self.channel_id, None)
             self.apply_tabler_adjustments(suggestion_call=True)
             updated_suggestions = view.bot.war.get_war_errors_string_2(self, view.bot.get_all_resolved_errors(), suggestion_call=True)
@@ -132,7 +143,7 @@ class Room(object):
         self.races.clear()
         self.races.extend(races)
     
-    def change_race_order(self, order: List[int]):
+    def change_race_order(self, order: List[int], local_call=False):
         new_order = list(range(1, len(self.races)+1))
         altered_races = [self.races[race_num-1] for race_num in order]
         
@@ -151,6 +162,13 @@ class Room(object):
             self.set_races(altered_races + self.races)
 
         self.fix_race_numbers()
+
+        if not local_call:
+            self.race_changes.append({
+                'type': 'order',
+                'payload': order
+            })
+            self.update_suggestions()
     
         return ", ".join(list(map(str, new_order)))
 
@@ -285,7 +303,10 @@ class Room(object):
             raceName = self.races[raceIndex].getTrackNameWithoutAuthor()
             remove_success = self.__remove_race__(raceIndex)
             if remove_success:
-                self.removed_races.append((raceIndex, raceName))
+                self.race_changes.append({
+                    'type': 'remove',
+                    'payload': (raceIndex, raceName)
+                })
                 #Update dcs, manual placements, quickedits, and room size changes, and subin scores
                 self.forcedRoomSize = generic_dictionary_shifter(self.forcedRoomSize, race_num)
                 self.dc_on_or_before = generic_dictionary_shifter(self.dc_on_or_before, race_num)
@@ -710,10 +731,14 @@ class Room(object):
                     if placement.getPlayer().get_FC() == FC:
                         placement.getPlayer().set_name(name_change_payload['name'], name_change_payload['type'])
         
-        #Next, we remove races
-        if not suggestion_call:
-            for removed_race_ind, _ in self.removed_races:
-                self.races.pop(removed_race_ind)
+        #Next, we remove races and change race order
+        if not suggestion_call: # race orders and removed races are already applied if suggestion_call==True, so don't apply them again
+            for change in self.race_changes:
+                payload = change['payload']
+                if change['type']=='remove':
+                    self.races.pop(payload[0])
+                else:
+                    self.change_race_order(payload, local_call=True)
         
         #Next, we need to renumber the races
         self.fix_race_numbers()
@@ -820,11 +845,10 @@ class Room(object):
     def get_recoverable_save_state(self):
         save_state = {}
         save_state['name_changes'] = self.name_changes.copy()
-        save_state['removed_races'] = self.removed_races.copy()
+        # save_state['removed_races'] = self.removed_races.copy()
+        save_state['race_changes'] = deepcopy(self.race_changes)
         save_state['playerPenalties'] = self.playerPenalties.copy()
-        
-        #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
-        save_state['dc_on_or_before'] = deepcopy(self.dc_on_or_before)
+        save_state['dc_on_or_before'] = deepcopy(self.dc_on_or_before) #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
         save_state['forcedRoomSize'] = self.forcedRoomSize.copy()
         save_state['rLIDs'] = self.rLIDs.copy()
         save_state['races'] = deepcopy(self.races)

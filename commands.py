@@ -2856,6 +2856,9 @@ class TablingCommands:
             if not UtilityFunctions.is_int(race) or not (0<int(race)<=len(this_bot.room.races)):
                 return await message.channel.send(f"All `raceNumber`s must be numbers between 1 and {len(this_bot.room.races)}. Do `{server_prefix}{command}` to see how to use this command.")
             race_order[i] = int(race_order[i])
+        
+        if len(race_order) != len(set(race_order)):
+            return await message.channel.send(f"You cannot have duplicate `raceNumber`s. Do `{server_prefix}{command}` to see how to use this command.")
 
         this_bot.add_save_state(message.content)
         new_order = this_bot.room.change_race_order(race_order)
