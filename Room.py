@@ -52,7 +52,7 @@ class Room(object):
         self.name_changes: Dict[str, Dict[str, Union[str, bool]]] = {}
         # self.removed_races = []
         #holds removed races and race order changes
-        self.race_changes: List[List[int]] = []
+        self.race_changes: List[Dict[str, Union[List[int], Tuple[int, str]]]] = []
 
         #Key will be the race number, value will be a list of all the placements changed for the race (including manual DC placements)
         self.placement_history: defaultdict[int, List[Dict[str, Any]]] = defaultdict(list)
