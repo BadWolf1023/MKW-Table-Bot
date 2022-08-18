@@ -85,12 +85,7 @@ class Room(object):
     
     @property
     def removed_races(self):
-        races = []
-        for i in self.race_changes:
-            if i['type'] == 'remove':
-                races.append(i['payload'])
-        
-        return races
+        return [change['payload'] for change in self.race_changes if change['type']=='remove']
 
     def add_races(self, rxx: str, races: List[Race.Race]):
         if not isinstance(rxx, str):
