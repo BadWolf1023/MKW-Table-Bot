@@ -32,10 +32,10 @@ class Table_Slash(ext_commands.Cog):
         ctx: discord.ApplicationContext,
         format: Option(str, "Format", choices=['FFA', '2v2', '3v3', '4v4', '5v5', '6v6']),
         num_teams: Option(int, 'Number of teams'),
-        room_arg: Option(str, 'Lounge Name/Mention/rxx/FC', required=False, default=None),
-        gps: Option(int, "Number of GPs", min_value=1, max_value=15, default=None),
+        lookup: Option(str, 'Lounge Name/Mention/rxx/FC', required=False, default=None),
+        num_gps: Option(int, "Number of GPs", min_value=1, max_value=15, default=None),
         psb: Option(str, 'Suppress large finish time warnings', required=False, default=None, choices=['yes', 'no']),
-        miis: Option(str, 'Show miis on table', required=False, default=None, choices=['on', 'off'])
+        show_miis: Option(str, 'Show miis on table', required=False, default=None, choices=['yes', 'no'])
     ):
         command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
 
@@ -44,17 +44,17 @@ class Table_Slash(ext_commands.Cog):
 
         args = [command, format, str(num_teams)]
 
-        if room_arg:
-            args.append(room_arg)
-        if gps:
-            gps = 'gps='+str(gps)
-            args.append(gps)
+        if lookup:
+            args.append(lookup)
+        if num_gps:
+            num_gps = 'gps='+str(num_gps)
+            args.append(num_gps)
         if psb is not None:
             psb = 'psb='+psb
             args.append(psb)
-        if miis is not None:
-            miis = 'miis='+miis
-            args.append(miis)
+        if show_miis is not None:
+            show_miis = 'miis='+show_miis
+            args.append(show_miis)
         
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
         

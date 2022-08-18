@@ -78,7 +78,7 @@ EARLY_DC_TERMS = {'earlydc'}
 DEPRECATED_QUICK_EDIT_TERMS = {'quickedit', 'qe'}
 QUICK_EDIT_TERMS = DEPRECATED_QUICK_EDIT_TERMS | {"changeplace", "changeposition", "cp"}
 RACE_EDIT_TERMS = {'raceedit', 'editrace', 'racepositions', 'changerace'}
-RACE_ORDER_TERMS = {'raceorder', 'changeraces', 'changeraceorder'}
+RACE_ORDER_TERMS = {'raceorder', 'changeraces', 'changeraceorder', 'racesorder', 'changeorder', 'order', 'changeracesorder'}
 
 TABLE_THEME_TERMS = {'style', 'theme', 'tablestyle', 'tabletheme'}
 GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}

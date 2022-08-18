@@ -132,19 +132,27 @@ class Room(object):
         self.races.clear()
         self.races.extend(races)
     
-    def change_race_order(self, order: List[str]):
-        altered_races = [self.races.pop(race_num-1) for race_num in order]
-
-        is_consecutive = sorted(order) == list(range(min(order), max(order)+1))
+    def change_race_order(self, order: List[int]):
+        new_order = list(range(1, len(self.races)+1))
+        altered_races = [self.races[race_num-1] for race_num in order]
+        
+        is_consecutive = len(order) > 1 and sorted(order) == list(range(min(order), max(order)+1))
         
         if is_consecutive:
-            ins = min(order)-1
-            for ind, race in enumerate(altered_races, ins):
-                self.races.insert(ind, race)
+            self.races[min(order)-1:max(order)] = altered_races
+            new_order[min(order)-1:max(order)] = order
+
         else:
+            for race_num in sorted(order, reverse=True):
+                self.races.pop(race_num-1)
+                new_order.pop(race_num-1)
+
+            new_order = order + new_order
             self.set_races(altered_races + self.races)
 
         self.fix_race_numbers()
+    
+        return ", ".join(list(map(str, new_order)))
 
     def fix_race_numbers(self):
         for race_num, race in enumerate(self.races, 1):
