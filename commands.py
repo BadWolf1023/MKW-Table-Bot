@@ -32,6 +32,8 @@ from data_tracking import DataTracker
 import SmartTypes
 import TimerDebuggers
 import api.api_common as api_common
+import api.api_channelbot_interface as cb_interface
+from api import api_data_builder
 
 #Other library imports, other people codes
 import math
@@ -2570,7 +2572,9 @@ class TablingCommands:
         try:
             image_download_success = await common.download_image(image_url, table_image_path)
             if not image_download_success:
-                await message.channel.send("Could not download table picture.")
+                await message.channel.send("Could not download table picture. Using backup table generation...")
+                #TODO: Here
+                image_download_success = await api_data_builder.generate_table_picture(table_sorted_data, table_image_path)
                 return
             #did the room have *any* errors? Regardless of ignoring any type of error
             war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0

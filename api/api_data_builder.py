@@ -332,3 +332,6 @@ def build_info_page_html(table_id: int):
 def get_picture_page_html():
     with codecs.open(f"{API_DATA_PATH}{TABLE_PICTURE_HTML_FILE}", "r", "utf-8") as fp:
         return str(BeautifulSoup(fp.read(), "html.parser"))
+
+def generate_table_picture(table_sorted_data, table_image_path):
+    table_html = build_full_table_html(table_sorted_data, style="orange")
