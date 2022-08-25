@@ -198,7 +198,7 @@ async def on_component_error(error: Exception, interaction: discord.Interaction,
             message = await interaction.original_message()
         except Exception:
             pass
-    
+
     if message:
         await handle_component_exception(error, message, prefix, channel_bot)
     else:
