@@ -14,11 +14,16 @@ from pathlib import Path
 import shutil
 import common
 
-user_delimiter = "C,'6WeWq~w,S24!z;L+EM$vL{3M,HMKjy9U2dfH8F-'mwH'2@K.qaQGpg*!StX*:D7^&P;d4@AcWS3)8f64~6CB^B4{s`>9+*brV"
+TOTAL_CODE_LINES = None
 
 backup_folder = "../backups/"
 meta = {
-    "command_count": {}
+    "command_count": {},
+    "user_ids": [],
+    "last_command_time": "2000-01-01 12:00:00.000000",
+    "total_commands_count": 0,
+    "lorenzi_tables_picture_count": 0,
+    "local_tables_picture_count": 0
 }
 
 def initialize():
@@ -26,19 +31,39 @@ def initialize():
     if os.path.isfile(common.JSON_META_FILE):
         with open(common.JSON_META_FILE, 'r') as f:
             meta = json.load(f)
+    else:
+        print("WARNING: No meta JSON found! Resetting meta. If this is a mistake, restore a meta JSON backup.")
     
+    backward_compatibility_update()
+    
+def backward_compatibility_update():
     if "user_ids" not in meta:
         meta["user_ids"] = []
+    
+    if "last_command_time" not in meta:
+        meta["last_command_time"] = "2000-01-01 12:00:00.000000"
+
+    if "total_commands_count" not in meta:
+        # Note, the real MKW Table Bot should manually input the old count combined with the new count since it has old statistics
+        meta["total_commands_count"] = sum(v for v in meta["command_count"].values())
+
+    if "lorenzi_tables_picture_count" not in meta:
+        meta["lorenzi_tables_picture_count"] = meta["command_count"].get("WAR_PICTURE_TERMS", 0)
+
+    if "local_tables_picture_count" not in meta:
+        meta["local_tables_picture_count"] = 0
+    
 
 def save_metadata():
     counts = meta["command_count"]
     meta["command_count"] = {k:counts[k] for k in sorted(counts.keys(),reverse=True)}
-
     with open(common.JSON_META_FILE,'w') as f:
         json.dump(meta, f, indent=4)
 
-def log_command(command, user_id: str, slash=False):
+def log_command(command: str, user_id: str, slash=False):
     log_user(user_id)
+    meta["last_command_time"] = str(datetime.now())
+    meta["total_commands_count"] += 1
     command = common.SLASH_TERMS_CONVERSIONS.get(command, command)
     if command == 'raw':
         meta['raw_slash_count'] = meta.get('raw_slash_count', 0) + 1
@@ -57,7 +82,6 @@ def log_user(user_id):
     if user_id not in meta["user_ids"]:
         meta["user_ids"].append(user_id)
 
-        
 
 def backup_files(to_back_up=common.FILES_TO_BACKUP):
     Path(backup_folder).mkdir(parents=True, exist_ok=True)
@@ -178,146 +202,62 @@ def hard_check(discord_username, limit=None):
     return results   
 
 def count_lines_of_code(dir='.') -> int:
-    lines_count = 0
-    for file in os.listdir(dir):
-        if os.path.isdir(dir+'/'+file):
-            lines_count+=count_lines_of_code(dir+'/'+file)
-        if re.match(r'.*\.(py|sql)$', file):
-            with open(dir+'/'+file, encoding='utf-8') as f:
-                for _ in f:
-                    lines_count += 1
-    return lines_count
+    global TOTAL_CODE_LINES
+    if TOTAL_CODE_LINES is None:
+        lines_count = 0
+        for file in os.listdir(dir):
+            if os.path.isdir(dir+'/'+file):
+                lines_count+=count_lines_of_code(dir+'/'+file)
+            if re.match(r'.*\.(py|sql)$', file):
+                with open(dir+'/'+file, encoding='utf-8') as f:
+                    for _ in f:
+                        lines_count += 1
+        TOTAL_CODE_LINES = lines_count
+    return TOTAL_CODE_LINES
 
+def add_lorenzi_picture_count():
+    meta["lorenzi_tables_picture_count"] += 1
 
-def get_from_stats_file(stats_file=common.STATS_FILE):
-    global user_delimiter
-    total_pictures = 0
-    total_commands = 0
-    total_code_lines = 0
-    servers = set()
-    users = set()
-    
-    with open(stats_file, "r+", encoding='utf-8') as f:
-        total_pictures = int(f.readline().strip("\n"))
-        total_commands = int(f.readline().strip("\n"))
-        total_code_lines = int(f.readline().strip("\n"))
-        for line_ in f:
-            line_ = line_.strip("\n")
-            if line_ == user_delimiter:
-                break
-            servers.add(line_)
-        for line_ in f:
-            line_ = line_.strip("\n")
-            users.add(line_)
-    return total_pictures, total_commands, total_code_lines, servers, users
+def add_local_picture_count():
+    meta["local_tables_picture_count"] += 1
 
-
-def get_combined_stats_from_both(stats_file=common.STATS_FILE, commands_logging=common.MESSAGE_LOGGING_FILE):
-    stats_1 = get_from_stats_file(stats_file)
-    stats_2 = get_from_messages_logging_file(commands_logging)
-    total_pictures = stats_1[0] + stats_2[0]
-    total_commands = stats_1[1] + stats_2[1]
-    total_code_lines = stats_1[2] + stats_2[2]
-    stats_1[3].update(stats_2[3])
-    stats_1[4].update(stats_2[4])
-    return total_pictures, total_commands, total_code_lines, stats_1[3], stats_1[4]
-
-        
-def get_from_messages_logging_file(commands_logging=common.MESSAGE_LOGGING_FILE):
-    users = set()
-    servers = set()
-    war_picture_count = 0
-    total_commands = 0
-    common.check_create(commands_logging)
-    with open(commands_logging, "r+", encoding='utf-8') as f:
-        for line_ in f:
-            total_commands += 1
-            try:
-                if "?wp" in line_[line_.index(" - Command: ") + len(" - Command: "):]:
-                    war_picture_count += 1
-                index_start = line_.index(" - User: ") + len(" - User: ")
-                end_index = line_.index(" - Command: ", index_start)
-                users.add(line_[index_start:end_index])
-                index_start = line_.index("Server: ") + len("Server: ")
-                end_index = line_.index(" - Channel: ", index_start)
-                servers.add(line_[index_start:end_index].strip())
-            except Exception:
-                pass
-    return war_picture_count, total_commands, 0, servers, users
-    
-
-def dump_to_stats_file(stats_file=common.STATS_FILE, commands_logging=common.MESSAGE_LOGGING_FILE):
-    global user_delimiter
-    war_picture_count, total_commands, _, servers, users = get_combined_stats_from_both(stats_file, commands_logging)
+def stats(num_bots:int, client) -> str: 
+    '''Returns a nicely printed string of fun Table Bot statistics
+    '''  
+    war_picture_count = meta["lorenzi_tables_picture_count"] + meta["local_tables_picture_count"]
+    total_command_count = meta["total_commands_count"]
     total_code_lines = count_lines_of_code()
-    temp_stats = f"{stats_file}_temp"
-    with open(temp_stats, "w+", encoding="utf-8", errors="replace") as temp_out:
-        temp_out.write(str(war_picture_count) + "\n")
-        temp_out.write(str(total_commands) + "\n")
-        temp_out.write(str(total_code_lines) + "\n")
-        for server in servers:
-            temp_out.write(server + "\n")
-        temp_out.write(user_delimiter + "\n")
-        for user in users:
-            temp_out.write(str(user) + "\n")
-            
-    os.remove(stats_file)
-    os.rename(temp_stats, stats_file)
-    os.remove(commands_logging)   
-    common.check_create(commands_logging) 
-    
+    number_servers = len(client.guilds)
+    number_users = len(meta["user_ids"])
 
-
-def stats(num_bots:int, client=None, stats_file=common.STATS_FILE, commands_logging=common.MESSAGE_LOGGING_FILE):
-    str_build = ""
-    
-    war_picture_count, total_commands, total_code_lines, servers, users = get_combined_stats_from_both(stats_file, commands_logging)
-    str_build += "Number of servers that have MKW Table Bot: **" + str(len(client.guilds if client is not None else servers)) + "**\n"
-    str_build += "First server ever: **The Funkynuts" + "**\n"
-    str_build += "\n"
-    str_build += "Number of people who have used MKW Table Bot: **" + str(len(users)) + "**\n"
-    str_build += "First user ever: **Chippy#8126" + "**\n"                
-    str_build += "\n"
-    str_build += "Number of table pictures generated: **" + str(war_picture_count) + "**\n"
-    str_build += "Total commands MKW Table Bot has recieved: **" + str(total_commands) + "**\n"
-    str_build += "\n"
-    #4133
-    #str_build += "Lines of high quality code written to make this bot a reality: **" + str(count_lines_of_code()) + "**\n"
-    str_build += "Lines of high quality code written to make this bot a reality: **" + str(total_code_lines) + "**\n"
-    str_build += "\n"
+    # Compute how long ago the last command was sent:
     right_now = datetime.now()
-    current_time = right_now.strftime('%I:%M:%S%p')
-    str_build += "Current server (and BadWolf's) time: **" + current_time + "**\n"
-    
-    ago = None
-    with open(commands_logging, "rb+") as f:
-        line_num = 0
-        try:
-            f.seek(-2, os.SEEK_END)
-            while True:
-                if f.read(1) == b'\n':
-                    line_num += 1
-                    if line_num == 2:
-                        break
-                f.seek(-2, os.SEEK_CUR)
-            last_line = f.readline().decode()
-            last_message_time = last_line.split("S")[0][:-2]
-            last_message_obj = datetime.strptime(last_message_time, '%Y-%m-%d %H:%M:%S.%f')
-            ago = right_now - last_message_obj
-        except:
-            pass
-    
-    if ago is not None:
-        str_build += "Last command before your stats command was **" + humanize.naturaltime(ago) + "**\n"
-    else:
-        str_build += "Last command before your stats command was **" + "N/A" + "**\n"
-    str_build += "Number of wars being tabled with the bot right now: **" + str(num_bots) + "**\n"
-    
-    str_build += "\n\nNotable beta testers: **\n\t- Chippy#8126\n\t- callum#6560\n\t- PhillyGator#0850**"
+    last_message_time_str = meta["last_command_time"]
+    last_message_time = datetime.strptime(last_message_time_str, '%Y-%m-%d %H:%M:%S.%f')
+    ago = humanize.naturaltime(right_now - last_message_time)
 
-    str_build += "\n\nSpecial thanks to: **\n\t- callum#6560's dad for solving the last piece to the tag recognition AI**"
-    
-    return str_build
+    # Format the current time into a pleasant format
+    current_time = right_now.strftime('%I:%M:%S%p')
+
+    return f"""**Meet the MKW Table Bot team:**
+  - Bad Wolf: Project manager, originally created and developed MKW Table Bot
+  - camelwater: Main Developer (active)
+  - andrew: Developer (inactive)
+  - Fear: Junior Developer
+
+Number of servers that have MKW Table Bot: **{number_servers}**
+Number of people who have used MKW Table Bot: **{number_users}**
+First server ever: **The Funkynuts**
+
+Total commands MKW Table Bot has recieved: **{total_command_count}**
+Number of table pictures generated: **{war_picture_count}**
+Lines of high quality code written to make this bot a reality: **{total_code_lines}**
+
+Current server time: **{current_time}**
+Last command before your stats command was **{ago}**
+Number of tables currently being tabled: **{num_bots}**
+
+Notable beta testers: **Chippy, callum, PhillyGator**"""
  
         
 if __name__ == '__main__':

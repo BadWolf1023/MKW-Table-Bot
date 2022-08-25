@@ -403,7 +403,6 @@ class BadWolfBot(ext_commands.Bot):
         if common.is_prod:
             Stats.backup_files()
             await Stats.prune_backups()
-            Stats.dump_to_stats_file()
         
         print(f"{str(datetime.now())}: Finished saving data")
     
@@ -499,7 +498,7 @@ class BadWolfBot(ext_commands.Bot):
             command_level = new_level
         
         full_command_name = " ".join(full_command_name)
-        Stats.log_command(full_command_name, message.user.id, slash=True)
+        Stats.log_command(full_command_name, message.author.id, slash=True)
         await self.process_application_commands(interaction)
     
     async def on_connect(self):
@@ -673,7 +672,7 @@ class BadWolfBot(ext_commands.Bot):
     async def process_message_commands(self, message, args, this_bot, server_prefix, is_lounge_server, from_slash=False):
         main_command = args[0].lower()
         if not from_slash:
-            Stats.log_command(main_command, message.user.id, slash=from_slash)
+            Stats.log_command(main_command, message.author.id, slash=from_slash)
 
         #Core commands
         if main_command in RESET_TERMS:

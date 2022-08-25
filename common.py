@@ -201,7 +201,6 @@ DISCORD_ID_FLAGS_FILE = f"{DATA_PATH}discord_id_flags.txt"
 FLAG_CODES_FILE = f"{DATA_PATH}flag_codes.txt"
 
 PRIVATE_INFO_FILE = f'{DATA_PATH}private.txt'
-STATS_FILE = f"{DATA_PATH}stats.txt"
 SHA_TRACK_NAMES_FILE = f"{DATA_PATH}sha_track_names.pkl"
 
 TABLE_BOT_PKL_FILE = f'{DATA_PATH}tablebots.pkl'
@@ -253,7 +252,6 @@ FILES_TO_BACKUP = {ERROR_LOGS_FILE,
                    DISCORD_ID_LOUNGES_FILE,
                    LOUNGE_ID_COUNTER_FILE,
                    LOUNGE_TABLE_UPDATES_FILE,
-                   STATS_FILE,
                    TABLE_BOT_PKL_FILE,
                    VR_IS_ON_FILE,
                    SHA_TRACK_NAMES_FILE,
