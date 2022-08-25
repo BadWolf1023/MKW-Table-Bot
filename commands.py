@@ -4,9 +4,7 @@ Created on Jun 26, 2021
 @author: willg
 '''
 
-#Bot internal imports - stuff I coded
-import asyncio
-import random
+#Bot internal imports - stuff we coded
 import ComponentPaginator
 from Placement import Placement
 import WiimmfiSiteFunctions
@@ -34,8 +32,12 @@ import TimerDebuggers
 import api.api_common as api_common
 import api.api_channelbot_interface as cb_interface
 from api import api_data_builder
+import URLShortener
+import Stats
 
 #Other library imports, other people codes
+import asyncio
+import random
 import math
 import time
 from tabulate import tabulate
@@ -51,8 +53,6 @@ import itertools
 import discord
 import os
 from datetime import datetime
-import URLShortener
-import Stats
 import re
 import traceback
 
