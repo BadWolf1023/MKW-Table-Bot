@@ -14,6 +14,7 @@ dill
 requests
 fastapi
 uvicorn[standard]
+imgkit
 
 
 JAVASCRIPTLOCALTUNNEL: npm install -g localtunnel
