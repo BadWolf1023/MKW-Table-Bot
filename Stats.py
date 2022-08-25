@@ -26,6 +26,9 @@ def initialize():
     if os.path.isfile(common.JSON_META_FILE):
         with open(common.JSON_META_FILE, 'r') as f:
             meta = json.load(f)
+    
+    if "user_ids" not in meta:
+        meta["user_ids"] = []
 
 def save_metadata():
     counts = meta["command_count"]
@@ -34,7 +37,8 @@ def save_metadata():
     with open(common.JSON_META_FILE,'w') as f:
         json.dump(meta, f, indent=4)
 
-def log_command(command, slash=False):
+def log_command(command, user_id: str, slash=False):
+    log_user(user_id)
     command = common.SLASH_TERMS_CONVERSIONS.get(command, command)
     if command == 'raw':
         meta['raw_slash_count'] = meta.get('raw_slash_count', 0) + 1
@@ -47,6 +51,13 @@ def log_command(command, slash=False):
                 meta["command_count"][name] = meta["command_count"].get(name, 0) + 1
                 if slash:
                     meta["slash_commands_count"] = meta.get('slash_commands_count', 0) + 1
+
+def log_user(user_id):
+    user_id = str(user_id)
+    if user_id not in meta["user_ids"]:
+        meta["user_ids"].append(user_id)
+
+        
 
 def backup_files(to_back_up=common.FILES_TO_BACKUP):
     Path(backup_folder).mkdir(parents=True, exist_ok=True)
