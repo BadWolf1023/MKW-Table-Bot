@@ -347,5 +347,8 @@ def generate_table_picture(table_sorted_data, table_image_path: str):
     table_html = build_full_table_html(table_sorted_data, style="orangediscordtable", relative_path_ok=False)
     hti.output_path = "/".join(table_image_path.split("/")[:-1])
     file_name = table_image_path.split("/")[-1]
-    hti.screenshot(html_str=table_html, css_file=[os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}"), os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES['orange']}")], save_as=file_name)
+    try:
+        hti.screenshot(html_str=table_html, css_file=[os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}"), os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES['orange']}")], save_as=file_name)
+    except:
+        return False
     return True

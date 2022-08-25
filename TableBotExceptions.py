@@ -102,3 +102,10 @@ class URLLocked(WiimmfiSiteRaceCondition):
 class NoAvailableBrowsers(WiimmfiSiteFailure):
     pass
 
+
+#Exceptions that have to do with table picture failures
+class LorenziSiteFailure(Exception):
+    pass
+
+class BackupPictureGeneratorFailed(LorenziSiteFailure):
+    pass

@@ -153,8 +153,7 @@ async def download_table_picture(message, table_sorted_data: Dict, image_url: st
         if image_download_success:
             Stats.add_local_picture_count()
         else:
-            await message.channel.send("Local table picture generator failed. This shouldn't have happened, so report it as a bug in MKW Table Bot server.")
-            raise Exception("Back up table generator failed. Shouldn't happen.")
+            raise TableBotExceptions.BackupPictureGeneratorFailed("Back up table generator failed. Shouldn't happen.")
 
 
 """============== Bot Owner only commands ================"""

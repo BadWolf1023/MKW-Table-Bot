@@ -660,6 +660,9 @@ class BadWolfBot(ext_commands.Bot):
             await common.safe_send(message,"This command has been disabled.")
         except (ext_commands.CommandNotFound,TableBotExceptions.CommandNotFound):
             await common.safe_send(message,f"Not a valid command. For more help, do the command: `{server_prefix}help`")
+        except TableBotExceptions.BackupPictureGeneratorFailed as e:
+            await common.safe_send(message, "Local table picture generator failed. This shouldn't have happened, so report it as a bug in MKW Table Bot server.")
+            raise e
         except Exception as e:
             common.log_traceback(traceback, this_bot, message)
             self.lounge_submissions.clear_user_cooldown(message.author)
