@@ -2682,8 +2682,7 @@ class TablingCommands:
                     
         finally:
             if os.path.exists(table_image_path):
-                pass
-                #os.remove(table_image_path)
+                os.remove(table_image_path)
 
     @staticmethod
     async def table_text_command(message:discord.Message, this_bot:ChannelBot, args: List[str], server_prefix:str, is_lounge_server:bool):
