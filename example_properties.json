@@ -2,6 +2,5 @@
     "mode": "dev",
     "error_log_channel": 0,
     "public_api_url": "https://mkw-table-bot-api.loca.lt",
-    "api_port": 8009,
-    "wkhtmlpdf_path": "C:\Program Files\wkhtmltopdf\bin"
+    "api_port": 8009
 }
