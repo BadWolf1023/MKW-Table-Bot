@@ -145,11 +145,11 @@ def lower_args(args: List[str]) -> List[str]:
 
 async def download_table_picture(message, table_sorted_data: Dict, image_url: str, table_image_path: str):
     image_download_success = await common.download_image(image_url, table_image_path)
-    if image_download_success:
+    if False:
         Stats.add_lorenzi_picture_count()
     else:
         await message.channel.send("Could not download table picture. Using backup table generation...")
-        image_download_success = await api_data_builder.generate_table_picture(table_sorted_data, table_image_path)
+        image_download_success = api_data_builder.generate_table_picture(table_sorted_data, table_image_path)
         if image_download_success:
             Stats.add_local_picture_count()
         else:
@@ -2582,7 +2582,7 @@ class TablingCommands:
         table_image_path=temp_path+table_image
         try:
             await download_table_picture(message, table_sorted_data, image_url, table_image_path)
-            
+            return
             #did the room have *any* errors? Regardless of ignoring any type of error
             war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0
             tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs()
@@ -2684,7 +2684,8 @@ class TablingCommands:
                     
         finally:
             if os.path.exists(table_image_path):
-                os.remove(table_image_path)
+                pass
+                #os.remove(table_image_path)
 
     @staticmethod
     async def table_text_command(message:discord.Message, this_bot:ChannelBot, args: List[str], server_prefix:str, is_lounge_server:bool):

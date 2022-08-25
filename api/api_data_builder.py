@@ -1,18 +1,18 @@
-from asyncio import create_task
 from bs4 import BeautifulSoup
 import codecs
-import re
-from datetime import timedelta
-from typing import List, Union, Tuple
+from typing import Union, Tuple
 
-import UtilityFunctions    
+import UtilityFunctions
 from api import api_common
 
+from html2image import Html2Image
+hti = Html2Image(size=(1000, 1000))
+import os
 
 
 API_DATA_PATH = "api/"
-HTML_DATA_PATH = f"html/"
-CSS_DATA_PATH = f"css/"
+HTML_DATA_PATH = "html/"
+CSS_DATA_PATH = "css/"
 TEAM_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}team_score_builder.html"
 TEAM_STYLE_FILE = f"{CSS_DATA_PATH}team_score_base.css"
 FULL_TABLE_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}full_table_builder.html"
@@ -170,10 +170,14 @@ def build_full_table_html(table_data: dict, style=None, table_background_picture
         soup = BeautifulSoup(fp.read(), "html.parser")
     try:
         soup.style.string = build_table_styling("full", style, table_background_picture_url, table_background_color, table_text_color, table_font, border_color, text_size)
+        
         # Add style sheets for base css styling and custom styling if it was specified
-        soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{FULL_TABLE_STYLE_FILE}"}))
+        print(os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}"))
+        print(os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES['orange']}"))
+        soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}")}))
         if style in FULL_TABLE_STYLES:
-            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{FULL_TABLE_STYLES[style]}"}))
+            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES[style]}")}))
+
 
         player_number = 0
         for id_index, (team_tag, team_data) in enumerate(table_data["teams"].items(), 1):
@@ -329,9 +333,17 @@ def build_info_page_html(table_id: int):
         if soup is not None:
             soup.decompose()
 
+
 def get_picture_page_html():
     with codecs.open(f"{API_DATA_PATH}{TABLE_PICTURE_HTML_FILE}", "r", "utf-8") as fp:
         return str(BeautifulSoup(fp.read(), "html.parser"))
 
-def generate_table_picture(table_sorted_data, table_image_path):
+
+def generate_table_picture(table_sorted_data, table_image_path: str):
+    print(table_image_path)
     table_html = build_full_table_html(table_sorted_data, style="orange")
+    hti.output_path = "/".join(table_image_path.split("/")[:-1])
+    file_name = table_image_path.split("/")[-1]
+    
+    hti.screenshot(html_str=table_html, css_file=[os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}"), os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES['orange']}")], save_as=file_name)
+    return True

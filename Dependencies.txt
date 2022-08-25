@@ -18,3 +18,5 @@ imgkit
 
 
 JAVASCRIPTLOCALTUNNEL: npm install -g localtunnel
+WINDOWS_wkhtmltopdf: https://wkhtmltopdf.org
+Debian_Ubuntu_wkhtmltopdf: sudo apt-get install wkhtmltopdf
