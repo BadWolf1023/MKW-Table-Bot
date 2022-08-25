@@ -160,7 +160,7 @@ def team_name_score_generator(team_data) -> Tuple[str, str]:
         for team_tag, team_data in team_data["teams"].items():
             yield team_tag, str(team_data["total_score"])
 
-def build_full_table_html(table_data: dict, style=None, table_background_picture_url=None, table_background_color=None, table_text_color=None, table_font=None, border_color=None, text_size=None):
+def build_full_table_html(table_data: dict, style=None, table_background_picture_url=None, table_background_color=None, table_text_color=None, table_font=None, border_color=None, text_size=None, relative_path_ok=True):
     '''
     table_data is what is returned by ScoreKeeper.get_war_table_DCS 
     '''
@@ -171,9 +171,16 @@ def build_full_table_html(table_data: dict, style=None, table_background_picture
         soup.style.string = build_table_styling("full", style, table_background_picture_url, table_background_color, table_text_color, table_font, border_color, text_size)
         
         # Add style sheets for base css styling and custom styling if it was specified
-        soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}")}))
+        if relative_path_ok:
+            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{FULL_TABLE_STYLE_FILE}"}))
+        else:
+            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}")}))
+        
         if style in FULL_TABLE_STYLES:
-            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES[style]}")}))
+            if relative_path_ok:
+                soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{FULL_TABLE_STYLES[style]}"}))
+            else:
+                soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES[style]}")}))
 
 
         player_number = 0
@@ -337,7 +344,7 @@ def get_picture_page_html():
 
 
 def generate_table_picture(table_sorted_data, table_image_path: str):
-    table_html = build_full_table_html(table_sorted_data, style="orangediscordtable")
+    table_html = build_full_table_html(table_sorted_data, style="orangediscordtable", relative_path_ok=False)
     hti.output_path = "/".join(table_image_path.split("/")[:-1])
     file_name = table_image_path.split("/")[-1]
     hti.screenshot(html_str=table_html, css_file=[os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}"), os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES['orange']}")], save_as=file_name)
