@@ -62,9 +62,10 @@ def save_metadata():
 
 def log_command(command: str, user_id: str, slash=False):
     log_user(user_id)
-    meta["last_command_time"] = str(datetime.now())
     meta["total_commands_count"] += 1
     command = common.SLASH_TERMS_CONVERSIONS.get(command, command)
+    if command != "stats":
+        meta["last_command_time"] = str(datetime.now())
     if command == 'raw':
         meta['raw_slash_count'] = meta.get('raw_slash_count', 0) + 1
         return
