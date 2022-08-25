@@ -1,14 +1,12 @@
 from bs4 import BeautifulSoup
+import os
 import codecs
 from typing import Union, Tuple
-
 import UtilityFunctions
 from api import api_common
-
 from html2image import Html2Image
-hti = Html2Image(size=(1000, 1000))
-import os
 
+hti = Html2Image(size=(980, 580))
 
 API_DATA_PATH = "api/"
 HTML_DATA_PATH = "html/"
@@ -31,7 +29,8 @@ FULL_TABLE_STYLES = {"rainbow": f"{CSS_DATA_PATH}full_scores_rainbow.css",
                "pastel": f"{CSS_DATA_PATH}full_scores_pastel.css",
                "orange": f"{CSS_DATA_PATH}full_scores_orange.css",
                "neon": f"{CSS_DATA_PATH}full_scores_neon.css",
-               "verticalblue": f"{CSS_DATA_PATH}full_scores_vertical_blue.css"
+               "verticalblue": f"{CSS_DATA_PATH}full_scores_vertical_blue.css",
+               "orangediscordtable": f"{CSS_DATA_PATH}full_scores_orange_discord.css"
 }
 
 def build_table_styling(html_type, style, table_background_picture_url: Union[None, str], table_background_color: Union[None, str], table_text_color: Union[None, str], table_font: Union[None, str], border_color: Union[None, str], text_size: Union[None, int]) -> str:
@@ -172,8 +171,6 @@ def build_full_table_html(table_data: dict, style=None, table_background_picture
         soup.style.string = build_table_styling("full", style, table_background_picture_url, table_background_color, table_text_color, table_font, border_color, text_size)
         
         # Add style sheets for base css styling and custom styling if it was specified
-        print(os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}"))
-        print(os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES['orange']}"))
         soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}")}))
         if style in FULL_TABLE_STYLES:
             soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES[style]}")}))
@@ -340,10 +337,8 @@ def get_picture_page_html():
 
 
 def generate_table_picture(table_sorted_data, table_image_path: str):
-    print(table_image_path)
-    table_html = build_full_table_html(table_sorted_data, style="orange")
+    table_html = build_full_table_html(table_sorted_data, style="orangediscordtable")
     hti.output_path = "/".join(table_image_path.split("/")[:-1])
     file_name = table_image_path.split("/")[-1]
-    
     hti.screenshot(html_str=table_html, css_file=[os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}"), os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES['orange']}")], save_as=file_name)
     return True
