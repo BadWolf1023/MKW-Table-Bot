@@ -146,11 +146,16 @@ class Placement:
         return isinstance(other, Placement) and self.time < other.time
     def __gt__(self, other):
         return isinstance(other, Placement) and self.time > other.time
+    def __le__(self, other):
+        return isinstance(other, Placement) and self.time <= other.time
+    def __ge__(self, other):
+        return isinstance(other, Placement) and self.time >= other.time
     def __eq__(self, other):
         return isinstance(other, Placement) and self.time == other.time
+    def __ne__(self, other):
+        return isinstance(other, Placement) and self.time!=other.time
     
     def __str__(self):
-        
         to_return = f"{self.place}. {UserDataProcessing.proccessed_lounge_add(self.player.get_full_display_name(), self.player.FC)} - "
         if self.is_disconnected():
             to_return += "DISCONNECTED"
