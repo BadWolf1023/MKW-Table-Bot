@@ -210,11 +210,8 @@ class Race:
         self.region = mostCommonRegion
             
     def addPlacement(self, placement: Placement):
-        if len(self.placements) == 0:
-            self.placements.append(placement)
-        else:
-            i = self.__findPlacementIndex(placement)
-            self.placements.insert(i, placement)
+        self.placements.append(placement)
+        self.placements.sort(key=lambda p: p.time)
         
         for i in range(0, len(self.placements)):
             self.placements[i].place = i+1
