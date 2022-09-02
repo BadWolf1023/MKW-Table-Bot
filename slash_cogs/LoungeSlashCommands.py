@@ -24,7 +24,7 @@ class TableTextModal(discord.ui.Modal):
         'rt': commands.LoungeCommands.rt_mogi_update,
         'ct': commands.LoungeCommands.ct_mogi_update
     }
-    def __init__(self, bot, chan_bot, prefix, is_lounge, view):
+    def __init__(self, bot, chan_bot, prefix, is_lounge, view: 'TableTextView'):
         super().__init__(title="Table Text Input")
         self.bot = bot
         self.chan_bot = chan_bot
@@ -41,12 +41,15 @@ class TableTextModal(discord.ui.Modal):
         message.content += '\n' + self.children[0].value
         # self.view.args.append(self.children[0].value)
         # print(message.content, self.view.args)
-        response = await interaction.response.send_message("Table text submitted.")
+        await interaction.response.defer()
         try:
-            await self.update_commands[self.view.type](self.bot, self.chan_bot, message, self.view.args, self.bot.lounge_submissions)
+            await self.update_commands[self.view.type](self.bot, message, self.chan_bot, self.view.args, self.bot.lounge_submissions)
         except Exception as error:
-            await response.edit_original_message(content="An error occurred while submitting table text.")
-            await InteractionUtils.on_component_error(error, interaction, self.prefix)
+            await interaction.followup.send(content="An error occurred while submitting table text:")
+            await InteractionUtils.on_component_error(error, interaction, self.prefix, self.chan_bot)
+            return
+
+        await interaction.followup.send("Table text submitted.")
         await self.view.message.edit(view=None)
 
 

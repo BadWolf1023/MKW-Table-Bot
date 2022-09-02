@@ -209,15 +209,34 @@ class Race:
         mostCommonRegion = max(regionCount, key=lambda x: regionCount[x])
         self.region = mostCommonRegion
             
-    def addPlacement(self, placement):
-        #I'm seriously lazy, but it doesn't matter if we sort 12 times rather than inserting in the correct place - this is a small list
+    def addPlacement(self, placement: Placement):
         self.placements.append(placement)
-        self.placements.sort(key=lambda x: x.time)
-        i = 0
-        while i < len(self.placements):
+        self.placements.sort(key=lambda p: p.time)
+        
+        for i in range(0, len(self.placements)):
             self.placements[i].place = i+1
-            i += 1
+
         self.update_region()
+    
+    def __findPlacementIndex(self, placement: Placement): 
+        left = 0
+        right = len(self.placements)-1
+        mid = (right+left)//2
+
+        while right-left > 0:
+            if self.placements[mid] > placement: 
+                right = mid - 1
+            elif self.placements[mid] < placement:
+                left = mid + 1
+            else:
+                return len(self.placements)-1 - self.placements[::-1].index(placement)
+            
+            mid = (right+left)//2
+        
+        mid = max(0, min(len(self.placements)-1, mid))
+        
+        return mid+1 if placement>=self.placements[mid] else mid
+
     
     def remove_placement_by_FC(self, FC):
         for ind, placement in enumerate(self.placements):
