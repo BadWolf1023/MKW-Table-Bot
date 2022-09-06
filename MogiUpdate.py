@@ -133,7 +133,6 @@ def update_mmr_ranges():
     pass
 
 
-
 def get_tier_and_summary_channel_id(tier:str, is_rt=True):
     tier = tier.lower().replace(" ", "").replace("-", "")
     if tier in {"queuebot", "queue", "duoqueue", "triqueue", "trioqueue", "squad", "squadqueue", "sq"}:
@@ -153,9 +152,9 @@ def getTierFromChannelID(summaryChannelID:int) -> str:
                 return "RT Squad Queue"
             return "RT " + tier.capitalize()
     for tier, channelID in ct_summary_channels.items():
-        if tier == "squadqueue":
-            return "CT Squad Queue"
         if channelID == summaryChannelID:
+            if tier == "squadqueue":
+                return "CT Squad Queue"
             return "CT " + tier.capitalize()
     return "Unknown Tier"
     

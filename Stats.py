@@ -133,6 +133,7 @@ async def prune_backups():
                 await common.run_command_async(f'rm -rf {new_path}/backups')
                 path = new_path
 
+            # create_time = datetime.strptime(re.sub(r"_(\d+)$", "", folder.replace(".zip", "")),'%Y-%m-%d').date()
             create_time = datetime.strptime(folder.replace(".zip", ""),'%Y-%m-%d').date()
             delta = datetime.date(datetime.now()) - create_time
 
