@@ -41,6 +41,7 @@ body{
     border-width: 2px;
 }
 
+.header_wrapper,
 .team_wrapper,
 .team_score_wrapper,
 .team_name_wrapper,
@@ -49,6 +50,6 @@ body{
 .player_total_wrapper,
 .player_wrapper 
 {
-        border-color: white;
+    border-color: white;
 }
 

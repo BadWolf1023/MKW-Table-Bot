@@ -7,6 +7,9 @@ body{
     box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
     background-color: #1932c4;
     border-radius: 10px;
+}
+
+#table_scores {
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: auto; /* override base template */
     
@@ -16,6 +19,10 @@ body{
     grid-auto-flow: row;
     grid-auto-rows: minmax(0, 1fr);
 
+}
+
+.header_wrapper {
+    border-bottom: 4px solid white;
 }
 
 .team_score, .team_name{

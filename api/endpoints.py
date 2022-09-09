@@ -34,7 +34,7 @@ def initialize(app_: FastAPI):
         text_size: Optional[int] = Query(None),
         show_team_names: Optional[bool] = Query(True),
         sort_teams: Optional[bool] = Query(True),
-
+        show_races_played: Optional[bool] = Query(True),
     ):
         table_bot = cb_interface.get_table_bot(table_id)
         if table_bot is None:
@@ -48,25 +48,27 @@ def initialize(app_: FastAPI):
             font, 
             border_color, 
             text_size,
-            include_team_names = show_team_names
+            include_team_names=show_team_names,
+            show_races_played=show_races_played
         )
 
     @app.get(FULL_TABLE_HTML_ENDPOINT + "{table_id}", response_class=HTMLResponse)
     def get_full_table_html(
         table_id: int,
+        show_races_played: Optional[bool] = Query(True),
         style: Optional[str] = Query(None, max_length=15),
         background_picture: Optional[str] = Query(None),
         background_color: Optional[str] = Query(None),
         text_color: Optional[str] = Query(None),
         font: Optional[str] = Query(None),
         border_color: Optional[str] = Query(None),
-        text_size: Optional[int] = Query(None)
+        text_size: Optional[int] = Query(None),
     ):
         table_bot = cb_interface.get_table_bot(table_id)
         if table_bot is None:
             raise_no_table_found()
         return api_data_builder.build_full_table_html(
-            cb_interface.get_team_score_data(table_bot), style, background_picture, background_color, text_color, font, border_color, text_size
+            cb_interface.get_team_score_data(table_bot), show_races_played, style, background_picture, background_color, text_color, font, border_color, text_size
         )
 
     @app.get(TEAM_SCORES_JSON_ENDPOINT + "{table_id}")
