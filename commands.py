@@ -4,9 +4,7 @@ Created on Jun 26, 2021
 @author: willg
 '''
 
-#Bot internal imports - stuff I coded
-import asyncio
-import random
+#Bot internal imports - stuff we coded
 import ComponentPaginator
 from Placement import Placement
 import WiimmfiSiteFunctions
@@ -32,12 +30,18 @@ from data_tracking import DataTracker
 import SmartTypes
 import TimerDebuggers
 import api.api_common as api_common
+import api.api_channelbot_interface as cb_interface
+from api import api_data_builder
+import URLShortener
+import Stats
 
 #Other library imports, other people codes
+import asyncio
+import random
 import math
 import time
 from tabulate import tabulate
-from typing import List, Set, Union, Tuple
+from typing import Dict, List, Set, Union, Tuple
 from collections.abc import Callable
 import urllib
 import copy
@@ -49,8 +53,6 @@ import itertools
 import discord
 import os
 from datetime import datetime
-import URLShortener
-import Stats
 import re
 import traceback
 
@@ -140,6 +142,19 @@ def ensure_table_loaded_check(channel_bot: TableBot.ChannelBot, server_prefix: s
 def lower_args(args: List[str]) -> List[str]:
     '''Takes a list of strings and returns a list with those strings in lower case form'''
     return [arg.lower() for arg in args]
+
+async def download_table_picture(message, table_sorted_data: Dict, image_url: str, table_image_path: str):
+    image_download_success = await common.download_image(image_url, table_image_path)
+    if image_download_success:
+        Stats.add_lorenzi_picture_count()
+    else:
+        await message.channel.send("Could not download table picture. Using backup table generation...")
+        image_download_success = api_data_builder.generate_table_picture(table_sorted_data, table_image_path)
+        if image_download_success:
+            Stats.add_local_picture_count()
+        else:
+            raise TableBotExceptions.BackupPictureGeneratorFailed("Back up table generator failed. Shouldn't happen.")
+
 
 """============== Bot Owner only commands ================"""
 #TODO: Refactor these - target the waterfall-like if-statements
@@ -1248,95 +1263,92 @@ class LoungeCommands:
             url_table_text = urllib.parse.quote(newTableText)
             image_url = common.base_url_lorenzi + url_table_text
             table_image_path = str(message.id) + ".png"
-            image_download_success = await common.download_image(image_url, table_image_path)
             try:
-                if not image_download_success:
-                    await message.channel.send("Could not get image for table.")
-                else:
+                await download_table_picture(message, table_sorted_data, image_url, table_image_path)
 
-                    if using_table_bot_table:
-                        war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0
-                        tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs()
-                        header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
-                        footer_combine_success = True
+                if using_table_bot_table:
+                    war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0
+                    tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs()
+                    header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
+                    footer_combine_success = True
 
-                        if header_combine_success and this_bot.getWar().displayMiis:
-                            footer_combine_success = ImageCombine.add_miis_to_table(this_bot, table_sorted_data, table_image_path=table_image_path, out_image_path=table_image_path)
-                        if not header_combine_success or not footer_combine_success:
-                            await common.safe_delete(delete_me)
-                            await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")
-                            return
+                    if header_combine_success and this_bot.getWar().displayMiis:
+                        footer_combine_success = ImageCombine.add_miis_to_table(this_bot, table_sorted_data, table_image_path=table_image_path, out_image_path=table_image_path)
+                    if not header_combine_success or not footer_combine_success:
+                        await common.safe_delete(delete_me)
+                        await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")
+                        return
 
-                    updater_channel = client.get_channel(updater_channel_id)
-                    preview_link += urllib.parse.quote(json_data)
-                    updater_link += urllib.parse.quote(json_data)
+                updater_channel = client.get_channel(updater_channel_id)
+                preview_link += urllib.parse.quote(json_data)
+                updater_link += urllib.parse.quote(json_data)
 
 
-                    embed = discord.Embed(
-                                        title = "",
-                                        description=f"[Click to preview this update]({updater_link})",
-                                        colour = discord.Colour.dark_red()
-                                    )
-                    file = discord.File(table_image_path)
-                    lounge_server_updates.add_counter()
-                    id_to_submit = lounge_server_updates.get_counter()
-                    embed.add_field(name='Submission ID', value=str(id_to_submit))
-                    embed.add_field(name="Tier", value=tier_number)
-                    embed.add_field(name="Races Played", value=races_played)
-                    summary_channel = client.get_channel(summary_channel_id)
-                    embed.add_field(name="Approving to", value=(summary_channel.mention if summary_channel is not None else "Can't find channel"))
-                    embed.add_field(name='Submitted from', value=message.channel.mention)
-                    embed.add_field(name='Submitted by', value=message.author.mention)
-                    embed.add_field(name='Discord ID', value=str(message.author.id))
+                embed = discord.Embed(
+                                    title = "",
+                                    description=f"[Click to preview this update]({updater_link})",
+                                    colour = discord.Colour.dark_red()
+                                )
+                file = discord.File(table_image_path)
+                lounge_server_updates.add_counter()
+                id_to_submit = lounge_server_updates.get_counter()
+                embed.add_field(name='Submission ID', value=str(id_to_submit))
+                embed.add_field(name="Tier", value=tier_number)
+                embed.add_field(name="Races Played", value=races_played)
+                summary_channel = client.get_channel(summary_channel_id)
+                embed.add_field(name="Approving to", value=(summary_channel.mention if summary_channel is not None else "Can't find channel"))
+                embed.add_field(name='Submitted from', value=message.channel.mention)
+                embed.add_field(name='Submitted by', value=message.author.mention)
+                embed.add_field(name='Discord ID', value=str(message.author.id))
 
-                    shortened_admin_panel_link = "No Link"
-                    try:
-                        admin_link_tiny_url = await URLShortener.tinyurl_shorten_url(updater_link)
-                        shortened_admin_panel_link = f"[Preview]({admin_link_tiny_url})"
-                    except:
-                        pass
+                shortened_admin_panel_link = "No Link"
+                try:
+                    admin_link_tiny_url = await URLShortener.tinyurl_shorten_url(updater_link)
+                    shortened_admin_panel_link = f"[Preview]({admin_link_tiny_url})"
+                except:
+                    pass
 
-                    embed.add_field(name='Short Preview Link:', value=shortened_admin_panel_link)
+                embed.add_field(name='Short Preview Link:', value=shortened_admin_panel_link)
 
-                    embed.set_image(url="attachment://" + table_image_path)
-                    embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
+                embed.set_image(url="attachment://" + table_image_path)
+                embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
 
-                    sent_message = await updater_channel.send(file=file, embed=embed)
-                    lounge_server_updates.add_report(id_to_submit, sent_message, summary_channel_id, json_data)
+                sent_message = await updater_channel.send(file=file, embed=embed)
+                lounge_server_updates.add_report(id_to_submit, sent_message, summary_channel_id, json_data)
 
-                    other_matching_submission_id = lounge_server_updates.submission_id_of_last_matching_json(id_to_submit)
-                    if other_matching_submission_id is not None:
-                        await updater_channel.send(f"**Warning:** This submission ({id_to_submit}) matches a previous submission, which has the id {other_matching_submission_id}. It is extremely unlikely this is by chance. Investigate before approving/denying.")
-
-
-                    file = discord.File(table_image_path)
-                    embed = discord.Embed(
-                                        title=f"Successfully submitted to {type_text} Reporters and {type_text} Updaters",
-                                        description=f"[Click to preview this update]({preview_link})",
-                                        colour=discord.Colour.dark_red()
-                                    )
-                    embed.add_field(name='Submission ID', value=str(id_to_submit))
-                    embed.add_field(name='Races Played', value=str(races_played))
+                other_matching_submission_id = lounge_server_updates.submission_id_of_last_matching_json(id_to_submit)
+                if other_matching_submission_id is not None:
+                    await updater_channel.send(f"**Warning:** This submission ({id_to_submit}) matches a previous submission, which has the id {other_matching_submission_id}. It is extremely unlikely this is by chance. Investigate before approving/denying.")
 
 
-                    shortened_preview_link = "No Link"
-                    try:
-                        if updater_link == preview_link:
-                            shortened_preview_link = shortened_admin_panel_link
-                        else:
-                            preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
-                            shortened_preview_link = f"[Preview]({preview_link_tiny_url})"
-                    except:
-                        pass
+                file = discord.File(table_image_path)
+                embed = discord.Embed(
+                                    title=f"Successfully submitted to {type_text} Reporters and {type_text} Updaters",
+                                    description=f"[Click to preview this update]({preview_link})",
+                                    colour=discord.Colour.dark_red()
+                                )
+                embed.add_field(name='Submission ID', value=str(id_to_submit))
+                embed.add_field(name='Races Played', value=str(races_played))
 
-                    embed.add_field(name='Short Preview Link:', value=shortened_preview_link)
 
-                    embed.set_image(url="attachment://" + table_image_path)
-                    embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
-                    embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
+                shortened_preview_link = "No Link"
+                try:
+                    if updater_link == preview_link:
+                        shortened_preview_link = shortened_admin_panel_link
+                    else:
+                        preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
+                        shortened_preview_link = f"[Preview]({preview_link_tiny_url})"
+                except:
+                    pass
 
-                    this_bot.has_been_lounge_submitted = True
-                    await message.channel.send(file=file, embed=embed)
+                embed.add_field(name='Short Preview Link:', value=shortened_preview_link)
+
+                embed.set_image(url="attachment://" + table_image_path)
+                embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
+                embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
+
+                this_bot.has_been_lounge_submitted = True
+                await message.channel.send(file=file, embed=embed)
             finally:
                 if os.path.exists(table_image_path):
                     os.remove(table_image_path)
@@ -2568,10 +2580,7 @@ class TablingCommands:
         table_image = f"{message.id}_picture.png"
         table_image_path=temp_path+table_image
         try:
-            image_download_success = await common.download_image(image_url, table_image_path)
-            if not image_download_success:
-                await message.channel.send("Could not download table picture.")
-                return
+            await download_table_picture(message, table_sorted_data, image_url, table_image_path)
             #did the room have *any* errors? Regardless of ignoring any type of error
             war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0
             tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs()

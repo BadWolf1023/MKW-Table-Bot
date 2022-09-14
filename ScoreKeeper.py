@@ -124,6 +124,8 @@ def resizeGPsInto(GPs, new_size_GP):
 def create_table_dict():
     return {
         "title_str": "",
+        "races_played": 0,
+        "format": "",
         "teams": {}
     }
 
@@ -167,6 +169,9 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, sort_teams=True, use_loun
     
     FC_table_dict = {}
     table_dict = create_table_dict()
+    table_dict["races_played"] = len(room.races)
+    _format = war.formatting
+    table_dict["format"] = _format.upper() if _format=="ffa" else _format
     
     # for fc, display_name in fcs_players.items():
     for player in players:

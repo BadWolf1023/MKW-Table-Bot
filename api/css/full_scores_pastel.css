@@ -2,7 +2,9 @@ body {
     font-family: cursive;
 }
 
-
+.format,
+.races_played,
+.date,
 .score,
 .player_total,
 .player_name,
@@ -12,6 +14,7 @@ body {
 
 }
 
+.header_wrapper,
 .team_wrapper,
 .team_name_wrapper,
 .team_players_wrapper,

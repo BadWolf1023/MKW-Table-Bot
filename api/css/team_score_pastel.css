@@ -2,10 +2,11 @@ body{
     font-family: cursive;
 }
 
-.team_name_box, .score_box{
+.header_wrapper, .team_name_box, .score_box{
     border: none;
 }
 
+.header,
 .team_name,
 .team_score {
     text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);

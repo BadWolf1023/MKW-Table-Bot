@@ -1,18 +1,17 @@
-from asyncio import create_task
+import datetime
 from bs4 import BeautifulSoup
+import os
 import codecs
-import re
-from datetime import timedelta
-from typing import List, Union, Tuple
-
-import UtilityFunctions    
+from typing import Union, Tuple
+import UtilityFunctions
 from api import api_common
+from html2image import Html2Image
 
-
+hti = Html2Image(size=(980, 580))
 
 API_DATA_PATH = "api/"
-HTML_DATA_PATH = f"html/"
-CSS_DATA_PATH = f"css/"
+HTML_DATA_PATH = "html/"
+CSS_DATA_PATH = "css/"
 TEAM_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}team_score_builder.html"
 TEAM_STYLE_FILE = f"{CSS_DATA_PATH}team_score_base.css"
 FULL_TABLE_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}full_table_builder.html"
@@ -31,11 +30,21 @@ FULL_TABLE_STYLES = {"rainbow": f"{CSS_DATA_PATH}full_scores_rainbow.css",
                "pastel": f"{CSS_DATA_PATH}full_scores_pastel.css",
                "orange": f"{CSS_DATA_PATH}full_scores_orange.css",
                "neon": f"{CSS_DATA_PATH}full_scores_neon.css",
-               "verticalblue": f"{CSS_DATA_PATH}full_scores_vertical_blue.css"
+               "verticalblue": f"{CSS_DATA_PATH}full_scores_vertical_blue.css",
+               "orangediscordtable": f"{CSS_DATA_PATH}full_scores_orange_discord.css"
 }
 
-def build_table_styling(html_type, style, table_background_picture_url: Union[None, str], table_background_color: Union[None, str], table_text_color: Union[None, str], table_font: Union[None, str], border_color: Union[None, str], text_size: Union[None, int]) -> str:
+def build_table_styling(html_type, style, include_races_played: bool, table_background_picture_url: Union[None, str], table_background_color: Union[None, str], table_text_color: Union[None, str], table_font: Union[None, str], border_color: Union[None, str], text_size: Union[None, int]) -> str:
     styling = ""
+
+    if include_races_played:
+        styling_segment = """
+        #table_scores {
+            height: 92% !important;
+        }
+        """
+        styling += styling_segment + "\n\n"
+
     if table_background_picture_url is not None:
         styling_segment = """#tablebot_table {
     background-image: url(%s) !important;""" % table_background_picture_url
@@ -161,7 +170,7 @@ def team_name_score_generator(team_data) -> Tuple[str, str]:
         for team_tag, team_data in team_data["teams"].items():
             yield team_tag, str(team_data["total_score"])
 
-def build_full_table_html(table_data: dict, style=None, table_background_picture_url=None, table_background_color=None, table_text_color=None, table_font=None, border_color=None, text_size=None):
+def build_full_table_html(table_data: dict, include_races_played=True, style=None, table_background_picture_url=None, table_background_color=None, table_text_color=None, table_font=None, border_color=None, text_size=None, relative_path_ok=True):
     '''
     table_data is what is returned by ScoreKeeper.get_war_table_DCS 
     '''
@@ -169,11 +178,48 @@ def build_full_table_html(table_data: dict, style=None, table_background_picture
     with codecs.open(f"{API_DATA_PATH}{FULL_TABLE_HTML_BUILDER_FILE}", "r", "utf-8") as fp:
         soup = BeautifulSoup(fp.read(), "html.parser")
     try:
-        soup.style.string = build_table_styling("full", style, table_background_picture_url, table_background_color, table_text_color, table_font, border_color, text_size)
+        soup.style.string = build_table_styling("full", style, include_races_played, table_background_picture_url, table_background_color, table_text_color, table_font, border_color, text_size)
+        
         # Add style sheets for base css styling and custom styling if it was specified
-        soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{FULL_TABLE_STYLE_FILE}"}))
+        if relative_path_ok:
+            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{FULL_TABLE_STYLE_FILE}"}))
+        else:
+            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}")}))
+        
         if style in FULL_TABLE_STYLES:
-            soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{FULL_TABLE_STYLES[style]}"}))
+            if relative_path_ok:
+                soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{FULL_TABLE_STYLES[style]}"}))
+            else:
+                soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES[style]}")}))
+
+
+        if include_races_played:
+            header_wrapper = soup.new_tag("div", attrs={"class": "header_wrapper"})
+            header_div = soup.new_tag("div", attrs={'class': "header"})
+            header_wrapper.append(header_div)
+
+            format_div = soup.new_tag("div", attrs={"class": "format"})
+            format_div.string = table_data['format']
+
+            races_played_div = soup.new_tag("div", attrs={"class": "races_played"})
+            races_played_div.string = f'{table_data["races_played"]} races'
+
+            sep = soup.new_tag("div", attrs={'class': "middledot"})
+            sep.string = '\u2022'
+
+            sep2 = soup.new_tag("div", attrs={'class': "middledot"})
+            sep2.string = '\u2022'
+
+            date_div = soup.new_tag("div", attrs={'class': "date"})
+            date_div.string = str(datetime.date.today())
+
+            header_div.append(format_div)
+            header_div.append(sep)
+            header_div.append(races_played_div)
+            header_div.append(sep2)
+            header_div.append(date_div)
+
+            soup.find(id="tablebot_table").insert(0, header_wrapper)
 
         player_number = 0
         for id_index, (team_tag, team_data) in enumerate(table_data["teams"].items(), 1):
@@ -225,7 +271,7 @@ def build_full_table_html(table_data: dict, style=None, table_background_picture
             team_score_wrapper.append(team_score_div)
             team_wrapper.append(team_score_wrapper)
 
-            soup.find(id="tablebot_table").append(team_wrapper)
+            soup.find(id="table_scores").append(team_wrapper)
         return str(soup)
     finally:
         if soup is not None:
@@ -236,7 +282,7 @@ def style_equal_width(html_tag_attrs, num_boxes):
 def style_equal_height(html_tag_attrs, num_boxes):
     html_tag_attrs.update({"style": f"height:{(1/num_boxes):.2%};"})
 
-def build_team_html(table_data: dict, style=None, table_background_picture_url=None, table_background_color=None, table_text_color=None, table_font=None, border_color=None, text_size=None, include_team_names=True):
+def build_team_html(table_data: dict, style=None, table_background_picture_url=None, table_background_color=None, table_text_color=None, table_font=None, border_color=None, text_size=None, include_team_names=True, show_races_played=False):
     '''
     table_data is what is returned by ScoreKeeper.get_war_table_DCS 
     '''    
@@ -245,13 +291,39 @@ def build_team_html(table_data: dict, style=None, table_background_picture_url=N
     with codecs.open(f"{API_DATA_PATH}{TEAM_HTML_BUILDER_FILE}", "r", "utf-8") as fp:
         soup = BeautifulSoup(fp.read(), "html.parser")
     try:
-        soup.style.string = build_table_styling("team", style, table_background_picture_url, table_background_color, table_text_color, table_font, border_color, text_size)
+        soup.style.string = build_table_styling("team", style, show_races_played, table_background_picture_url, table_background_color, table_text_color, table_font, border_color, text_size)
         # Add style sheets for base css styling and custom styling if it was specified
         soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{TEAM_STYLE_FILE}"}))
         if style in TEAM_STYLES:
             soup.head.append(soup.new_tag("link", attrs={"rel": "stylesheet", "href": f"/{TEAM_STYLES[style]}"}))
             if style == "neon" and table_text_color is not None:
                 soup.head.script.string += build_neon_text_js_injection(table_text_color)
+        
+        if show_races_played:
+            header_wrapper = soup.new_tag("div", attrs={"class": "header_wrapper"})
+            header_div = soup.new_tag("div", attrs={'class': "header"})
+            header_wrapper.append(header_div)
+
+            format_div = soup.new_tag("div", attrs={"class": "format"})
+            format_div.string = table_data['format']
+
+            races_played_div = soup.new_tag("div", attrs={"class": "races_played"})
+            races_played_div.string = f'{table_data["races_played"]} races'
+
+            sep = soup.new_tag("div", attrs={'class': "middledot"})
+            sep.string = '\u2022'
+
+            # sep2 = soup.new_tag("div", attrs={'class': "middledot"})
+            # sep2.string = '\u2022'
+
+            # date_div = soup.new_tag("div", attrs={'class': "date"})
+            # date_div.string = str(datetime.date.today())
+
+            header_div.append(format_div)
+            header_div.append(sep)
+            header_div.append(races_played_div)
+
+            soup.find(id="tablebot_table").insert(0, header_wrapper)
         
         for id_index, (team_tag, score) in enumerate(team_name_score_generator(table_data), 1):
             if include_team_names:
@@ -329,6 +401,18 @@ def build_info_page_html(table_id: int):
         if soup is not None:
             soup.decompose()
 
+
 def get_picture_page_html():
     with codecs.open(f"{API_DATA_PATH}{TABLE_PICTURE_HTML_FILE}", "r", "utf-8") as fp:
         return str(BeautifulSoup(fp.read(), "html.parser"))
+
+
+def generate_table_picture(table_sorted_data, table_image_path: str):
+    table_html = build_full_table_html(table_sorted_data, style="orangediscordtable", relative_path_ok=False)
+    hti.output_path = "/".join(table_image_path.split("/")[:-1])
+    file_name = table_image_path.split("/")[-1]
+    try:
+        hti.screenshot(html_str=table_html, css_file=[os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}"), os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES['orange']}")], save_as=file_name)
+    except:
+        return False
+    return True
