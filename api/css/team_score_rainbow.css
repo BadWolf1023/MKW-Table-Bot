@@ -2,13 +2,12 @@ body{
     font-family: fantasy;
 }
 
-.header,
 .team_name,
 .team_score {
     text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
 }
 
-.header_wrapper, .team_name_box, .score_box{
+.team_name_box, .score_box{
     border: none;
 }
 .team_name_box:nth-child(7n+1),

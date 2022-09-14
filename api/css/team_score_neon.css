@@ -18,16 +18,12 @@ body{
 
 }
 
-.header_wrapper, .team_name_box, .score_box, .team_name_box:first-child, .score_box:first-child{
+.team_name_box, .score_box, .team_name_box:first-child, .score_box:first-child{
     overflow-y: visible;
     border-style: double;
     overflow-x: hidden;
     border-width: 8px;
     border-color: rgba(230, 0, 115, 0.65);
-}
-
-.header {
-    font-size: 30px;
 }
 
 
@@ -65,7 +61,7 @@ body{
 }
 
  /* text glow */
-.header_wrapper, .team_name, .team_score{
+.team_name, .team_score{
     color: #fff;
     -webkit-animation: glow 1.5s cubic-bezier(.67, -0.37, .77, -0.39) infinite alternate;
     -moz-animation: glow 1.5s ease-out infinite alternate;

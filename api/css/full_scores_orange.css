@@ -8,9 +8,6 @@ body {
     border-radius: 10px;
 }
 
-.races_played,
-.format,
-.date,
 .score,
 .player_total,
 .player_name,
@@ -19,7 +16,6 @@ body {
     text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
 }
 
-.header_wrapper,
 .team_wrapper,
 .team_score_wrapper,
 .team_name_wrapper,

@@ -403,6 +403,7 @@ class BadWolfBot(ext_commands.Bot):
         if common.is_prod:
             Stats.backup_files()
             await Stats.prune_backups()
+            Stats.dump_to_stats_file()
         
         print(f"{str(datetime.now())}: Finished saving data")
     
@@ -498,7 +499,7 @@ class BadWolfBot(ext_commands.Bot):
             command_level = new_level
         
         full_command_name = " ".join(full_command_name)
-        Stats.log_command(full_command_name, message.author.id, slash=True)
+        Stats.log_command(full_command_name, slash=True)
         await self.process_application_commands(interaction)
     
     async def on_connect(self):
@@ -660,9 +661,6 @@ class BadWolfBot(ext_commands.Bot):
             await common.safe_send(message,"This command has been disabled.")
         except (ext_commands.CommandNotFound,TableBotExceptions.CommandNotFound):
             await common.safe_send(message,f"Not a valid command. For more help, do the command: `{server_prefix}help`")
-        except TableBotExceptions.BackupPictureGeneratorFailed as e:
-            await common.safe_send(message, "Local table picture generator failed. This shouldn't have happened, so report it as a bug in MKW Table Bot server.")
-            raise e
         except Exception as e:
             common.log_traceback(traceback, this_bot, message)
             self.lounge_submissions.clear_user_cooldown(message.author)
@@ -675,7 +673,7 @@ class BadWolfBot(ext_commands.Bot):
     async def process_message_commands(self, message, args, this_bot, server_prefix, is_lounge_server, from_slash=False):
         main_command = args[0].lower()
         if not from_slash:
-            Stats.log_command(main_command, message.author.id, slash=from_slash)
+            Stats.log_command(main_command, slash=from_slash)
 
         #Core commands
         if main_command in RESET_TERMS:
