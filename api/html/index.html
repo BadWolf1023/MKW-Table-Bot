@@ -1,0 +1,49 @@
+<html>
+
+<head>
+
+    <script type="text/JavaScript">
+         <!--
+            function accessAPI() {
+               let tableId = document.getElementById("table-id").value;
+               window.location = window.location + "info/" + tableId;
+            }
+         //-->
+    </script>
+    <link rel="stylesheet" href="css/index.css">
+    <style>
+        
+    </style>
+
+</head>
+
+<body>
+    <div class="wrapper">
+        <h1>MKW Table Bot API</h1>
+        <div class="content">
+            <h2>Using the API</h2>
+            <ol class="list">
+                <li class="list-item">
+                    Begin a table (<code>/sw</code>)
+                </li>
+                <li class="list-item">
+                    Get the Table ID (displayed when table is started, or you can do <code>/tableid</code>)
+                </li>
+                <li>
+                    Choose an endpoint and get your desired table, picture, or JSON!
+                </li>
+                <li class="list-item">
+                    <strong>For streamers:</strong> Configure an OBS Browser Source that points to the desired endpoint.
+                </li>
+            </ol>
+            <h2>Try it out!</h2>
+            <form onsubmit="return false;">
+                <label for="table-id">Table ID:</label> 
+                <input type="text" id="table-id" name="table-id">
+                <input type="submit" value="Go" onclick="accessAPI()"> 
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

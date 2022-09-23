@@ -223,6 +223,14 @@ def add_lorenzi_picture_count():
 def add_local_picture_count():
     meta["local_tables_picture_count"] += 1
 
+def get_stats_json():
+    return {
+        "users": len(meta["user_ids"]),
+        "servers": len(common.client.guilds),
+        "pictures": meta["lorenzi_tables_picture_count"] + meta["local_tables_picture_count"],
+        "commands": meta["total_commands_count"]
+    }
+
 def stats(num_bots:int, client) -> str: 
     '''Returns a nicely printed string of fun Table Bot statistics
     '''  
