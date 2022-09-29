@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import os
 import codecs
 from typing import Union, Tuple
+import re
+
 import UtilityFunctions
 from api import api_common
 from html2image import Html2Image
@@ -12,6 +14,9 @@ hti = Html2Image(size=(980, 580))
 API_DATA_PATH = "api/"
 HTML_DATA_PATH = "html/"
 CSS_DATA_PATH = "css/"
+
+HOME_BUILDER_FILE = f"{HTML_DATA_PATH}index.html"
+HOME_STYLE_FILE = f"{CSS_DATA_PATH}index.css"
 TEAM_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}team_score_builder.html"
 TEAM_STYLE_FILE = f"{CSS_DATA_PATH}team_score_base.css"
 FULL_TABLE_HTML_BUILDER_FILE = f"{HTML_DATA_PATH}full_table_builder.html"
@@ -169,6 +174,11 @@ def team_name_score_generator(team_data) -> Tuple[str, str]:
     else:
         for team_tag, team_data in team_data["teams"].items():
             yield team_tag, str(team_data["total_score"])
+
+def build_home_html():
+    soup = None
+    with codecs.open(f"{API_DATA_PATH}{HOME_BUILDER_FILE}", "r", "utf-8") as fp:
+        return fp.read()
 
 def build_full_table_html(table_data: dict, include_races_played=True, style=None, table_background_picture_url=None, table_background_color=None, table_text_color=None, table_font=None, border_color=None, text_size=None, relative_path_ok=True):
     '''
@@ -365,11 +375,34 @@ def build_info_page_html(table_id: int):
         soup.body.append(soup.new_tag('br'))
         soup.body.append(soup.new_tag('br'))
 
-        team_header_tag = soup.new_tag('h3')
+        table_id_tag = soup.new_tag('h3', attrs={'style': 'margin-bottom: 50px'})
+        table_id_tag.string = f"TABLE_ID = {table_id}"
+        soup.body.append(table_id_tag)
+
+        header_tag = soup.new_tag('h3', attrs={'style': 'margin-bottom: 0px;'})
+        header_tag.string = f"Available endpoints:"
+        soup.body.append(header_tag)
+
+        list_tag = soup.new_tag('ul', attrs={"style": 'margin-bottom: 50px; margin-top: 5px'})
+        soup.body.append(list_tag)
+
+
+        endpoint_regex = r"([A-Z]+_)*ENDPOINT"
+        for name in dir(api_common):
+            if re.fullmatch(endpoint_regex, name):
+                link = api_common.__getattribute__(name) + '{TABLE_ID}'
+                if "api/" in link and 'stats' not in link:
+                    code_tag = soup.new_tag('code')
+                    code_tag.string = link
+                    li_tag = soup.new_tag('li')
+                    li_tag.append(code_tag)
+                    list_tag.append(li_tag)
+
+        team_header_tag = soup.new_tag('h3', attrs={'style': 'margin-bottom: 0px'})
         team_header_tag.string = f"Get team score HTML for an ongoing table with TableBot:"
         soup.body.append(team_header_tag)
 
-        list_tag = soup.new_tag('ul')
+        list_tag = soup.new_tag('ul', attrs={'style': 'margin-top: 5px'})
         soup.body.append(list_tag)
 
         for style in TEAM_STYLES:
@@ -377,7 +410,7 @@ def build_info_page_html(table_id: int):
             url_tag.string = f"Scores with tags in {style} style"
             li_tag = soup.new_tag('li')
             li_tag.append(url_tag)
-            soup.body.ul.append(li_tag)
+            list_tag.append(li_tag)
             #soup.body.append(soup.new_tag('br'))
         
         soup.body.append(soup.new_tag('br'))
@@ -395,7 +428,8 @@ def build_info_page_html(table_id: int):
         em_tag.string = """ as a browser source, then applying your own CSS in the "Custom CSS" field."""
         li_tag.append(em_tag)
 
-        soup.body.ul.append(li_tag)
+        list_tag.append(li_tag)
+
         return str(soup)
     finally:
         if soup is not None:
