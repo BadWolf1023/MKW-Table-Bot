@@ -144,8 +144,7 @@ def lower_args(args: List[str]) -> List[str]:
     return [arg.lower() for arg in args]
 
 async def download_table_picture(message, table_sorted_data: Dict, image_url: str, table_image_path: str):
-    # image_download_success = await common.download_image(image_url, table_image_path)
-    image_download_success = False
+    image_download_success = await common.download_image(image_url, table_image_path)
     if image_download_success:
         Stats.add_lorenzi_picture_count()
     else:
@@ -2577,7 +2576,7 @@ class TablingCommands:
         display_url_table_text = urllib.parse.quote(table_text)
         true_url_table_text = urllib.parse.quote(table_text_with_style_and_graph)
         image_url = common.base_url_lorenzi + true_url_table_text
-        temp_path = './temp/'
+        temp_path = 'temp/'
         table_image = f"{message.id}_picture.png"
         table_image_path=temp_path+table_image
         try:
