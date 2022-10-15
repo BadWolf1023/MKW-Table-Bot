@@ -417,9 +417,19 @@ for k,v in CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS.items():
 
 TABLE_BOT_CHANNEL_TIER_MAPPINGS = {"rt": RT_TABLE_BOT_CHANNEL_TIER_MAPPINGS, "ct": CT_TABLE_BOT_CHANNEL_TIER_MAPPINGS}
 
+def is_ct(races):
+    c = 0
+    for r in races:
+        if c >= len(races) / 2:
+            return True
+        if r.is_ct:
+            c+=1
+            
+    return c >= len(races) / 2
+
 def get_channel_type_and_tier(channel_id, races):
     if client.get_channel(channel_id).category_id == SQUAD_QUEUE_CATEGORY_ID:
-        if races[0].is_ct:
+        if is_ct(races):
             return "ct", "SQ"
         else:
             return "rt", "SQ"

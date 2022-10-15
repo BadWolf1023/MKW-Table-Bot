@@ -277,7 +277,6 @@ def generate_footer_section_for_team(miis: Dict[str, Mii.Mii], team_tag="No Tag"
         
     canvas_for_text.text((team_tag_start_location_x-1,team_tag_start_location_y), team_tag, TEAM_TAG_TEXT_COLOR, font=team_tag_font)
 
-
     blank_footer_background_array = np.array(pil_image)
     if add_left_border:
         left_border = create_numpy_image_with_color(dimensions=(len(blank_footer_background_array), TEAM_LEFT_BORDER_WIDTH), color=TEAM_LEFT_BORDER_COLOR)
@@ -291,7 +290,6 @@ def add_autotable_header(errors=True, table_image_path="TEST_TABLE.png", autogen
     autogenerate_extend = autogenerate_header_cv2[0][0]
     table_cv2 = cv2.imread(table_image_path)
     
-    
     middle_header_cv2 = None
     if edits:
         middle_header_cv2 = cv2.imread(edits_image_path)
@@ -300,8 +298,6 @@ def add_autotable_header(errors=True, table_image_path="TEST_TABLE.png", autogen
     else:
         middle_header_cv2 = cv2.imread(no_errors_image_path)
     middle_header_extend = middle_header_cv2[0][0]
-    
-    
     
     autogenerate_header_height = len(autogenerate_header_cv2)
     autogenerate_header_width = len(autogenerate_header_cv2[0])
@@ -321,8 +317,6 @@ def add_autotable_header(errors=True, table_image_path="TEST_TABLE.png", autogen
         autogenerate_header_cv2 = np.concatenate((left_data, autogenerate_header_cv2, right_data), axis=1)
     elif add_left_autogenerate < 0 or add_right_autogenerate < 0:
         return False
-    
-    
     
     if add_left_middle > 0 and add_right_middle > 0:
         left_data = np.full((middle_header_height, add_left_middle, 3), middle_header_extend)

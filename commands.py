@@ -144,11 +144,12 @@ def lower_args(args: List[str]) -> List[str]:
     return [arg.lower() for arg in args]
 
 async def download_table_picture(message, table_sorted_data: Dict, image_url: str, table_image_path: str):
-    image_download_success = await common.download_image(image_url, table_image_path)
+    # image_download_success = await common.download_image(image_url, table_image_path)
+    image_download_success = False
     if image_download_success:
         Stats.add_lorenzi_picture_count()
     else:
-        await message.channel.send("Could not download table picture. Using backup table generation...")
+        await message.channel.send("Could not download table picture. Using backup table picture generation.")
         image_download_success = api_data_builder.generate_table_picture(table_sorted_data, table_image_path)
         if image_download_success:
             Stats.add_local_picture_count()

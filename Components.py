@@ -202,7 +202,7 @@ class PictureButton(discord.ui.Button['PictureView']):
                                                            requester=interaction.user.display_name)
 
 class SubmitButton(discord.ui.Button['PictureView']):
-    def __init__(self,channel_bot: TableBot.ChannelBot, rt_ct:str, tier:str ,num_races:int):
+    def __init__(self,channel_bot: TableBot.ChannelBot, rt_ct: str, tier: str ,num_races: int):
         super().__init__(style=discord.ButtonStyle.danger, label=f"Submit to {rt_ct.upper()} "
                                                                  f"{'T' if tier != 'SQ' else ''}{tier}", row=0)
         self.tier = tier

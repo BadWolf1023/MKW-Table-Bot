@@ -619,7 +619,9 @@ async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=No
     
     if tier == "squadqueue":
         tier = determine_tier(id_mapping, is_rt)
-    
+    else:
+        tier = "Tier " + tier
+        
     json_data["tier"] = tier
     
     team_map, success = map_to_teams(players_and_scores, id_mapping)
