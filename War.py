@@ -7,6 +7,7 @@ import itertools
 import ErrorChecker
 from collections import defaultdict
 import random
+from Room import Room
 import TableBotExceptions
 import UtilityFunctions
 import UserDataProcessing
@@ -221,7 +222,7 @@ class War(object):
         return errors
 
 
-    def get_war_errors_string_2(self, room, resolved_errors, replaceLounge=True, up_to_race=None, suggestion_call=False):
+    def get_war_errors_string_2(self, room: Room, resolved_errors, replaceLounge=True, up_to_race=None, suggestion_call=False):
         error_types = defaultdict(list)
 
         errors = ErrorChecker.get_war_errors_players(self, room, error_types, replaceLounge, ignoreLargeTimes=self.ignoreLargeTimes)
@@ -247,6 +248,9 @@ class War(object):
         
         if self.ignoreLargeTimes and num_errors_no_large_times < num_errors_large_times:
             info_string += "- Large times occurred, but are being ignored. Table could be incorrect.\n"
+        
+        if room.race_order_changed():
+            info_string += "- Race order changed by tabler"
         
         if up_to_race and up_to_race>0: # only show errors up to specified race if it was provided
             errors = {k: v for (k, v) in errors.items() if k<=up_to_race}

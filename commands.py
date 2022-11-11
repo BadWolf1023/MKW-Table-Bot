@@ -144,7 +144,8 @@ def lower_args(args: List[str]) -> List[str]:
     return [arg.lower() for arg in args]
 
 async def download_table_picture(message, table_sorted_data: Dict, image_url: str, table_image_path: str):
-    image_download_success = await common.download_image(image_url, table_image_path)
+    # image_download_success = await common.download_image(image_url, table_image_path)
+    image_download_success = False
     if image_download_success:
         Stats.add_lorenzi_picture_count()
     else:
@@ -1268,7 +1269,7 @@ class LoungeCommands:
 
                 if using_table_bot_table:
                     war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0
-                    tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs()
+                    tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs() or this_bot.getRoom().race_order_changed()
                     header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
                     footer_combine_success = True
 
@@ -2576,14 +2577,17 @@ class TablingCommands:
         display_url_table_text = urllib.parse.quote(table_text)
         true_url_table_text = urllib.parse.quote(table_text_with_style_and_graph)
         image_url = common.base_url_lorenzi + true_url_table_text
-        temp_path = 'temp/'
+        temp_path = './temp/'
         table_image = f"{message.id}_picture.png"
         table_image_path=temp_path+table_image
         try:
             await download_table_picture(message, table_sorted_data, image_url, table_image_path)
             #did the room have *any* errors? Regardless of ignoring any type of error
             war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0
-            tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs()
+            tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or \
+                                len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or \
+                                len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs() or \
+                                this_bot.getRoom().race_order_changed()
             header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
             footer_combine_success = True
             lorenzi_edit_link = common.base_url_edit_table_lorenzi + display_url_table_text
@@ -2871,7 +2875,7 @@ class TablingCommands:
 
         this_bot.add_save_state(message.content)
         new_order = this_bot.room.change_race_order(race_order)
-        await message.channel.send(f"Race order changed to: `{new_order}`.")
+        await message.channel.send(f"Race order changed to: `{new_order}`. *This command will cause errors in table if not used correctly. Make sure to check the table. *")
 
     @staticmethod
     async def quick_edit_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, dont_send=False):

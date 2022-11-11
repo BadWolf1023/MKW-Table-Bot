@@ -17,6 +17,7 @@ import TagAIShell
 from data_tracking import DataTracker
 import InteractionUtils
 from api import api_channelbot_interface, endpoints
+import MiiPuller
 
 #External library imports for this file
 import discord
@@ -308,6 +309,10 @@ class BadWolfBot(ext_commands.Bot):
             self.prune_mii_cooldowns.start()
         except RuntimeError:
             print("prune_mii_cooldowns task already started")
+        try:
+            self.clear_mii_cache.start()
+        except RuntimeError:
+            print("clear_mii_cache task already started")
                 
         try:
             self.dumpDataAndBackup.start()
@@ -324,11 +329,22 @@ class BadWolfBot(ext_commands.Bot):
         finished_on_ready = True
         print(f"Logged in as {self.user}")
     
+    @tasks.loop(hours=2)
+    async def clear_mii_cache(self):
+        for fc in list(MiiPuller.MII_CACHE.keys())[::-1]:
+            if (MiiPuller.cache_time_expired(MiiPuller.MII_CACHE[fc][1])):
+                MiiPuller.MII_CACHE.pop(fc)
+        
+        for fc in list(MiiPuller.MII_PHOTO_CACHE.keys())[::-1]:
+            if (MiiPuller.photo_cache_is_expired(MiiPuller.MII_PHOTO_CACHE[fc])):
+                MiiPuller.MII_PHOTO_CACHE.pop(fc)
+                common.delete_file(f"{common.MIIS_CACHE_PATH}{fc}.png")
+
     # For memory purposes; don't want dictionary to keep ballooning
     @tasks.loop(hours=8)
     async def prune_mii_cooldowns(self):
         for user, last_used in list(self.mii_cooldowns.items())[::-1]:
-            if time.monotonic()-last_used > 5:
+            if time.monotonic()-last_used > common.MII_COOLDOWN:
                 self.mii_cooldowns.pop(user)
 
     #This function will run every 1 minute. It will remove any table bots that are

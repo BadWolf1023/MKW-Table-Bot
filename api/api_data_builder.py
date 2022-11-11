@@ -443,10 +443,11 @@ def get_picture_page_html():
 
 def generate_table_picture(table_sorted_data, table_image_path: str):
     table_html = build_full_table_html(table_sorted_data, style="orangediscordtable", relative_path_ok=False)
-    hti.output_path = "/".join(table_image_path.split("/")[:-1])
+    s = "/".join(table_image_path.split("/")[:-1])
+    # print(s)
+    hti.output_path = s
     file_name = table_image_path.split("/")[-1]
-    # print(table_image_path)
-    # print(hti.output_path, file_name)
+    # print(hti.output_path)
     try:
         hti.screenshot(html_str=table_html, css_file=[os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}"), os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES['orangediscordtable']}")], save_as=file_name)
     except:
