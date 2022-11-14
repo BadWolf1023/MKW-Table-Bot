@@ -259,7 +259,7 @@ Number of servers that have MKW Table Bot: **{number_servers}**
 Number of people who have used MKW Table Bot: **{number_users}**
 First server ever: **The Funkynuts**
 
-Total commands MKW Table Bot has recieved: **{total_command_count}**
+Total commands MKW Table Bot has received: **{total_command_count}**
 Number of table pictures generated: **{war_picture_count}**
 Lines of high quality code written to make this bot a reality: **{total_code_lines}**
 

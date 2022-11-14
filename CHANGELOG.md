@@ -14,7 +14,7 @@ MKW Table Bot is officially released to the public as a Discord bot to automate 
 - Added commands: ?updates, ?rxx, ?setwarname, ?setprefix (admins only), ?fc, ?stats - see ?help for details
 - Bot highly stable, no scorekeeping bugs found. Scorekeeping uses war metadata to shape the room into the table.
 - Removed several commands (they've been replaced by better things), thank you to the beta testers!
-- Added headers to table pictures to alert people who only recieved the picture if there are errors or not.
+- Added headers to table pictures to alert people who only received the picture if there are errors or not.
 - Removed case sensitivity for Lounge names
 - ?wp updates the room automatically, no need to do ?ur
 - Minor bug fixes
