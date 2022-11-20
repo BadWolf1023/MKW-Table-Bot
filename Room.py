@@ -149,7 +149,6 @@ class Room(object):
             struct.clear()
             for k, v in new_struct.items():
                 struct[k] = v
-                print(k, v)
         
         for _, sub_data in self.sub_ins.items():
             for key in ['sub_in_start_race', 'sub_out_end_race']: 
