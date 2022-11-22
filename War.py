@@ -194,7 +194,7 @@ class War(object):
     def get_num_players(self):
         return self.numberOfTeams*self.playersPerTeam
 
-    def clear_resolved_errors(self, errors, resolved):
+    def clear_resolved_errors(self, room: Room, errors, resolved):
         def error_priority(err_type):
             return ['tie', 'missing_player', 'blank_player', 'gp_missing_1', 'large_time', 'gp_missing'].index(err_type)
 
@@ -206,7 +206,7 @@ class War(object):
                 err = race_errors[err_indx]
                 err['race'] = errors[race_indx][0]
                 players = err['player_fcs'] if 'player_fcs' in err else err['player_fc']
-                err_makeup = err['type'] + '-' + str(players) + '-' + str(err['race'])
+                err_makeup = err['type'] + '-' + str(players) + '-' + str(room.getRaces()[err['race']-1].get_match_id())
                 err_bytes = err_makeup.encode('ascii')
                 err['id'] = base64.b64encode(err_bytes)
                 if err['id'] in resolved:
@@ -229,7 +229,7 @@ class War(object):
         if errors is None:
             return "Room not loaded.", "", None
 
-        error_types = self.clear_resolved_errors(error_types, resolved_errors)
+        error_types = self.clear_resolved_errors(room, error_types, resolved_errors)
 
         if suggestion_call: 
             return error_types
