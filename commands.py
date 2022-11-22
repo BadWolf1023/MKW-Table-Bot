@@ -144,8 +144,8 @@ def lower_args(args: List[str]) -> List[str]:
     return [arg.lower() for arg in args]
 
 async def download_table_picture(message, table_sorted_data: Dict, image_url: str, table_image_path: str):
-    # image_download_success = await common.download_image(image_url, table_image_path)
-    image_download_success = False
+    image_download_success = await common.download_image(image_url, table_image_path)
+    # image_download_success = False
     if image_download_success:
         Stats.add_lorenzi_picture_count()
     else:
