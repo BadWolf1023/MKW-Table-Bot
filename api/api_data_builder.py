@@ -9,7 +9,7 @@ import UtilityFunctions
 from api import api_common
 from html2image import Html2Image
 
-hti = Html2Image(size=(980, 580))
+hti = Html2Image(size=(980, 580), custom_flags=['--no-sandbox', '--default-background-color=0', '--hide-scrollbars'])
 
 API_DATA_PATH = "api/"
 HTML_DATA_PATH = "html/"
@@ -45,7 +45,7 @@ def build_table_styling(html_type, style, include_races_played: bool, table_back
     if include_races_played:
         styling_segment = """
         #table_scores {
-            height: 92% !important;
+            height: 93% !important;
         }
         """
         styling += styling_segment + "\n\n"
@@ -443,10 +443,13 @@ def get_picture_page_html():
 
 def generate_table_picture(table_sorted_data, table_image_path: str):
     table_html = build_full_table_html(table_sorted_data, style="orangediscordtable", relative_path_ok=False)
-    hti.output_path = "/".join(table_image_path.split("/")[:-1])
+    s = "/".join(table_image_path.split("/")[:-1])
+    # print(s)
+    hti.output_path = s
     file_name = table_image_path.split("/")[-1]
+    # print(hti.output_path)
     try:
-        hti.screenshot(html_str=table_html, css_file=[os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}"), os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES['orange']}")], save_as=file_name)
+        hti.screenshot(html_str=table_html, css_file=[os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLE_FILE}"), os.path.abspath(f"{API_DATA_PATH}{FULL_TABLE_STYLES['orangediscordtable']}")], save_as=file_name)
     except:
         return False
     return True

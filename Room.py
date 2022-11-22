@@ -50,7 +50,7 @@ class Room(object):
         self.table = table
 
         self.name_changes: Dict[str, Dict[str, Union[str, bool]]] = {}
-        # self.removed_races = []
+
         #holds removed races and race order changes
         self.race_changes: List[Dict[str, Union[List[int], Tuple[int, str]]]] = []
 
@@ -58,13 +58,13 @@ class Room(object):
         self.placement_history: defaultdict[int, List[Dict[str, Any]]] = defaultdict(list)
         
         #Dictionary - key is race number, value is the number of players for the race that the tabler specified
-        self.forcedRoomSize = defaultdict(int) #This contains the races that have their size changed by the tabler - when a race is removed, we
+        self.forcedRoomSize: defaultdict[int, int] = defaultdict(int) #This contains the races that have their size changed by the tabler - when a race is removed, we
         #need to change all the LATER races (the races that happened after the removed race) down by one race
 
         self.playerPenalties = defaultdict(int)
         
         #for each race, holds fc_player dced that race, and also holds 'on' or 'before'
-        self.dc_on_or_before = defaultdict(dict)
+        self.dc_on_or_before: defaultdict[int, Dict[str, str]] = defaultdict(dict)
         # self.manual_dc_placements: defaultdict[int, List[Dict[str, Any]]] = defaultdict(list) #maps race to manually configured DC placements (on/before)
 
         self.set_up_user = setup_discord_id
@@ -138,6 +138,22 @@ class Room(object):
         self.races.clear()
         self.races.extend(races)
     
+    def update_edits(self, order: List[int]):
+        #TODO: add check for GP order changes: then can edit war.manualEdits
+        
+        race_replace = {k: i + 1 for i, k in enumerate(order)}
+        for struct in [self.placement_history, self.forcedRoomSize, self.dc_on_or_before]:
+            new_struct = dict()
+            for race_num, data in struct.items():
+                new_struct[race_replace[race_num]] = data
+            struct.clear()
+            for k, v in new_struct.items():
+                struct[k] = v
+        
+        for _, sub_data in self.sub_ins.items():
+            for key in ['sub_in_start_race', 'sub_out_end_race']: 
+                sub_data[key] = race_replace[sub_data[key]]
+
     def change_race_order(self, order: List[int], local_call=False):
         new_order = list(range(1, len(self.races)+1))
         altered_races = [self.races[race_num-1] for race_num in order]
@@ -147,7 +163,6 @@ class Room(object):
         if is_consecutive:
             self.races[min(order)-1:max(order)] = altered_races
             new_order[min(order)-1:max(order)] = order
-
         else:
             for race_num in sorted(order, reverse=True):
                 self.races.pop(race_num-1)
@@ -163,6 +178,7 @@ class Room(object):
                 'type': 'order',
                 'payload': order
             })
+            self.update_edits(new_order)
             self.update_suggestions()
     
         return ", ".join(list(map(str, new_order)))
@@ -332,6 +348,13 @@ class Room(object):
         for raceInd, raceName in self.removed_races:
             removed_str += "- " + raceName + " (originally race #" + str(raceInd+1) + ") removed by tabler\n"
         return removed_str
+    
+    def race_order_changed(self):
+        for key in self.race_changes:
+            if key == 'order':
+                return True
+
+        return False
     
     #Should only call if you know the data for an FC among the placements will be unique
     def getFCPlacements(self, startrace=1,endrace=None):

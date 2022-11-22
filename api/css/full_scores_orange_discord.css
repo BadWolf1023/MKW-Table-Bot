@@ -1,5 +1,6 @@
 body {
     font: bold small-caps Verdana;
+    font-weight: bold;
     color: white;
 }
 
@@ -19,18 +20,6 @@ body {
     text-shadow: 2px 1px 2px rgba(0, 0, 0, 0.644);
 }
 
-.header_wrapper
-.team_wrapper,
-.team_score_wrapper,
-.team_name_wrapper,
-.score_wrapper,
-.player_name_wrapper,
-.player_total_wrapper,
-.player_wrapper {
-    border-color: white;
-}
-
-
 .team_score_wrapper{
     font-size: 50px;
 }
@@ -42,6 +31,16 @@ body {
 .player_total_wrapper,
 .player_name_wrapper,
 .score_wrapper{
-    font-size: 25px;
+    font-size: 20px;
 }
 
+.header_wrapper,
+.team_wrapper,
+.team_score_wrapper,
+.team_name_wrapper,
+.score_wrapper,
+.player_name_wrapper,
+.player_total_wrapper,
+.player_wrapper {
+    border-color: white;
+}

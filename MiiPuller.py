@@ -17,6 +17,7 @@ from typing import Set, List, Dict
 import shutil
 import os
 import asyncio
+from copy import copy
 
 #from xml.dom.minidom import parse, parseString
 import lxml.objectify
@@ -66,7 +67,6 @@ BACK_OFF_SECONDS_AMOUNT = 20
 DYNAMIC_CACHER_COOLDOWN = timedelta(hours=2)
 MAXIMUM_FAILURES = 30
 MII_DYNAMIC_CACHER = [datetime.now(), 0, MII_DEFAULT_CACHE_TIME] #date of last reset
-from copy import copy
 
 def update_pulling_mii_failed():
     MII_DYNAMIC_CACHER[1] += 1
@@ -111,6 +111,7 @@ def get_unexpired_cached_mii_datas(fcs:Set[str]) -> Set[str]:
         if fc in MII_CACHE:
             if not cache_time_expired(MII_CACHE[fc][1]):
                 result.add(fc)
+
     return result, (len(result) == len(fcs))
 
 def get_sake_post_data(player_ids):
