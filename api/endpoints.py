@@ -55,6 +55,7 @@ def initialize(app_: FastAPI):
         show_team_names: Optional[bool] = Query(True),
         sort_teams: Optional[bool] = Query(True),
         show_races_played: Optional[bool] = Query(True),
+        fit_names: Optional[bool] = Query(False)
     ):
         table_bot = cb_interface.get_table_bot(table_id)
         if table_bot is None:
@@ -69,7 +70,8 @@ def initialize(app_: FastAPI):
             border_color, 
             text_size,
             include_team_names=show_team_names,
-            show_races_played=show_races_played
+            show_races_played=show_races_played,
+            fit_names=fit_names
         )
 
     @app.get(FULL_TABLE_HTML_ENDPOINT + "{table_id}", response_class=HTMLResponse)
