@@ -222,7 +222,7 @@ class RoomPageParser(object):
         room_type = str(text_list[6])
         # strip white spaces, the star, and the cc
         cc = str(text_list[7])[3:-2]
-        is_ct = str(text_list[-1]) in {'u', 'c'}
+        is_ct = str(text_list[-1]).lower() in {'u', 'c'}
         placements = []
         track_name = "Unknown_Track (Bad HTML, mkwx messed up)"
         try:
@@ -400,7 +400,7 @@ class FrontPageParser(object):
         cc = None
         track = None
         created_when = None
-        is_ct = room_info[-1] != 'n'
+        is_ct = str(room_info[-1]).lower() != 'n'
         if len(room_info) == 12:
             match_id = None
             match_time = room_info[5]
