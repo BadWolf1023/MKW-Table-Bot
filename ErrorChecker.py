@@ -117,11 +117,13 @@ def get_room_errors_players(war, room, error_types, startrace=None, endrace=None
                 ties = sorted(tie, key=lambda fc:race.getPlacement(fc))
 
                 if len(ties)<=2: #display tie error suggestion
-                    player_fc = ties[0]
-                    placement = race.getPlacement(player_fc)
-                    _, mii_name = placement.get_fc_and_name()
-                    player_name = UserDataProcessing.lounge_name_or_mii_name(player_fc, mii_name, lounge_replace)
-                    tie_error = {'type': 'tie', 'player_name': player_name, 'player_fc': player_fc, 'placements': [placement.get_place(), placement.get_place()+1], 'player_fcs': sorted(ties)}
+                    placement = race.getPlacement(ties[0])
+                    player_names = []
+                    for fc in ties:
+                        place = race.getPlacement(fc)
+                        _, mii_name = place.get_fc_and_name()
+                        player_names.append(UserDataProcessing.lounge_name_or_mii_name(fc, mii_name, lounge_replace))
+                    tie_error = {'type': 'tie', 'player_names': player_names, 'player_fcs': ties, 'placement': placement.get_place()}
                     error_types[int(race.raceNumber)].append(tie_error)
 
                 for this_fc in ties:

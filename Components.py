@@ -575,8 +575,8 @@ class SuggestionView(discord.ui.View):
                     self.add_item(SuggestionButton(error, label, value=place))
         
         elif err_type == 'tie':
-            for insert in error['placements']:
-                label = label_builder.format(error['player_name'], UtilityFunctions.place_to_str(insert))
+            for insert in error['player_names']:
+                label = label_builder.format(insert, UtilityFunctions.place_to_str(error['placement']))
                 self.add_item(SuggestionButton(error, label, value=insert))
         
         self.add_item(RejectButton())
@@ -641,9 +641,10 @@ def get_command_args(error, info, bot):
         args = ['changeplace', str(playerNum), str(race), placement]
     
     elif err_type == 'tie':
-        playerNum = bot.player_to_num(error['player_fc'])
+        idx = error['player_names'].index(info)
+        playerNum = bot.player_to_num(error['player_fcs'][idx])
         race = error['race']
-        placement = str(info)
+        placement = str(error['placement'])
         args = ['changeplace', str(playerNum), str(race), placement]
     
     return args

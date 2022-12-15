@@ -3,6 +3,7 @@ body {
     margin: 0px auto;
     font-size: 25px;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 #tablebot_table {

@@ -245,14 +245,18 @@ def build_full_table_html(table_data: dict, include_races_played=True, style=Non
             header_div = soup.new_tag("div", attrs={'class': "header"})
             header_wrapper.append(header_div)
 
-            format_div = soup.new_tag("div", attrs={"class": "format"})
-            format_div.string = table_data['format']
+            if table_data:
+                format_div = soup.new_tag("div", attrs={"class": "format"})
+                format_div.string = table_data['format']
+
+                sep = soup.new_tag("div", attrs={'class': "middledot"})
+                sep.string = '\u2022'
+
+                header_div.append(format_div)
+                header_div.append(sep)
 
             races_played_div = soup.new_tag("div", attrs={"class": "races_played"})
             races_played_div.string = f'{table_data["races_played"]} races'
-
-            sep = soup.new_tag("div", attrs={'class': "middledot"})
-            sep.string = '\u2022'
 
             sep2 = soup.new_tag("div", attrs={'class': "middledot"})
             sep2.string = '\u2022'
@@ -260,8 +264,6 @@ def build_full_table_html(table_data: dict, include_races_played=True, style=Non
             date_div = soup.new_tag("div", attrs={'class': "date"})
             date_div.string = str(datetime.date.today())
 
-            header_div.append(format_div)
-            header_div.append(sep)
             header_div.append(races_played_div)
             header_div.append(sep2)
             header_div.append(date_div)
@@ -371,14 +373,18 @@ def build_team_html(table_data: dict, style=None, table_background_picture_url=N
             header_div = soup.new_tag("div", attrs={'class': "header"})
             header_wrapper.append(header_div)
 
-            format_div = soup.new_tag("div", attrs={"class": "format"})
-            format_div.string = table_data['format']
+            if table_data:
+                format_div = soup.new_tag("div", attrs={"class": "format"})
+                format_div.string = table_data['format']
+
+                sep = soup.new_tag("div", attrs={'class': "middledot"})
+                sep.string = '\u2022'
+
+                header_div.append(format_div)
+                header_div.append(sep)
 
             races_played_div = soup.new_tag("div", attrs={"class": "races_played"})
             races_played_div.string = f'{table_data["races_played"]} races'
-
-            sep = soup.new_tag("div", attrs={'class': "middledot"})
-            sep.string = '\u2022'
 
             # sep2 = soup.new_tag("div", attrs={'class': "middledot"})
             # sep2.string = '\u2022'
@@ -386,8 +392,6 @@ def build_team_html(table_data: dict, style=None, table_background_picture_url=N
             # date_div = soup.new_tag("div", attrs={'class': "date"})
             # date_div.string = str(datetime.date.today())
 
-            header_div.append(format_div)
-            header_div.append(sep)
             header_div.append(races_played_div)
 
             soup.find(id="tablebot_table").insert(0, header_wrapper)

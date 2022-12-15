@@ -782,9 +782,9 @@ async def initialize():
     await populate_score_matrix_table()
     await populate_player_fcs_table()
 
-    # Race.initialize needs to be called first
-    await fix_shas(Race.sha_track_name_mappings)
     if common.is_prod or common.is_beta:
+        # Race.initialize needs to be called first
+        await fix_shas(Race.sha_track_name_mappings)
         print(f"{datetime.now()}: Vacuuming...")
         await vacuum()
         print(f"{datetime.now()}: Done vacuuming.")

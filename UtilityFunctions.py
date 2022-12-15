@@ -18,7 +18,6 @@ def sort_dict(my_dict:dict, key=None, reverse=False):
 def get_blw():
     return common.blackListedWords
 
-
 def remove_blacklisted(name:str, get_blacklisted_words=get_blw):
     blacklisted_words = get_blacklisted_words()
     if name is None or len(name) == 0:

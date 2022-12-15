@@ -505,6 +505,17 @@ class Table_Slash(ext_commands.Cog):
         # if guild: args.append(guild)
         
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
+    
+    @slash_command(name="api",
+        description="Get Table Bot API links for current table",
+        guild_ids=common.SLASH_GUILDS)
+    async def _api(
+        self,
+        ctx: discord.ApplicationContext
+    ):
+        command , message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+
+        await self.bot.process_message_commands(message, [command], this_bot, server_prefix, is_lounge, from_slash=True)
 
 def setup(bot):
     bot.add_cog(Table_Slash(bot))

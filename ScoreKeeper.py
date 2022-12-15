@@ -124,8 +124,9 @@ def resizeGPsInto(GPs, new_size_GP):
 def create_table_dict():
     return {
         "title_str": "",
-        "races_played": 0,
         "format": "",
+        "races_played": 0,
+        "tracks": [],
         "teams": {}
     }
 
@@ -149,11 +150,12 @@ def create_player():
             "penalties": 0,
             "subbed_out": False,
             "race_scores": [],
+            "race_positions": [],
             "gp_scores": [],
             "flag": ""
             }
 
-def get_war_table_DCS(channel_bot:TableBot.ChannelBot, sort_teams=True, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False, step=None, up_to_race=None):
+def get_war_table_DCS(channel_bot:TableBot.ChannelBot, sort_teams=True, full_details=False, use_lounge_otherwise_mii=True, use_miis=False, lounge_replace=None, server_id=None, missingRacePts=3, discord_escape=False, step=None, up_to_race=None):
     war = channel_bot.getWar()
     room = channel_bot.getRoom()
     if step is None:
@@ -267,6 +269,19 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, sort_teams=True, use_loun
         for fc, _ in FC_table_dict.items():
             FC_table_dict[fc]["race_scores"].extend(GP_scores[fc])
             FC_table_dict[fc]["gp_scores"].append(GP_scores[fc])
+    
+    for fc, _ in FC_table_dict.items():
+        for race in room.getRaces():
+            placement = race.getPlacement(fc)
+            if placement:
+                placement = placement.get_place()
+            FC_table_dict[fc]["race_positions"].append(placement)
+    
+    if full_details:
+        for race in room.getRaces():
+            table_dict["tracks"].append(race.getTrackNameWithoutAuthor())
+    else:
+        table_dict.pop("tracks")
     
 
                 

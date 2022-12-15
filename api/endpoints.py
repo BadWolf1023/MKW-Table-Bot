@@ -94,14 +94,14 @@ def initialize(app_: FastAPI):
         )
 
     @app.get(TEAM_SCORES_JSON_ENDPOINT + "{table_id}")
-    def get_team_scores_json(table_id: int):
+    def get_team_scores_json(table_id: int, full_details: Optional[bool] = Query(False)):
         table_bot = cb_interface.get_table_bot(table_id)
         if table_bot is None:
             raise HTTPException(
                 status_code=404,
                 detail="Table ID not found. Either the table has been reset, or the table ID given does not exist. Table Bot gave you a table ID when you started the table. Use that.",
             )
-        return cb_interface.get_team_score_data(table_bot)
+        return cb_interface.get_team_score_data(table_bot, full_details=full_details)
 
     @app.get(INFO_ENDPOINT + "{table_id}", response_class=HTMLResponse)
     def info_page(table_id: int):
