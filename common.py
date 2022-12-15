@@ -17,7 +17,7 @@ import ssl
 import certifi
 import dill
 import TimerDebuggers
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Dict, List, Literal
 
 # I don't know the exact details because I'm not extremely familiar with how SSL certification actually works, but
 # this was necessary at one point because a main SSL certificate list expired a while ago,
@@ -170,6 +170,8 @@ MII_SIZE_FOR_TABLE = 81
 #Other variables
 LORENZI_FLAG_PAGE_URL = "https://gb.hlorenzi.com/help/flags"
 LORENZI_FLAG_PAGE_URL_NO_PREVIEW = f"<{LORENZI_FLAG_PAGE_URL}>"
+LORENZI_FLAG_API = "https://gb.hlorenzi.com/api/v1/flagsGet"
+LORENZI_FLAG_PIC_URL = "https://gb.hlorenzi.com/assets/flags/{0}.png"
 
 #Various folder paths
 SERVER_SETTINGS_PATH = "discord_server_settings/"
@@ -472,6 +474,17 @@ def delete_file(filename):
         os.remove(filename)
     except Exception:
         pass
+
+async def get_request(full_url, resp_type: Literal["json", "html", "bytes"] = "json"):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(full_url) as r:
+            if r.status == 200:
+                if resp_type == "json":
+                    return await r.json()
+                elif resp_type == "html":
+                    return await r.text()
+                else: 
+                    return await r.read()
 
 def log_traceback(traceback, channel_bot=None, message=None):
     if is_prod or is_beta:

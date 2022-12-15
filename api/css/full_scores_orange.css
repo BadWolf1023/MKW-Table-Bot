@@ -5,10 +5,10 @@ body {
 
 #tablebot_table {
     background-color: #bd3500;
-    border-radius: 10px;
+    /* border-radius: 10px; */
 }
 
-.races_played,
+/* .races_played,
 .format,
 .date,
 .score,
@@ -17,7 +17,7 @@ body {
 .team_name,
 .team_score {
     text-shadow: 3px 3px 4px rgba(0, 0, 0, 0.644);
-}
+} */
 
 .header_wrapper,
 .team_wrapper,

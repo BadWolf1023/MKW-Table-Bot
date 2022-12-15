@@ -329,7 +329,7 @@ def read_valid_flags_file(filename=common.FLAG_CODES_FILE):
         for line in f:
             flag_codes.add(line.strip("\n").strip().lower())
     return flag_codes
-
+    
 def initialize():
     global discordId_flags
     global discordId_lounges
@@ -342,11 +342,11 @@ def initialize():
     discordId_flags.clear()
     discordId_flags.update(read_DiscordID_Flags_file())
 
-    fc_discordId,discordId_fc = read_FC_DiscordID_file()
-    discordId_lounges,lounges_discordId = read_DiscordID_Lounges_file()
+    fc_discordId, discordId_fc = read_FC_DiscordID_file()
+    discordId_lounges, lounges_discordId = read_DiscordID_Lounges_file()
 
-    valid_flag_codes.clear()
-    valid_flag_codes.update(read_valid_flags_file())
+    # valid_flag_codes.clear()
+    # valid_flag_codes.update(get_valid_flags())
     blacklisted_users.clear()
     blacklisted_users.update(read_Blacklisted_file())
     

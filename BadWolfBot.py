@@ -26,6 +26,7 @@ from discord.ext import tasks
 from discord.ext import commands as ext_commands
 import traceback
 import sys
+import json
 import atexit
 import signal
 import dill as p
@@ -313,6 +314,10 @@ class BadWolfBot(ext_commands.Bot):
             self.clear_mii_cache.start()
         except RuntimeError:
             print("clear_mii_cache task already started")
+        try:
+            self.update_valid_flags.start()
+        except RuntimeError:
+            pass
                 
         try:
             self.dumpDataAndBackup.start()
@@ -328,6 +333,16 @@ class BadWolfBot(ext_commands.Bot):
     
         finished_on_ready = True
         print(f"Logged in as {self.user}")
+    
+    @tasks.loop(hours=168)
+    async def update_valid_flags(self):
+        json_str = await common.get_request(common.LORENZI_FLAG_API, resp_type='text')
+        flag_codes = json.loads(json_str)
+        UserDataProcessing.valid_flag_codes = set(flag_codes)
+
+        for flag_code in UserDataProcessing.valid_flag_codes:
+            if not os.path.exists(image_path := common.FLAG_IMAGES_PATH + f"{flag_code}.png"):
+                await common.download_image(common.LORENZI_FLAG_PIC_URL.format(flag_code), image_path)
     
     @tasks.loop(hours=2)
     async def clear_mii_cache(self):
