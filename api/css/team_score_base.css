@@ -60,7 +60,8 @@ body {
 .team_score, .team_name {
     margin: auto;
     text-align: center;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
+    white-space: nowrap;
 }
 
 .team_name_box:first-child, .score_box:first-child{
