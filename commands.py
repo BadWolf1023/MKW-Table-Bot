@@ -1326,7 +1326,7 @@ class LoungeCommands:
                 embed = discord.Embed(
                                     title=f"Successfully submitted to {type_text} Reporters and {type_text} Updaters",
                                     description=f"[Click to preview this update]({preview_link})",
-                                    colour=discord.Colour.dark_red()
+                                    colour=discord.Colour.green()
                                 )
                 embed.add_field(name='Submission ID', value=str(id_to_submit))
                 embed.add_field(name='Races Played', value=str(races_played))

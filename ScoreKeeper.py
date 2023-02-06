@@ -390,7 +390,7 @@ def format_sorted_data_for_gsc(table_data):
     gsc_team_scores = {first_team_tag:[0, 0, 0, 0],
                        second_team_tag:[0, 0, 0, 0]}
     for gp_index, first_team_score, second_team_score in zip(range(len(gsc_tag_scores[first_team_tag])), gsc_tag_scores[first_team_tag], gsc_tag_scores[second_team_tag]):
-        multiplier = 1 if gp_index != 3 else 2
+        multiplier = 1 if gp_index != 3 else 3
         if first_team_score > second_team_score:
             gsc_team_scores[first_team_tag][gp_index] = 2
         elif first_team_score < second_team_score:
