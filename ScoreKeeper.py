@@ -126,6 +126,7 @@ def create_table_dict():
         "title_str": "",
         "format": "",
         "races_played": 0,
+        "rxx": [],
         "tracks": [],
         "teams": {}
     }
@@ -280,10 +281,11 @@ def get_war_table_DCS(channel_bot:TableBot.ChannelBot, sort_teams=True, full_det
     if full_details:
         for race in room.getRaces():
             table_dict["tracks"].append(race.getTrackNameWithoutAuthor())
+        table_dict["rxx"] = room.get_rxxs()
     else:
         table_dict.pop("tracks")
+        table_dict.pop("rxx")
     
-
                 
     #build table string
     numRaces = up_to_race if up_to_race else min( (len(room.races), war.getNumberOfGPS()*4) )
