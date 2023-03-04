@@ -813,8 +813,6 @@ class BadWolfBot(ext_commands.Bot):
             await commands.TablingCommands.change_race_order_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in QUICK_EDIT_TERMS:
-            # if main_command in DEPRECATED_QUICK_EDIT_TERMS:
-            #     await message.channel.send(f"**NOTE: The command `{server_prefix}{main_command}` will be renamed soon. Only `{server_prefix}changeposition` and `{server_prefix}changeplace` will work in the future.**")
             await commands.TablingCommands.quick_edit_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in CHANGE_PLAYER_TAG_TERMS:

@@ -27,7 +27,6 @@ def initialize(app_: FastAPI):
     global app
     app = app_
     app.mount("/css", StaticFiles(directory="./api/css"))
-
     
 
     app.add_middleware(
