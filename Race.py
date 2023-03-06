@@ -9,7 +9,7 @@ from collections import defaultdict
 from typing import List
 import common
 
-CTGP_CTWW_REGION = 'vs_54'
+CTGP_CTWW_REGION = 'vs_43'
 BATTLE_REGION = 'bt'
 RT_WW_REGION = 'vs'
 PRIVATE_ROOM_REGION = 'priv'
