@@ -151,7 +151,7 @@ class Room(object):
                 struct[k] = v
         
         for _, sub_data in self.sub_ins.items():
-            for key in ['sub_in_start_race', 'sub_out_end_race']: 
+            for key in ['in_start_race', 'out_end_race']: 
                 sub_data[key] = race_replace[sub_data[key]]
 
     def change_race_order(self, order: List[int], local_call=False):
