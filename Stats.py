@@ -137,7 +137,7 @@ async def prune_backups():
             create_time = datetime.strptime(folder.replace(".zip", ""),'%Y-%m-%d').date()
             delta = datetime.date(datetime.now()) - create_time
 
-            if delta.days > 14 and create_time.day != 1:
+            if delta.days > 7 and create_time.day != 1:
                 if os.path.exists(path+"/tablebot_data"):
                     print("Deleting", path)
                     shutil.rmtree(path+"/tablebot_data")

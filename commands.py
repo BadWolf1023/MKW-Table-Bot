@@ -1241,6 +1241,12 @@ class LoungeCommands:
             command_removed = temp[temp.index(args[0])+len(args[0]):].strip("\n\t ")
             tier_number_removed = command_removed[command_removed.index(args[1])+len(args[1]):].strip("\n\t ")
             table_text = tier_number_removed[tier_number_removed.index(args[2])+len(args[2]):].strip("\n\t ")
+            table_sorted_data = SK.create_table_dict()
+            
+            races_played_str = re.search(r"#title.*(\s|$)", temp).group()
+            races_played_str.strip("#title")
+            races_played_str.strip()
+            table_sorted_data["races_played"] = races_played_str
 
 
         lounge_server_updates.update_user_cooldown(message.author)
