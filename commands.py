@@ -1243,9 +1243,11 @@ class LoungeCommands:
             table_text = tier_number_removed[tier_number_removed.index(args[2])+len(args[2]):].strip("\n\t ")
             table_sorted_data = SK.create_table_dict()
             
-            races_played_str = re.search(r"#title.*(\s|$)", temp).group()
-            races_played_str.strip("#title")
-            races_played_str.strip()
+            races_played_str = re.search(r"#title.*(\s|$)", temp)
+            races_played_str = '0' if not races_played_str else races_played_str.group()
+            races_matches = re.findall(r'\d+', races_played_str)
+            races_played_str = races_matches[0] if len(races_matches) > 0 else '0'
+            
             table_sorted_data["races_played"] = races_played_str
 
 
