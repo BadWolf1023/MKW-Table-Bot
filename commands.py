@@ -1244,9 +1244,9 @@ class LoungeCommands:
             table_sorted_data = SK.create_table_dict()
             
             races_played_str = re.search(r"#title.*(\s|$)", temp)
-            races_played_str = '0' if not races_played_str else races_played_str.group()
+            races_played_str = '12' if not races_played_str else races_played_str.group()
             races_matches = re.findall(r'\d+', races_played_str)
-            races_played_str = races_matches[0] if len(races_matches) > 0 else '0'
+            races_played_str = races_matches[0] if len(races_matches) > 0 else '12'
             
             table_sorted_data["races_played"] = races_played_str
 
