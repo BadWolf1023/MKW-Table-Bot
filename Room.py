@@ -203,7 +203,7 @@ class Room(object):
         if race_num in self.placement_history:
             race_placement_changes = self.placement_history[race_num]
             # manual DC placements do not count as placement changes and should not trigger the warning
-            race_placement_changes = [i for i in race_placement_changes if i['type']=='change'] 
+            race_placement_changes = [i for i in race_placement_changes if 'change' in i['type']] 
 
         return race_num in self.placement_history and len(race_placement_changes) > 0
     
