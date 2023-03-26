@@ -29,39 +29,40 @@ from typing import List
 """
 Class X: 12000+ MMR - T5, T6, T7, T8
 Class S: 10500-11999 MMR - T5, T6, T7
-Class A: 9000-10499 MMR - T5, T6
-Class B: 8000-8999 MMR - T5, T4
-Class C: 7000-7999 MMR - T3, T4
-Class D: 5500-6999 MMR - T2, T3
-Class E: 4000-5499 MMR - T1, T2
-Class F: 2000-3999 MMR - T1
-Class G: <1999 MMR - T0
+Class A: 9250-10499 MMR - T5, T6
+Class B: 8000-9249 MMR - T5, T4
+Class C: 6000-7999 MMR - T3, T4
+Class D: 4250-5999 MMR - T2, T3
+Class E: 3000-4249 MMR - T1, T2
+Class F: <2999 MMR - T1
 """
-RT_MMR_CUTOFFS = [(1999,"Tier 0"),
-                  (3999,"Tier 1"),
-                  (5499,"Tier 2"),
-                  (6999,"Tier 3"),
+RT_MMR_CUTOFFS = [
+                  (2999,"Tier 1"),
+                  (4249,"Tier 2"),
+                  (5999,"Tier 3"),
                   (7999,"Tier 4"),
-                  (8999,"Tier 5"),
+                  (9249,"Tier 5"),
                   (10499,"Tier 6"),
                   (11999,"Tier 7"),
-                  (999999,"Tier 8")]
+                  (999999,"Tier 8")
+                  ]
 
 """
-Class X: 11750+ MMR - T4
-Class S: 10250-11759 MMR - T4
-Class A: 8750-10249 MMR - T3, T4
-Class B: 6250-8749 MMR - T2, T3, T4
-Class C: 4500-6249 MMR - T2, T3
-Class D: 2250-4499 MMR - T1, T2
-Class E: <2249 MMR - T1
+Class X: 12000+ MMR - T4+
+Class S: 10500-11999 MMR - T4+
+Class A: 8750-10449 MMR - T4+
+Class B: 7250-8749 MMR - T3, T4
+Class C: 5750-7294 MMR - T2, T3
+Class D: 3750-5749 MMR - T1, T2
+Class E: <3749 MMR - T1
 """
-CT_MMR_CUTOFFS = [(2249, "Tier 1"),
-                  (4499, "Tier 2"),
-                  (6249, "Tier 3"),
-                  (999999, "Tier 4")
-                  # (5499, "Tier 5"),
-                  # (999999, "Tier 6")
+CT_MMR_CUTOFFS = [
+                    (3749, "Tier 1"),
+                    (5794, "Tier 2"),
+                    (7294, "Tier 3"),
+                    (999999, "Tier 4")
+                    # (5499, "Tier 5"),
+                    # (999999, "Tier 6")
                   ]
 
 

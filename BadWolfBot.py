@@ -504,7 +504,7 @@ class BadWolfBot(ext_commands.Bot):
         # if await AbuseTracking.abuse_track_check(message): 
         #     return
 
-        is_lounge_server = InteractionUtils.simulating_lounge_server(interaction)
+        is_lounge_server = UtilityFunctions.simulating_lounge_server(interaction)
         
         if interaction.channel.category_id in TEMPORARY_VR_CATEGORIES and command not in ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS:
             return
@@ -542,7 +542,7 @@ class BadWolfBot(ext_commands.Bot):
         
         message = InteractionUtils.create_proxy_msg(ctx.interaction, ctx=ctx, args=args)
 
-        is_lounge_server = InteractionUtils.simulating_lounge_server(message)
+        is_lounge_server = UtilityFunctions.simulating_lounge_server(message)
         
         this_bot = self.check_create_channel_bot(message)
         if is_lounge_server and this_bot.isFinishedLounge():
@@ -579,14 +579,14 @@ class BadWolfBot(ext_commands.Bot):
             return
         if not finished_on_ready:
             return
-        if common.is_beta and not InteractionUtils.check_beta_server(message):
+        if common.is_beta and not UtilityFunctions.check_beta_server(message):
             return
         server_prefix = '?'
         this_bot = None
 
         try:
             #server_id = message.guild.id   
-            is_lounge_server = InteractionUtils.simulating_lounge_server(message)
+            is_lounge_server = UtilityFunctions.simulating_lounge_server(message)
             server_prefix = ServerFunctions.get_server_prefix(message.guild.id)
             message_has_prefix, is_mention, _ = self.has_prefix(message.content, server_prefix)
             if is_mention:

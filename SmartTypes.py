@@ -170,26 +170,29 @@ class SmartLookupTypes:
     def is_unknown(self):
         return self._original_type is SmartLookupTypes.UNKNOWN
 
-    def get_smart_print(self) -> Tuple[str, str]:
+    def get_smart_print(self, is_lounge=False) -> Tuple[str, str]:
         '''Based on the type, returns a 2-tuple of strings that most informational messages can use
         The first index in the tuple is a descriptive of the SmartLookupType type along with the actual modified type
         The second index is the correct grammatical pronoun of the type (eg they, you, it)
         '''
+        lookup = self.original if self.get_type() is SmartLookupTypes.LOUNGE_NAME else self.modified_original
+        if is_lounge: 
+            lookup = "that player" if self.get_type() == SmartLookupTypes.LOUNGE_NAME else "given"
         if self.get_type() is SmartLookupTypes.FC:
-            return f"the FC {self.modified_original}", "they"
+            return f"the FC {lookup}", "they"
         if self.get_type() is SmartLookupTypes.FC_LIST:
-            return f"the FCs {self.modified_original}", "they"
+            return f"the FCs {lookup}", "they"
         if self.get_type() is SmartLookupTypes.DISCORD_ID:
-            return f"the discord ID {self.modified_original}", "they"
+            return f"the discord ID {lookup}", "they"
         if self.get_type() is SmartLookupTypes.SELF_DISCORD_ID:
             return f"you", "you"
         if self.get_type() is SmartLookupTypes.RXX:
-            return f"the rxx {self.modified_original}", "it"
+            return f"the rxx {lookup}", "it"
         if self.get_type() is SmartLookupTypes.LOUNGE_NAME:
-            return f"{self.original}", "they"
+            return f"{lookup}", "they"
         if self.get_type() is SmartLookupTypes.RAW_DISCORD_MENTION:
-            return f"the discord ID {self.modified_original}", "they"
-        return f"{self.modified_original}", "it"
+            return f"the discord ID {lookup}", "they"
+        return f"{lookup}", "it"
 
     def get_clean_smart_print(self, message):
         '''Based on the type, returns a 2-tuple of strings that most informational messages can use
@@ -197,7 +200,7 @@ class SmartLookupTypes:
         If the given type was a discord mention, the display name of that member will be returned if it can be found, otherwise the discord ID of the mention will be used
         The second index is the correct grammatical pronoun of the type (eg they, you, it)
         '''
-        descriptive, pronoun = self.get_smart_print()
+        descriptive, pronoun = self.get_smart_print(is_lounge=UtilityFunctions.simulating_lounge_server(message))
         if self.get_type() is self.RAW_DISCORD_MENTION:
             for mention in message.mentions:
                 if str(mention.id) == self.modified_original:

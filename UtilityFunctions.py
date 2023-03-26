@@ -113,7 +113,6 @@ def addBotAdmin(admin_id:str):
         return True
     
 def removeBotAdmin(admin_id:str):
-    
     admin_id = str(admin_id).lower()
     if common.botAdminsFileIsOpen:
         return False
@@ -135,6 +134,17 @@ def removeBotAdmin(admin_id:str):
         
         common.botAdminsFileIsOpen = False
         return True
+
+def simulating_lounge_server(message_or_interaction):
+    if common.is_beta and check_beta_server(message_or_interaction):
+        return True
+    return check_lounge_server(message_or_interaction)
+
+def check_lounge_server(message_or_interaction):
+    return message_or_interaction.guild.id == common.MKW_LOUNGE_SERVER_ID
+
+def check_beta_server(message_or_interaction):
+    return message_or_interaction.guild.id == common.TABLE_BOT_DISCORD_SERVER_ID
     
 def isfloat(value):
     try:
