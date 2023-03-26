@@ -142,6 +142,8 @@ async def prune_backups():
                     print("Deleting", path)
                     shutil.rmtree(path+"/tablebot_data")
                     shutil.rmtree(path + "/discord_server_settings")
+                    await common.run_command_async(f'rm {path}/logging/messages_logging.txt')
+                    await common.run_command_async(f'rm {path}/logging/error_logs.txt')
             elif delta.days >= 1:
                 db_path = path+"/tablebot_data/room_data_tracking.db"
                 db_path_zip = db_path + ".zip"
