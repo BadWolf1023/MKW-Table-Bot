@@ -1250,13 +1250,10 @@ class LoungeCommands:
             
             table_sorted_data["races_played"] = races_played_str
 
-
         lounge_server_updates.update_user_cooldown(message.author)
         delete_me = await message.channel.send("Submitting table... please wait...")
 
-
         error_code, newTableText, json_data = await MogiUpdate.textInputUpdate(table_text, tier_number, races_played, is_rt=is_primary)
-
 
         if error_code != MogiUpdate.SUCCESS_EC:
             if error_code is None:
@@ -2855,7 +2852,7 @@ class TablingCommands:
             missing_str = (f"\nYou are missing these players in your command: "+', '.join(missing)) if missing else ''
             return await message.channel.send(incorrect_str+missing_str)
 
-        # finally, input has been validated
+        # input has been validated
         this_bot.add_save_state(message.content)
 
         this_bot.room.change_race_placements(race_num, list(players.keys()))
