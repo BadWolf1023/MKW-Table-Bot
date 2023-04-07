@@ -54,9 +54,12 @@ class MessageWrapper():
         if attr in CANT_IMPLEMENT:
             raise NotImplementedError(f"Proxy message from interaction cannot {attr}")
         return self.message.__getattribute__(attr)
+    
+    def __str__(self) -> str:
+        return self.message.__str__()
 
 class ChannelWrapper():
-    def __init__(self, channel, ctx: discord.ApplicationContext):
+    def __init__(self, channel: discord.TextChannel, ctx: discord.ApplicationContext):
         self.channel = channel
         self.ctx = ctx
         if self.ctx:
@@ -78,6 +81,9 @@ class ChannelWrapper():
 
     def __getattr__(self,attr):
         return self.channel.__getattribute__(attr)
+    
+    def __str__(self) -> str:
+        return self.channel.__str__()
     
 def build_user_payload(original: Union[discord.Member, discord.User], member=False):
     user = original
