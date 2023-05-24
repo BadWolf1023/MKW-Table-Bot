@@ -18,6 +18,7 @@ from data_tracking import DataTracker
 import InteractionUtils
 from api import api_channelbot_interface, endpoints
 import MiiPuller
+import WiimmfiSiteFunctions
 
 #External library imports for this file
 import discord
@@ -156,7 +157,8 @@ SERVER_DEFAULT_LARGE_TIME_TERMS = {'defaultlargetime','defaultlargetimes', 'defa
 
 
 #Bot Admin Only Commands
-SET_CTGP_REGION_TERMS = {'set_ctgp_region'}
+SET_CTGP_REGION_TERMS = {'set_ctgp_region', 'add_ctgp_region'}
+REMOVE_CTGP_REGION_TERMS = {'remove_ctgp_region'}
 VR_ON_TERMS = {'vr_on'}
 VR_OFF_TERMS = {'vr_off'}
 BLACKLIST_USER_TERMS = {"blacklistuser"}
@@ -323,14 +325,12 @@ class BadWolfBot(ext_commands.Bot):
             self.dumpDataAndBackup.start()
         except RuntimeError:
             print("dumpData+Backup task already started")
-        # try:
-        #     checkBotAbuse.start()
-        # except RuntimeError:
-        #     print("checkBotAbuse task already started")
-        
+        try:
+            self.update_ctww_regions.start()
+        except RuntimeError:
+            print("update_ctww_regions task already started")
 
         self.mentions = [f'<@!{self.user.id}>', f'<@{self.user.id}>']
-    
         finished_on_ready = True
         print(f"Logged in as {self.user}")
     
@@ -343,6 +343,11 @@ class BadWolfBot(ext_commands.Bot):
         for flag_code in UserDataProcessing.valid_flag_codes:
             if not os.path.exists(image_path := common.FLAG_IMAGES_PATH + f"{flag_code}.png"):
                 await common.download_image(common.LORENZI_FLAG_PIC_URL.format(flag_code), image_path)
+    
+    @tasks.loop(hours=24)
+    async def update_ctww_regions(self):
+        regions = await WiimmfiSiteFunctions.get_valid_ctww_regions()
+        Race.CTGP_CTWW_REGIONS = regions
     
     @tasks.loop(hours=2)
     async def clear_mii_cache(self):
@@ -781,6 +786,9 @@ class BadWolfBot(ext_commands.Bot):
         elif main_command in SET_CTGP_REGION_TERMS:
             await commands.BotAdminCommands.change_ctgp_region_command(message, args)
         
+        elif main_command in REMOVE_CTGP_REGION_TERMS:
+            await commands.BotAdminCommands.change_ctgp_region_command(message, args, remove=True)
+        
         elif main_command in VR_ON_TERMS:
             await commands.BotAdminCommands.global_vr_command(message, on=True)
                 
@@ -970,7 +978,7 @@ class BadWolfBot(ext_commands.Bot):
             await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.RT_WW_REGION)
         
         elif main_command in CTWW_TERMS:
-            await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.CTGP_CTWW_REGION)  
+            await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.CTGP_CTWW_REGIONS)  
         
         elif main_command in BATTLES_TERMS:
             await commands.OtherCommands.wws_command(message, this_bot, ww_type=Race.BATTLE_REGION)
@@ -1147,15 +1155,15 @@ def load_CTGP_region_pickle():
     if os.path.exists(common.CTGP_REGION_FILE):
         with open(common.CTGP_REGION_FILE, "rb") as pickle_in:
             try:
-                Race.CTGP_CTWW_REGION = p.load(pickle_in)
+                Race.CTGP_CTWW_REGIONS = p.load(pickle_in)
             except:
-                print(f"Could not read in the CTGP_REGION for ?ctww command. Current region is: {Race.CTGP_CTWW_REGION}") 
+                print(f"Could not read in the CTGP_REGION for ?ctww command. Current regions are: {Race.CTGP_CTWW_REGIONS}") 
 
     
 def pickle_CTGP_region():
     with open(common.CTGP_REGION_FILE, "wb+") as pickle_out:
         try:
-            p.dump(Race.CTGP_CTWW_REGION, pickle_out)
+            p.dump(Race.CTGP_CTWW_REGIONS, pickle_out)
             return
         except:
             print("Could not dump pickle for CTGP region for ?ctww. Exception occurred.")
