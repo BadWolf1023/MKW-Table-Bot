@@ -50,8 +50,11 @@ url_cacher = URLCacher.URLCacher()
 
 WIIMMFI_URL = 'https://wiimmfi.de'
 MKWX_URL = 'https://wiimmfi.de/stats/mkwx'
+REGION_URL = f"{WIIMMFI_URL}/region/list"
 if common.USING_LINUX_PROXY:
-    MKWX_URL = common.properties['mkwx_proxy_url']
+    wiimmfi_proxy_url = common.properties['wiimmfi_proxy_url']
+    MKWX_URL =  wiimmfi_proxy_url + "/stats/mkwx"
+    REGION_URL = REGION_URL.replace(WIIMMFI_URL, wiimmfi_proxy_url)
 SUB_MKWX_URL = f"{MKWX_URL}/list/"
 
 special_test_cases = {
@@ -84,6 +87,19 @@ def fix_cloudflare_email(text: str) -> str:
         out.append(line)
     return "\n".join(out)
 
+async def get_valid_ctww_regions():
+    valid_regions = set()
+    html = await url_cacher.get_url(REGION_URL)
+    soup = BeautifulSoup(html, "html.parser")
+    region_list = soup.find(id="rlist")
+    for row in list(region_list.childGenerator()):
+        cols = list(row.children)
+        region_name = cols[2].text
+        reg_owner = cols[1].text.lower()
+        if region_name.strip() == "CTGP v1.03" and reg_owner == "mrbean35000vr" and cols[3].text == '\u2713':
+            valid_regions.add("vs_" + cols[0].text)
+    
+    return valid_regions
 
 async def get_room_HTML(room_link: str) -> Union[str, None]:
     '''Upon a successful request, returns HTML string of a given link with all of the cloudflare emails cleaned up.

@@ -9,12 +9,12 @@ from collections import defaultdict
 from typing import List
 import common
 
-CTGP_CTWW_REGION = 'vs_43'
+CTGP_CTWW_REGIONS = {'vs_43'}
 BATTLE_REGION = 'bt'
 RT_WW_REGION = 'vs'
 PRIVATE_ROOM_REGION = 'priv'
 UNKNOWN_REGION = 'unk'
-VALID_REGIONS = {CTGP_CTWW_REGION, BATTLE_REGION, RT_WW_REGION, PRIVATE_ROOM_REGION, UNKNOWN_REGION}
+VALID_REGIONS = {*CTGP_CTWW_REGIONS, BATTLE_REGION, RT_WW_REGION, PRIVATE_ROOM_REGION, UNKNOWN_REGION}
 
 
 def is_valid_region(region:str):
@@ -108,9 +108,14 @@ def save_data():
 def on_exit():
     save_data()
 
-def set_ctgp_region(new_region:str):
-    global CTGP_CTWW_REGION
-    CTGP_CTWW_REGION = new_region
+def add_ctgp_region(new_region: str):
+    CTGP_CTWW_REGIONS.add(new_region)
+
+def remove_ctgp_region(region: str):
+    try:
+        CTGP_CTWW_REGIONS.remove(region)
+    except:
+        pass
     
 class Race:
     '''
@@ -249,9 +254,8 @@ class Race:
     def setRegion(self, region):
         self.region = region
         
-    
     def isCTGPWW(self):
-        return self.region == CTGP_CTWW_REGION
+        return self.region in CTGP_CTWW_REGIONS
     
     def isRTWW(self):
         return self.region == RT_WW_REGION
@@ -380,7 +384,7 @@ class Race:
         if self.region is None:
             return ""
         
-        if self.region == CTGP_CTWW_REGION:
+        if self.region in CTGP_CTWW_REGIONS:
             return "CTWW (CTGP)"
         if self.region == RT_WW_REGION:
             return "WW"
@@ -394,7 +398,7 @@ class Race:
     def getWWFullName(region):
         if region is None:
             return ""
-        if region == CTGP_CTWW_REGION:
+        if region in CTGP_CTWW_REGIONS:
             return "CTGP Custom Track Worldwide"
         if region == RT_WW_REGION:
             return "Regular Track Worldwide"

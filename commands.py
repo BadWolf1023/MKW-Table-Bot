@@ -367,14 +367,17 @@ class BotAdminCommands:
             
 
     @staticmethod
-    async def change_ctgp_region_command(message: discord.Message, args: List[str]):
+    async def change_ctgp_region_command(message: discord.Message, args: List[str], remove=False):
         BotAdminCommands.is_bot_admin_check(message.author, "cannot change CTGP CTWW region")
         if len(args) != 2:
             await message.channel.send(f"You must give a new CTGP region to use for displaying CTGP WWs. For example, `?{args[0]} vs_40`")
         else:
-            new_ctgp_region = args[1]
-            Race.set_ctgp_region(new_ctgp_region)
-            await message.channel.send(f"CTGP WW Region set to: {new_ctgp_region}")
+            ctgp_region = args[1]
+            if remove:
+                Race.remove_ctgp_region(ctgp_region)
+            else:
+                Race.add_ctgp_region(ctgp_region)
+            await message.channel.send(f"CTGP region `{ctgp_region}` {'removed' if remove else 'added'}.\nCurrent CTGP regions: {sorted(Race.CTGP_CTWW_REGIONS)}")
 
     @staticmethod
     async def global_vr_command(message: discord.Message, on=True):
@@ -795,6 +798,12 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             days = int(match)
             command = command.replace(matches[-1],"")
         opponent_name = command.strip()
+        player_did = str(message.author.id)
+
+        players = command.split()
+        if len(players) > 1 and common.is_dev:
+            player_did = str(UserDataProcessing.get_DiscordID_By_LoungeName(players[0]))
+            opponent_name = players[1]
 
         if len(opponent_name) == 0:
             await message.channel.send("Please specify a player name. " + error_message)
@@ -805,20 +814,24 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             await message.channel.send(f"No player found with name {UtilityFunctions.clean_for_output(opponent_name)}.\n" + error_message)
             return
 
-        player_did = str(message.author.id)
-
         if player_did == opponent_did:
             await message.channel.send(f"You can not compare your record against yourself.\n" + error_message)
             return
 
-        result = await DataTracker.DataRetriever.get_record(player_did,opponent_did,days)
-        total, wins = result[0]
-        if total == 0:
+        # result = await DataTracker.DataRetriever.get_record_new(player_did,opponent_did,days)
+        rt_result = await DataTracker.DataRetriever.get_record(player_did, opponent_did, days)
+        ct_result = await DataTracker.DataRetriever.get_record(player_did, opponent_did, days, is_ct=True)
+        (rt_total, rt_wins), (ct_total, ct_wins) = rt_result[0], ct_result[0]
+
+        if rt_total+ct_total == 0:
             await message.channel.send(f"You have played no races against {UtilityFunctions.clean_for_output(opponent_name)}")
             return
 
-        losses = total-wins
-        await message.channel.send(f'{wins} Wins — {losses} Losses')
+        rt_losses = rt_total-rt_wins
+        ct_losses = ct_total-ct_wins
+        rt_record = "No record" if rt_total == 0 else f"{rt_wins} Wins — {rt_losses} Losses"
+        ct_record = "No record" if ct_total == 0 else f"{ct_wins} Wins — {ct_losses} Losses"
+        await message.channel.send(f"RT: {rt_record}\nCT: {ct_record}")
 
 
 """================== Other Commands ===================="""
@@ -1053,7 +1066,7 @@ class OtherCommands:
         rooms = []
         if ww_type == Race.RT_WW_REGION:
             rooms = parser.get_RT_WWs()
-        elif ww_type == Race.CTGP_CTWW_REGION:
+        elif ww_type == Race.CTGP_CTWW_REGIONS:
             rooms = parser.get_CTGP_WWs()
         elif ww_type == Race.BATTLE_REGION:
             rooms = parser.get_battle_WWs()

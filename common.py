@@ -50,7 +50,7 @@ reload_properties()
 
 MII_COMMAND_DISABLED = False
 MIIS_ON_TABLE_DISABLED = False
-USING_LINUX_PROXY = "mkwx_proxy_url" in properties
+USING_LINUX_PROXY = "wiimmfi_proxy_url" in properties
 ON_WINDOWS = os.name == 'nt'
 
 HREF_HTML_NAME = 'data-href' if (USING_LINUX_PROXY or not ON_WINDOWS) else 'href'
