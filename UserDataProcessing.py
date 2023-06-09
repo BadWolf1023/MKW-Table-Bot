@@ -352,5 +352,8 @@ def initialize():
     
 #2021-04-03 20:29:45.779373
 def convert_datetime_str(datetime_str:str):
-    return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S.%f')
+    try:
+        return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S.%f')
+    except:
+        return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
 
