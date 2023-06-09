@@ -800,9 +800,9 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         opponent_name = command.strip()
         player_did = str(message.author.id)
 
-        if common.is_dev and len(players := command.split()) > 0:
-            player_did = str(UserDataProcessing.get_DiscordID_By_LoungeName(players[0]))
-            opponent_name = players[1]
+        # if common.is_dev and len(players := command.split()) > 0:
+        #     player_did = str(UserDataProcessing.get_DiscordID_By_LoungeName(players[0]))
+        #     opponent_name = players[1]
 
         if len(opponent_name) == 0:
             await message.channel.send("Please specify a player name. " + error_message)
