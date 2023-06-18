@@ -87,6 +87,8 @@ def fix_cloudflare_email(text: str) -> str:
         out.append(line)
     return "\n".join(out)
 
+# potentially use https://wiimmfi.de/region/stat#rt0 - this page seems to have currently used CTWW regions
+# rather than all CTWW regions
 async def get_valid_ctww_regions():
     valid_regions = set()
     html = await url_cacher.get_url(REGION_URL)

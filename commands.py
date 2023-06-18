@@ -1072,7 +1072,7 @@ class OtherCommands:
         rooms = []
         if ww_type == Race.RT_WW_REGION:
             rooms = parser.get_RT_WWs()
-        elif ww_type in Race.CTGP_CTWW_REGIONS:
+        elif ww_type == Race.CTGP_CTWW_REGIONS:
             rooms = parser.get_CTGP_WWs()
         elif ww_type == Race.BATTLE_REGION:
             rooms = parser.get_battle_WWs()
