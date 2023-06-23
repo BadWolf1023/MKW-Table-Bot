@@ -115,3 +115,4 @@ class MessagePaginator(pages.Paginator):
     async def on_timeout(self) -> None:
         self.buttons.clear()
         await self.message.edit(view=None)
+        del self

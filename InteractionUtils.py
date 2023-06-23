@@ -75,7 +75,8 @@ class ChannelWrapper():
                 return await self.channel.send(*args,**kwargs)
             if isinstance(msg, discord.WebhookMessage):
                 return msg
-            return await msg.original_message()
+            return await msg.original_response()
+            # return await msg.original_message()
         else:
             return await self.channel.send(*args,**kwargs)
 
@@ -190,7 +191,7 @@ async def on_component_error(error: Exception, interaction: discord.Interaction,
         message = interaction.message
     if not message:
         try:
-            message = await interaction.original_message()
+            message = await interaction.original_response()
         except Exception:
             pass
 

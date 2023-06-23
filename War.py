@@ -121,6 +121,12 @@ class War(object):
         if self.teams is None:
             raise TableBotExceptions.WarSetupStillRunning()
         return [fc for fc, tag in self.teams.items() if tag == tagToGet]
+
+    def change_tag_name(self, tag: str, new_tag: str):
+        if tag == new_tag:
+            return
+        for fc in self.getFCsForTag(tag):
+            self.setTeamForFC(fc, new_tag)
     
     def set_temp_team_tags(self, tags_player_fcs):
         self.temporary_tag_data = tags_player_fcs
@@ -148,11 +154,18 @@ class War(object):
                 result += f"\t{playerNum}. {UserDataProcessing.proccessed_lounge_add(playerName, fc)}\n"
             
         return result
+    
+    def get_tag_list_str(self):
+        result = ""
+        for tag in sorted(self.getTags()):
+            result += f"**Tag: {UtilityFunctions.clean_for_output(tag)}**\n"
+        
+        return result
         
     def print_teams(self):
         if self.teams is None:
             raise TableBotExceptions.WarSetupStillRunning()
-        for tag in self.getTags(self, self.teams):
+        for tag in self.getTags():
             print(tag + self.getFCsForTag(tag))
             
     def addEdit(self, FC, gpNum, gpScore):
