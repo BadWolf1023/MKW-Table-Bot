@@ -12,7 +12,7 @@ from typing import Dict, Union
 # import gc
 
 class ManualTeamsModal(discord.ui.Modal):
-    def __init__(self, bot, prefix, is_lounge, view):
+    def __init__(self, bot, prefix, is_lounge, view: 'ManualTeamsView'):
         super().__init__(title="Manual Teams Input")
         self.bot = bot
         self.prefix = prefix
@@ -35,7 +35,7 @@ class ManualTeamsModal(discord.ui.Modal):
         except Exception as error:
             await response.edit_original_message(content='An error occurred while creating manual teams.')
             return await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
-        await self.view.message.edit(view=None)
+        await self.view.on_timeout()
         
 
 class InputTeamsButton(discord.ui.Button['ManualTeamsView']):
@@ -684,7 +684,7 @@ class TagEditSelectMenu(discord.ui.Select['TagEditView']):
 
 class InputTagButton(discord.ui.Button['TagEditView']):
     def __init__(self):
-        super().__init__(style=discord.ButtonStyle.primary, label="Change Tag", row=1)
+        super().__init__(style=discord.ButtonStyle.primary, label="Change Tag", row=1, disabled=True)
     
     async def callback(self, interaction: discord.Interaction):
         self.used = True
@@ -692,32 +692,37 @@ class InputTagButton(discord.ui.Button['TagEditView']):
 
 class EditTagModal(discord.ui.Modal):
     def __init__(self, bot: TableBot.ChannelBot, view: 'TagEditView'):
-        super().__init__(title="Manual Teams Input")
+        super().__init__(title="Change Tag: " + view.selected_value)
         self.bot = bot
         self.view = view
         self.add_item(discord.ui.InputText(style=discord.InputTextStyle.singleline, label='Input', placeholder="Input new tag here"))
 
-    async def on_error(self): #not yet implemented in pycord - will be soon
-        pass
+    # async def on_error(self): #not yet implemented in pycord - will be soon
+    #     pass
 
     async def callback(self, interaction: discord.Interaction):
         new_tag = UtilityFunctions.clean_for_output(self.children[0].value)
         old_tag = self.view.selected_value
         try:
+            self.bot.add_save_state(f"/edittag {old_tag} {new_tag}")
             self.bot.war.change_tag_name(old_tag, new_tag)
+        except AssertionError:
+            await self.view.on_timeout()
+            return await interaction.response.send_message("The tag you are trying to change has already been changed. Run the command again if you still want to change the tag.")
         except Exception as error:
             await interaction.response.send_message(content='An error occurred while changing tag name.')
             return await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
 
         await interaction.response.send_message(f"Changed tag **{old_tag}** -> **{new_tag}**")
-        await self.view.message.edit(view=None)
+        await self.view.on_timeout()
 
 class TagEditView(discord.ui.View):
     def __init__(self, bot: TableBot.ChannelBot, prefix, is_lounge):
-        super().__init__(timeout=30)
+        super().__init__(timeout=45)
         self.bot = bot
         self.prefix = prefix
         self.is_lounge = is_lounge
+        self.message = None
         self.used = False
         self.selected_value = ""
 
@@ -753,7 +758,7 @@ class TagEditView(discord.ui.View):
             return False
         if self.used:
             await self.delete(interaction)
-            await interaction.followup.send("Manual teams have already been entered.", ephemeral=True)
+            await interaction.followup.send("Someone has already used this input.", ephemeral=True)
             return False
         return allowed
     
