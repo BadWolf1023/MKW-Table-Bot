@@ -2130,11 +2130,35 @@ class TablingCommands:
         new_tag = UtilityFunctions.clean_for_output(tag_arg)
         this_bot.getWar().setTeamForFC(player_fc, new_tag)
         await message.channel.send(f"{player_name} tag set to: {new_tag}")
+    
+    @staticmethod
+    async def change_tag_name_command(
+        message: discord.Message, 
+        this_bot: ChannelBot, 
+        args: List[str], 
+        server_prefix: str, 
+        is_lounge_server: bool
+    ):
+        ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
+
+        bad_input = False
+        if len(args) < 3 or (bad_input := (args[1] not in this_bot.war.getTags())):
+            tag_str = this_bot.war.get_tag_list_str()
+            if bad_input:
+                tag_str = f"**{args[1]}** was not a valid tag. Select a tag to change below.\n\n" + tag_str
+            tag_change_view = Components.TagEditView(this_bot, server_prefix, is_lounge_server)
+            return await message.channel.send(tag_str, view=tag_change_view)
+            
+        this_bot.add_save_state(message.content)
+        new_tag = UtilityFunctions.clean_for_output(args[2])
+        this_bot.war.change_tag_name(args[1], new_tag)
+        await message.channel.send(f"Changed tag **{args[1]}** -> **{new_tag}**")
+
 
     #Refactor this method to make it more readable
     @staticmethod
     @TimerDebuggers.timer_coroutine
-    async def start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, permission_check:Callable):
+    async def start_war_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool, permission_check: Callable):
         await mkwx_check(message, "Start table command disabled.")
         rlCooldown = this_bot.getRLCooldownSeconds()
         if rlCooldown > 0:

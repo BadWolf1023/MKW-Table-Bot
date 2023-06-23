@@ -281,7 +281,7 @@ class Table_Slash(ext_commands.Cog):
     @slash_command(name="changetag",
     description="Change a player's tag",
     guild_ids=common.SLASH_GUILDS)
-    async def _change_tag(
+    async def _change_player_tag(
         self,
         ctx: discord.ApplicationContext,
         player: Option(str, "Player number (run /ap) or Lounge name"),
@@ -291,6 +291,25 @@ class Table_Slash(ext_commands.Cog):
         args = [command, player, tag]
         
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
+    
+    @slash_command(
+        name="edittag",
+        description="Change the name of a tag",
+        guild_ids=common.SLASH_GUILDS
+    )
+    async def _change_team_tag(
+        self,
+        ctx: discord.ApplicationContext,
+        tag: Option(str, "Tag to change", default=None),
+        new_tag: Option(str, "New tag name", default=None)
+    ):  
+        command, message, this_bot, prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command]
+        if tag:
+            args.append(tag)
+        if new_tag:
+            args.append(new_tag)
+        await self.bot.process_message_commands(message, args, this_bot, prefix, is_lounge, from_slash=True)
 
     @slash_command(name="earlydc",
     description="Fix player incorrectly missing from race 1 of GP",

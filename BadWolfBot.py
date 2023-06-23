@@ -21,6 +21,7 @@ import MiiPuller
 import WiimmfiSiteFunctions
 
 #External library imports for this file
+# import gc
 import discord
 import time
 from discord.ext import tasks
@@ -43,6 +44,7 @@ from fastapi import FastAPI
 import uvicorn
 from collections import defaultdict
 
+# gc.set_debug(gc.DEBUG_UNCOLLECTABLE)
 CT_WAR_LOUNGE_ECHELONS_CAT_ID = 851666104228249652
 WAR_LOUNGE_ECHELONS_CAT_ID = 751956338912788559
 WAR_LOUNGE_COMP_DISC_CAT_ID = 751956337612685405
@@ -76,6 +78,7 @@ MERGE_ROOM_TERMS = {"mr", "mergeroom"}
 SET_TABLE_NAME_TERMS = {"setwarname", "settablename"}
 CHANGE_PLAYER_NAME_TERMS = {'changename', 'cn'}
 CHANGE_PLAYER_TAG_TERMS = {'assignteam', 'changeteam', 'assigntag', 'changetag', 'setteam', 'settag', 'ct'}
+CHANGE_TAG_NAME_TERMS = {'edittag', 'et'}
 CHANGE_ROOM_SIZE_TERMS = {'changeroomsize', "editroomsize", "forceroomsize", "crs"}
 EARLY_DC_TERMS = {'earlydc'}
 DEPRECATED_QUICK_EDIT_TERMS = {'quickedit', 'qe'}
@@ -386,9 +389,8 @@ class BadWolfBot(ext_commands.Bot):
             for channel_id in self.table_bots[server_id]:
                 if self.table_bots[server_id][channel_id].isInactive(): #if the table bot is inactive, delete it
                     to_remove.append((server_id, channel_id))
-                    
         for (serv_id, chan_id) in to_remove:
-            self.table_bots[serv_id][chan_id].destroy()
+            self.table_bots[serv_id][chan_id].reset()
             del(self.table_bots[serv_id][chan_id])
     
     #This function dumps everything we have pulled recently from the API
@@ -825,6 +827,9 @@ class BadWolfBot(ext_commands.Bot):
         
         elif main_command in CHANGE_PLAYER_TAG_TERMS:
             await commands.TablingCommands.change_player_tag_command(message, this_bot, args, server_prefix, is_lounge_server)
+        
+        elif main_command in CHANGE_TAG_NAME_TERMS:
+            await commands.TablingCommands.change_tag_name_command(message, this_bot, args, server_prefix, is_lounge_server)
         
         elif main_command in CHANGE_PLAYER_NAME_TERMS:
             await commands.TablingCommands.change_player_name_command(message, this_bot, args, server_prefix, is_lounge_server)

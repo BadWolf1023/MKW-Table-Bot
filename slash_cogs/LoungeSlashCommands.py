@@ -85,6 +85,7 @@ class TableTextView(discord.ui.View):
         self.clear_items()
         self.stop()
         await self.message.edit(view=None)
+        del self
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         can_interact = interaction.channel.permissions_for(interaction.user).send_messages

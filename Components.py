@@ -9,6 +9,7 @@ import common
 import Stats
 import time
 from typing import Dict, Union
+# import gc
 
 class ManualTeamsModal(discord.ui.Modal):
     def __init__(self, bot, prefix, is_lounge, view):
@@ -58,11 +59,13 @@ class ManualTeamsView(discord.ui.View):
         self.clear_items()
         self.stop()
         await interaction.response.edit_message(view=None)
+        del self
     
     async def on_timeout(self):
         self.clear_items()
         self.stop()
         await self.message.edit(view=None)
+        del self
         
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         can_interact = interaction.channel.permissions_for(interaction.user).send_messages
@@ -136,6 +139,9 @@ class ConfirmView(discord.ui.View):
             self.stop()
             await common.safe_edit(self.message, view=None)
         
+        del self
+        # print(gc.is_finalized(self))
+
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         can_interact = interaction.channel.permissions_for(interaction.user).send_messages
         if not can_interact:
@@ -291,6 +297,9 @@ class PictureView(discord.ui.View):
         self.stop()
         if self.message:
             await common.safe_edit(self.message, view=None)
+        
+        del self
+        # print(gc.is_finalized(self))
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
         await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
@@ -380,6 +389,9 @@ class VRView(discord.ui.View):
         self.stop()
         if self.message_ref:
             await common.safe_edit(self.message_ref, view=None)
+        
+        del self
+        # print(gc.is_finalized(self))
     
     async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
         await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
@@ -521,6 +533,9 @@ class SuggestionView(discord.ui.View):
         except AttributeError: # room has already been destroyed/cleaned up
             pass
 
+        del self
+        # print(gc.is_finalized(self))
+
     async def refresh_suggestions(self):
         """Race removal happened, so buttons must be updated."""
         self.errors = self.bot.getRoom().suggestion_errors
@@ -648,3 +663,106 @@ def get_command_args(error, info, bot):
         args = ['changeplace', str(playerNum), str(race), placement]
     
     return args
+
+
+##########################################
+    
+class TagEditSelectMenu(discord.ui.Select['TagEditView']):
+    def __init__(self, values, name):
+        options = [discord.SelectOption(label=str(value)) for value in values]
+        super().__init__(placeholder=name, options=options)
+    
+    async def callback(self, interaction: discord.Interaction):
+        self.view.selected_value = interaction.data['values'][0]
+        self.placeholder = self.view.selected_value 
+
+        self.view.enable_change()
+        try:
+            await interaction.response.edit_message(view=self.view)
+        except: 
+            pass
+
+class InputTagButton(discord.ui.Button['TagEditView']):
+    def __init__(self):
+        super().__init__(style=discord.ButtonStyle.primary, label="Change Tag", row=1)
+    
+    async def callback(self, interaction: discord.Interaction):
+        self.used = True
+        await interaction.response.send_modal(EditTagModal(self.view.bot, self.view))
+
+class EditTagModal(discord.ui.Modal):
+    def __init__(self, bot: TableBot.ChannelBot, view: 'TagEditView'):
+        super().__init__(title="Manual Teams Input")
+        self.bot = bot
+        self.view = view
+        self.add_item(discord.ui.InputText(style=discord.InputTextStyle.singleline, label='Input', placeholder="Input new tag here"))
+
+    async def on_error(self): #not yet implemented in pycord - will be soon
+        pass
+
+    async def callback(self, interaction: discord.Interaction):
+        new_tag = UtilityFunctions.clean_for_output(self.children[0].value)
+        old_tag = self.view.selected_value
+        try:
+            self.bot.war.change_tag_name(old_tag, new_tag)
+        except Exception as error:
+            await interaction.response.send_message(content='An error occurred while changing tag name.')
+            return await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
+
+        await interaction.response.send_message(f"Changed tag **{old_tag}** -> **{new_tag}**")
+        await self.view.message.edit(view=None)
+
+class TagEditView(discord.ui.View):
+    def __init__(self, bot: TableBot.ChannelBot, prefix, is_lounge):
+        super().__init__(timeout=30)
+        self.bot = bot
+        self.prefix = prefix
+        self.is_lounge = is_lounge
+        self.used = False
+        self.selected_value = ""
+
+        self.add_item(TagEditSelectMenu(sorted(self.bot.war.getTags()), "Select tag to change"))
+        self.add_item(InputTagButton())
+        self.bot.add_component(self)
+
+    def enable_change(self):
+        for child in self.children:
+            child.disabled = False
+
+    async def delete(self, interaction: discord.Interaction):
+        self.clear_items()
+        self.stop()
+        await interaction.response.edit_message(view=None)
+        del self
+    
+    async def on_timeout(self):
+        self.clear_items()
+        self.stop()
+        await self.message.edit(view=None)
+        del self
+        
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        can_interact = interaction.channel.permissions_for(interaction.user).send_messages
+        if not can_interact:
+            await interaction.response.send_message("You cannot interact with this.", ephemeral=True)
+            return False
+
+        allowed = InteractionUtils.commandIsAllowed(self.is_lounge, interaction.user, self.bot, 'restricted_interaction', is_interaction=True)
+        if not allowed: 
+            await interaction.response.send_message("You cannot interact with this button.", ephemeral=True)
+            return False
+        if self.used:
+            await self.delete(interaction)
+            await interaction.followup.send("Manual teams have already been entered.", ephemeral=True)
+            return False
+        return allowed
+    
+    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
+        await InteractionUtils.on_component_error(error, interaction, self.prefix, self.bot)
+    
+    async def send(self, messageable, content=None, embed=None, file=None):
+        if hasattr(messageable, 'channel'):
+            messageable = messageable.channel
+
+        self.message = await messageable.send(content=content, embed=embed, file=file, view=self)
+        return self.message
