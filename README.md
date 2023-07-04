@@ -32,7 +32,8 @@ You will need to set up a few things before you can actually run the code. Even 
 1. You cannot actually make requests to Wiimmfi to pull room data. Wiimmfi is protected with Cloudeflare. Our server has been whitelisted, but your computer is obviously not whitelisted. Therefore, to test, use one of our testing rooms, which can be accessed with special rxx numbers when you start the table. Eg `sw 2v2 6 r0000001` (Or you can create more testing rooms in the `testing_rooms` folder and update this line of code: https://github.com/BadWolf1023/MKW-Table-Bot/blob/main/WiimmfiSiteFunctions.py#L60C1-L60C20 )
 2. You may or may not have an API key for 255mp's API. You can reach out to him for a key, but you generally don't need it. It's simply used to pull player names based on their discord ID or FC. Without it, their mii name will be displayed (rather than their Lounge name). Not a huge issue!
 
-**Useful information for navigating the project and squashing bugs:**
+**Useful information (navigating the project, squashing bugs and project oddities):**
+- Some exceptions are logged in `logfile.log` and aren't displayed in the console. We will probably change this in the future, but for now, you'll need to actively check this file for raised exceptions.
 - `BadWolfBot.py` is the main file. This is what you run to start the bot.
 - The Slash command interfaces are in the `slash_cogs` folder. When a slash command is sent, Table Bot transforms it into a text command and then sends it over to `BadWolfBot.py`.
 - If a text command is sent, it comes directly to `BadWolfBot.py`
