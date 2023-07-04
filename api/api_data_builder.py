@@ -277,6 +277,8 @@ def build_full_table_html(table_data: dict, include_races_played=True, style=Non
             team_name_wrapper = soup.new_tag('div', attrs={"class": "team_name_wrapper"})
             # team_name_wrapper2 = soup.new_tag('div', attrs={"class": "team_name_wrapper2"})
             team_name_div = soup.new_tag('div', attrs={"class": "team_name", "id": f"team_{id_index}_name"})
+            if table_data['format'] == 'FFA':
+                team_tag = "FFA"
             team_name_div.string = team_tag
             # team_name_wrapper2.append(team_name_div)
             team_name_wrapper.append(team_name_div)

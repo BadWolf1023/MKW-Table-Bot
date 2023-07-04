@@ -329,7 +329,6 @@ class SQL_Search_Query_Builder(object):
         ORDER BY Event_FCs.event_id;
         """
 
-
         return f"""
         SELECT Event_Races.event_id, MIN(Race.race_id) as race_id, Race.match_time, Track.is_ct, x.fc, x.mii_hex
         FROM Event_Races INNER JOIN 
@@ -343,31 +342,34 @@ class SQL_Search_Query_Builder(object):
         
 
     @staticmethod
-    def get_player_races(did, days):
+    def get_player_races(did, days, is_ct):
         days_filter_clause = f"AND Event.time_added > date('now','-{days} days')" if (days is not None) else ""
 
         return f"""
-        SELECT race_id, place
-                 FROM Place
-                     JOIN Player_FCs ON Place.fc = Player_FCs.fc
-                 WHERE Place.race_id IN (
-                     SELECT race_id
-                     FROM Event_Races
-                              JOIN Event ON Event_Races.event_id = Event.event_id
-                              JOIN Tier ON Event.channel_id = Tier.channel_id
-                     WHERE player_setup_amount == 12
-                       {days_filter_clause}
-                       {SQL_Search_Query_Builder.get_event_valid_filter()}
-                 )
-                   AND discord_id = {did}
-                   AND time < 6 * 60
+        SELECT Place.race_id, Place.place
+            FROM Place
+                JOIN Player_FCs ON Place.fc = Player_FCs.fc
+            WHERE Place.race_id IN (
+                SELECT Race.race_id
+                FROM Race
+                    JOIN Event_Races on Race.race_id = Event_Races.race_id
+                    JOIN Event ON Event_Races.event_id = Event.event_id
+                    JOIN Tier ON Event.channel_id = Tier.channel_id
+                    JOIN Track ON Race.track_name = Track.track_name
+                WHERE player_setup_amount = 12
+                    AND Track.is_ct = {1 if is_ct else 0}
+                    {days_filter_clause}
+                    {SQL_Search_Query_Builder.get_event_valid_filter()}
+            )
+                AND discord_id = {did}
+                AND time < 6 * 60
         """
 
     @staticmethod
-    def get_record_query(player_did, opponent_did, days):
+    def get_record_query(player_did, opponent_did, days, is_ct):
         return f"""
-        SELECT COUNT(*), SUM(CASE WHEN a.place < b.place THEN 1 ELSE 0 END) as wins
-        FROM ({SQL_Search_Query_Builder.get_player_races(player_did, days)}) as a 
-        JOIN ({SQL_Search_Query_Builder.get_player_races(opponent_did, days)}) as b 
+        SELECT COUNT(*), COUNT(CASE WHEN a.place < b.place THEN 1 END) as wins
+        FROM ({SQL_Search_Query_Builder.get_player_races(player_did, days, is_ct)}) as a 
+            INNER JOIN ({SQL_Search_Query_Builder.get_player_races(opponent_did, days, is_ct)}) as b 
         ON a.race_id = b.race_id
         """
