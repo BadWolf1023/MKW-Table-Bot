@@ -16,6 +16,7 @@ Visit the Documentation to see all the commands: https://github.com/BadWolf1023/
 * andrew#9232
 * camelwater#6035
 * liam#8547
+  
 
 # Developers, READ BELOW
 You will need to set up a few things before you can actually run the code. Even after you have set up a few things, some features will be limited. Below is a guide on how to set up the bot, useful information, and the limitations of running it in your testing enviornment:
@@ -28,4 +29,4 @@ You will need to set up a few things before you can actually run the code. Even 
 
 Please note the following limitations:
 1. You cannot actually make requests to Wiimmfi to pull room data. Wiimmfi is protected with Cloudeflare. Our server has been whitelisted, but your computer is obviously not whitelisted. Therefore, to test, use one of our testing rooms, which can be accessed with special rxx numbers when you start the table. Eg `sw 2v2 6 r0000001` (Or you can create more testing rooms in the `testing_rooms` folder and update this line of code: https://github.com/BadWolf1023/MKW-Table-Bot/blob/main/WiimmfiSiteFunctions.py#L60C1-L60C20 )
-2. 
+2. You may or may not have an API key for 255mp's API. You can reach out to him for a key, but you generally don't need it. It's simply used to pull player names based on their discord ID or FC. Without it, their mii name will be displayed (rather than their Lounge name). Not a huge issue!
