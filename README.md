@@ -26,7 +26,7 @@ You will need to set up a few things before you can actually run the code. Even 
 2. Make a copy of `example_private.txt`. Name it `private.txt`.
 3. Put the bot token in the appropriate places in `private.txt`.
 4. Install all dependencies in `Dependencies.txt`. Consider using `pip install` to do so. Note: there is a Node.js dependency. You will need to install Node.js and install this dependency. (No, we don't write Node.js code, it's just used for the localtunnel.)
-5. You can run the bot by running `BadWolfBot.py.
+5. You can run now the bot by running `BadWolfBot.py`
 
 **Limitations:**
 1. You cannot actually make requests to Wiimmfi to pull room data. Wiimmfi is protected with Cloudeflare. Our server has been whitelisted, but your computer is obviously not whitelisted. Therefore, to test, use one of our testing rooms, which can be accessed with special rxx numbers when you start the table. Eg `sw 2v2 6 r0000001` (Or you can create more testing rooms in the `testing_rooms` folder and update this line of code: https://github.com/BadWolf1023/MKW-Table-Bot/blob/main/WiimmfiSiteFunctions.py#L60C1-L60C20 )
