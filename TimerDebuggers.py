@@ -1,7 +1,7 @@
 from time import time
 import functools
 
-DEBUGGING = True
+DEBUGGING = False
 
 def timer_coroutine(func):
     # This function shows the execution time of 

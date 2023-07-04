@@ -782,7 +782,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
     @staticmethod
     async def record_command(message: discord.Message, args: List[str], server_prefix: str):  # TODO: This might have broken with new case for args
         command_name = args[0]
-        error_message = f"Usage: `{server_prefix}{command_name} player_name (num_days)`"
+        error_message = f"Usage: `{server_prefix}{command_name} player_name (other_player_name) (num_days)`"
 
         if len(args) == 1:
             await message.channel.send(error_message)
@@ -800,7 +800,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         opponent_name = command.strip()
         player_did = str(message.author.id)
         
-        # for testing purposes, but maybe could implement for actual command? users would have to enter names with spaces removed
+        # users have to enter names with spaces removed
         if common.is_dev and len(players := command.split()) > 1:
             player_did = str(UserDataProcessing.get_DiscordID_By_LoungeName(players[0]))
             opponent_name = players[1]
@@ -818,14 +818,6 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             await message.channel.send(f"You can not compare your record against yourself.\n" + error_message)
             return
 
-        # result = await DataTracker.DataRetriever.get_record(player_did,opponent_did,days)
-        # total, wins = result[0]
-        # if total == 0:
-        #     await message.channel.send(f"You have played no races against {UtilityFunctions.clean_for_output(opponent_name)}")
-        #     return
-
-        # losses = total-wins
-        # await message.channel.send(f'{wins} Wins — {losses} Losses')
         rt_result = await DataTracker.DataRetriever.get_record(player_did, opponent_did, days)
         ct_result = await DataTracker.DataRetriever.get_record(player_did, opponent_did, days, is_ct=True)
         (rt_total, rt_wins), (ct_total, ct_wins) = rt_result[0], ct_result[0]
