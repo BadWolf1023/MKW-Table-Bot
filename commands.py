@@ -800,8 +800,11 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         opponent_name = command.strip()
         player_did = str(message.author.id)
         
+        self_comparison = True
+        players = command.split()
         # users have to enter names with spaces removed
-        if common.is_dev and len(players := command.split()) > 1:
+        if len(players) > 1:
+            self_comparison = False
             player_did = str(UserDataProcessing.get_DiscordID_By_LoungeName(players[0]))
             opponent_name = players[1]
 
@@ -823,7 +826,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         (rt_total, rt_wins), (ct_total, ct_wins) = rt_result[0], ct_result[0]
 
         if rt_total+ct_total == 0:
-            await message.channel.send(f"You have played no races against {UtilityFunctions.clean_for_output(opponent_name)}")
+            await message.channel.send(f"{'You have' if self_comparison else f'{players[0]} has'} played no races against {UtilityFunctions.clean_for_output(opponent_name)}.")
             return
 
         rt_losses = rt_total-rt_wins
