@@ -40,3 +40,4 @@ You will need to set up a few things before you can actually run the code. Even 
 - In short, if you are not modifying the slash command interface for a command, just jump to the area in `BadWolfBot.py` where the command is processed and start following the rabbit trail.
 - A good IDE is recommended! It will help you jump around the project and save time.
   - New to developing? Check out [Pycharm](https://www.jetbrains.com/pycharm/) - since this is an OSS project, you can download the Community Edition for free.
+- Did you change a few lines of code but Github says you changed the entire file? Please follow [these directions](https://blog.boot.dev/clean-code/line-breaks-vs-code-lf-vs-crlf/#:~:text=This%20is%20typically%20due%20to,line%20feed%20characters%2C%20by%20default.)
