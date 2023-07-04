@@ -44,6 +44,8 @@ from fastapi import FastAPI
 import uvicorn
 from collections import defaultdict
 
+os.path = os.path.realpath('C:\\Users\\Alexander\\Documents\\Table_Bot_3.7.23\\MKW-Table-Bot') #NECESSARY FOR FEAR, DELETE IF I SUBMIT WITHOUT DELETING MYSELF 
+
 # gc.set_debug(gc.DEBUG_UNCOLLECTABLE)
 CT_WAR_LOUNGE_ECHELONS_CAT_ID = 851666104228249652
 WAR_LOUNGE_ECHELONS_CAT_ID = 751956338912788559
@@ -53,9 +55,9 @@ LOUNGE_ECHELONS_CT_CAT_ID = 520790337443332104
 LOUNGE_COMP_DISC_ID = 455763458483421194
 TEMPORARY_VR_CATEGORIES = [LOUNGE_COMP_DISC_ID, LOUNGE_ECHELONS_CAT_ID, LOUNGE_ECHELONS_CT_CAT_ID, WAR_LOUNGE_COMP_DISC_CAT_ID, WAR_LOUNGE_ECHELONS_CAT_ID, CT_WAR_LOUNGE_ECHELONS_CAT_ID]
 
-real_bot_key = None
-beta_bot_key = None
-testing_bot_key = None
+real_bot_key = "MTEyNTU0NDQ4MTYxODQwNzQ2NQ.Gkdvbr.fvPx7Ei9HwBUMUN4vI83f27QlCEZjsXlGwQbAs"
+beta_bot_key = "MTEyNTU0NDQ4MTYxODQwNzQ2NQ.Gkdvbr.fvPx7Ei9HwBUMUN4vI83f27QlCEZjsXlGwQbAs"
+testing_bot_key = "MTEyNTU0NDQ4MTYxODQwNzQ2NQ.Gkdvbr.fvPx7Ei9HwBUMUN4vI83f27QlCEZjsXlGwQbAs"
 bot_invite_picture = "https://media.discordapp.net/attachments/781249043623182406/911592069636685884/unknown.png"
 
 #These commands modify the table
