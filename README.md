@@ -23,7 +23,7 @@ You will need to set up a few things before you can actually run the code. Even 
 
 **Setup:**
 1. To run a Discord bot in general, you need to have a developer account and obtain a bot token. For instructions on how to do so, please refer to here: https://discordpy.readthedocs.io/en/stable/discord.html
-2. Make a copy of `example_private.txt`. Name it `private.txt`.
+2. Make a copy of `private_example.txt`. Name it `private.txt`.
 3. Put the bot token in the appropriate places in `private.txt`.
 4. Install all dependencies in `Dependencies.txt`. Consider using `pip install` to do so. Note: there is a Node.js dependency. You will need to install Node.js and install this dependency. (No, we don't write Node.js code, it's just used for the localtunnel.)
 5. You can run now the bot by running `BadWolfBot.py`
