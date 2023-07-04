@@ -629,7 +629,7 @@ class Room(object):
         to_build = ""
         for counter, (fc, player) in enumerate(players, 1):
             fc_str = f" - {fc}" if include_fc else ""
-            to_build += f"{counter}. {UserDataProcessing.proccessed_lounge_add(player, fc, lounge_replace)}{fc_str}\n"
+            to_build += f"`{counter}.` {UserDataProcessing.proccessed_lounge_add(player, fc, lounge_replace)}{fc_str}\n"
         return to_build
 
     
