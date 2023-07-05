@@ -1225,7 +1225,7 @@ def data_init():
 
 async def initialize():
     global bot
-    #this line can fucking rot in the fiery pits of the underworld
+    endpoints.initialize(app)
     data_init()
     await DataTracker.initialize()
 
