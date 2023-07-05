@@ -26,46 +26,6 @@ import discord
 
 from typing import List
 
-"""
-Class X: 12000+ MMR - T5, T6, T7, T8
-Class S: 10500-11999 MMR - T5, T6, T7
-Class A: 9250-10499 MMR - T5, T6
-Class B: 8000-9249 MMR - T5, T4
-Class C: 6000-7999 MMR - T3, T4
-Class D: 4250-5999 MMR - T2, T3
-Class E: 3000-4249 MMR - T1, T2
-Class F: <2999 MMR - T1
-"""
-RT_MMR_CUTOFFS = [
-                  (2999,"Tier 1"),
-                  (4249,"Tier 2"),
-                  (5999,"Tier 3"),
-                  (7999,"Tier 4"),
-                  (9249,"Tier 5"),
-                  (10499,"Tier 6"),
-                  (11999,"Tier 7"),
-                  (999999,"Tier 8")
-                  ]
-
-"""
-Class X: 12000+ MMR - T4+
-Class S: 10500-11999 MMR - T4+
-Class A: 8750-10449 MMR - T4+
-Class B: 7250-8749 MMR - T3, T4
-Class C: 5750-7294 MMR - T2, T3
-Class D: 3750-5749 MMR - T1, T2
-Class E: <3749 MMR - T1
-"""
-CT_MMR_CUTOFFS = [
-                    (3749, "Tier 1"),
-                    (5794, "Tier 2"),
-                    (7294, "Tier 3"),
-                    (999999, "Tier 4")
-                    # (5499, "Tier 5"),
-                    # (999999, "Tier 6")
-                  ]
-
-
 SUCCESS_EC = 0
 INVALID_RT_NUM_EC = 101
 INVALID_CT_NUM_EC = 102
@@ -170,7 +130,7 @@ def createJSON(players, mult=default_multiplier):
 # - Individual player races played will be the actual number of races they played as well
 # - Multiplier for each person will be global races played ÷ 12
 # - Updater Bot will leave all multipliers alone, even on subs/subbees. Updater Bot will not change any JSON except for the following: Updater Bot must change gain/loss prevention and full gain/loss on JSON appropriately for sub ins and sub outs.
-def create_player_json(player:Tuple[str, int, int, int], races_played=12, sub_in=False, sub_out=False, squadqueue=False):
+def create_player_json(player:Tuple[str, int, int, int], races_played=12, sub_in=False, sub_out=False):
     player_json = {}
     player_json["player_id"] = player[3]
     player_json["score"] = player[1]
@@ -195,7 +155,7 @@ def sort_teams_json(teams_JSON):
         team["players"].sort(key=team_players_sort_key, reverse=True)
     teams_JSON.sort(key=teams_sort_key, reverse=True)
 
-def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], races_played=12, squadqueue=False):
+def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], races_played=12):
     teams_JSON = []
     for team in team_map:
         team_json = []
@@ -213,7 +173,7 @@ def create_teams_JSON(team_map:List[List[Tuple[str, int, int]]], races_played=12
                             sub_out = True
                     
 
-                team_json.append(create_player_json(player, races_played, sub_in=sub_in, sub_out=sub_out, squadqueue=squadqueue))
+                team_json.append(create_player_json(player, races_played, sub_in=sub_in, sub_out=sub_out))
         teams_JSON.append({"players":team_json})
     #import pprint
     #print("Before sort:")
@@ -553,21 +513,9 @@ def sort_teams_by_scores(teams:List[List[List[Tuple[str, int]]]]):
         new_teams.append(sorted_team)
     return new_teams
 
-#This is for Squad Queue - the tier shall be the highest tier that the lowest mmr player can access
-def determine_tier(id_mapping, is_rt=True):
-    lowest_mmr = id_mapping[min(id_mapping, key=lambda k: id_mapping[k][2])][2]
-    cutoffs = RT_MMR_CUTOFFS if is_rt else CT_MMR_CUTOFFS
-    for cutoff, tier in cutoffs:
-        if lowest_mmr <= cutoff:
-            return tier
-    return None
-    
-            
+#This is for Squad Queue - the tier shall be the highest tier that the lowest mmr player can access         
 
 async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=None, is_rt=True):
-    squadqueue = False
-    if tier == "squadqueue":
-        squadqueue = True
     newTableText, table_lines = process_table_text(tableText)
     if newTableText == BAD_TABLE:
         return BAD_TABLE, None, None
@@ -619,7 +567,7 @@ async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=No
         return PLAYER_NOT_FOUND_EC, None, missing
     
     if tier == "squadqueue":
-        tier = determine_tier(id_mapping, is_rt)
+        tier = "Squad Queue"
     else:
         tier = "Tier " + tier
         
@@ -630,7 +578,7 @@ async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=No
     if not success:
         return None, None, None
     
-    json_data["teams"] = create_teams_JSON(team_map, races_played, squadqueue)
+    json_data["teams"] = create_teams_JSON(team_map, races_played)
     json_dump = json.dumps(json_data, separators=(',', ':'))
     
     return SUCCESS_EC, newTableText, json_dump

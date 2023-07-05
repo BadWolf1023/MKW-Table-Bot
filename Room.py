@@ -556,7 +556,7 @@ class Room(object):
             build_string = "*Disconnection List:*\n"
             for raceNum, missing_players in enumerate(missingPlayersByRace, 1):
                 for fc, player in sorted(missing_players):
-                    build_string += "\t" + str(counter) + ". **"
+                    build_string += "\t" + str(counter) + "\. **"
                     status_str = "disconnected on or before"
                     confirm_str = ""
                     if raceNum in self.dc_on_or_before and fc in self.dc_on_or_before[raceNum]:
@@ -629,7 +629,7 @@ class Room(object):
         to_build = ""
         for counter, (fc, player) in enumerate(players, 1):
             fc_str = f" - {fc}" if include_fc else ""
-            to_build += f"{counter}. {UserDataProcessing.proccessed_lounge_add(player, fc, lounge_replace)}{fc_str}\n"
+            to_build += f"\t{counter}\. {UserDataProcessing.proccessed_lounge_add(player, fc, lounge_replace)}{fc_str}"
         return to_build
 
     

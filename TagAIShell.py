@@ -169,7 +169,7 @@ def nice_print_teams(teams, num_tabs=0):
         result += '\t'*num_tabs + f"Tag: {teamTag}\n"
         for fc, playerName in fc_players:
             playerNum += 1
-            result += '\t'*num_tabs + f"\t{playerNum}. {playerName}\n"
+            result += '\t'*num_tabs + f"\t{playerNum}\. {playerName}\n"
     return result
 
 def view_AI_results():

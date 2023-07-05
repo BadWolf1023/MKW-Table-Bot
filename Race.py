@@ -444,7 +444,7 @@ class Race:
          "\nMatch end time: " + str(self.matchTime)
         placementsSTR = ""
         for placement in self.placements:
-            placementsSTR += str("\n\t" + str(placement))
+            placementsSTR += str("\n" + str(placement))
         return curStr + placementsSTR
             
 
