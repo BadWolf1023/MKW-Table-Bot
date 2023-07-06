@@ -71,7 +71,6 @@ class Room(object):
         self.set_up_user_display_name = setup_display_name
         self.sub_ins: Dict[str, Dict[str, Any]] = {} #dict of FCs that subbed in: dict(sub_in_start_race, sub_in_end_race, sub_out_fc, sub_out_mii_name, sub_out_name, sub_out_start_race, sub_out_end_race, sub_out_scores)
         self.is_freed = False
-        self.multiple_rxxs_used = False
         
         self.miis: Dict[str, Mii.Mii] = {}
         self.populating = False
@@ -463,6 +462,9 @@ class Room(object):
             last_rxx = self.rLIDs[-1]
             return f"**Room URL:** https://wiimmfi.de/stats/mkwx/list/{last_rxx}  |  **rxx number:** {last_rxx}"
         return ""
+
+    def has_multiple_rxxs(self):
+        return len(self.rLIDs) > 1
 
     def get_table_id_text(self):
         #return f"**Table ID:** {self.get_event_id()} | Table Bot API Link: {common.TABLE_BOT_API_LINK}?table_id={self.get_event_id()}"
