@@ -71,6 +71,7 @@ class Room(object):
         self.set_up_user_display_name = setup_display_name
         self.sub_ins: Dict[str, Dict[str, Any]] = {} #dict of FCs that subbed in: dict(sub_in_start_race, sub_in_end_race, sub_out_fc, sub_out_mii_name, sub_out_name, sub_out_start_race, sub_out_end_race, sub_out_scores)
         self.is_freed = False
+        self.multiple_rxxs_used = False
         
         self.miis: Dict[str, Mii.Mii] = {}
         self.populating = False
