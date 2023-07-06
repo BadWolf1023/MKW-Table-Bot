@@ -1,6 +1,4 @@
 MKW Table Bot Discord Token: BOT_TOKEN_GOES_HERE
 Beta Bot Discord Token: NOT_APPLICABLE
 Testing Bot Discord Token: NOT_APPLICABLE
-Bitly API Token: NOT_USED
-Tiny URL API Token: NOT_APPLICABLE
 MKW Lounge API Token: NOT_APPLICABLE
