@@ -1344,7 +1344,7 @@ class LoungeCommands:
                                 )
                 embed.add_field(name='Submission ID', value=str(id_to_submit))
                 embed.add_field(name='Races Played', value=str(races_played))
-
+                embed.add_field(name='Preview Link', value=str(f"[Preview]({preview_link})"))
                 embed.set_image(url="attachment://" + table_image_path)
                 embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                 embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
