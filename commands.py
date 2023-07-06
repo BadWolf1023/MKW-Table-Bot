@@ -1324,6 +1324,7 @@ class LoungeCommands:
                 embed.add_field(name='Submitted from', value=message.channel.mention)
                 embed.add_field(name='Submitted by', value=message.author.mention)
                 embed.add_field(name='Discord ID', value=str(message.author.id))
+                embed.add_field(name='Preview Link', value=str(f"[Preview]({preview_link})"))
 
                 embed.set_image(url="attachment://" + table_image_path)
                 embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
@@ -1339,7 +1340,6 @@ class LoungeCommands:
                 file = discord.File(table_image_path)
                 embed = discord.Embed(
                                     title=f"Successfully submitted to {type_text} Reporters and {type_text} Updaters",
-                                    description=f"[Click to preview this update]({preview_link})",
                                     colour=discord.Colour.green()
                                 )
                 embed.add_field(name='Submission ID', value=str(id_to_submit))
