@@ -1225,7 +1225,7 @@ def data_init():
 
 async def initialize():
     global bot
-    endpoints.initialize(app)
+    # endpoints.initialize(app)
     data_init()
     await DataTracker.initialize()
 
