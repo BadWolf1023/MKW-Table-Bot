@@ -463,7 +463,7 @@ class Room(object):
             return f"**Room URL:** https://wiimmfi.de/stats/mkwx/list/{last_rxx}  |  **rxx number:** {last_rxx}"
         return ""
 
-    def has_multiple_rxxs(self):
+    def has_merged(self):
         return len(self.rLIDs) > 1
 
     def get_table_id_text(self):
