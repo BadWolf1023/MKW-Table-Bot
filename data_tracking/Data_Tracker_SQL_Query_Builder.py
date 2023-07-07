@@ -342,7 +342,7 @@ class SQL_Search_Query_Builder(object):
 
     @staticmethod
     def get_player_races(did, days, is_ct):
-        days_filter_clause = f"AND Event.time_added > date('now','-{days} days')" if (days is not None) else ""
+        days_filter_clause = f"AND Race.time_added > date('now','-{days} days')" if (days is not None) else ""
 
         return f"""
         SELECT Place.race_id, Place.place
@@ -351,18 +351,11 @@ class SQL_Search_Query_Builder(object):
             JOIN Track USING (track_name)
         WHERE time < 6 * 60
             AND Track.is_ct = {1 if is_ct else 0}
+            {days_filter_clause}
             AND Place.fc IN (
                 SELECT fc
                 FROM Player_FCs
                 WHERE discord_id = {did}
-            )
-            AND Place.race_id IN (
-                SELECT race_id
-                FROM Event_Races
-                    JOIN Event USING (event_id)
-                WHERE player_setup_amount = 12
-                {days_filter_clause}
-                {SQL_Search_Query_Builder.get_event_valid_filter()}
             )
         """
 
