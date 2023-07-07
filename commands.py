@@ -797,8 +797,6 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
                 match = match[:-1]
             days = int(match)
             command = command.replace(matches[-1],"")
-        opponent_name = command.strip()
-        player_did = str(message.author.id)
         
         self_comparison = True
         players = command.split()
@@ -807,6 +805,9 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             self_comparison = False
             player_did = str(UserDataProcessing.get_DiscordID_By_LoungeName(players[0]))
             opponent_name = players[1]
+        else:
+            opponent_name = command.strip()
+            player_did = str(message.author.id)
 
         if len(opponent_name) == 0:
             await message.channel.send("Please specify a player name. " + error_message)

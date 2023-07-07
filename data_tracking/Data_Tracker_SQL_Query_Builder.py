@@ -4,7 +4,6 @@ Created on Oct 29, 2021
 '''
 from typing import List
 
-
 PLAYER_TABLE_NAMES = ["fc", "pid", "player_url"]
 RACE_TABLE_NAMES = ["race_id", "rxx", "time_added", "match_time", "race_number", "room_name", "track_name", "room_type", "cc", "region", "is_wiimmfi_race", "num_players", "first_place_time", "last_place_time", "avg_time"]
 TRACK_TABLE_NAMES = ["track_name", "url", "fixed_track_name", "is_ct", "track_name_lookup"]
@@ -347,22 +346,24 @@ class SQL_Search_Query_Builder(object):
 
         return f"""
         SELECT Place.race_id, Place.place
-            FROM Place
-                JOIN Player_FCs ON Place.fc = Player_FCs.fc
-            WHERE Place.race_id IN (
-                SELECT Race.race_id
-                FROM Race
-                    JOIN Event_Races on Race.race_id = Event_Races.race_id
-                    JOIN Event ON Event_Races.event_id = Event.event_id
-                    JOIN Tier ON Event.channel_id = Tier.channel_id
-                    JOIN Track ON Race.track_name = Track.track_name
-                WHERE player_setup_amount = 12
-                    AND Track.is_ct = {1 if is_ct else 0}
-                    {days_filter_clause}
-                    {SQL_Search_Query_Builder.get_event_valid_filter()}
+        FROM Place
+            JOIN Race USING (race_id)
+            JOIN Track USING (track_name)
+        WHERE time < 6 * 60
+            AND Track.is_ct = {1 if is_ct else 0}
+            AND Place.fc IN (
+                SELECT fc
+                FROM Player_FCs
+                WHERE discord_id = {did}
             )
-                AND discord_id = {did}
-                AND time < 6 * 60
+            AND Place.race_id IN (
+                SELECT race_id
+                FROM Event_Races
+                    JOIN Event USING (event_id)
+                WHERE player_setup_amount = 12
+                {days_filter_clause}
+                {SQL_Search_Query_Builder.get_event_valid_filter()}
+            )
         """
 
     @staticmethod
@@ -370,6 +371,6 @@ class SQL_Search_Query_Builder(object):
         return f"""
         SELECT COUNT(*), COUNT(CASE WHEN a.place < b.place THEN 1 END) as wins
         FROM ({SQL_Search_Query_Builder.get_player_races(player_did, days, is_ct)}) as a 
-            INNER JOIN ({SQL_Search_Query_Builder.get_player_races(opponent_did, days, is_ct)}) as b 
-        ON a.race_id = b.race_id
+            JOIN ({SQL_Search_Query_Builder.get_player_races(opponent_did, days, is_ct)}) as b 
+            ON a.race_id = b.race_id
         """
