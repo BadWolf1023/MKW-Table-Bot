@@ -142,7 +142,6 @@ def add_miis_to_table(channel_bot:ChannelBot, table_data:List[Tuple[str, List[Tu
     
 
 def get_footer_with_miis(channel_bot:ChannelBot, table_data:List[Tuple[str, List[Tuple[str, Tuple[str, int]]]]]):
-    
     team_footers = []
     extension_should_reflect = not channel_bot.getWar().is_ffa()
     if channel_bot.getWar().is_ffa():
