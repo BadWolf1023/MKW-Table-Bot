@@ -866,7 +866,7 @@ class Room(object):
     #This is not the entire save state of the class, but rather, the save state for edits made by the user 
     def get_recoverable_save_state(self):
         save_state = {}
-        save_state['name_changes'] = deepcopy(self.name_changes)
+        save_state['name_changes'] = self.name_changes.copy()
         # save_state['removed_races'] = self.removed_races.copy()
         save_state['race_changes'] = deepcopy(self.race_changes)
         save_state['playerPenalties'] = self.playerPenalties.copy()
