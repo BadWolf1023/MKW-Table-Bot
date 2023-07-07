@@ -32,7 +32,6 @@ import TimerDebuggers
 import api.api_common as api_common
 import api.api_channelbot_interface as cb_interface
 from api import api_data_builder
-import URLShortener
 import Stats
 
 #Other library imports, other people codes
@@ -1293,7 +1292,9 @@ class LoungeCommands:
 
                 if using_table_bot_table:
                     war_had_errors = len(this_bot.getWar().get_all_war_errors_players(this_bot.getRoom(), False)) > 0
-                    tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs() or this_bot.getRoom().race_order_changed()
+                    tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or len(this_bot.getRoom().forcedRoomSize) > 0 or \
+                                        this_bot.getRoom().had_positions_changed() or len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs() or \
+                                        this_bot.getRoom().race_order_changed() or this_bot.getRoom().has_merged()
                     header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
                     footer_combine_success = True
 
@@ -1325,15 +1326,7 @@ class LoungeCommands:
                 embed.add_field(name='Submitted from', value=message.channel.mention)
                 embed.add_field(name='Submitted by', value=message.author.mention)
                 embed.add_field(name='Discord ID', value=str(message.author.id))
-
-                shortened_admin_panel_link = "No Link"
-                try:
-                    admin_link_tiny_url = await URLShortener.tinyurl_shorten_url(updater_link)
-                    shortened_admin_panel_link = f"[Preview]({admin_link_tiny_url})"
-                except:
-                    pass
-
-                embed.add_field(name='Short Preview Link:', value=shortened_admin_panel_link)
+                embed.add_field(name='Preview Link', value=str(f"[Preview]({preview_link})"))
 
                 embed.set_image(url="attachment://" + table_image_path)
                 embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
@@ -1349,25 +1342,11 @@ class LoungeCommands:
                 file = discord.File(table_image_path)
                 embed = discord.Embed(
                                     title=f"Successfully submitted to {type_text} Reporters and {type_text} Updaters",
-                                    description=f"[Click to preview this update]({preview_link})",
                                     colour=discord.Colour.green()
                                 )
                 embed.add_field(name='Submission ID', value=str(id_to_submit))
                 embed.add_field(name='Races Played', value=str(races_played))
-
-
-                shortened_preview_link = "No Link"
-                try:
-                    if updater_link == preview_link:
-                        shortened_preview_link = shortened_admin_panel_link
-                    else:
-                        preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
-                        shortened_preview_link = f"[Preview]({preview_link_tiny_url})"
-                except:
-                    pass
-
-                embed.add_field(name='Short Preview Link:', value=shortened_preview_link)
-
+                embed.add_field(name='Preview Link', value=str(f"[Preview]({preview_link})"))
                 embed.set_image(url="attachment://" + table_image_path)
                 embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                 embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
@@ -1744,9 +1723,8 @@ class TablingCommands:
             return
 
         preview_link += urllib.parse.quote(json_data)
-        preview_link_tiny_url = await URLShortener.tinyurl_shorten_url(preview_link)
 
-        embedVar = discord.Embed(title="Prediction Link",url=preview_link_tiny_url,colour=discord.Color.blue())
+        embedVar = discord.Embed(title="Prediction Link",url=preview_link,colour=discord.Color.blue())
         embedVar.set_author(
             name='MMR/LR Prediction',
             icon_url='https://www.mkwlounge.gg/images/logo.png'
@@ -2635,7 +2613,7 @@ class TablingCommands:
             tableWasEdited = len(this_bot.getWar().manualEdits) > 0 or len(this_bot.getRoom().dc_on_or_before) > 0 or \
                                 len(this_bot.getRoom().forcedRoomSize) > 0 or this_bot.getRoom().had_positions_changed() or \
                                 len(this_bot.getRoom().get_removed_races_string()) > 0 or this_bot.getRoom().had_subs() or \
-                                this_bot.getRoom().race_order_changed()
+                                this_bot.getRoom().race_order_changed() or this_bot.getRoom().has_merged()
             header_combine_success = ImageCombine.add_autotable_header(errors=war_had_errors, table_image_path=table_image_path, out_image_path=table_image_path, edits=tableWasEdited)
             footer_combine_success = True
             lorenzi_edit_link = common.base_url_edit_table_lorenzi + display_url_table_text
@@ -2648,15 +2626,6 @@ class TablingCommands:
                 await common.safe_delete(message3)
                 await message.channel.send("Internal server error when combining images. Sorry, please notify BadWolf immediately.")
             else:
-                if len(full_lorenzi_edit_link.format(lorenzi_edit_link))>=4000:
-                    max_attempts = 2
-                    for _ in range(max_attempts):
-                        try:
-                            lorenzi_edit_link = await URLShortener.tinyurl_shorten_url_special(lorenzi_edit_link)
-                            break
-                        except URLShortener.URLShortenFailure:
-                            await asyncio.sleep(.5)
-
                 full_lorenzi_edit_link = full_lorenzi_edit_link.format(lorenzi_edit_link)
                 embed = discord.Embed(
                     title = "",

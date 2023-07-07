@@ -11,7 +11,6 @@ import commands
 import Lounge
 import TableBotExceptions
 import common
-import URLShortener
 import AbuseTracking
 import TagAIShell
 from data_tracking import DataTracker
@@ -674,9 +673,6 @@ class BadWolfBot(ext_commands.Bot):
         except TableBotExceptions.WarSetupStillRunning:
             await common.safe_send(message,
                                    f"I'm still trying to set up your table. Please wait until I respond with a confirmation. If you think it has been too long since I've responded, you can try ?reset and start your table again.")
-        except URLShortener.URLShortenFailure:
-            await common.safe_send(message, f"TinyURL failed to shorten a link. Retrying the command probably won't work.")
-            common.log_traceback(traceback, this_bot, message)
         except discord.errors.DiscordServerError:
             await common.safe_send(message,
                                    "Discord's servers are either down or struggling, so I cannot send table pictures right now. Wait a few minutes for the issue to resolve.")
@@ -1142,9 +1138,6 @@ def private_data_init():
         real_bot_key = read_next_token(f)
         beta_bot_key = read_next_token(f)
         testing_bot_key = read_next_token(f)
-        URLShortener.BITLY_API_TOKEN = read_next_token(f)
-        URLShortener.TINYURL_API_TOKEN = read_next_token(f)
-        # URLShortener.reload_module()
         LoungeAPIFunctions.code = read_next_token(f)
 
 
@@ -1262,7 +1255,3 @@ if __name__ == "__main__":
     PORT = common.properties["api_port"]
     app = FastAPI(on_startup=[initialize], on_shutdown=[close_wrapper])
     uvicorn.run(app, log_config=f"log.ini", port=PORT)
-
-
-
-    

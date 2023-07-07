@@ -463,6 +463,9 @@ class Room(object):
             return f"**Room URL:** https://wiimmfi.de/stats/mkwx/list/{last_rxx}  |  **rxx number:** {last_rxx}"
         return ""
 
+    def has_merged(self):
+        return len(self.rLIDs) > 1
+
     def get_table_id_text(self):
         #return f"**Table ID:** {self.get_event_id()} | Table Bot API Link: {common.TABLE_BOT_API_LINK}?table_id={self.get_event_id()}"
         return f"**Table ID:** {self.get_event_id()}"
@@ -556,7 +559,7 @@ class Room(object):
             build_string = "*Disconnection List:*\n"
             for raceNum, missing_players in enumerate(missingPlayersByRace, 1):
                 for fc, player in sorted(missing_players):
-                    build_string += "\t" + str(counter) + ". **"
+                    build_string += "\t" + str(counter) + "\. **"
                     status_str = "disconnected on or before"
                     confirm_str = ""
                     if raceNum in self.dc_on_or_before and fc in self.dc_on_or_before[raceNum]:

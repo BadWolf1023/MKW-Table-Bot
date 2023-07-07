@@ -156,7 +156,7 @@ class Placement:
         return not self.__eq__(other)
     
     def __str__(self):
-        to_return = f"{self.place}. {UserDataProcessing.proccessed_lounge_add(self.player.get_full_display_name(), self.player.FC)} - "
+        to_return = f"{self.place}\. {UserDataProcessing.proccessed_lounge_add(self.player.get_full_display_name(), self.player.FC)} - "
         if self.is_disconnected():
             to_return += "DISCONNECTED"
         else:
