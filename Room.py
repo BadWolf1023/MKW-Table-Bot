@@ -648,7 +648,7 @@ class Room(object):
                 mii.change_display_name(self.name_changes[fc]['name'])
             except KeyError:
                 # save states do not track Mii objects, so need case for undo here  
-                if mii.name_change:
+                if mii.name_changed():
                     mii.name_change = False
         return miis
 
