@@ -115,6 +115,7 @@ class SmartLookupTypes:
             discord_id = self.get_discord_id()
             if discord_id is None:
                 lounge_name = self.modified_original
+                # lounge_name = "that player"
             else:
                 lounge_name = UserDataProcessing.get_lounge(discord_id)
 
@@ -177,7 +178,10 @@ class SmartLookupTypes:
         '''
         lookup = self.original if self.get_type() is SmartLookupTypes.LOUNGE_NAME else self.modified_original
         if is_lounge: 
-            lookup = "that player" if self.get_type() == SmartLookupTypes.LOUNGE_NAME else "given"
+            if self.get_type() == SmartLookupTypes.LOUNGE_NAME:
+                lookup = self.get_lounge_name() if UserDataProcessing.get_DiscordID_By_LoungeName(self.modified_original) else "that player"
+            else:
+                lookup = "given"
         if self.get_type() is SmartLookupTypes.FC:
             return f"the FC {lookup}", "they"
         if self.get_type() is SmartLookupTypes.FC_LIST:
