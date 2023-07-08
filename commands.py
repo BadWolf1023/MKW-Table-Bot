@@ -781,7 +781,7 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
     @staticmethod
     async def record_command(message: discord.Message, args: List[str], server_prefix: str):  # TODO: This might have broken with new case for args
         command_name = args[0]
-        error_message = f"Usage: `{server_prefix}{command_name} player_name (num_days)`"
+        error_message = f"Usage: `{server_prefix}{command_name} player_name (other_player_name) (num_days)`"
 
         if len(args) == 1:
             await message.channel.send(error_message)
@@ -796,12 +796,17 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
                 match = match[:-1]
             days = int(match)
             command = command.replace(matches[-1],"")
-        opponent_name = command.strip()
-        player_did = str(message.author.id)
-
-        # if common.is_dev and len(players := command.split()) > 0:
-        #     player_did = str(UserDataProcessing.get_DiscordID_By_LoungeName(players[0]))
-        #     opponent_name = players[1]
+        
+        self_comparison = True
+        players = command.split()
+        # users have to enter names with spaces removed
+        if len(players) > 1:
+            self_comparison = False
+            player_did = str(UserDataProcessing.get_DiscordID_By_LoungeName(players[0]))
+            opponent_name = players[1]
+        else:
+            opponent_name = command.strip()
+            player_did = str(message.author.id)
 
         if len(opponent_name) == 0:
             await message.channel.send("Please specify a player name. " + error_message)
@@ -816,27 +821,19 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
             await message.channel.send(f"You can not compare your record against yourself.\n" + error_message)
             return
 
-        result = await DataTracker.DataRetriever.get_record(player_did,opponent_did,days)
-        total, wins = result[0]
-        if total == 0:
-            await message.channel.send(f"You have played no races against {UtilityFunctions.clean_for_output(opponent_name)}")
+        rt_result = await DataTracker.DataRetriever.get_record(player_did, opponent_did, days)
+        ct_result = await DataTracker.DataRetriever.get_record(player_did, opponent_did, days, is_ct=True)
+        (rt_total, rt_wins), (ct_total, ct_wins) = rt_result[0], ct_result[0]
+
+        if rt_total+ct_total == 0:
+            await message.channel.send(f"{'You have' if self_comparison else f'{players[0]} has'} played no races against {UtilityFunctions.clean_for_output(opponent_name)}.")
             return
 
-        losses = total-wins
-        await message.channel.send(f'{wins} Wins — {losses} Losses')
-        # rt_result = await DataTracker.DataRetriever.get_record(player_did, opponent_did, days)
-        # ct_result = await DataTracker.DataRetriever.get_record(player_did, opponent_did, days, is_ct=True)
-        # (rt_total, rt_wins), (ct_total, ct_wins) = rt_result[0], ct_result[0]
-
-        # if rt_total+ct_total == 0:
-        #     await message.channel.send(f"You have played no races against {UtilityFunctions.clean_for_output(opponent_name)}")
-        #     return
-
-        # rt_losses = rt_total-rt_wins
-        # ct_losses = ct_total-ct_wins
-        # rt_record = "No record" if rt_total == 0 else f"{rt_wins} Wins — {rt_losses} Losses"
-        # ct_record = "No record" if ct_total == 0 else f"{ct_wins} Wins — {ct_losses} Losses"
-        # await message.channel.send(f"RT: {rt_record}\nCT: {ct_record}")
+        rt_losses = rt_total-rt_wins
+        ct_losses = ct_total-ct_wins
+        rt_record = "No record" if rt_total == 0 else f"{rt_wins} Wins — {rt_losses} Losses"
+        ct_record = "No record" if ct_total == 0 else f"{ct_wins} Wins — {ct_losses} Losses"
+        await message.channel.send(f"RT: {rt_record}\nCT: {ct_record}")
 
 
 """================== Other Commands ===================="""

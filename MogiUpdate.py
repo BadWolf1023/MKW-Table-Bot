@@ -553,11 +553,9 @@ async def textInputUpdate(tableText:str, tier:str, races_played=12, warFormat=No
     if len(two_deep_flatten(players_and_scores)) != 12:
         return WRONG_PLAYER_COUNT, None, None
     
-    
     json_data = {}
     json_data["format"] = str(warFormat)
     json_data["races"] = races_played
-    
     
     id_mapping, missing = await MogiUpdateAPIFunctions.getPlayerIDs(three_deep_flatten(players_and_scores), is_rt)
     
