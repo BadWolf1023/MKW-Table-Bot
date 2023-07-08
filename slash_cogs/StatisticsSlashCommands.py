@@ -173,11 +173,16 @@ class StatisticsSlash(ext_commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         player: Option(str, "Player to compare against (Lounge name)"),
+        player2: Option(str, "To compare 2 other players (Lounge name)", default=None),
+        # type: Option(str, "RT/CT", choices=['RT', 'CT']),
         days: Option(int,"Timeframe (in days) to include data for",min_value=1,default=None)
     ):
         command, message, _, server_prefix, _ = await self.bot.slash_interaction_pre_invoke(ctx)
-        args = [command, player]
-
+        args = [command, player.replace(" ", "")]
+        if player2:
+            args.append(player2.replace(" ", ""))
+        # if type:
+        #     args.append(type)
         if days is not None:
             args.append(str(days)+'d')
 

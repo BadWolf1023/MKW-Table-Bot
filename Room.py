@@ -644,11 +644,15 @@ class Room(object):
 
     def get_available_miis_dict(self, FCs) -> Dict[str, Mii.Mii]:
         miis = {fc: self.get_miis()[fc] for fc in FCs if fc in self.get_miis()}
+        # Name changes don't update Mii objects, 
+        # so name changes have to be updated here
         for fc, mii in miis.items():
             try:
                 mii.change_display_name(self.name_changes[fc]['name'])
-            except KeyError: 
-                pass
+            except KeyError:
+                # save states do not track Mii objects, so need case for undo here  
+                if mii.name_changed():
+                    mii.name_change = False
         return miis
 
     def remove_miis_with_missing_files(self):

@@ -82,8 +82,9 @@ class DataRetriever(object):
         return await db_connection.execute(tracks_query, [track])
 
     @staticmethod
-    async def get_record(player_did, opponent_did, days):
-        record_query = QB.SQL_Search_Query_Builder.get_record_query(player_did, opponent_did, days)
+    @TimerDebuggers.timer_coroutine
+    async def get_record(player_did, opponent_did, days, is_ct=False):
+        record_query = QB.SQL_Search_Query_Builder.get_record_query(player_did, opponent_did, days, is_ct=is_ct)
         return await db_connection.execute(record_query)
 
     @staticmethod
@@ -781,10 +782,10 @@ async def initialize():
     await populate_tier_table()
     await populate_score_matrix_table()
     await populate_player_fcs_table()
+    # Race.initialize needs to be called first
+    await fix_shas(Race.sha_track_name_mappings)
 
     if common.is_prod or common.is_beta:
-        # Race.initialize needs to be called first
-        await fix_shas(Race.sha_track_name_mappings)
         print(f"{datetime.now()}: Vacuuming...")
         await vacuum()
         print(f"{datetime.now()}: Done vacuuming.")
