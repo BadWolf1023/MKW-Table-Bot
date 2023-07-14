@@ -15,5 +15,3 @@ requests
 fastapi==0.90.1
 uvicorn[standard]
 html2image
-
-JAVASCRIPTLOCALTUNNEL: npm install -g localtunnel
