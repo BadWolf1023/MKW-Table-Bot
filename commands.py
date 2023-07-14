@@ -1718,12 +1718,12 @@ class TablingCommands:
 
         preview_link += urllib.parse.quote(json_data)
 
-        embedVar = discord.Embed(colour=discord.Color.blue())
+        embedVar = discord.Embed(title="", colour=discord.Color.blue(), description=f"[Preview Link]({preview_link})")
         embedVar.set_author(
             name='MMR/LR Prediction',
-            description=f"[Preview Link]({preview_link})",
             icon_url='https://www.mkwlounge.gg/images/logo.png'
         )
+
         await message.channel.send(embed=embedVar)
 
     @staticmethod
