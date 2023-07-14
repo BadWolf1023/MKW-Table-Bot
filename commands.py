@@ -1218,7 +1218,7 @@ class LoungeCommands:
     async def _mogi_update(client, message: discord.Message, this_bot: TableBot.ChannelBot, args: List[str], lounge_server_updates: Lounge.Lounge, is_primary=True):
         command_incorrect_format_message = "The format of this command is: `?" + args[0] + " TierNumber RacesPlayed (TableText)`\n- **TierNumber** must be a number. For RTs, between 1 and 8. For CTs, between 1 and 7. If you are trying to submit a squadqueue table, **TierNumber** should be: squadqueue\n-**RacesPlayed** must be a number, between 1 and 32."
         cooldown = lounge_server_updates.get_user_update_submit_cooldown(message.author.id)
-        updater_channel_id, updater_link, preview_link, type_text = lounge_server_updates.get_information(is_primary)
+        updater_channel_id, _, preview_link, type_text = lounge_server_updates.get_information(is_primary)
 
         if cooldown > 0:
             await message.channel.send(f"You have already submitted a table very recently. Please wait {cooldown} more seconds before submitting another table.", delete_after=10)
@@ -1304,12 +1304,11 @@ class LoungeCommands:
 
                 updater_channel = client.get_channel(updater_channel_id)
                 preview_link += urllib.parse.quote(json_data)
-                updater_link += urllib.parse.quote(json_data)
 
 
                 embed = discord.Embed(
                                     title = "",
-                                    description=f"[Click to preview this update]({updater_link})",
+                                    description=f"[Click to preview this update]({preview_link})",
                                     colour = discord.Colour.dark_red()
                                 )
                 file = discord.File(table_image_path)
@@ -1323,8 +1322,6 @@ class LoungeCommands:
                 embed.add_field(name='Submitted from', value=message.channel.mention)
                 embed.add_field(name='Submitted by', value=message.author.mention)
                 embed.add_field(name='Discord ID', value=str(message.author.id))
-                embed.add_field(name='Preview Link', value=str(f"[Preview]({preview_link})"))
-
                 embed.set_image(url="attachment://" + table_image_path)
                 embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
 
@@ -1339,11 +1336,11 @@ class LoungeCommands:
                 file = discord.File(table_image_path)
                 embed = discord.Embed(
                                     title=f"Successfully submitted to {type_text} Reporters and {type_text} Updaters",
+                                    description=f"[Click to preview this update]({preview_link})",
                                     colour=discord.Colour.green()
                                 )
                 embed.add_field(name='Submission ID', value=str(id_to_submit))
                 embed.add_field(name='Races Played', value=str(races_played))
-                embed.add_field(name='Preview Link', value=str(f"[Preview]({preview_link})"))
                 embed.set_image(url="attachment://" + table_image_path)
                 embed.set_author(name="Updater Automation", icon_url="https://64.media.tumblr.com/b0df9696b2c8388dba41ad9724db69a4/tumblr_mh1nebDwp31rsjd4ho1_500.jpg")
                 embed.set_footer(text="Note: the actual update may look different than this preview if the Updaters need to first update previous mogis. If the link is too long, just hit the enter key.")
@@ -1711,7 +1708,7 @@ class TablingCommands:
         rt_ct, tier = rt_ct or 'rt', tier or 1
         is_primary = rt_ct == 'rt'
 
-        updater_channel_id, updater_link, preview_link, type_text = lounge_server_updates.get_information(is_primary)
+        updater_channel_id, _, preview_link, type_text = lounge_server_updates.get_information(is_primary)
         error_code, newTableText, json_data = await MogiUpdate.textInputUpdate(table_text, str(tier), this_bot.war.numberOfGPs*4, is_rt=is_primary)
 
         if error_code != MogiUpdate.SUCCESS_EC:
@@ -1721,9 +1718,10 @@ class TablingCommands:
 
         preview_link += urllib.parse.quote(json_data)
 
-        embedVar = discord.Embed(title="Prediction Link",url=preview_link,colour=discord.Color.blue())
+        embedVar = discord.Embed(colour=discord.Color.blue())
         embedVar.set_author(
             name='MMR/LR Prediction',
+            description=f"[Preview Link]({preview_link})",
             icon_url='https://www.mkwlounge.gg/images/logo.png'
         )
         await message.channel.send(embed=embedVar)
