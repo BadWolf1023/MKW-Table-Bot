@@ -12,6 +12,8 @@ from collections import namedtuple
 
 MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_type=rt&event_data="
 MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK = "https://www.mkwlounge.gg/ladder/tabler.php?ladder_type=ct&event_data="
+MKW_LOUNGE_RT_UPDATER_LINK = MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK
+MKW_LOUNGE_CT_UPDATER_LINK = MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK
 MKW_LOUNGE_RT_UPDATER_CHANNEL = 758161201682841610
 MKW_LOUNGE_CT_UPDATER_CHANNEL = 758161224202059847
 
@@ -19,9 +21,11 @@ UpdateChannels = namedtuple(
     "UpdateChannels",
     [
         "updater_channel_id_primary",
+        "updater_link_primary",
         "preview_link_primary",
         "type_text_primary",
         "updater_channel_id_secondary",
+        "updater_link_secondary",
         "preview_link_secondary",
         "type_text_secondary",
     ],
@@ -30,17 +34,21 @@ UpdateChannels = namedtuple(
 lounge_channel_mappings = {
     common.MKW_LOUNGE_SERVER_ID: UpdateChannels(
         updater_channel_id_primary=MKW_LOUNGE_RT_UPDATER_CHANNEL,
+        updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
         preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
         type_text_primary="RT",
         updater_channel_id_secondary=MKW_LOUNGE_CT_UPDATER_CHANNEL,
+        updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
         preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
         type_text_secondary="CT",
     ),
     common.TABLE_BOT_DISCORD_SERVER_ID: UpdateChannels(
         updater_channel_id_primary=common.TABLE_BOT_SERVER_BETA_TWO_CHANNEL_ID,
+        updater_link_primary=MKW_LOUNGE_RT_UPDATER_LINK,
         preview_link_primary=MKW_LOUNGE_RT_UPDATE_PREVIEW_LINK,
         type_text_primary="RT",
         updater_channel_id_secondary=common.TABLE_BOT_SERVER_BETA_TWO_CHANNEL_ID,
+        updater_link_secondary=MKW_LOUNGE_CT_UPDATER_LINK,
         preview_link_secondary=MKW_LOUNGE_CT_UPDATE_PREVIEW_LINK,
         type_text_secondary="CT",
     ),
@@ -169,6 +177,7 @@ class Lounge:
     def get_primary_information(self):
         return (
             self.channels_mapping.updater_channel_id_primary,
+            self.channels_mapping.updater_link_primary,
             self.channels_mapping.preview_link_primary,
             self.channels_mapping.type_text_primary,
         )
@@ -176,6 +185,7 @@ class Lounge:
     def get_secondary_information(self):
         return (
             self.channels_mapping.updater_channel_id_secondary,
+            self.channels_mapping.updater_link_secondary,
             self.channels_mapping.preview_link_secondary,
             self.channels_mapping.type_text_secondary,
         )
