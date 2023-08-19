@@ -261,10 +261,10 @@ def get_wiimmfi_utc_time(race_time:str):
     return datetime.strptime(race_time, '%Y-%m-%d %H:%M').replace(tzinfo=timezone.utc)
 
 def is_race_ID(raceID):
-    return re.match("^r[0-9]{7}$", raceID) is not None
+    return re.match("^r[0-9]{7,8}$", raceID) is not None
 
 def is_rLID(roomID):
-    return re.match("^r[0-9]{7}$", roomID) is not None
+    return re.match("^r[0-9]{7,8}$", roomID) is not None
 
 def is_fc(fc):
     return re.match("^[0-9]{4}[-][0-9]{4}[-][0-9]{4}(-2)?$", fc.strip()) is not None
