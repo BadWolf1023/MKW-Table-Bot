@@ -804,6 +804,9 @@ Most played RTs in tier 4 during the last 5 days: `{server_prefix}{args[0]} rt t
         if len(players) > 1:
             self_comparison = False
             player_did = str(UserDataProcessing.get_DiscordID_By_LoungeName(players[0]))
+            if not player_did:
+                await message.channel.send(f"No player found with name {UtilityFunctions.clean_for_output(players[0])}.\n" + error_message)
+                return
             opponent_name = players[1]
         else:
             opponent_name = command.strip()
@@ -1706,7 +1709,7 @@ class TablingCommands:
         links = list()
         endpoint_regex = r"([A-Z]+_)*ENDPOINT"
         for name in dir(api_common):
-            if re.fullmatch(endpoint_regex, name):
+            if re.fullmatch(endpoint_regex, name) and name.endswith("/"):
                 link = api_common.API_URL + api_common.__getattribute__(name) + str(table_id)
                 name = name.replace("_", " ").lower()
                 name = name[0].upper() + name[1:]
