@@ -2806,6 +2806,40 @@ class TablingCommands:
             this_bot.add_save_state(message.content)
             this_bot.set_race_size(new_size)
             await message.channel.send(f"Each section of the table will now be {new_size} races.")
+            
+    @staticmethod
+    async def gp_count_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
+        ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
+
+        COUNT_ARG_NAME = "<gp_count>"
+
+        if len(args) != 2:
+            await message.channel.send(f"Here's how to use this command: `{server_prefix}{args[0]} {COUNT_ARG_NAME}`")
+            return
+        
+        new_gp_count = args[1]
+
+        if not new_gp_count.isnumeric() or int(new_gp_count) <= 0:
+            await message.channel.send(f"Invalid argument `{COUNT_ARG_NAME}` (`{new_gp_count}`). Argument must be a positive number.")
+            return
+        
+        new_gp_count = int(new_gp_count)
+        war = this_bot.get_war()
+
+        if new_gp_count == war.get_number_of_gps():
+            await message.channel.send(f"Number of GPs is already set to `{new_gp_count}`.")
+            return
+        
+        played_gps = this_bot.get_room().getNumberOfGPS()
+
+        if new_gp_count < played_gps:
+            await message.channel.send(f"Too many races have been played. `{COUNT_ARG_NAME}` must be at least `{played_gps}`.")
+            return
+
+        war.set_number_of_gps(new_gp_count)
+
+        await message.channel.send(f"GP count was successfully updated to `{new_gp_count}`.")
+        await TablingCommands.war_picture_command(message, this_bot, ['wp'], server_prefix, is_lounge_server)
 
     @staticmethod
     async def race_edit_command(message: discord.Message, this_bot: ChannelBot, args: List[str], is_lounge_server: bool):

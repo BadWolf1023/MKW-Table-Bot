@@ -263,6 +263,19 @@ class Table_Slash(ext_commands.Cog):
         args = [command, str(race)]
         
         await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
+        
+    @slash_command(name="gpcount",
+    description="Changes the number of GPs in a table",
+    guild_ids=common.SLASH_GUILDS)
+    async def _gp_count(
+        self,
+        ctx: discord.ApplicationContext,
+        gp_count: Option(int, "The number of GPs")
+    ):
+        command, message, this_bot, server_prefix, is_lounge = await self.bot.slash_interaction_pre_invoke(ctx)
+        args = [command, str(gp_count)]
+        
+        await self.bot.process_message_commands(message, args, this_bot, server_prefix, is_lounge, from_slash=True)
 
     @slash_command(name="changename",
     description="Change a player's name",
