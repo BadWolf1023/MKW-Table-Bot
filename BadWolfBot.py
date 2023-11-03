@@ -87,7 +87,7 @@ RACE_ORDER_TERMS = {'raceorder', 'changeraces', 'changeraceorder', 'racesorder',
 
 TABLE_THEME_TERMS = {'style', 'theme', 'tablestyle', 'tabletheme'}
 GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
-DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
+DISPLAY_GP_SIZE_TERMS = {'gpsize', 'size', 'tablesize', 'displaysize'}
 GP_COUNT_TERMS = {"gpcount", "changegpcount"}
 
 
