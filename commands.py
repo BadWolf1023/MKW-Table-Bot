@@ -2819,7 +2819,7 @@ class TablingCommands:
         
         new_gp_count = args[1]
 
-        if not new_gp_count.isnumeric() or int(new_gp_count) <= 0:
+        if not UtilityFunctions.isint(new_gp_count) or int(new_gp_count) <= 0:
             await message.channel.send(f"Invalid argument `{COUNT_ARG_NAME}` (`{new_gp_count}`). Argument must be a positive number.")
             return
         
@@ -2828,12 +2828,6 @@ class TablingCommands:
 
         if new_gp_count == war.get_number_of_gps():
             await message.channel.send(f"Number of GPs is already set to `{new_gp_count}`.")
-            return
-        
-        played_gps = this_bot.get_room().getNumberOfGPS()
-
-        if new_gp_count < played_gps:
-            await message.channel.send(f"Too many races have been played. `{COUNT_ARG_NAME}` must be at least `{played_gps}`.")
             return
 
         war.set_number_of_gps(new_gp_count)
