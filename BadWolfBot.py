@@ -87,7 +87,8 @@ RACE_ORDER_TERMS = {'raceorder', 'changeraces', 'changeraceorder', 'racesorder',
 
 TABLE_THEME_TERMS = {'style', 'theme', 'tablestyle', 'tabletheme'}
 GRAPH_TERMS = {'graph', 'tablegraph', 'graphtheme'}
-DISPLAY_GP_SIZE_TERMS = {'size', 'tablesize', 'displaysize'}
+DISPLAY_GP_SIZE_TERMS = {'gpsize', 'size', 'tablesize', 'displaysize'}
+GP_COUNT_TERMS = {"gpcount", "changegpcount"}
 
 
 #Commands that require a table to be started, but don't modify the war/room/table in any way
@@ -184,7 +185,7 @@ SET_API_URL_TERMS = {"apiurl", "setapiurl", "api_url", "set_api_url"}
 
 
 
-needPermissionCommands = DISPLAY_GP_SIZE_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REDO_TERMS | LIST_REDOS_TERMS | LIST_UNDOS_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_TABLE_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS | GET_SUBSTITUTIONS_TERMS | INTERACTIONS
+needPermissionCommands = DISPLAY_GP_SIZE_TERMS | GP_COUNT_TERMS | TABLE_THEME_TERMS | GRAPH_TERMS | RESET_TERMS | START_WAR_TERMS | UNDO_TERMS | REDO_TERMS | LIST_REDOS_TERMS | LIST_UNDOS_TERMS | REMOVE_RACE_TERMS | PLAYER_PENALTY_TERMS | TEAM_PENALTY_TERMS | EDIT_PLAYER_SCORE_TERMS | PLAYER_DISCONNECT_TERMS | MERGE_ROOM_TERMS | SET_TABLE_NAME_TERMS | CHANGE_PLAYER_NAME_TERMS | CHANGE_PLAYER_TAG_TERMS | CHANGE_ROOM_SIZE_TERMS | EARLY_DC_TERMS | QUICK_EDIT_TERMS | SUBSTITUTE_TERMS | GET_SUBSTITUTIONS_TERMS | INTERACTIONS
 ALLOWED_COMMANDS_IN_LOUNGE_ECHELONS = LOUNGE_MOGI_UPDATE_TERMS | STATS_TERMS | INVITE_TERMS | MII_TERMS | FC_TERMS | BATTLES_TERMS | CTWW_TERMS | WORLDWIDE_TERMS | VERIFY_ROOM_TERMS | SET_FLAG_TERMS | GET_FLAG_TERMS | POPULAR_TRACKS_TERMS | UNPOPULAR_TRACKS_TERMS | TOP_PLAYERS_TERMS | BEST_TRACK_TERMS | WORST_TRACK_TERMS | RECORD_TERMS
 
 common.needPermissionCommands.update(needPermissionCommands)
@@ -1022,6 +1023,9 @@ class BadWolfBot(ext_commands.Bot):
 
         elif main_command in DISPLAY_GP_SIZE_TERMS:
             await commands.TablingCommands.gp_display_size_command(message, this_bot, args, server_prefix, is_lounge_server)
+
+        elif main_command in GP_COUNT_TERMS:
+            await commands.TablingCommands.gp_count_command(message, this_bot, args, server_prefix, is_lounge_server)
             
         elif main_command in POPULAR_TRACKS_TERMS:
             await commands.StatisticCommands.popular_tracks_command(message, args, server_prefix, is_top_tracks=True)

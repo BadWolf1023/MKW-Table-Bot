@@ -193,6 +193,9 @@ class War(object):
     def addTeamPenalty(self, team_tag, amount):
         self.teamPenalties[team_tag] += amount
     
+    def set_number_of_gps(self, new_gp_count):
+        self.numberOfGPs = new_gp_count
+
     def __str__(self):
         war_string = "-- WAR --"
         war_string += "\nNumber of teams: " + str(self.numberOfTeams)
