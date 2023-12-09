@@ -9,7 +9,7 @@ import UtilityFunctions
 from api import api_common
 from html2image import Html2Image
 
-hti = Html2Image(size=(980, 580), custom_flags=['--no-sandbox', '--default-background-color=0', '--hide-scrollbars'])
+hti = Html2Image(size=(980, 580), custom_flags=['--no-sandbox', '--default-background-color=00000000', '--hide-scrollbars'])
 
 API_DATA_PATH = "api/"
 HTML_DATA_PATH = "html/"
