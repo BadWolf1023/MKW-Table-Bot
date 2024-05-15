@@ -2809,7 +2809,8 @@ class TablingCommands:
     @staticmethod
     async def gp_count_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-
+        await message.channel.send(f"This command has a critical bug, so it has been disabled until it is fixed. Thanks for your understanding.")
+        return
         COUNT_ARG_NAME = "<gp_count>"
 
         if len(args) != 2:
