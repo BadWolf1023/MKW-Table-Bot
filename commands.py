@@ -2809,8 +2809,6 @@ class TablingCommands:
     @staticmethod
     async def gp_count_command(message:discord.Message, this_bot:ChannelBot, args:List[str], server_prefix:str, is_lounge_server:bool):
         ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
-        await message.channel.send(f"This command has a critical bug, so it has been disabled until it is fixed. Thanks for your understanding.")
-        return
         COUNT_ARG_NAME = "<gp_count>"
 
         if len(args) != 2:
@@ -2819,13 +2817,20 @@ class TablingCommands:
         
         new_gp_count = args[1]
 
-        if not UtilityFunctions.isint(new_gp_count) or int(new_gp_count) <= 0:
-            await message.channel.send(f"Invalid argument `{COUNT_ARG_NAME}` (`{new_gp_count}`). Argument must be a positive number.")
+        if not UtilityFunctions.isint(new_gp_count):
+            await message.channel.send(f"Invalid argument `{COUNT_ARG_NAME}` (`{new_gp_count}`). The number of GPs must be a number.")
             return
         
-        new_gp_count = int(new_gp_count)
-        war = this_bot.get_war()
+        new_gp_count = int(new_gp_count)            
+        
+        MIN_GPS = 1
+        MAX_GPS = 15
 
+        if new_gp_count < MIN_GPS or new_gp_count > MAX_GPS:
+            await message.channel.send(f"Invalid argument `{COUNT_ARG_NAME}` (`{new_gp_count}`). The number of GPs must between {MIN_GPS} and {MAX_GPS}.")
+            return
+
+        war = this_bot.get_war()
         if new_gp_count == war.get_number_of_gps():
             await message.channel.send(f"Number of GPs is already set to `{new_gp_count}`.")
             return
