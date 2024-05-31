@@ -59,6 +59,7 @@ def _reverseEngineerResults(lounge_names_mapping: List[Tuple[str, str, int]], js
     Index 0: Lounge player id
     Index 1: Score originally given to this function
     Index 2: Current mmr
+    unmatched_players is a list of player names that weren't found in the API's JSON
     """
     try:
         if len(json_data) != len(lounge_names_mapping):
