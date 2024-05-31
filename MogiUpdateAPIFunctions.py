@@ -49,12 +49,16 @@ def getLookup(name:str):
 
 def _reverseEngineerResults(lounge_names_mapping: List[Tuple[str, str, int]], json_data) -> Dict[str, int]:
     """lounge_names_mapping is a list of players. The data in the tuples is:
-    Index 0: A "mapping" version of a players name
-    Index 1: The player's original name given to getPlayerIDs
+    Index 0: A "mapping" version of a players lounge name
+    Index 1: The player's original lounge name given to getPlayerIDs
     Index 2: The player's score
     
     Returns a tuple of (None, []) if the JSON data was corrupt/unexpected format
-    Upon success, returns a tuple of (matched_players, unmatched_players)
+    Upon success, returns a tuple of (matched_players, unmatched_players) where:
+    matched_players is a Dictionary where the key is the original lounge name and the value is a tuple where:
+    Index 0: Lounge player id
+    Index 1: Score originally given to this function
+    Index 2: Current mmr
     """
     try:
         if len(json_data) != len(lounge_names_mapping):
