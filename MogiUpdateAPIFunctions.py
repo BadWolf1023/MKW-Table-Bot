@@ -48,6 +48,14 @@ def getLookup(name:str):
     return name.replace(" ", "").lower().strip("\n\t")
 
 def _reverseEngineerResults(lounge_names_mapping: List[Tuple[str, str, int]], json_data) -> Dict[str, int]:
+    """lounge_names_mapping is a list of players. The data in the tuples is:
+    Index 0: A "mapping" version of a players name
+    Index 1: The player's original name given to getPlayerIDs
+    Index 2: The player's score
+    
+    Returns a tuple of (None, []) if the JSON data was corrupt/unexpected format
+    Upon success, returns a tuple of (matched_players, unmatched_players)
+    """
     try:
         if len(json_data) != len(lounge_names_mapping):
             pass
@@ -96,7 +104,12 @@ def _reverseEngineerResults(lounge_names_mapping: List[Tuple[str, str, int]], js
             
 #Takes a list of players, returns that list of player's matched to their player IDs
 async def getPlayerIDs(mogi_players: List[Tuple[str, int]], is_rt=True, mogiPlayerAmount=12) -> Dict[str, int]:
-    #Don't even ping the API if this clearly isn't a mogi
+    """mogi_players is a list of players. The tuples in this list are as follows:
+    Index 0: The player's lounge name
+    Index 1: The player's score (can set this index to 0 if scores are irrelevant)
+    
+    Set is_rt to True for rts and False for cts
+    """
     
     lounge_names = [getLookup(data[0]) for data in mogi_players]
     lounge_names_mapping = []
