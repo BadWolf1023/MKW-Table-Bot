@@ -15,3 +15,4 @@ requests
 fastapi==0.90.1
 uvicorn[standard]
 html2image
+Pillow==9.5.0
