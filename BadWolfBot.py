@@ -691,8 +691,8 @@ class BadWolfBot(ext_commands.Bot):
             await common.safe_send(message,
                                    "Cannot access Wiimmfi's mkwx. I'm either blocked by Cloudflare, or the website is down.")
             await self.send_to_503_channel(logging_info)
-        except TableBotExceptions.CommandDisabled:
-            await common.safe_send(message,"This command has been disabled.")
+        except TableBotExceptions.CommandDisabled as e:
+            await common.safe_send(message, f"This command has been disabled: {e}")
         except (ext_commands.CommandNotFound,TableBotExceptions.CommandNotFound):
             await common.safe_send(message,f"Not a valid command. For more help, do the command: `{server_prefix}help`")
         except TableBotExceptions.BackupPictureGeneratorFailed as e:

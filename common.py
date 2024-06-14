@@ -71,6 +71,7 @@ is_prod = properties['mode'] == 'prod'
 
 DISABLE_MKWX_COMMANDS = False
 LIMIT_MKWX_COMMANDS = False
+SW_DISABLED = True
 STUB_MKWX = False
 STUB_MKWX_FILE_NAME = "testing_rooms/mkwx.html"
 
