@@ -1,4 +1,5 @@
 #Internal imports (stuff I coded) for this file
+import custom_logging
 import ServerFunctions
 import Stats
 import LoungeAPIFunctions
@@ -1258,4 +1259,5 @@ async def close_wrapper():
 if __name__ == "__main__":
     PORT = common.properties["api_port"]
     app = FastAPI(on_startup=[initialize], on_shutdown=[close_wrapper])
-    uvicorn.run(app, log_config=f"log.ini", port=PORT)
+    logger = custom_logging.get_logger()
+    uvicorn.run(app, log_config=None, port=PORT)
