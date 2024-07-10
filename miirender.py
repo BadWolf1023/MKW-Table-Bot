@@ -8,8 +8,11 @@ import common
 def u8(data):
     return pack(">B", data)
 
-def get_mii_url(mii_data, picture_width=512):
-    return "https://studio.mii.nintendo.com/miis/image.png?data=" + mii_data.decode("utf-8") + f"&type=face&width={picture_width}&instanceCount=1"
+def get_mii_url(mii_data, picture_width=512, use_alternative_renderer=False):
+    data = mii_data.decode("utf-8")
+    if use_alternative_renderer:
+        return "https://mii-unsecure.ariankordi.net/render.png?data={data}=&width=1600"
+    return "https://studio.mii.nintendo.com/miis/image.png?data=" + data + f"&type=face&width={picture_width}&instanceCount=1"
 
 def format_mii_data(original_mii_data):
     orig_mii = Gen1Wii.from_bytes(unhexlify(original_mii_data))
@@ -108,10 +111,10 @@ def format_mii_data(original_mii_data):
     return mii_data
 
 
-async def download_mii(original_mii_data, file_name, picture_width=512):
+async def download_mii(original_mii_data, file_name, picture_width=512, use_alternative_renderer=False):
     mii_data = format_mii_data(original_mii_data)
     
-    mii_url = get_mii_url(mii_data, picture_width)
+    mii_url = get_mii_url(mii_data, picture_width, use_alternative_renderer=use_alternative_renderer)
     success = await common.download_image(mii_url, file_name)
     return success if success else None
 
