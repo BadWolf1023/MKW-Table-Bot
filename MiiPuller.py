@@ -248,9 +248,9 @@ async def get_one_time_mii(mii_hex_str: str, fc: str, message_id: int, picture_w
     if success:
         return Mii.Mii(mii_hex_to_binary(mii_hex_str), mii_hex_str, folder_path, real_file_name, fc)
 
-async def download_mii_photo(fc, mii_hex_str, message_id, picture_width=512):
+async def download_mii_photo(fc, mii_hex_str, message_id, picture_width=512, use_alternative_renderer=False):
     cache_download_path, full_download_path, _, _ = get_mii_file_names(fc, message_id)
-    success = await miirender.download_mii(mii_hex_str, cache_download_path, picture_width=picture_width)
+    success = await miirender.download_mii(mii_hex_str, cache_download_path, picture_width=picture_width, use_alternative_renderer=use_alternative_renderer)
     if success:
         update_mii_photo_cache(fc)
         return True
@@ -262,7 +262,7 @@ def copy_cache_photo_and_get_mii(mii_bytes, mii_hex, fc, message_id):
     shutil.copy2(cache_download_path, full_download_path)
     return Mii.Mii(mii_bytes, mii_hex, folder_path, real_file_name, fc)
     
-async def get_miis(fcs:List[str], message_id:str, picture_width=512):
+async def get_miis(fcs:List[str], message_id:str, picture_width=512, use_alternative_renderer=False):
     reset_dynamic_cacher_if_needed()
     if len(fcs) == 0:
         return {}
@@ -300,7 +300,7 @@ async def get_miis(fcs:List[str], message_id:str, picture_width=512):
     fcs_missing_miis = list(need_to_download_mii_photos)
     missing_fc_chunks = [fcs_missing_miis[i:i+max_concurrent] for i in range(len(fcs_missing_miis))[::max_concurrent]]
     for missing_fc_chunk in missing_fc_chunks:
-        future_to_fc = {download_mii_photo(fc, need_to_download_mii_photos[fc][1], message_id, picture_width):fc for fc in missing_fc_chunk}
+        future_to_fc = {download_mii_photo(fc, need_to_download_mii_photos[fc][1], message_id, picture_width, use_alternative_renderer):fc for fc in missing_fc_chunk}
         results = await asyncio.gather(*future_to_fc)
         for fc, mii_pull_result in zip(missing_fc_chunk, results):
             if not isinstance(mii_pull_result, str):
