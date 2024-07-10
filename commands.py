@@ -56,6 +56,7 @@ import re
 import traceback
 
 vr_is_on = False
+USE_ALTERNATIVE_MII_RENDERING = True
 
 async def send_missing_permissions(channel:discord.TextChannel, content=None, delete_after=7):
     try:
@@ -249,6 +250,8 @@ class BotOwnerCommands:
     async def garbage_collect_command(message: discord.Message):
         BotOwnerCommands.is_bot_owner_check(message.author, "cannot garbage collect")
         gc.collect()
+        global USE_ALTERNATIVE_MII_RENDERING
+        USE_ALTERNATIVE_MII_RENDERING = not USE_ALTERNATIVE_MII_RENDERING
         await message.channel.send("Collected")
 
 
