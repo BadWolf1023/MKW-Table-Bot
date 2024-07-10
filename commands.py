@@ -985,7 +985,7 @@ class OtherCommands:
             return
 
         FC = fcs[0]
-        mii_dict = await MiiPuller.get_miis([FC], str(message.id), USE_ALTERNATIVE_MII_RENDERING)
+        mii_dict = await MiiPuller.get_miis([FC], str(message.id))
         common.client.mii_cooldowns[message.author.id] = time.monotonic()
 
         if isinstance(mii_dict, str):
