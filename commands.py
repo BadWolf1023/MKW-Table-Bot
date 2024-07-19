@@ -54,6 +54,7 @@ import os
 from datetime import datetime
 import re
 import traceback
+import json
 
 vr_is_on = False
 USE_ALTERNATIVE_MII_RENDERING = True
@@ -2727,6 +2728,18 @@ class TablingCommands:
             common.log_traceback(traceback)
             common.log_error(f"rxx(s) that triggered traceback: {this_bot.getRoom().rLIDs}")
             await message.channel.send(f"Table Bot has a bug, and this mkwx room triggered it. I cannot tally your scores. You should join the Table Bot server by using the invite code *{common.TABLEBOT_SERVER_INVITE_CODE}* and tell developers what happened and for them to check error logs.")
+    
+    @staticmethod
+    async def table_json_command(message:discord.Message, this_bot:ChannelBot, args: List[str], server_prefix:str, is_lounge_server:bool):
+        ensure_table_loaded_check(this_bot, server_prefix, is_lounge_server)
+        server_id = message.guild.id
+        try:
+            json_text = cb_interface.get_team_score_data(this_bot, full_details=True)
+            await message.channel.send(json.dumps(json_text))
+        except AttributeError:
+            common.log_traceback(traceback)
+            common.log_error(f"rxx(s) that triggered traceback: {this_bot.getRoom().rLIDs}")
+            await message.channel.send(f"An unknown error occurred. You should join the Table Bot server by using the invite code *{common.TABLEBOT_SERVER_INVITE_CODE}* and tell developers what happened and for them to check error logs.")
 
     @staticmethod
     async def manual_war_setup(message: discord.Message, this_bot: ChannelBot, args: List[str], server_prefix: str, is_lounge_server: bool):
