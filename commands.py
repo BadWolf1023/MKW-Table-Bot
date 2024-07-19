@@ -2735,7 +2735,7 @@ class TablingCommands:
         server_id = message.guild.id
         try:
             json_text = cb_interface.get_team_score_data(this_bot, full_details=True)
-            await common.safe_send_file(message, json_text)
+            await common.safe_send_file(message, json.dumps(json_text))
         except AttributeError:
             common.log_traceback(traceback)
             common.log_error(f"rxx(s) that triggered traceback: {this_bot.getRoom().rLIDs}")
