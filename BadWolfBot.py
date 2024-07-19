@@ -105,6 +105,7 @@ FCS_TERMS = {"fcs"}
 TRANSFER_TABLE_TERMS = {"transferfrom", "copyfrom", "transfer", "copy", "copytable", "transfertable", "movetable", "move"}
 GET_SUBSTITUTIONS_TERMS = {"subs", "substitutes", "substitutions", "getsubs", "allsubs"}
 API_TERMS = {"api", "apilink", "obsoverlay", "overlay", "scoreboard"}
+JSON_TERMS = {"json"}
 
 #Button interactions (only people in room can use buttons in Lounge; however, this isn't applied to the commands)
 INTERACTIONS = {'restricted_interaction'}
@@ -731,6 +732,9 @@ class BadWolfBot(ext_commands.Bot):
         
         elif main_command in TABLE_TEXT_TERMS:
             await commands.TablingCommands.table_text_command(message, this_bot, args, server_prefix, is_lounge_server)
+
+        elif main_command in JSON_TERMS:
+            await commands.TablingCommands.table_json_command(message, this_bot, args, server_prefix, is_lounge_server)
 
         elif main_command in PREDICT_TERMS:
             await commands.TablingCommands.predict_command(message, this_bot, args, server_prefix, self.lounge_submissions)
