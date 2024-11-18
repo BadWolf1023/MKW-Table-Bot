@@ -60,7 +60,7 @@ def initialize(app_: FastAPI):
         if table_bot is None:
             raise_no_table_found()
         return api_data_builder.build_team_html(
-            cb_interface.get_team_score_data(table_bot, sort_teams), 
+            cb_interface.get_team_score_data(table_bot, sort_teams=sort_teams), 
             style, 
             background_picture, 
             background_color, 
