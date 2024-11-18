@@ -332,7 +332,8 @@ MKW_LOUNGE_TABLE_BOT_SUPPORT_ROLE_ID = 748367398905708634
 table_bot_support_plus_roles = reporter_plus_roles | {MKW_LOUNGE_TABLE_BOT_SUPPORT_ROLE_ID}
 
 SHA_ADDERS = [
-    683193773055934474 # Fear#1616
+    683193773055934474, # Fear#1616
+    853413567844188160 # Azuki aka shinatsu
 ]
 
 #Bot Admin information
