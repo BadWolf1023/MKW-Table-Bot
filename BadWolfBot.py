@@ -450,18 +450,19 @@ class BadWolfBot(ext_commands.Bot):
     @tasks.loop(seconds=30)
     async def updatePresence(self):
         global switch_status
-        game_str = ""
+        status_str = ""
         if switch_status:
-            game_str = "?quickstart for the basics, ?help for documentation"
+            status_str = "?quickstart for the basics, ?help for documentation"
         else:
-            game_str = f"{str(self.getNumActiveWars())} active table"
+            status_str = f"{str(self.getNumActiveWars())} active table"
             if self.getNumActiveWars() != 1:
-                game_str += 's'
+                status_str += 's'
         
         switch_status = not switch_status
         
-        game = discord.Game(game_str)
-        await self.change_presence(status=discord.Status.online, activity=game)
+        activity = discord.CustomActivity(name=status_str)
+        await self.change_presence(status=discord.Status.online, activity=activity)
+        # using a custom activity for status removes the unnecessary "Playing: " text
     
     def getNumActiveWars(self):
         inactivity_time_period_count = timedelta(minutes=30)
