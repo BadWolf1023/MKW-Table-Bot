@@ -127,6 +127,7 @@ class LoungeSlash(ext_commands.Cog):
         self, 
         ctx: discord.ApplicationContext,
         tier: Option(str, "Tier of event", choices=[
+            OptionChoice('T0', '0'), 
             OptionChoice('T1', '1'), 
             OptionChoice('T2', '2'), 
             OptionChoice('T3', '3'), 
