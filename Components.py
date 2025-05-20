@@ -8,7 +8,7 @@ import TimerDebuggers
 import common
 import Stats
 import time
-from typing import Dict, Union
+from typing import Dict, List, Union
 # import gc
 
 class ManualTeamsModal(discord.ui.Modal):
@@ -339,17 +339,17 @@ class UpdateVRButton(discord.ui.Button['VRView']):
         self.responded = True
         await interaction.response.edit_message(content='Refreshing room...')
         # await interaction.response.defer()
-        msg = InteractionUtils.create_proxy_msg(interaction, self.view.trigger_command_args)
         # Stats.log_command('vr')
 
-        data = await commands.OtherCommands.vr_command(msg, self.bot, self.view.trigger_command_args, self_refresh=True)
+        data = await commands.OtherCommands.vr_command(self.view.trigger_message, self.bot, self.view.trigger_command_args, self_refresh=True)
         
         await self.view.refresh_vr(interaction, data)
 
 class VRView(discord.ui.View):
-    def __init__(self, trigger_command_args, bot: TableBot.ChannelBot):
+    def __init__(self, trigger_message: discord.Message, trigger_command_args: List[str], bot: TableBot.ChannelBot):
         super().__init__(timeout=300)
         self.bot = bot
+        self.trigger_message = trigger_message
         self.trigger_command_args = trigger_command_args
         self.message_ref: Union[discord.Message, discord.InteractionMessage] = None
         self.last_vr_content = None

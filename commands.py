@@ -1154,7 +1154,7 @@ class OtherCommands:
             return {'content': f"{str_msg}```"}
         else:
             # await message2.delete()
-            vr_view = Components.VRView(args, this_bot)
+            vr_view = Components.VRView(message, args, this_bot)
             this_bot.add_component(vr_view)
             await vr_view.edit(message2, content=f"{str_msg}```")
 
